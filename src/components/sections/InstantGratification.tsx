@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useOnboarding } from "@/context/OnboardingContext";
 
 export default function InstantGratification() {
+    const { openModal } = useOnboarding();
     const [dob, setDob] = useState("");
     const [glitch, setGlitch] = useState(false);
     const [result, setResult] = useState<string | null>(null);
@@ -43,10 +45,10 @@ export default function InstantGratification() {
                         </div>
 
                         <button
-                            onClick={handleScan}
+                            onClick={openModal}
                             className="w-full bg-white text-black font-bold uppercase tracking-widest py-4 hover:bg-[#FFD700] transition-colors"
                         >
-                            {glitch ? "Analyzing Trauma..." : "Reveal My Flaw"}
+                            CLAIM MY SPOT
                         </button>
                     </motion.div>
                 ) : (

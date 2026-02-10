@@ -2,12 +2,15 @@
 
 import { useRef, useEffect } from "react";
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
+import { useOnboarding } from "@/context/OnboardingContext";
 
 export default function Hero() {
+    const { openModal } = useOnboarding();
     const eyeContainerRef = useRef<HTMLDivElement>(null);
 
-    // Mouse position logic for the eye
+    // Mouse position logic for the eye (unchanged)
     const mouseX = useMotionValue(0);
+
     const mouseY = useMotionValue(0);
 
     // Smooth spring animation for the eye movement
@@ -64,9 +67,10 @@ export default function Hero() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     transition={{ duration: 0.5, delay: 1.2 }}
+                    onClick={openModal}
                     className="mt-12 px-8 py-4 bg-[#FFD700] text-[#12011A] font-bold font-mono text-lg uppercase tracking-widest hover:bg-white transition-colors duration-300 shadow-[0_0_20px_rgba(255,215,0,0.4)]"
                 >
-                    Seize Control
+                    CLAIM MY SPOT
                 </motion.button>
             </div>
 

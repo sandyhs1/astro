@@ -1,8 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useOnboarding } from "@/context/OnboardingContext";
 
 export default function ExclusiveEntry() {
+    const { openModal } = useOnboarding();
+
     return (
         <section className="min-h-[80vh] flex items-center justify-center bg-[#FFD700] text-[#12011A] p-6 relative">
             <div className="max-w-4xl text-center">
@@ -21,8 +24,11 @@ export default function ExclusiveEntry() {
                         Decide. Now.
                     </p>
 
-                    <button className="px-12 py-5 bg-[#12011A] text-white text-lg font-bold uppercase tracking-widest hover:scale-105 transition-transform duration-300 shadow-2xl">
-                        Claim Last Spot
+                    <button
+                        onClick={openModal}
+                        className="px-12 py-5 bg-[#12011A] text-white text-lg font-bold uppercase tracking-widest hover:scale-105 transition-transform duration-300 shadow-2xl"
+                    >
+                        CLAIM MY SPOT
                     </button>
 
                     <p className="mt-6 font-mono text-xs opacity-60">

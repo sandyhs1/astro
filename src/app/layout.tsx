@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   description: "The Universe doesn't care about your feelings. It cares about your math.",
 };
 
+import { OnboardingProvider } from "@/context/OnboardingContext";
+import OnboardingModal from "@/components/features/OnboardingModal";
 import SmoothScroll from "@/components/ui/SmoothScroll";
 
 export default function RootLayout({
@@ -29,9 +31,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+        suppressHydrationWarning
         className={`${playfair.variable} ${dmMono.variable} antialiased bg-[#12011A] text-white selection:bg-[#FFD700] selection:text-[#12011A]`}
       >
-        <SmoothScroll>{children}</SmoothScroll>
+        <OnboardingProvider>
+          <SmoothScroll>{children}</SmoothScroll>
+          <OnboardingModal />
+        </OnboardingProvider>
       </body>
     </html>
   );
