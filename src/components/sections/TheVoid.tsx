@@ -12,9 +12,10 @@ export default function TheVoid() {
                 </div>
 
                 <div className="mt-12 md:mt-0 flex gap-8">
-                    <a href="#" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Manifesto</a>
-                    <a href="#" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Legal</a>
-                    <a href="#" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Login</a>
+                    <a href="/report" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Report</a>
+                    <a href="/astrology" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Astrology</a>
+                    <a href="/our-process" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Our Process</a>
+                    <a href="/myths" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Myths</a>
                 </div>
             </div>
 

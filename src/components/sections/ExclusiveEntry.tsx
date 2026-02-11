@@ -31,9 +31,6 @@ export default function ExclusiveEntry() {
                         CLAIM MY SPOT
                     </button>
 
-                    <p className="mt-6 font-mono text-xs opacity-60">
-                        Offer expires in 14:02 minutes. No extensions.
-                    </p>
                 </motion.div>
             </div>
         </section>

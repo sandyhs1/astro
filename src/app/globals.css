@@ -12,10 +12,45 @@
   --color-stark-white: var(--stark-white);
   --font-serif: var(--font-serif);
   --font-mono: var(--font-mono);
+
+  /* Add animations to theme */
+  --animate-scroll-left: scroll-left 60s linear infinite;
+  --animate-scroll-right: scroll-right 60s linear infinite;
 }
 
 body {
   background: var(--deep-purple);
   color: var(--stark-white);
   font-family: var(--font-mono);
+}
+
+/* Horizontal Scroll Animations for Testimonials */
+@layer utilities {
+  @keyframes scroll-left {
+    0% {
+      transform: translateX(0);
+    }
+
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes scroll-right {
+    0% {
+      transform: translateX(-50%);
+    }
+
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  .animate-scroll-left {
+    animation: scroll-left 60s linear infinite;
+  }
+
+  .animate-scroll-right {
+    animation: scroll-right 60s linear infinite;
+  }
 }
