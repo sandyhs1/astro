@@ -15,8 +15,30 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SoulSync | The Algorithm of Karma", // Placeholder title
-  description: "The Universe doesn't care about your feelings. It cares about your math.",
+  title: "Most Astrology Is Emotional Fraud. This Isn’t.",
+  description: "A Vedic based life report that decodes your patterns, blindspots and timing - without emotional blackmail, fake curses or upsells. Built for thinkers, not believers.",
+  openGraph: {
+    title: "Most Astrology Is Emotional Fraud. This Isn’t.",
+    description: "A Vedic based life report that decodes your patterns, blindspots and timing - without emotional blackmail, fake curses or upsells. Built for thinkers, not believers.",
+    url: "https://quantumkarma.tech",
+    siteName: "SoulSync",
+    images: [
+      {
+        url: "https://quantumkarma.tech/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "SoulSync Cosmic Mascot",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Most Astrology Is Emotional Fraud. This Isn’t.",
+    description: "A Vedic based life report that decodes your patterns, blindspots and timing - without emotional blackmail, fake curses or upsells. Built for thinkers, not believers.",
+    images: ["https://quantumkarma.tech/og-image.png"],
+  },
 };
 
 import { OnboardingProvider } from "@/context/OnboardingContext";
