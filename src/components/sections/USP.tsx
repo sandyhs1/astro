@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { FaCrosshairs, FaDatabase, FaSatellite } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 const features = [
     {
@@ -22,6 +23,8 @@ const features = [
 ];
 
 export default function USP() {
+    const router = useRouter();
+
     return (
         <section className="min-h-screen bg-[#12011A] flex flex-col items-center justify-center py-24 relative overflow-hidden">
 
@@ -56,7 +59,10 @@ export default function USP() {
                             This isn't about feeling good. It's about being right.
                         </motion.p>
 
-                        <button className="px-10 py-4 border border-[#FFD700]/50 text-[#FFD700] hover:bg-[#FFD700] hover:text-black transition-all duration-300 font-mono text-sm uppercase tracking-widest flex items-center gap-4">
+                        <button
+                            onClick={() => router.push('/report')}
+                            className="px-10 py-4 border border-[#FFD700]/50 text-[#FFD700] hover:bg-[#FFD700] hover:text-black transition-all duration-300 font-mono text-sm uppercase tracking-widest flex items-center gap-4"
+                        >
                             <FaCrosshairs className="animate-pulse" />
                             Acquire Target
                         </button>

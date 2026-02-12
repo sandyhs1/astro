@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function DashaClock() {
+    const router = useRouter();
     const containerRef = useRef<HTMLDivElement>(null);
     const timeRef = useRef<HTMLHeadingElement>(null);
 
@@ -60,7 +62,10 @@ export default function DashaClock() {
                     <span className="text-red-500 italic">Every second you wait is a fortune lost.</span>
                 </p>
 
-                <button className="mt-12 px-10 py-4 border border-[#FFD700] text-[#FFD700] hover:bg-[#FFD700] hover:text-black transition-all duration-300 font-mono text-sm uppercase tracking-widest">
+                <button
+                    onClick={() => router.push('/report')}
+                    className="mt-12 px-10 py-4 border border-[#FFD700] text-[#FFD700] hover:bg-[#FFD700] hover:text-black transition-all duration-300 font-mono text-sm uppercase tracking-widest"
+                >
                     WAKE UP
                 </button>
             </div>

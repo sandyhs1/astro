@@ -6,23 +6,23 @@ import { useRef } from "react";
 const cards = [
     {
         id: 1,
-        title: "Magnetic Aura",
-        text: "Stop chasing. Become the gravity black hole they can't escape.",
+        title: "Emotional Bankruptcy",
+        text: "Stop investing in people who treat you like an option. Your 7th House reveals why you attract takers, narcissists, and emotional ghosts. Close the account.",
     },
     {
         id: 2,
-        title: "Destroy Boredom",
-        text: "Safety is the enemy of desire. Learn to be dangerously unpredictable.",
+        title: "Cortisol Addiction",
+        text: "You're not 'hustling', you're dying. Your body is keeping score of every compromise. We pinpoint exactly when your health will crash if you don't pivot.",
     },
     {
         id: 3,
-        title: "The Obsession",
-        text: "Trigger their primal instinct to possess you. It’s biology, not magic.",
+        title: "The Mediocrity Trap",
+        text: "Competence is a commodity. You are being paid to be safe, not great. We identify the exact 'X-Factor' in your chart that scares your boss but builds your empire.",
     },
     {
         id: 4,
-        title: "The Power Flip",
-        text: "Take back the leash. Dictate the terms of your own pleasure.",
+        title: "Lineage Breaker",
+        text: "You inherited your parents' fears, not just their genes. It ends with you. We show you the karmic debt you need to pay off so your children don't have to.",
     },
 ];
 
@@ -38,7 +38,7 @@ export default function Kamasutra() {
         <section ref={targetRef} className="relative h-[300vh] bg-[#12011A]">
             <div className="sticky top-0 flex h-screen items-center overflow-hidden">
                 <h2 className="absolute top-10 left-10 z-10 font-serif text-4xl text-[#FFD700] mix-blend-difference">
-                    Dominate Your Chemistry
+                    Weaponize Your Attraction
                 </h2>
                 <motion.div style={{ x }} className="flex gap-10 pl-20 pr-20">
                     {cards.map((card) => (

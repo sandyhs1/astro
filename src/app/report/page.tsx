@@ -360,50 +360,50 @@ function TestimonialsSection() {
         {
             user: "u/burnout_szn",
             time: "3h",
-            title: "finally someone gets it",
-            content: "spent ₹40k on a 'guru' who told me to wear 9 gemstones and chant for 3 hours daily. this report said 'you're not cursed, you're just in the wrong job'. switched careers. never looked back."
+            title: "sister is speechless",
+            content: "Thanku thanku sooooooo so much... You are very much true about her...my sister hardly get impressed by someone...but literally got impressed with your knowledge... She still can't able to believe that someone can interpret about her this much true.. Hrudayapoorvaka Dhanyavaadagalu... Thanku once again"
         },
         {
             user: "u/chaotic_millennial",
             time: "1d",
-            title: "called out my self-sabotage",
-            content: "it literally said 'stop dating unavailable people, your 7th house shows you KNOW they're wrong but you do it anyway'. felt personally attacked but also... yeah. working on it now."
+            title: "pure clarity",
+            content: "You are amazing! I've been analyzing myself for years, but you connected dots I didn't even know existed. The way you explained my career blockages was surgical. No fluff, just pure clarity. I finally feel like I'm in the driver's seat of my own life."
         },
         {
             user: "u/corporate_slave_no_more",
             time: "5h",
-            title: "timing was surgical",
-            content: "told me not to quit my job until march 2026. i was ready to rage-quit in december. waited. got headhunted with 2x salary in april. the math is insane."
+            title: "reading my soul source code",
+            content: "This is so insightful! Thank you so much for such a deep and accurate analysis. It's truly beyond helpful. It felt like you were reading my soul's source code—exposing the glitches and showing me exactly how to patch them."
         },
         {
             user: "u/relationship_wreck",
             time: "12h",
-            title: "saved me from a disaster",
-            content: "was about to move in with my partner. report flagged massive incompatibility i was ignoring. broke up 2 weeks later when they admitted they'd been lying about wanting kids. dodged a nuke."
+            title: "honest and straightforward",
+            content: "Thank you for taking the time to break this down so clearly. .. A lot of what you pointed out makes sense, I appreciate the straightforward perspective and the honesty around expectations during this period."
         },
         {
             user: "u/crypto_casualties",
             time: "2d",
-            title: "exit timing = perfect",
-            content: "sold my portfolio in nov based on the wealth timing section. market tanked 40% in jan. my therapist thinks i'm psychic. no bro, i just read the manual."
+            title: "flabbergasted",
+            content: "I'm honestly flabbergasted. I don't think anyone has ever described me this accurately before, not even myself. I don't know who you are, but wow... you held up a mirror for me in a way I've never experienced. Every single point you mentioned felt absolutely spot on. Truly, every single one. I'm genuinely considering printing this out and framing it."
         },
         {
             user: "u/sleep_deprived_founder",
             time: "8h",
-            title: "stopped the 3am spirals",
-            content: "used to wake up panicking about whether i was 'on the right path'. now i have a literal roadmap. sleep quality up 10x. anxiety meds = cancelled."
+            title: "marriage clarity",
+            content: "You got almost everything right. I am still giving this marriage everything and maybe in the end everything works out. Thank you for the advice."
         },
         {
             user: "u/recovering_people_pleaser",
             time: "6h",
-            title: "permission to be selfish",
-            content: "spent 28 years trying to make everyone happy. report said 'your sun in 1st house means you're SUPPOSED to prioritize yourself'. started saying no. life immediately better."
+            title: "wholesome read",
+            content: "This is such a wholesome read! I'm surely going to try to be more assertive now. If not that then atleast authoritarian In my opinion I have the mindset and intentions but lack a little corporate confidence. Thank you for shedding light on it"
         },
         {
             user: "u/data_nerd_validated",
             time: "4h",
-            title: "it's an operating system",
-            content: "as an engineer, i appreciate the brutal logic. no mysticism. no fear tactics. just patterns, probabilities, and actionable intel. this is astrology for adults."
+            title: "psycho-spiritual audit",
+            content: "You are fabulous. The depth of this report is insane—it's not just astrology, it's a full psycho-spiritual audit. I walked in skeptical and walked out a believer. 10/10 would recommend to anyone feeling lost."
         },
     ];
 
@@ -412,50 +412,50 @@ function TestimonialsSection() {
         {
             user: "u/gen_z_chaos",
             time: "9h",
-            title: "no cap this slaps",
-            content: "was lowkey spiraling about my future. this report came through with receipts. told me exactly when to launch my side hustle. im up 3x in 6 months. bestie this is not a drill."
+            title: "literally cried",
+            content: "Fuck why this is so accurate 🥲 And the analysis you did is on point I literally cried for 10 minutes straight. Thank you bub! Means a lot!"
         },
         {
             user: "u/midwest_overthinker",
             time: "1d",
-            title: "cheaper than therapy",
-            content: "been in therapy for 2 years. this report explained my commitment issues in 10 minutes. therapist read it and said 'yeah this tracks'. ₹3799 vs ₹2000/session. you do the math."
+            title: "dragged me but i needed it",
+            content: "okay i was skeptical bc most astrology is vague trash but this?? dragged me to hell and back in the best way. calling out my commitment issues with actual dates? rude but necessary. i feel seen."
         },
         {
             user: "u/toxic_ex_survivor",
             time: "7h",
-            title: "explained my pattern",
-            content: "dated 4 emotionally unavailable people in a row. thought i was the problem. report showed my venus-saturn aspect attracts them but also gives me the power to break the cycle. currently single and healing."
+            title: "scary accurate timeline",
+            content: "bro the career timeline is actually scary accurate. said i'd pivot in 2024... i literally handed in my notice last week. how do you know this?? i'm shook. subscriber for life."
         },
         {
             user: "u/startup_graveyard",
             time: "11h",
-            title: "saved my co-founder situation",
-            content: "was about to sign a 50-50 equity split with someone i met 3 months ago. timing analysis said 'wait 6 months'. they showed their true colors in month 4. bullet dodged."
+            title: "no toxic positivity",
+            content: "no toxic positivity here and i love it. just straight facts about why i keep failing at business. the 'invisible tax' concept hit hard. fixed my strategy based on the wealth window and seeing movement already."
         },
         {
             user: "u/chronic_job_hopper",
             time: "2d",
-            title: "finally stuck with something",
-            content: "switched jobs 5x in 3 years. always felt off. report said 'youre a 10th house stellium, you need autonomy not hierarchy'. went freelance. haven't looked back."
+            title: "life-saving roast",
+            content: "this isn't a horoscope, it's a roast session that saves your life. finding out my 'nice guy' act was actually a defense mechanism? oof. heavy realization but exactly what i needed to grow up."
         },
         {
             user: "u/overthinker_anonymous",
             time: "5h",
-            title: "permission to rest",
-            content: "was grinding 80hr weeks thinking thats what success looks like. report said my chart shows burnout cycles every 2.5 years. implemented rest. productivity actually went UP."
+            title: "cheat code for life",
+            content: "finally something that doesn't tell me to 'just manifest it'. gave me practical windows for action. i feel like i have a cheat code for the next 5 years. worth every rupee."
         },
         {
             user: "u/manifestation_skeptic",
             time: "3h",
-            title: "manifesting but make it logical",
-            content: "used to roll my eyes at 'manifestation'. this report said 'you have favorable transits for X in this window, act then'. i acted. it worked. im a convert but like, the smart kind."
+            title: "therapist is gonna be shook",
+            content: "my therapist is gonna act surprised when i show up with actual answers next week lol. this report did in 20 mins what we've been trying to figure out for months. wild."
         },
         {
             user: "u/family_business_heir",
             time: "10h",
-            title: "confirmed i should walk away",
-            content: "was guilt-tripped into joining family business. report said my chart shows entrepreneurship in a completely different field. quit. built my own thing. dad's mad but im thriving."
+            title: "strategic personality audit",
+            content: "i usually cringe at 'soul' stuff but this was surprisingly grounded. logical, structured, and deep. feels like a strategic audit of my personality. 100% accurate."
         },
     ];
 
