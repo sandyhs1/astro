@@ -119,6 +119,7 @@ export default function OnboardingModal() {
                     productId,
                     customerEmail: formData.email,
                     customerName: formData.fullName,
+                    currency
                 }),
             });
 
