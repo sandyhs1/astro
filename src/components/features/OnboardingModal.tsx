@@ -52,22 +52,95 @@ export default function OnboardingModal() {
         }
     };
 
-    const handlePayment = () => {
+    // Handle automated success from Dodo redirect
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const status = searchParams.get('status');
+
+        if (status === 'success') {
+            const savedData = localStorage.getItem('onboardingFormData');
+            if (savedData) {
+                try {
+                    const parsedData = JSON.parse(savedData);
+                    setFormData(parsedData);
+                    setShowSuccess(true);
+
+                    // Trigger email notification automatically
+                    const transactionId = `DODO_${Date.now()}`;
+                    const submissionTime = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+                    const emailParams = {
+                        fullName: parsedData.fullName,
+                        email: parsedData.email,
+                        dob: parsedData.dob,
+                        tob: `${parsedData.tob} ${parsedData.tobAmPm}`,
+                        pob: parsedData.pob,
+                        questions: parsedData.questions,
+                        paymentStatus: "Success (Automated Dodo)",
+                        transactionId: transactionId,
+                        submissionTime: submissionTime
+                    };
+
+                    emailjs.send(
+                        'service_kejjsw8',
+                        'template_dq668f3',
+                        emailParams,
+                        'p0Y1TsA4CgkB89zWO'
+                    ).then(() => {
+                        console.log("✅ Automated Success Email sent");
+                        // Clean up
+                        localStorage.removeItem('onboardingFormData');
+                        window.history.replaceState({}, document.title, "/");
+                    }).catch(error => {
+                        console.error("❌ Email error:", error);
+                    });
+                } catch (e) {
+                    console.error("Failed to parse saved onboarding data", e);
+                }
+            }
+        }
+    }, [showSuccess]);
+
+    const handleDodoPayment = async (currency: 'INR' | 'USD') => {
         setIsProcessing(true);
-        // Open Razorpay Payment Link in new tab
-        window.open("https://rzp.io/rzp/dSO8evHH", "_blank");
-        // Show verification state
-        setIsProcessing(false);
+
+        const productId = currency === 'USD'
+            ? process.env.NEXT_PUBLIC_DODO_PRODUCT_ID_USD
+            : process.env.NEXT_PUBLIC_DODO_PRODUCT_ID_INR;
+
+        // Persist form data before redirecting
+        localStorage.setItem('onboardingFormData', JSON.stringify(formData));
+
+        try {
+            const response = await fetch('/api/create-dodo-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productId,
+                    customerEmail: formData.email,
+                    customerName: formData.fullName,
+                }),
+            });
+
+            const data = await response.json();
+            if (data.checkout_url) {
+                window.location.href = data.checkout_url;
+            } else {
+                throw new Error(data.error || "Failed to get checkout URL");
+            }
+        } catch (error) {
+            console.error("Dodo Payment Error:", error);
+            alert("Payment initialization failed. Please try again.");
+            setIsProcessing(false);
+        }
     };
 
     const handleVerification = async () => {
         setIsProcessing(true);
 
-        // Simulating verification/email sending
-        const transactionId = `TXN${Date.now()}`;
+        const transactionId = `MANUAL_${Date.now()}`;
         const submissionTime = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
 
-        // Prepare EmailJS template parameters
         const emailParams = {
             fullName: formData.fullName,
             email: formData.email,
@@ -119,7 +192,7 @@ export default function OnboardingModal() {
         router.push('/myths');
     };
 
-    if (!isOpen) return null;
+    if (!isOpen && !showSuccess) return null;
 
     // Success Screen
     if (showSuccess) {
@@ -201,8 +274,8 @@ export default function OnboardingModal() {
                         <span className="text-[10px] font-bold text-white tracking-wider uppercase">Official Partner</span>
                     </div>
 
-                    {/* Razorpay-style Header */}
-                    <div className="bg-[#528FF0] p-6 text-white text-center pb-8 sticky top-0">
+                    {/* Dodo-style Header */}
+                    <div className="bg-[#000000] p-6 text-white text-center pb-8 sticky top-0">
                         <div className="flex justify-between items-center mb-6">
                             <button onClick={() => setShowPayment(false)} className="opacity-70 hover:opacity-100 absolute left-4 top-4">
                                 <FaTimes />
@@ -210,36 +283,54 @@ export default function OnboardingModal() {
                             <h3 className="font-bold text-xl w-full text-center">SoulSync Official</h3>
                         </div>
                         <div className="flex flex-col items-center justify-center">
-                            <span className="text-sm opacity-80 mb-1 font-medium tracking-wide">TOTAL AMOUNT</span>
-                            <div className="text-4xl font-extrabold tracking-tight">₹3,799.00</div>
-                            <div className="text-xs opacity-75 mt-2 bg-blue-600/30 px-3 py-1 rounded-full border border-blue-400/30">
-                                Complete Destiny Report + Vedic Charts
+                            <span className="text-sm opacity-80 mb-1 font-medium tracking-wide">SECURE CHECKOUT</span>
+                            <div className="text-3xl font-extrabold tracking-tight">Complete Your Report</div>
+                            <div className="text-xs opacity-75 mt-2 bg-white/10 px-3 py-1 rounded-full border border-white/10">
+                                Powered by Dodo Payments
                             </div>
                         </div>
                     </div>
 
                     {/* Payment Body */}
-                    <div className="p-6 -mt-4 bg-white rounded-t-2xl relative z-10">
+                    <div className="p-6 -mt-4 bg-white rounded-t-2xl relative z-10 w-full space-y-4">
 
-                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6 flex items-start gap-3">
-                            <div className="bg-blue-100 p-2 rounded-full mt-0.5">
-                                <FaLock className="text-blue-600 text-sm" />
+                        <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-2 flex items-start gap-3">
+                            <div className="bg-gray-100 p-2 rounded-full mt-0.5">
+                                <FaLock className="text-gray-600 text-sm" />
                             </div>
                             <div>
-                                <h4 className="font-bold text-sm text-gray-800 mb-1">Secure Payment Gateway</h4>
+                                <h4 className="font-bold text-sm text-gray-800 mb-1">Global Payment Suite</h4>
                                 <p className="text-xs text-gray-600 leading-relaxed">
-                                    You are about to access the secure Razorpay portal. Your payment details are encrypted and processed by India's most trusted gateway.
+                                    Choose your preferred currency. Secure payment processed globally via Dodo Payments.
                                 </p>
                             </div>
                         </div>
 
-                        <button
-                            onClick={handlePayment}
-                            className="w-full bg-[#528FF0] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#3d7cd6] transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 mb-4 group"
-                        >
-                            <span>Initialise Payment</span>
-                            <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
-                        </button>
+                        {/* Payment Buttons */}
+                        <div className="grid grid-cols-1 gap-3">
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => handleDodoPayment('INR')}
+                                disabled={isProcessing}
+                                className="w-full bg-[#111111] text-white py-4 rounded-xl font-bold text-lg hover:bg-black transition-all shadow-lg flex items-center justify-center gap-3 relative overflow-hidden group"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                                <span>Pay in INR (₹3,799)</span>
+                                <FaArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
+                            </motion.button>
+
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => handleDodoPayment('USD')}
+                                disabled={isProcessing}
+                                className="w-full bg-white text-[#111111] border-2 border-[#111111] py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all shadow-md flex items-center justify-center gap-3 relative overflow-hidden group"
+                            >
+                                <span>Pay in USD ($55.00)</span>
+                                <FaArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
+                            </motion.button>
+                        </div>
 
                         <div className="border-t border-gray-100 pt-4 mt-6">
                             <p className="text-xs text-center text-gray-500 mb-3 font-medium">After completing payment, verify below:</p>

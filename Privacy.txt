@@ -1,0 +1,203 @@
+Privacy Policy — Quantum Karma
+
+Last updated: 15 Feb 2026
+
+We don’t like creepy apps.
+So we built this to avoid becoming one.
+
+This page explains what data we collect, why we collect it, what we do with it, and what we don’t do with it.
+
+If you’re uncomfortable sharing personal birth details, you should not use this service. The product cannot exist without that information.
+
+This service is operated from Bangalore, India.
+
+1. What Information We Collect
+
+We only collect information necessary to generate your report and run the service properly.
+
+Information you provide
+
+Name (can be nickname)
+
+Date of birth
+
+Time of birth
+
+Place of birth
+
+Email address
+
+Your stated concern (career, relationship, direction etc.)
+
+Optional notes you write to us
+
+Without birth details, the system cannot function. We do not ask for anything unrelated like contacts, photos, phone gallery, or social accounts.
+
+Automatically collected information
+
+Standard website data:
+
+IP address
+
+Device type
+
+Browser type
+
+Pages visited
+
+Purchase status
+
+This helps prevent fraud and fix bugs. Not to profile your personality.
+
+Payment data
+
+Payments are processed by third-party payment processors.
+We do not store your card or UPI credentials on our servers.
+
+We only receive confirmation that payment succeeded or failed.
+
+2. How We Use Your Data
+
+We use your information strictly to operate the service.
+
+That includes:
+
+generating your chart
+
+structuring your report
+
+reviewing it manually
+
+delivering it to you
+
+responding to support questions
+
+improving clarity and accuracy
+
+We do not use your birth details to advertise to you across the internet.
+We do not sell your data to brokers.
+
+3. About AI / LLM Usage (Important)
+
+We use multiple language models (LLMs) as tools.
+
+They help with:
+
+structuring reports
+
+formatting explanations
+
+organizing insights
+
+They do NOT replace human interpretation.
+
+Every report is interpreted and reviewed by a human before delivery.
+
+The models assist presentation.
+They do not decide meaning.
+
+Also — rare mistakes can happen in interpretation.
+That’s unavoidable in any interpretive system, including astrology itself.
+
+Which is why we provide post-delivery support and clarification.
+
+We actively correct misunderstandings when users contact us.
+
+If anyone claims astrology can be 100% accurate every time — you should question that claim. No human or system can guarantee certainty.
+
+4. Data Storage & Security
+
+Your data is stored securely using access-restricted systems.
+
+We apply:
+
+encryption in transit
+
+restricted access
+
+minimal internal visibility
+
+Only people directly involved in generating your report can access identifiable data.
+
+We do not pass raw personal birth details around casually inside the company.
+
+5. How Long We Keep Data
+
+We keep identifiable data only as long as needed to:
+
+deliver your report
+
+provide support
+
+handle disputes
+
+After that:
+We may retain anonymized pattern data (no names, no emails) to improve quality.
+
+You may request deletion anytime by emailing help@soulsync.tech
+
+We will remove identifiable personal data unless legally required to retain transaction records.
+
+6. Third-Party Services
+
+We rely on infrastructure providers for:
+
+hosting
+
+payment processing
+
+email delivery
+
+analytics
+
+They process limited data required to perform their role.
+
+They do not own your birth data and cannot legally reuse it for their purposes.
+
+7. We Do Not Sell Personal Data
+
+Let’s make this simple:
+
+We do not sell, rent, trade, or monetize your birth details.
+
+Our revenue comes from reports — not from your identity.
+
+If that ever changes, this policy would be rewritten clearly.
+
+8. Your Rights
+
+You may:
+
+request a copy of stored personal data
+
+request correction
+
+request deletion
+
+withdraw consent for future use
+
+Email: help@soulsync.tech
+
+We respond manually — not automated bots.
+
+9. Children’s Privacy
+
+This service is not designed for children under 18.
+
+We do not knowingly store children’s personal data independently of a parent or guardian.
+
+10. Policy Updates
+
+We may update this policy when the product evolves.
+
+We won’t secretly expand data usage without updating this page.
+
+Continued use after update means acceptance.
+
+11. Final Clarity
+
+We built Quantum Karma to give perspective — not surveillance.
+
+Your personal information exists here only to generate your report and support you afterwards.
+
+Nothing more.
