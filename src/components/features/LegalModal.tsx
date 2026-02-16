@@ -272,7 +272,7 @@ We don’t build our business on refund friction. We build it on transparency be
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar" data-lenis-prevent>
                             <div className="text-gray-300 font-mono text-sm leading-relaxed whitespace-pre-wrap space-y-4">
                                 {content}
                             </div>

@@ -28,28 +28,25 @@ export default function TheVoid() {
                     <a href="/astrology" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Astrology</a>
                     <a href="/our-process" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Our Process</a>
                     <a href="/myths" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Myths</a>
+                    <button
+                        onClick={() => openLegal('refunds')}
+                        className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase"
+                    >
+                        Refunds
+                    </button>
+                    <button
+                        onClick={() => openLegal('terms')}
+                        className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase"
+                    >
+                        Terms
+                    </button>
+                    <button
+                        onClick={() => openLegal('privacy')}
+                        className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase"
+                    >
+                        Privacy
+                    </button>
                 </div>
-            </div>
-
-            <div className="max-w-7xl mx-auto mt-12 flex justify-end gap-6 border-t border-white/5 pt-8">
-                <button
-                    onClick={() => openLegal('terms')}
-                    className="font-mono text-[10px] text-gray-700 hover:text-gray-400 transition-colors uppercase tracking-widest"
-                >
-                    Terms
-                </button>
-                <button
-                    onClick={() => openLegal('privacy')}
-                    className="font-mono text-[10px] text-gray-700 hover:text-gray-400 transition-colors uppercase tracking-widest"
-                >
-                    Privacy
-                </button>
-                <button
-                    onClick={() => openLegal('refunds')}
-                    className="font-mono text-[10px] text-gray-700 hover:text-gray-400 transition-colors uppercase tracking-widest"
-                >
-                    Refunds
-                </button>
             </div>
 
             <div className="text-center mt-20">
