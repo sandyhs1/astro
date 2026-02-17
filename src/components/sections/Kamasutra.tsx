@@ -6,23 +6,23 @@ import { useRef } from "react";
 const cards = [
     {
         id: 1,
-        title: "Emotional Bankruptcy",
-        text: "Stop investing in people who treat you like an option. Your 7th House reveals why you attract takers, narcissists, and emotional ghosts. Close the account.",
+        title: "Love Life",
+        text: "Stop attracting trauma bonds. Your chart reveals exactly why you simp for toxicity. We kill the weak patterns so you become the one they chase.",
     },
     {
         id: 2,
-        title: "Cortisol Addiction",
-        text: "You're not 'hustling', you're dying. Your body is keeping score of every compromise. We pinpoint exactly when your health will crash if you don't pivot.",
+        title: "Career",
+        text: "You're not 'hustling', you're dying. We expose the exact unfair advantage in your chart. Stop playing fair. Start dominating markets by aligning with your cosmic authority.",
     },
     {
         id: 3,
-        title: "The Mediocrity Trap",
-        text: "Competence is a commodity. You are being paid to be safe, not great. We identify the exact 'X-Factor' in your chart that scares your boss but builds your empire.",
+        title: "Health",
+        text: "Your body isn't random; it's a stellar machine. We pinpoint the precise planetary weaknesses draining your vitality. Bio-hack your existence before your biology forces a shutdown.",
     },
     {
         id: 4,
-        title: "Lineage Breaker",
-        text: "You inherited your parents' fears, not just their genes. It ends with you. We show you the karmic debt you need to pay off so your children don't have to.",
+        title: "Better Human",
+        text: "Kill the version of you that seeks validation. We show you the ruthless path to self-mastery. Evolve or dissolve. The universe has no mercy for potential that refuses to act.",
     },
 ];
 
@@ -38,7 +38,7 @@ export default function Kamasutra() {
         <section ref={targetRef} className="relative h-[300vh] bg-[#12011A]">
             <div className="sticky top-0 flex h-screen items-center overflow-hidden">
                 <h2 className="absolute top-10 left-10 z-10 font-serif text-4xl text-[#FFD700] mix-blend-difference">
-                    Weaponize Your Attraction
+                    Weaponize Your Life
                 </h2>
                 <motion.div style={{ x }} className="flex gap-10 pl-20 pr-20">
                     {cards.map((card) => (
