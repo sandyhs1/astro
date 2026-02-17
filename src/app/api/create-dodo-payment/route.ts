@@ -6,7 +6,7 @@ export async function POST(req: Request) {
         const { productId, customerEmail, customerName, currency } = await req.json();
 
         const client = new DodoPayments({
-            bearerToken: process.env.DODO_PAYMENTS_API_KEY,
+            bearerToken: process.env.DODO_PAYMENTS_API_KEY || process.env.NEXT_PUBLIC_DODO_API_KEY,
             environment: 'live_mode',
         });
 

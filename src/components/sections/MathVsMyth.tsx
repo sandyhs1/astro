@@ -59,7 +59,7 @@ export default function MathVsMyth() {
                         <div className="absolute -top-3 right-8 bg-[#FFD700] text-[#12011A] text-xs font-bold px-3 py-1 uppercase tracking-wider">
                             The SoulSync Advantage
                         </div>
-                        <h3 className="font-serif text-3xl mb-6 text-white">SoulSync Precision</h3>
+                        <h3 className="font-serif text-3xl mb-6 text-white">Quantum Karma Precision</h3>
                         <ul className="space-y-4 font-mono text-sm text-white">
                             <li className="flex items-start gap-3">
                                 <FaCheck className="mt-1 text-[#FFD700] shrink-0" />

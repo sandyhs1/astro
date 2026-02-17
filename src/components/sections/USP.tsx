@@ -53,7 +53,7 @@ export default function USP() {
                             viewport={{ once: true }}
                             className="font-mono text-gray-400 text-lg leading-relaxed mb-12"
                         >
-                            Astrology is the original psychology. SoulSync is a <span className="text-white border-b border-[#FFD700]">surveillance system</span> for your destiny.
+                            Astrology is the original psychology. Quantum Karma is a <span className="text-white border-b border-[#FFD700]">surveillance system</span> for your destiny.
                             <br /><br />
                             While others look at the stars and make a wish, we look at the data and execute a command.
                             This isn't about feeling good. It's about being right.
