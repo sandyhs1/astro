@@ -46,18 +46,20 @@ export default function Hero() {
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, delay: 0.2 }}
-                    className="font-serif text-5xl md:text-7xl lg:text-8xl font-bold leading-tight tracking-tight text-white max-w-5xl"
+                    className="font-serif text-3xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight text-white max-w-6xl mx-auto"
                 >
-                    Your life isn't falling apart. It's just <span className="text-[#FFD700] italic">unoptimized</span>.
+                    You don’t have a motivation problem. <br />
+                    You have a <span className="text-[#FFD700] italic">timing problem</span>.
                 </motion.h1>
 
                 <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1, delay: 0.8 }}
-                    className="mt-6 text-xl md:text-2xl font-mono text-gray-400 max-w-3xl"
+                    className="mt-6 text-lg md:text-xl font-mono text-gray-400 max-w-4xl mx-auto"
                 >
-                    The universe is a rigorous game. <span className="text-white border-b border-[#FFD700]">Stop playing like an amateur.</span>
+                    Your hard work is backfiring because your timing is off. <br />
+                    <span className="text-white border-b border-[#FFD700]">We map your personal timeline so you know exactly when to strike.</span>
                 </motion.p>
 
                 {/* CTA */}
@@ -70,7 +72,7 @@ export default function Hero() {
                     onClick={openModal}
                     className="mt-12 px-8 py-4 bg-[#FFD700] text-[#12011A] font-bold font-mono text-lg uppercase tracking-widest hover:bg-white transition-colors duration-300 shadow-[0_0_20px_rgba(255,215,0,0.4)]"
                 >
-                    CLAIM MY SPOT
+                    See My Decision Map
                 </motion.button>
             </div>
 

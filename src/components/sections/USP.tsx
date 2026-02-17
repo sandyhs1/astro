@@ -6,19 +6,35 @@ import { useRouter } from "next/navigation";
 
 const features = [
     {
-        icon: <FaSatellite className="text-4xl text-[#FFD700]" />,
-        title: "Orbital Surveillance",
-        desc: "We don't guess. We track planetary movements with NASA-grade precision (Sidereal).",
-    },
-    {
         icon: <FaDatabase className="text-4xl text-[#FFD700]" />,
-        title: "Karmic Data Mining",
-        desc: "We extract the hidden debt patterns from your lineage that are keeping you poor.",
+        title: "Decision Intelligence",
+        desc: (
+            <span className="block text-[#FFD700] font-bold text-lg mt-1">
+                Not Astrology.
+            </span>
+        ),
     },
     {
         icon: <FaCrosshairs className="text-4xl text-[#FFD700]" />,
-        title: "Tactical Execution",
-        desc: "We don't give you a horoscope. We give you a war plan with exact dates to strike.",
+        title: "We don’t tell you what will happen.",
+        desc: (
+            <div className="space-y-1 mt-1">
+                <p className="font-bold text-white mb-2">We show:</p>
+                <ul className="space-y-1 text-gray-400 text-xs font-mono">
+                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When you’re persuasive</li>
+                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When you’re impulsive</li>
+                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When you’re delusional</li>
+                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When you’re strategic</li>
+                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When you attract chaos</li>
+                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When people trust you</li>
+                </ul>
+            </div>
+        ),
+    },
+    {
+        icon: <FaSatellite className="text-4xl text-[#FFD700]" />,
+        title: "Your psychology runs in cycles.",
+        desc: "Your calendar ignores it.",
     },
 ];
 
@@ -82,7 +98,7 @@ export default function USP() {
                                 <div className="shrink-0 pt-1">{item.icon}</div>
                                 <div>
                                     <h3 className="font-serif text-xl text-white mb-2">{item.title}</h3>
-                                    <p className="font-mono text-xs text-gray-400 leading-relaxed">{item.desc}</p>
+                                    <div className="font-mono text-xs text-gray-400 leading-relaxed">{item.desc}</div>
                                 </div>
                             </motion.div>
                         ))}

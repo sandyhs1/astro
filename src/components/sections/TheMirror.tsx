@@ -21,9 +21,9 @@ export default function TheMirror() {
             <div className="max-w-4xl mx-auto px-6 text-center z-10">
                 <motion.div style={{ opacity, scale }}>
                     <h2 className="font-serif text-4xl md:text-6xl text-[#EFCAFF] leading-snug mb-8">
-                        You don&apos;t have bad luck. <br />
-                        You have a <span className="text-[#FFD700] underline decoration-1 underline-offset-8">blind spot</span> <br />
-                        that is ruining your life.
+                        You don’t make bad decisions. <br />
+                        You make the <span className="text-[#FFD700] underline decoration-1 underline-offset-8">right decisions</span> <br />
+                        at the wrong time.
                     </h2>
 
                     <div className="mt-16 p-8 border border-[#FFD700]/20 bg-[#12011A]/80 backdrop-blur-sm rounded-lg">
@@ -31,8 +31,7 @@ export default function TheMirror() {
                             Reality Check
                         </p>
                         <p className="font-serif text-xl italic text-gray-400">
-                            &quot;Just think positive&quot; is why you're still broke and dating the same narcissist with a different face.
-                            Stop manifesting. Start strategizing.
+                            Your birth chart isn’t predicting events - it reveals how you repeatedly create them.
                         </p>
                     </div>
                 </motion.div>
