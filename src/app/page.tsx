@@ -5,6 +5,7 @@ import USP from "@/components/sections/USP";
 import TheStack from "@/components/sections/TheStack";
 import Benefits from "@/components/sections/Benefits";
 import MathVsMyth from "@/components/sections/MathVsMyth";
+import ForSkeptics from "@/components/sections/ForSkeptics";
 import Kamasutra from "@/components/sections/Kamasutra";
 import DashaClock from "@/components/sections/DashaClock";
 import AlgoSuffering from "@/components/sections/AlgoSuffering";
@@ -23,6 +24,7 @@ export default function Home() {
       <TheStack />
       <Benefits />
       <MathVsMyth />
+      <ForSkeptics />
       <Kamasutra />
       <DashaClock />
       <AlgoSuffering />

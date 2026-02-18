@@ -16,18 +16,12 @@ const features = [
     },
     {
         icon: <FaCrosshairs className="text-4xl text-[#FFD700]" />,
-        title: "We don’t tell you what will happen.",
+        // Not 'what will happen' but 'how you create outcomes' card
+        title: "Not 'what will happen to you.'",
         desc: (
-            <div className="space-y-1 mt-1">
-                <p className="font-bold text-white mb-2">We show:</p>
-                <ul className="space-y-1 text-gray-400 text-xs font-mono">
-                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When you’re persuasive</li>
-                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When you’re impulsive</li>
-                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When you’re delusional</li>
-                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When you’re strategic</li>
-                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When you attract chaos</li>
-                    <li className="flex items-center gap-2"><span className="w-1 h-1 bg-[#FFD700] rounded-full"></span>When people trust you</li>
-                </ul>
+            <div className="font-mono text-xs text-gray-400 leading-relaxed">
+                But <span className="text-white font-bold">&apos;how you repeatedly create outcomes.&apos;</span>
+                <span className="block mt-2 text-gray-500">Your patterns are predictable. We make them visible.</span>
             </div>
         ),
     },

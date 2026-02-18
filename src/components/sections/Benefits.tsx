@@ -7,20 +7,23 @@ const benefits = [
     {
         title: "CAREER",
         headline: "WAR.",
-        text: "The market doesn't care about your passion. It cares about timing. Most businesses fail because they launch in a void. We give you the astrological 'Cheat Codes' to strike when the universe is contractually obligated to back you.",
-        img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop"
+        // Career card: timing-focused, brutal, no fluff
+        text: "You're not losing because you're lazy. You're losing because you're pitching, launching, and negotiating on your worst days. We show you exactly when the market is listening. Strike then. Not before. Not after.",
+        img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=2070&auto=format&fit=crop"
     },
     {
         title: "LOVE",
         headline: "CONQUEST.",
-        text: "Marriage isn't a fairy tale; it's a merger. 50% end in divorce because people marry potential, not reality. We strip away the romance and show you the raw compatibility data. Save yourself a decade of lawyers and therapy.",
-        img: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?q=80&w=1974&auto=format&fit=crop"
+        // Love card: raw compatibility, no romance fluff
+        text: "You keep falling for the same person with a different face. That's not bad luck — that's a pattern. We show you the exact emotional cycles that make you magnetic or repellent. Know your windows. Stop self-sabotaging the ones who actually stay.",
+        img: "https://images.unsplash.com/photo-1474552226712-ac0f0961a954?q=80&w=2071&auto=format&fit=crop"
     },
     {
         title: "LEGACY",
         headline: "IMMORTAL.",
-        text: "You will be forgotten in 3 generations unless you build something requiring divine intervention. Most people leave debt; you will leave a dynasty. We align your life's work with your soul's blueprint so it echoes after you're gone.",
-        img: "https://images.unsplash.com/photo-1635322966219-b75ed3a9eb8c?q=80&w=2071&auto=format&fit=crop"
+        // Legacy card: dynasty building, soul blueprint
+        text: "Most people spend their whole life reacting. You get to be the one who decided. We align your decisions with the long game — the one that outlives you. Build something that doesn't need you to survive.",
+        img: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2070&auto=format&fit=crop"
     }
 ];
 
