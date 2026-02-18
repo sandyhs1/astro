@@ -16,6 +16,7 @@
   /* Add animations to theme */
   --animate-scroll-left: scroll-left 60s linear infinite;
   --animate-scroll-right: scroll-right 60s linear infinite;
+  --animate-spin-slow: spin 3s linear infinite;
 }
 
 body {

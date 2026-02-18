@@ -9,7 +9,7 @@ const benefits = [
         headline: "WAR.",
         // Career card: timing-focused, brutal, no fluff
         text: "You're not losing because you're lazy. You're losing because you're pitching, launching, and negotiating on your worst days. We show you exactly when the market is listening. Strike then. Not before. Not after.",
-        img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=2070&auto=format&fit=crop"
+        img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=2064&auto=format&fit=crop"
     },
     {
         title: "LOVE",
