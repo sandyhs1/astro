@@ -1,11 +1,63 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaTimes, FaArrowRight, FaCheck, FaLock, FaShieldAlt } from "react-icons/fa";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useRouter } from "next/navigation";
 import emailjs from '@emailjs/browser';
+
+// 24 distinct identity insights — selected by a multi-factor hash of birth data
+// so every user sees something different based on THEIR actual information.
+const IDENTITY_INSIGHTS: string[] = [
+    "You carry a quiet intensity that most people mistake for stillness.",
+    "You've been the most capable person in the room for years — but rarely the loudest.",
+    "You've outgrown some relationships but haven't fully let go yet.",
+    "You think in systems. You just haven't found the right one for your own life.",
+    "You've spent a long time being responsible for other people's feelings.",
+    "You know exactly what you want. The hard part is believing you deserve it.",
+    "You process things deeply but rarely show it on the surface.",
+    "You're better at starting things than finishing them — but not because you're lazy.",
+    "You have strong instincts. The problem is you've been trained to doubt them.",
+    "You give more than you receive — and you've mostly made your peace with it.",
+    "Something shifted for you recently. You haven't quite named it yet, but it's real.",
+    "You're in a chapter that feels like in-between — not stuck, just becoming.",
+    "You're not afraid of hard work. You're afraid of working hard on the wrong thing.",
+    "You've been patient with people who haven't earned it.",
+    "You tend to overthink decisions and underthink your own worth.",
+    "You've built your identity around being reliable — even when it cost you.",
+    "You're more resilient than you give yourself credit for.",
+    "You've started over before. This time feels different — and it is.",
+    "You help everyone else find clarity but struggle to find your own.",
+    "You care deeply but have learned to care quietly.",
+    "There's a version of your life you haven't let yourself want out loud yet.",
+    "You've been at a crossroads longer than you'd like to admit.",
+    "You're not indecisive. You just need the stakes to feel worth it.",
+    "You feel things fully — you just choose carefully who gets to see that.",
+];
+
+/**
+ * Derives a unique insight for this user using birth month, birth day,
+ * the length of their name, and the first character of their birthplace.
+ * Two users who type the same questions will almost certainly see
+ * different insights because the selection is driven by their birth data.
+ */
+function generateIdentityInsight(dob: string, fullName: string, pob: string): string {
+    const date = new Date(dob);
+    const month = isNaN(date.getMonth()) ? 0 : date.getMonth();           // 0–11
+    const day = isNaN(date.getDate()) ? 1 : date.getDate();               // 1–31
+    const nameLen = fullName.trim().length % 6;                            // 0–5
+    const pobCode = (pob.trim().charCodeAt(0) || 65) % 5;                 // 0–4
+    const index = (month * 2 + (day % 2) + nameLen + pobCode) % IDENTITY_INSIGHTS.length;
+    return IDENTITY_INSIGHTS[index];
+}
+
+const fadeUp = {
+    initial: { opacity: 0, y: 16 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -8 },
+    transition: { duration: 0.35, ease: "easeOut" },
+};
 
 export default function OnboardingModal() {
     const { isOpen, closeModal } = useOnboarding();
@@ -15,6 +67,8 @@ export default function OnboardingModal() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [countdown, setCountdown] = useState(60);
+    const [wowRevealed, setWowRevealed] = useState(false);
+    const wowTimerRef = useRef<NodeJS.Timeout | null>(null);
     const [formData, setFormData] = useState({
         fullName: "",
         email: "",
@@ -26,9 +80,23 @@ export default function OnboardingModal() {
     });
     const [error, setError] = useState<string | null>(null);
 
+    const firstName = formData.fullName.trim().split(" ")[0] || "you";
+    const identityInsight = generateIdentityInsight(formData.dob, formData.fullName, formData.pob);
+
     // Clear error when changing steps
     useEffect(() => {
         setError(null);
+    }, [step]);
+
+    // WOW screen loading timer
+    useEffect(() => {
+        if (step === 5) {
+            setWowRevealed(false);
+            wowTimerRef.current = setTimeout(() => setWowRevealed(true), 3000);
+        }
+        return () => {
+            if (wowTimerRef.current) clearTimeout(wowTimerRef.current);
+        };
     }, [step]);
 
     // Handle countdown and auto-redirect
@@ -54,19 +122,19 @@ export default function OnboardingModal() {
         if (currentStep === 1) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!formData.fullName.trim() || !emailRegex.test(formData.email.trim())) {
-                setError("PROTOCOL INTERRUPTED: Identity verification failed. Please enter a valid Name and Email format (e.g. user@domain.com).");
+                setError("Please enter your full name and a valid email address (e.g. you@example.com).");
                 return false;
             }
         }
         if (currentStep === 2) {
             if (!formData.dob || !formData.tob || !formData.pob.trim()) {
-                setError("PROTOCOL INTERRUPTED: Temporal coordinates missing. Date, Time, and Place of Birth are mandatory.");
+                setError("We need your date, time, and place of birth to continue.");
                 return false;
             }
         }
         if (currentStep === 3) {
             if (!formData.questions.trim() || formData.questions.length < 10) {
-                setError("PROTOCOL INTERRUPTED: Insufficient data. Please ask at least 5 questions or provide more detail.");
+                setError("Share a little more — even a few sentences help us personalise your report.");
                 return false;
             }
         }
@@ -74,12 +142,12 @@ export default function OnboardingModal() {
     };
 
     const handleNext = () => {
-        if (!validateStep(step)) return;
+        if (step <= 3 && !validateStep(step)) return;
 
-        if (step < 3) {
+        if (step < 5) {
             setStep(step + 1);
         } else {
-            // Trigger payment modal
+            // Step 5 CTA → trigger payment modal (existing logic)
             setShowPayment(true);
         }
     };
@@ -209,6 +277,7 @@ export default function OnboardingModal() {
         setStep(1);
         setShowPayment(false);
         setShowSuccess(false);
+        setWowRevealed(false);
         setFormData({
             fullName: "",
             email: "",
@@ -227,8 +296,9 @@ export default function OnboardingModal() {
 
     if (!isOpen && !showSuccess) return null;
 
-    // Success Screen
+    // ─── SUCCESS SCREEN ────────────────────────────────────────────────────────
     if (showSuccess) {
+        const successFirstName = formData.fullName.trim().split(" ")[0] || "friend";
         return (
             <motion.div
                 initial={{ opacity: 0 }}
@@ -260,21 +330,36 @@ export default function OnboardingModal() {
                         <FaCheck className="text-black text-3xl" />
                     </motion.div>
 
-                    <h2 className="font-serif text-3xl md:text-4xl text-white mb-4">
-                        We got you, <span className="text-[#FFD700]">{formData.fullName.split(' ')[0]}</span>.
-                    </h2>
+                    <motion.h2
+                        {...fadeUp}
+                        transition={{ delay: 0.3 }}
+                        className="font-serif text-3xl md:text-4xl text-white mb-2"
+                    >
+                        Done ✔️
+                    </motion.h2>
 
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6">
-                        <p className="font-mono text-sm text-gray-300 leading-relaxed italic mb-4">
-                            "The universe has been waiting for you to stop playing small. Your chart is a battlefield, and we will hand you the map shortly. Don't waste it."
+                    <motion.p
+                        {...fadeUp}
+                        transition={{ delay: 0.4 }}
+                        className="font-serif text-lg text-[#FFD700] mb-6"
+                    >
+                        Your chart is now in analysis mode.
+                    </motion.p>
+
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6 text-left space-y-3">
+                        <p className="font-mono text-sm text-gray-300 leading-relaxed">
+                            Hey <span className="text-[#FFD700]">{successFirstName}</span>, the humans are working on your report now 🐾
                         </p>
-                        <p className="font-mono text-xs text-[#FFD700] leading-relaxed border-t border-white/10 pt-4">
-                            Your custom high voltage report will be shared with you in the next 4 - 6 hours (within regular business hours).
+                        <p className="font-mono text-xs text-[#FFD700] border-t border-white/10 pt-3">
+                            Expected delivery: within 24 hours.
+                        </p>
+                        <p className="font-mono text-xs text-gray-500 leading-relaxed">
+                            You don't need to check anything — we'll email you when it's ready.
                         </p>
                     </div>
 
                     <p className="font-mono text-xs text-gray-500 mb-6 leading-relaxed">
-                        Redirecting to the TRUTH in <span className="text-[#FFD700] font-bold">{countdown}s</span>...
+                        Redirecting in <span className="text-[#FFD700] font-bold">{countdown}s</span>…
                     </p>
 
                     <button
@@ -288,8 +373,9 @@ export default function OnboardingModal() {
         );
     }
 
-    // Payment Confirmation Modal with Trust Badges
+    // ─── PAYMENT MODAL ─────────────────────────────────────────────────────────
     if (showPayment) {
+        const payFirstName = formData.fullName.trim().split(" ")[0] || "friend";
         return (
             <motion.div
                 initial={{ opacity: 0 }}
@@ -307,7 +393,7 @@ export default function OnboardingModal() {
                         <span className="text-[10px] font-bold text-white tracking-wider uppercase">Official Partner</span>
                     </div>
 
-                    {/* Dodo-style Header */}
+                    {/* Header */}
                     <div className="bg-[#000000] p-6 text-white text-center pb-8 sticky top-0">
                         <div className="flex justify-between items-center mb-6">
                             <button onClick={() => setShowPayment(false)} className="opacity-70 hover:opacity-100 absolute left-4 top-4">
@@ -317,8 +403,13 @@ export default function OnboardingModal() {
                         </div>
                         <div className="flex flex-col items-center justify-center">
                             <span className="text-sm opacity-80 mb-1 font-medium tracking-wide">SECURE CHECKOUT</span>
-                            <div className="text-3xl font-extrabold tracking-tight">Complete Your Report</div>
-                            <div className="text-xs opacity-75 mt-2 bg-white/10 px-3 py-1 rounded-full border border-white/10">
+                            <div className="text-2xl font-extrabold tracking-tight">
+                                Your Life Map is Ready, {payFirstName} 🗺️
+                            </div>
+                            <p className="text-xs opacity-75 mt-3 max-w-xs leading-relaxed">
+                                I've got everything I need. Once payment is complete, your personalised analysis begins.
+                            </p>
+                            <div className="text-xs opacity-60 mt-3 bg-white/10 px-3 py-1 rounded-full border border-white/10">
                                 Powered by Dodo Payments
                             </div>
                         </div>
@@ -326,6 +417,20 @@ export default function OnboardingModal() {
 
                     {/* Payment Body */}
                     <div className="p-6 -mt-4 bg-white rounded-t-2xl relative z-10 w-full space-y-4">
+
+                        {/* Trust bullets */}
+                        <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-2 space-y-2">
+                            {[
+                                "Human-reviewed analysis",
+                                "No fear-based upsells",
+                                "Delivered within 24 hours",
+                            ].map((item) => (
+                                <div key={item} className="flex items-center gap-2 text-xs text-gray-700">
+                                    <FaCheck className="text-green-500 flex-shrink-0" />
+                                    <span>{item}</span>
+                                </div>
+                            ))}
+                        </div>
 
                         <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-2 flex items-start gap-3">
                             <div className="bg-gray-100 p-2 rounded-full mt-0.5">
@@ -339,7 +444,7 @@ export default function OnboardingModal() {
                             </div>
                         </div>
 
-                        {/* Payment Buttons */}
+                        {/* Payment Buttons — DO NOT MODIFY */}
                         <div className="grid grid-cols-1 gap-3">
                             <motion.button
                                 whileHover={{ scale: 1.02 }}
@@ -372,7 +477,7 @@ export default function OnboardingModal() {
                                 disabled={isProcessing}
                                 className="w-full bg-green-50 text-green-700 border border-green-200 py-3 rounded-lg font-bold text-sm hover:bg-green-100 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                             >
-                                {isProcessing ? "Verifying Status..." : (
+                                {isProcessing ? "Verifying…" : (
                                     <>
                                         <FaCheck /> <span>I Have Completed Payment</span>
                                     </>
@@ -382,7 +487,6 @@ export default function OnboardingModal() {
 
                         <div className="mt-6 flex flex-col items-center gap-2">
                             <div className="flex items-center justify-center gap-4 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                                {/* Simple text badges for reliability if images aren't available */}
                                 <span className="border border-gray-200 rounded px-2 py-1 text-[10px] font-bold text-gray-400">UPI</span>
                                 <span className="border border-gray-200 rounded px-2 py-1 text-[10px] font-bold text-gray-400">VISA</span>
                                 <span className="border border-gray-200 rounded px-2 py-1 text-[10px] font-bold text-gray-400">MasterCard</span>
@@ -397,6 +501,9 @@ export default function OnboardingModal() {
             </motion.div>
         );
     }
+
+    // ─── MAIN ONBOARDING MODAL ─────────────────────────────────────────────────
+    const totalSteps = 5;
 
     return (
         <AnimatePresence>
@@ -418,10 +525,19 @@ export default function OnboardingModal() {
                         {/* Header */}
                         <div className="flex justify-between items-center p-4 md:p-6 border-b border-white/10 bg-white/5 sticky top-0 z-10">
                             <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                                <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-pulse"></div>
                                 <span className="font-mono text-[#FFD700] text-xs md:text-sm tracking-widest uppercase">
-                                    System Access: Level {step}/3
+                                    Step {step}/{totalSteps}
                                 </span>
+                            </div>
+                            {/* Progress dots */}
+                            <div className="flex gap-1.5 absolute left-1/2 -translate-x-1/2">
+                                {Array.from({ length: totalSteps }).map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className={`h-1.5 rounded-full transition-all duration-300 ${i < step ? "bg-[#FFD700] w-5" : "bg-white/20 w-1.5"}`}
+                                    />
+                                ))}
                             </div>
                             <button onClick={handleClose} className="text-gray-500 hover:text-white transition-colors">
                                 <FaTimes />
@@ -431,115 +547,272 @@ export default function OnboardingModal() {
                         {/* Content */}
                         <div className="p-6 md:p-12">
 
-                            {/* Step 1: Identity */}
-                            {step === 1 && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    className="space-y-6"
-                                >
-                                    <h2 className="font-serif text-2xl md:text-3xl text-white">Identify Yourself.</h2>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block font-mono text-xs text-gray-500 mb-2 uppercase">Full Name</label>
-                                            <input
-                                                type="text"
-                                                value={formData.fullName}
-                                                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                                className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base"
-                                                placeholder="Enter your legal name"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block font-mono text-xs text-gray-500 mb-2 uppercase">Email Coordinates</label>
-                                            <input
-                                                type="email"
-                                                value={formData.email}
-                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                                className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base"
-                                                placeholder="Where do we send the dossier?"
-                                            />
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
+                            <AnimatePresence mode="wait">
 
-                            {/* Step 2: Coordinates */}
-                            {step === 2 && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    className="space-y-6"
-                                >
-                                    <h2 className="font-serif text-2xl md:text-3xl text-white">Temporal Coordinates.</h2>
-                                    <p className="font-mono text-xs text-gray-400">Precision is mandatory. 4 minutes = different destiny.</p>
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* ── STEP 1: Name + Email ───────────────────────── */}
+                                {step === 1 && (
+                                    <motion.div
+                                        key="step1"
+                                        {...fadeUp}
+                                        className="space-y-6"
+                                    >
+                                        <div className="space-y-1">
+                                            <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest mb-3">Hey 👋</p>
+                                            <h2 className="font-serif text-2xl md:text-3xl text-white leading-snug">
+                                                I'll help build your life map.
+                                                <br />
+                                                <span className="text-gray-400 text-xl md:text-2xl">This takes just a minute.</span>
+                                            </h2>
+                                        </div>
+                                        <div className="space-y-4 pt-2">
                                             <div>
-                                                <label className="block font-mono text-xs text-gray-500 mb-2 uppercase">Date of Birth</label>
+                                                <label className="block font-mono text-xs text-gray-500 mb-2 uppercase tracking-widest">Your name</label>
                                                 <input
-                                                    type="date"
-                                                    value={formData.dob}
-                                                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                                                    className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base"
+                                                    type="text"
+                                                    value={formData.fullName}
+                                                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                                    className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
+                                                    placeholder="What do people call you?"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block font-mono text-xs text-gray-500 mb-2 uppercase">Time of Birth</label>
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="time"
-                                                        value={formData.tob}
-                                                        onChange={(e) => setFormData({ ...formData, tob: e.target.value })}
-                                                        className="w-2/3 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base"
-                                                    />
-                                                    <select
-                                                        value={formData.tobAmPm}
-                                                        onChange={(e) => setFormData({ ...formData, tobAmPm: e.target.value })}
-                                                        className="w-1/3 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base"
-                                                    >
-                                                        <option value="AM">AM</option>
-                                                        <option value="PM">PM</option>
-                                                    </select>
-                                                </div>
+                                                <label className="block font-mono text-xs text-gray-500 mb-2 uppercase tracking-widest">Your email</label>
+                                                <input
+                                                    type="email"
+                                                    value={formData.email}
+                                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                    className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
+                                                    placeholder="Where should we send your report?"
+                                                />
                                             </div>
                                         </div>
+                                    </motion.div>
+                                )}
+
+                                {/* ── STEP 2: Birth Details ─────────────────────── */}
+                                {step === 2 && (
+                                    <motion.div
+                                        key="step2"
+                                        {...fadeUp}
+                                        className="space-y-6"
+                                    >
+                                        <div className="space-y-1">
+                                            <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest mb-3">
+                                                Nice to meet you, {firstName} ✨
+                                            </p>
+                                            <h2 className="font-serif text-2xl md:text-3xl text-white leading-snug">
+                                                When did your story begin?
+                                            </h2>
+                                            <p className="font-mono text-xs text-gray-400 pt-1">
+                                                Even approximate times work — we'll connect the dots.
+                                            </p>
+                                        </div>
+                                        <div className="space-y-4 pt-2">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block font-mono text-xs text-gray-500 mb-2 uppercase tracking-widest">Date of birth</label>
+                                                    <input
+                                                        type="date"
+                                                        value={formData.dob}
+                                                        onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                                                        className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block font-mono text-xs text-gray-500 mb-2 uppercase tracking-widest">Birth time</label>
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="time"
+                                                            value={formData.tob}
+                                                            onChange={(e) => setFormData({ ...formData, tob: e.target.value })}
+                                                            className="w-2/3 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
+                                                        />
+                                                        <select
+                                                            value={formData.tobAmPm}
+                                                            onChange={(e) => setFormData({ ...formData, tobAmPm: e.target.value })}
+                                                            className="w-1/3 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
+                                                        >
+                                                            <option value="AM">AM</option>
+                                                            <option value="PM">PM</option>
+                                                        </select>
+                                                    </div>
+                                                    <p className="text-[10px] text-gray-600 mt-1 font-mono">That's okay if you're unsure — we'll work with what we have.</p>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block font-mono text-xs text-gray-500 mb-2 uppercase tracking-widest">Place of birth</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.pob}
+                                                    onChange={(e) => setFormData({ ...formData, pob: e.target.value })}
+                                                    className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
+                                                    placeholder="Where did you enter this chaos called Earth?"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Double-check callout */}
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.5 }}
+                                            className="flex items-start gap-3 bg-[#FFD700]/8 border border-[#FFD700]/25 rounded-xl p-4 mt-2"
+                                        >
+                                            <span className="text-[#FFD700] text-base mt-0.5">🔍</span>
+                                            <div>
+                                                <p className="font-mono text-xs text-[#FFD700] font-semibold mb-1 uppercase tracking-wider">Double-check before continuing</p>
+                                                <p className="font-mono text-xs text-gray-400 leading-relaxed">
+                                                    These details directly shape your report. Even a small error — especially the birth time — can affect the accuracy of your analysis.
+                                                </p>
+                                            </div>
+                                        </motion.div>
+                                    </motion.div>
+                                )}
+
+                                {/* ── STEP 3: Questions / Problem ───────────────── */}
+                                {step === 3 && (
+                                    <motion.div
+                                        key="step3"
+                                        {...fadeUp}
+                                        className="space-y-6"
+                                    >
+                                        <div className="space-y-1">
+                                            <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest mb-3">Almost there 💖</p>
+                                            <h2 className="font-serif text-2xl md:text-3xl text-white leading-snug">
+                                                What made you come here today, {firstName}?
+                                            </h2>
+                                            <p className="font-mono text-xs text-gray-400 pt-1">
+                                                This is a safe space. The more you share, the sharper your report.
+                                            </p>
+                                        </div>
                                         <div>
-                                            <label className="block font-mono text-xs text-gray-500 mb-2 uppercase">Place of Birth</label>
-                                            <input
-                                                type="text"
-                                                value={formData.pob}
-                                                onChange={(e) => setFormData({ ...formData, pob: e.target.value })}
-                                                className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base"
-                                                placeholder="City, Country"
+                                            <textarea
+                                                value={formData.questions}
+                                                onChange={(e) => setFormData({ ...formData, questions: e.target.value })}
+                                                className="w-full h-40 md:h-48 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors resize-none text-sm md:text-base rounded-lg"
+                                                placeholder="Ask us anything — love, career, life direction, patterns you can't shake. The more specific you are, the more precise your report. (e.g. Why do I attract unavailable partners? When will I get promoted? Is this year good for marriage?)"
                                             />
                                         </div>
-                                    </div>
-                                </motion.div>
-                            )}
+                                    </motion.div>
+                                )}
 
-                            {/* Step 3: Cosmic Confessions */}
-                            {step === 3 && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    className="space-y-6"
-                                >
-                                    <h2 className="font-serif text-2xl md:text-3xl text-white">Cosmic Confessions 💖</h2>
-                                    <p className="font-mono text-xs text-gray-400">This is a safe space. The more context you give, the sharper your report.</p>
-                                    <div>
-                                        <textarea
-                                            value={formData.questions}
-                                            onChange={(e) => setFormData({ ...formData, questions: e.target.value })}
-                                            className="w-full h-40 md:h-48 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors resize-none text-sm md:text-base"
-                                            placeholder="Ask us at least 5 questions about your life, love, career... We need the details to unlock your patterns! (e.g. Why do I attract unavailable partners? When will I get promoted? Is this year good for marriage?)"
-                                        />
-                                    </div>
-                                </motion.div>
-                            )}
+                                {/* ── STEP 4: Identity Hook ─────────────────────── */}
+                                {step === 4 && (
+                                    <motion.div
+                                        key="step4"
+                                        {...fadeUp}
+                                        className="space-y-8 py-4"
+                                    >
+                                        <div className="space-y-3">
+                                            <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest">One quick thing, {firstName}…</p>
+                                            <h2 className="font-serif text-2xl md:text-3xl text-white leading-snug">
+                                                I'm already noticing a pattern.
+                                            </h2>
+                                        </div>
+
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.97 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: 0.4, duration: 0.5 }}
+                                            className="bg-gradient-to-br from-[#FFD700]/10 to-[#FFD700]/5 border border-[#FFD700]/30 rounded-2xl p-6 md:p-8"
+                                        >
+                                            <p className="font-serif text-xl md:text-2xl text-white leading-relaxed">
+                                                "{identityInsight}"
+                                            </p>
+                                        </motion.div>
+
+                                        <motion.p
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ delay: 0.8 }}
+                                            className="font-mono text-xs text-gray-500 leading-relaxed"
+                                        >
+                                            This is an observation, not a prediction. Your full report goes much deeper.
+                                        </motion.p>
+                                    </motion.div>
+                                )}
+
+                                {/* ── STEP 5: WOW Moment ────────────────────────── */}
+                                {step === 5 && (
+                                    <motion.div
+                                        key="step5"
+                                        {...fadeUp}
+                                        className="space-y-8 py-4"
+                                    >
+                                        <AnimatePresence mode="wait">
+                                            {!wowRevealed ? (
+                                                /* Loading state */
+                                                <motion.div
+                                                    key="loading"
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    exit={{ opacity: 0 }}
+                                                    className="flex flex-col items-center gap-6 py-8"
+                                                >
+                                                    {/* Pulsing dots loader */}
+                                                    <div className="flex gap-2">
+                                                        {[0, 0.2, 0.4].map((delay, i) => (
+                                                            <motion.div
+                                                                key={i}
+                                                                animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
+                                                                transition={{ duration: 1.2, delay, repeat: Infinity, ease: "easeInOut" }}
+                                                                className="w-3 h-3 rounded-full bg-[#FFD700]"
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <p className="font-serif text-xl md:text-2xl text-white text-center leading-relaxed">
+                                                        Hmm… give me a second, {firstName}.
+                                                        <br />
+                                                        <span className="text-gray-400 text-lg">Connecting the dots…</span>
+                                                    </p>
+                                                </motion.div>
+                                            ) : (
+                                                /* Revealed state */
+                                                <motion.div
+                                                    key="revealed"
+                                                    initial={{ opacity: 0, y: 12 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ duration: 0.5 }}
+                                                    className="space-y-6"
+                                                >
+                                                    <div className="space-y-2">
+                                                        <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest">I see it now…</p>
+                                                        <h2 className="font-serif text-2xl md:text-3xl text-white leading-snug">
+                                                            I'm already seeing a pattern.
+                                                        </h2>
+                                                    </div>
+
+                                                    {/* Cute reassurance */}
+                                                    <div className="text-center space-y-2">
+                                                        <p className="text-4xl">🌟</p>
+                                                        <p className="font-serif text-xl md:text-2xl text-white leading-relaxed">
+                                                            You're in good hands, {firstName}.
+                                                        </p>
+                                                        <p className="font-mono text-xs text-gray-400 leading-relaxed">
+                                                            Your report is being prepared personally — no algorithms, no auto-generated fluff.
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Trust bullets */}
+                                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
+                                                        {[
+                                                            { icon: "✔", text: "Human-reviewed analysis" },
+                                                            { icon: "✔", text: "No fear-based upsells" },
+                                                            { icon: "✔", text: "Delivered within 24 hours" },
+                                                        ].map(({ icon, text }) => (
+                                                            <div key={text} className="flex items-center gap-3">
+                                                                <span className="text-[#FFD700] font-bold text-sm">{icon}</span>
+                                                                <span className="font-mono text-sm text-gray-300">{text}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </motion.div>
+                                )}
+
+                            </AnimatePresence>
 
                             {/* Error Message */}
                             <AnimatePresence>
@@ -556,23 +829,32 @@ export default function OnboardingModal() {
                                 )}
                             </AnimatePresence>
 
-                            {/* Footer Control */}
+                            {/* Footer Controls */}
                             <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
                                 {step > 1 ? (
                                     <button
                                         onClick={() => setStep(step - 1)}
-                                        className="text-gray-500 hover:text-white font-mono text-xs uppercase tracking-widest"
+                                        className="text-gray-500 hover:text-white font-mono text-xs uppercase tracking-widest transition-colors"
                                     >
                                         Back
                                     </button>
-                                ) : <div></div>}
+                                ) : <div />}
 
-                                <button
-                                    onClick={handleNext}
-                                    className="flex items-center gap-2 bg-[#FFD700] text-black px-6 md:px-8 py-3 font-bold uppercase tracking-widest hover:bg-white transition-colors text-xs md:text-sm"
-                                >
-                                    {step === 3 ? "Initialize Payment" : "Next Phase"} <FaArrowRight />
-                                </button>
+                                {/* Step 5 CTA only shows after reveal */}
+                                {step === 5 && !wowRevealed ? (
+                                    <div />
+                                ) : (
+                                    <button
+                                        onClick={handleNext}
+                                        className="flex items-center gap-2 bg-[#FFD700] text-black px-6 md:px-8 py-3 font-bold uppercase tracking-widest hover:bg-white transition-colors text-xs md:text-sm rounded-sm"
+                                    >
+                                        {step === 4
+                                            ? "Continue"
+                                            : step === 5
+                                                ? <>Unlock My Full Report <FaArrowRight /></>
+                                                : <>Next <FaArrowRight /></>}
+                                    </button>
+                                )}
                             </div>
 
                         </div>
