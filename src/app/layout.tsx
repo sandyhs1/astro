@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, DM_Mono } from "next/font/google";
+import { Playfair_Display, DM_Mono, Libre_Baskerville, Jost } from "next/font/google";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -12,6 +12,18 @@ const dmMono = DM_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
   weight: ["300", "400", "500"],
+});
+
+const libreBaskerville = Libre_Baskerville({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["700"],
+});
+
+const jost = Jost({
+  variable: "--font-body",
+  subsets: ["latin"],
+  weight: ["300", "400"],
 });
 
 export const metadata: Metadata = {
@@ -54,7 +66,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         suppressHydrationWarning
-        className={`${playfair.variable} ${dmMono.variable} antialiased bg-[#12011A] text-white selection:bg-[#FFD700] selection:text-[#12011A]`}
+        className={`${playfair.variable} ${dmMono.variable} ${libreBaskerville.variable} ${jost.variable} antialiased bg-[#12011A] text-white selection:bg-[#FFD700] selection:text-[#12011A]`}
       >
         <OnboardingProvider>
           <SmoothScroll>{children}</SmoothScroll>

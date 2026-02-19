@@ -46,20 +46,22 @@ export default function Hero() {
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, delay: 0.2 }}
-                    className="font-serif text-3xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight text-white max-w-6xl mx-auto"
+                    className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight text-white max-w-6xl mx-auto"
+                    style={{ fontFamily: "var(--font-display)" }}
                 >
-                    You don’t have a motivation problem. <br />
-                    You have a <span className="text-[#FFD700] italic">timing problem</span>.
+                    Don't chase. <br />
+                    <span className="text-[#FFD700]">Attract.</span> On command.
                 </motion.h1>
 
                 <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1, delay: 0.8 }}
-                    className="mt-6 text-lg md:text-xl font-mono text-gray-400 max-w-4xl mx-auto"
+                    className="mt-6 text-lg md:text-xl font-light text-gray-400 max-w-4xl mx-auto leading-relaxed tracking-wide"
+                    style={{ fontFamily: "var(--font-body)" }}
                 >
-                    Your hard work is backfiring because your timing is off. <br />
-                    <span className="text-white border-b border-[#FFD700]">We map your personal timeline so you know exactly when to strike.</span>
+                    The universe has favorites. Be one of them. <br />
+                    <span className="text-white border-b border-[#FFD700]">We map your personal &apos;God Mode&apos; cycles so you never waste energy on a bad day again.</span>
                 </motion.p>
 
                 {/* CTA */}

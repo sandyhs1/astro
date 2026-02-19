@@ -24,6 +24,12 @@ export default function OnboardingModal() {
         pob: "",
         questions: ""
     });
+    const [error, setError] = useState<string | null>(null);
+
+    // Clear error when changing steps
+    useEffect(() => {
+        setError(null);
+    }, [step]);
 
     // Handle countdown and auto-redirect
     useEffect(() => {
@@ -43,7 +49,33 @@ export default function OnboardingModal() {
         return () => clearInterval(timer);
     }, [showSuccess]);
 
+    const validateStep = (currentStep: number) => {
+        setError(null);
+        if (currentStep === 1) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!formData.fullName.trim() || !emailRegex.test(formData.email.trim())) {
+                setError("PROTOCOL INTERRUPTED: Identity verification failed. Please enter a valid Name and Email format (e.g. user@domain.com).");
+                return false;
+            }
+        }
+        if (currentStep === 2) {
+            if (!formData.dob || !formData.tob || !formData.pob.trim()) {
+                setError("PROTOCOL INTERRUPTED: Temporal coordinates missing. Date, Time, and Place of Birth are mandatory.");
+                return false;
+            }
+        }
+        if (currentStep === 3) {
+            if (!formData.questions.trim() || formData.questions.length < 10) {
+                setError("PROTOCOL INTERRUPTED: Insufficient data. Please ask at least 5 questions or provide more detail.");
+                return false;
+            }
+        }
+        return true;
+    };
+
     const handleNext = () => {
+        if (!validateStep(step)) return;
+
         if (step < 3) {
             setStep(step + 1);
         } else {
@@ -488,7 +520,7 @@ export default function OnboardingModal() {
                                 </motion.div>
                             )}
 
-                            {/* Step 3: Interrogation */}
+                            {/* Step 3: Cosmic Confessions */}
                             {step === 3 && (
                                 <motion.div
                                     initial={{ opacity: 0, x: 20 }}
@@ -496,18 +528,33 @@ export default function OnboardingModal() {
                                     exit={{ opacity: 0, x: -20 }}
                                     className="space-y-6"
                                 >
-                                    <h2 className="font-serif text-2xl md:text-3xl text-white">The Interrogation.</h2>
-                                    <p className="font-mono text-xs text-gray-400">What specific failures are you trying to fix?</p>
+                                    <h2 className="font-serif text-2xl md:text-3xl text-white">Cosmic Confessions 💖</h2>
+                                    <p className="font-mono text-xs text-gray-400">This is a safe space. The more context you give, the sharper your report.</p>
                                     <div>
                                         <textarea
                                             value={formData.questions}
                                             onChange={(e) => setFormData({ ...formData, questions: e.target.value })}
                                             className="w-full h-40 md:h-48 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors resize-none text-sm md:text-base"
-                                            placeholder="Ex: Why do I sabotage every relationship? When will my business scale?"
+                                            placeholder="Ask us at least 5 questions about your life, love, career... We need the details to unlock your patterns! (e.g. Why do I attract unavailable partners? When will I get promoted? Is this year good for marriage?)"
                                         />
                                     </div>
                                 </motion.div>
                             )}
+
+                            {/* Error Message */}
+                            <AnimatePresence>
+                                {error && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        className="mt-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg flex items-start gap-3"
+                                    >
+                                        <FaTimes className="text-red-500 mt-1 flex-shrink-0" />
+                                        <p className="font-mono text-xs text-red-400 leading-relaxed">{error}</p>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
                             {/* Footer Control */}
                             <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/10">

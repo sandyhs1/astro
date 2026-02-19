@@ -17,7 +17,7 @@ export default function TheVoid() {
         <footer className="bg-black py-20 px-6 border-t border-[#333]">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-end">
                 <div>
-                    <h2 className="font-serif text-2xl text-white mb-2">SoulSync</h2>
+                    <h2 className="font-serif text-2xl text-white mb-2">Quantum Karma</h2>
                     <p className="font-mono text-gray-500 text-sm">
                         Fate is optional. Dominance is a choice.
                     </p>

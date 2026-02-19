@@ -6,42 +6,54 @@ import { useRouter } from "next/navigation";
 
 const cards = [
     {
-        title: "THE FINANCIAL BLOCK",
-        subtitle: "Why You're Broke",
-        description: "You work harder than everyone else but stay in the same tax bracket. It's not the economy. It's your timing. We show you exactly when to push and when to hoard.",
+        title: "THE CALIBRATION",
+        subtitle: "Step 01",
+        description: (
+            <>
+                A 4-minute error shifts your entire destiny grid. We don&apos;t do horoscopes. We do <span className="text-white font-bold">forensic soul audits</span>. Precision is the only variable that matters.
+            </>
+        ),
         color: "#1a0524",
         border: "#FF4444",
         protocol: {
-            code: "PROTOCOL: WEALTH_EXTRACTION",
-            status: "CRITICAL FAILURE DETECTED",
-            brief: "Subject is trading time for money. This is a losing volatility trade. 2nd House & 11th House alignment suggests dormant asset capabilities.",
-            action: "ACTIVATE WEALTH YOGAS"
+            code: "PROTOCOL: TIME_LOCK",
+            status: "SCANNING TIMELINE",
+            brief: "Subject is inputting lunar data. Validating star chart alignment is absolute.",
+            action: "LOCK TARGET"
         }
     },
     {
-        title: "THE TOXIC LOOP",
-        subtitle: "Why You're Lonely",
-        description: "You interpret anxiety as chemistry. We expose the exact planetary trigger that makes you attracted to people who destroy you—so you can finally stop.",
+        title: "THE DOWNLOAD",
+        subtitle: "Step 02",
+        description: (
+            <>
+                We calculate <span className="text-[#FFD700] font-bold">algorithms</span>, not predictions. See your exact patterns in <span className="text-red-400">Love</span>, <span className="text-green-400">Wealth</span>, and Vitality. It&apos;s not magic. It&apos;s <span className="text-white font-bold">behavioral surveillance</span>.
+            </>
+        ),
         color: "#22082e",
         border: "#FFD700",
         protocol: {
-            code: "PROTOCOL: CORE_MAGNETISM",
-            status: "PATTERN LOOP DETECTED",
-            brief: "Subject confuses trauma bonding with soul recognition. Venus-Rahu conflict indicates high susceptibility to emotional vampires.",
-            action: "BREAK THE CYCLE"
+            code: "PROTOCOL: FUTURE_ARCHITECTURE",
+            status: "DATA EXTRACTED",
+            brief: "Mapping subconscious wiring and upcoming volatility events across all sectors.",
+            action: "DECODE NOW"
         }
     },
     {
-        title: "THE AUTHORITY",
-        subtitle: "How to Rule",
-        description: "Mediocrity is a disease. We hand you the blueprint to your own power. No more asking for permission. No more waiting. pure, unadulterated command.",
+        title: "THE EXECUTION",
+        subtitle: "Step 03",
+        description: (
+            <>
+                Timing is leverage. Reaction is mastery. We show you exactly <span className="text-[#FFD700] font-bold">when to strike</span> and <span className="text-white font-bold">how to pivot</span>. Stop guessing. <span className="italic text-red-500">Dominate.</span>
+            </>
+        ),
         color: "#2a0a38",
         border: "#FFFFFF",
         protocol: {
-            code: "PROTOCOL: DOMINION_OVERRIDE",
-            status: "DORMANT POWER SIGNATURE",
-            brief: "Subject is waiting for permission that will never come. Sun placement demands autonomous empire building, not employment.",
-            action: "SEIZE COMMAND"
+            code: "PROTOCOL: NEURAL_REWRITE",
+            status: "STRATEGY ENGAGED",
+            brief: "Optimizing reaction delays. Aligning ego with cosmic authority for total dominion.",
+            action: "EXECUTE"
         }
     }
 ];
@@ -98,9 +110,9 @@ function Card({ i, c, progress, range, targetScale }: { i: number, c: any, progr
                         <h2 className="font-serif text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">{c.title}</h2>
                     </div>
 
-                    <p className="font-sans text-lg md:text-xl lg:text-2xl text-gray-300 leading-relaxed max-w-lg">
+                    <div className="font-sans text-lg md:text-xl lg:text-2xl text-gray-300 leading-relaxed max-w-xl">
                         {c.description}
-                    </p>
+                    </div>
                 </div>
 
                 <div className="flex justify-between items-end relative z-10">
