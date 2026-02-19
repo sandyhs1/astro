@@ -56,7 +56,7 @@ const fadeUp = {
     initial: { opacity: 0, y: 16 },
     animate: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: -8 },
-    transition: { duration: 0.35, ease: "easeOut" },
+    transition: { duration: 0.35, ease: "easeOut" as const },
 };
 
 export default function OnboardingModal() {
@@ -68,6 +68,7 @@ export default function OnboardingModal() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [countdown, setCountdown] = useState(60);
     const [wowRevealed, setWowRevealed] = useState(false);
+    const [isDecoding, setIsDecoding] = useState(false); // micro-pause between step 3 → 4
     const wowTimerRef = useRef<NodeJS.Timeout | null>(null);
     const [formData, setFormData] = useState({
         fullName: "",
@@ -143,6 +144,16 @@ export default function OnboardingModal() {
 
     const handleNext = () => {
         if (step <= 3 && !validateStep(step)) return;
+
+        // After Step 3: show a 2.5s "decoding" pause before Step 4
+        if (step === 3) {
+            setIsDecoding(true);
+            setTimeout(() => {
+                setIsDecoding(false);
+                setStep(4);
+            }, 2500);
+            return;
+        }
 
         if (step < 5) {
             setStep(step + 1);
@@ -394,25 +405,10 @@ export default function OnboardingModal() {
                     </div>
 
                     {/* Header */}
-                    <div className="bg-[#000000] p-6 text-white text-center pb-8 sticky top-0">
-                        <div className="flex justify-between items-center mb-6">
-                            <button onClick={() => setShowPayment(false)} className="opacity-70 hover:opacity-100 absolute left-4 top-4">
-                                <FaTimes />
-                            </button>
-                            <h3 className="font-bold text-xl w-full text-center">SoulSync Official</h3>
-                        </div>
-                        <div className="flex flex-col items-center justify-center">
-                            <span className="text-sm opacity-80 mb-1 font-medium tracking-wide">SECURE CHECKOUT</span>
-                            <div className="text-2xl font-extrabold tracking-tight">
-                                Your Life Map is Ready, {payFirstName} 🗺️
-                            </div>
-                            <p className="text-xs opacity-75 mt-3 max-w-xs leading-relaxed">
-                                I've got everything I need. Once payment is complete, your personalised analysis begins.
-                            </p>
-                            <div className="text-xs opacity-60 mt-3 bg-white/10 px-3 py-1 rounded-full border border-white/10">
-                                Powered by Dodo Payments
-                            </div>
-                        </div>
+                    <div className="bg-[#000000] p-4 text-white sticky top-0">
+                        <button onClick={() => setShowPayment(false)} className="opacity-70 hover:opacity-100">
+                            <FaTimes />
+                        </button>
                     </div>
 
                     {/* Payment Body */}
@@ -549,8 +545,47 @@ export default function OnboardingModal() {
 
                             <AnimatePresence mode="wait">
 
+                                {/* ── DECODING MICRO-PAUSE (Step 3 → 4) ─────────── */}
+                                {isDecoding && (
+                                    <motion.div
+                                        key="decoding"
+                                        initial={{ opacity: 0, scale: 0.96 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.96 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="flex flex-col items-center justify-center gap-8 py-16 text-center"
+                                    >
+                                        {/* Pulsing gold rings */}
+                                        <div className="relative flex items-center justify-center">
+                                            {[0, 0.3, 0.6].map((delay, i) => (
+                                                <motion.div
+                                                    key={i}
+                                                    animate={{ scale: [1, 1.8, 1], opacity: [0.6, 0, 0.6] }}
+                                                    transition={{ duration: 2, delay, repeat: Infinity, ease: "easeInOut" }}
+                                                    className="absolute w-16 h-16 rounded-full border border-[#FFD700]/40"
+                                                />
+                                            ))}
+                                            <span className="text-3xl relative z-10">✨</span>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest">
+                                                Just a moment…
+                                            </p>
+                                            <p className="font-serif text-2xl text-white leading-snug">
+                                                Your details are being<br />
+                                                <span className="text-[#FFD700]">stacked & decoded</span> 🔮
+                                            </p>
+                                            <p className="font-mono text-xs text-gray-500 pt-1">
+                                                Mapping your chart patterns…
+                                            </p>
+                                        </div>
+                                    </motion.div>
+                                )}
+
                                 {/* ── STEP 1: Name + Email ───────────────────────── */}
-                                {step === 1 && (
+                                {!isDecoding && step === 1 && (
+
                                     <motion.div
                                         key="step1"
                                         {...fadeUp}
@@ -590,7 +625,7 @@ export default function OnboardingModal() {
                                 )}
 
                                 {/* ── STEP 2: Birth Details ─────────────────────── */}
-                                {step === 2 && (
+                                {!isDecoding && step === 2 && (
                                     <motion.div
                                         key="step2"
                                         {...fadeUp}
@@ -670,7 +705,7 @@ export default function OnboardingModal() {
                                 )}
 
                                 {/* ── STEP 3: Questions / Problem ───────────────── */}
-                                {step === 3 && (
+                                {!isDecoding && step === 3 && (
                                     <motion.div
                                         key="step3"
                                         {...fadeUp}
@@ -697,7 +732,7 @@ export default function OnboardingModal() {
                                 )}
 
                                 {/* ── STEP 4: Identity Hook ─────────────────────── */}
-                                {step === 4 && (
+                                {!isDecoding && step === 4 && (
                                     <motion.div
                                         key="step4"
                                         {...fadeUp}
@@ -733,7 +768,7 @@ export default function OnboardingModal() {
                                 )}
 
                                 {/* ── STEP 5: WOW Moment ────────────────────────── */}
-                                {step === 5 && (
+                                {!isDecoding && step === 5 && (
                                     <motion.div
                                         key="step5"
                                         {...fadeUp}
@@ -775,12 +810,6 @@ export default function OnboardingModal() {
                                                     transition={{ duration: 0.5 }}
                                                     className="space-y-6"
                                                 >
-                                                    <div className="space-y-2">
-                                                        <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest">I see it now…</p>
-                                                        <h2 className="font-serif text-2xl md:text-3xl text-white leading-snug">
-                                                            I'm already seeing a pattern.
-                                                        </h2>
-                                                    </div>
 
                                                     {/* Cute reassurance */}
                                                     <div className="text-center space-y-2">
