@@ -175,6 +175,113 @@ export default function FontsPage() {
                     </p>
                 </div>
             </div>
+
+            {/* NEW EXPLORATORY HERO DESIGNS */}
+            <div className="w-full flex flex-col bg-black">
+                {/* HERO 1: NEON MONOLITH */}
+                <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-black border-t-[12px] border-fuchsia-600">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(192,132,252,0.1),transparent_60%)] pointer-events-none"></div>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-fuchsia-900/20 blur-[120px] rounded-full pointer-events-none"></div>
+
+                    <div className="z-10 text-center px-6 max-w-5xl">
+                        <span className="text-fuchsia-500 font-mono text-sm tracking-[0.4em] uppercase mb-6 block font-bold">Design 01 // Neon Monolith</span>
+                        <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-8 leading-[0.9]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                            Don&apos;t chase. <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-pink-600">Attract.</span> On command.
+                        </h1>
+                        <p className="text-lg md:text-xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed font-light" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                            The universe has favorites. Be one of them. <br />
+                            <span className="text-white border-b border-fuchsia-500/50 pb-1 inline-block mt-2">We map your personal &apos;God Mode&apos; cycles so you never waste energy on a bad day again.</span>
+                        </p>
+                        <button className="px-10 py-5 bg-fuchsia-600 text-white font-mono uppercase tracking-[0.2em] text-sm hover:bg-white hover:text-black transition-all shadow-[0_0_40px_rgba(192,132,252,0.6)]">
+                            See My Decision Map
+                        </button>
+                    </div>
+                </div>
+
+                {/* HERO 2: LIQUID GOLD MATRIX */}
+                <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-[#050505] border-t-[12px] border-[#D4AF37]">
+                    <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[linear-gradient(to_right,#D4AF37_1px,transparent_1px),linear-gradient(to_bottom,#D4AF37_1px,transparent_1px)] bg-[size:48px_48px]"></div>
+
+                    <div className="z-10 text-center px-6 max-w-5xl">
+                        <span className="text-[#D4AF37] font-mono text-xs tracking-[0.5em] uppercase mb-8 block font-bold">Design 02 // Liquid Gold Matrix</span>
+                        <h1 className="text-6xl md:text-[7rem] font-black text-white tracking-tight mb-8 leading-[0.85]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                            Don&apos;t chase.<br />
+                            <span className="text-[#D4AF37] italic font-normal">Attract.</span> On command.
+                        </h1>
+                        <p className="text-xl md:text-2xl text-gray-500 mb-14 max-w-3xl mx-auto font-light leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
+                            The universe has favorites. Be one of them. <br />
+                            <span className="text-gray-200 mt-2 inline-block">We map your personal &apos;God Mode&apos; cycles so you never waste energy on a bad day again.</span>
+                        </p>
+                        <button className="px-12 py-5 border items-center justify-center border-[#D4AF37] text-[#D4AF37] font-serif uppercase tracking-[0.3em] text-sm hover:bg-[#D4AF37] hover:text-black transition-all duration-500">
+                            See My Decision Map
+                        </button>
+                    </div>
+                </div>
+
+                {/* HERO 3: QUANTUM VOID */}
+                <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-[#020617] border-t-[12px] border-cyan-500">
+                    <div className="absolute right-[-10%] top-[-10%] w-[60vh] h-[60vh] bg-blue-600/30 blur-[150px] rounded-full pointer-events-none mix-blend-screen"></div>
+                    <div className="absolute left-[-10%] bottom-[-10%] w-[60vh] h-[60vh] bg-cyan-400/20 blur-[150px] rounded-full pointer-events-none mix-blend-screen"></div>
+
+                    <div className="z-10 text-left px-6 md:px-16 max-w-7xl w-full">
+                        <span className="text-cyan-400 font-mono text-sm tracking-[0.4em] uppercase mb-6 block font-bold">Design 03 // Quantum Void</span>
+                        <h1 className="text-5xl md:text-[6rem] font-extrabold text-white mb-8 uppercase leading-[0.9] tracking-tighter" style={{ fontFamily: "'Unbounded', sans-serif" }}>
+                            Don&apos;t chase. <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">Attract.</span> <br /> On command.
+                        </h1>
+                        <div className="h-[2px] w-32 bg-cyan-500 mb-10"></div>
+                        <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl leading-relaxed font-light tracking-wide" style={{ fontFamily: "'Manrope', sans-serif" }}>
+                            The universe has favorites. Be one of them. <br />
+                            <span className="text-slate-200 bg-white/5 border border-white/10 px-3 py-1 mt-4 inline-block rounded md:whitespace-nowrap">We map your personal &apos;God Mode&apos; cycles so you never waste energy on a bad day again.</span>
+                        </p>
+                        <button className="px-10 py-5 bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 font-mono uppercase tracking-[0.3em] text-xs hover:bg-cyan-500 hover:text-black transition-all backdrop-blur-md">
+                            [ See My Decision Map ]
+                        </button>
+                    </div>
+                </div>
+
+                {/* HERO 4: BLOOD MOON */}
+                <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-[#0A0000] border-t-[12px] border-red-600">
+                    <div className="absolute top-0 right-0 w-[80vw] h-[80vw] bg-red-900/10 blur-[150px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/3"></div>
+
+                    <div className="z-10 text-center px-6 max-w-5xl">
+                        <span className="text-red-500 font-mono text-sm tracking-[0.6em] uppercase mb-10 block font-bold">Design 04 // Blood Moon</span>
+                        <h1 className="text-6xl md:text-[9rem] font-black text-white uppercase leading-[0.8] tracking-tighter mb-8" style={{ fontFamily: "'Big Shoulders Display', display" }}>
+                            Don&apos;t chase. <br />
+                            <span className="text-red-600 mix-blend-screen drop-shadow-[0_0_20px_rgba(220,38,38,0.8)]">Attract.</span> <br /> On command.
+                        </h1>
+                        <p className="text-lg md:text-xl text-red-200/60 mb-14 max-w-2xl mx-auto uppercase tracking-[0.2em] leading-relaxed font-medium" style={{ fontFamily: "'Barlow', sans-serif" }}>
+                            The universe has favorites.<br /> Be one of them. <br />
+                            <span className="text-white border-b-2 border-red-600/50 mt-4 inline-block pb-1">We map your personal &apos;God Mode&apos; cycles so you never waste energy on a bad day again.</span>
+                        </p>
+                        <button className="px-14 py-6 bg-red-600 text-white font-black text-sm uppercase tracking-[0.4em] hover:bg-white hover:text-red-600 transition-colors shadow-2xl">
+                            See My Decision Map
+                        </button>
+                    </div>
+                </div>
+
+                {/* HERO 5: ETHEREAL GLASS */}
+                <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-black border-t-[12px] border-emerald-400">
+                    <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-emerald-500/20 blur-[120px] rounded-full -translate-y-1/2 pointer-events-none"></div>
+                    <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-sky-500/20 blur-[100px] rounded-full pointer-events-none"></div>
+
+                    <div className="z-10 text-center px-8 md:px-16 py-20 max-w-5xl border border-white/10 bg-black/40 backdrop-blur-3xl rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,1)]">
+                        <span className="text-emerald-400 font-mono text-[10px] tracking-[0.4em] uppercase mb-8 block">Design 05 // Ethereal Glass</span>
+                        <h1 className="text-5xl md:text-7xl font-normal text-white mb-8 leading-tight tracking-tight" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                            Don&apos;t chase. <br />
+                            <span className="text-emerald-400 italic">Attract.</span> On command.
+                        </h1>
+                        <p className="text-lg md:text-xl text-gray-400 mb-12 max-w-2xl mx-auto font-light leading-relaxed" style={{ fontFamily: "'Lato', sans-serif" }}>
+                            The universe has favorites. Be one of them. <br />
+                            <span className="text-white block mt-2">We map your personal &apos;God Mode&apos; cycles so you never waste energy on a bad day again.</span>
+                        </p>
+                        <button className="px-10 py-5 rounded-full bg-white text-black font-semibold uppercase tracking-widest text-xs hover:bg-emerald-400 hover:text-black transition-all shadow-[0_10px_30px_rgba(255,255,255,0.2)]">
+                            See My Decision Map
+                        </button>
+                    </div>
+                </div>
+            </div>
         </>
     );
 }

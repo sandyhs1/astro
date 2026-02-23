@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, DM_Mono, Libre_Baskerville, Jost } from "next/font/google";
+import { Playfair_Display, DM_Mono, Libre_Baskerville, Jost, Unbounded, Manrope } from "next/font/google";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -24,6 +24,18 @@ const jost = Jost({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["300", "400"],
+});
+
+const unbounded = Unbounded({
+  variable: "--font-unbounded",
+  subsets: ["latin"],
+  weight: ["400", "700", "800", "900"],
+});
+
+const manrope = Manrope({
+  variable: "--font-manrope",
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -66,7 +78,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         suppressHydrationWarning
-        className={`${playfair.variable} ${dmMono.variable} ${libreBaskerville.variable} ${jost.variable} antialiased bg-[#12011A] text-white selection:bg-[#FFD700] selection:text-[#12011A]`}
+        className={`${playfair.variable} ${dmMono.variable} ${libreBaskerville.variable} ${jost.variable} ${unbounded.variable} ${manrope.variable} antialiased bg-[#12011A] text-white selection:bg-[#FFD700] selection:text-[#12011A]`}
       >
         <OnboardingProvider>
           <SmoothScroll>{children}</SmoothScroll>
