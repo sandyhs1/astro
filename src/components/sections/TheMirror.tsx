@@ -20,9 +20,12 @@ export default function TheMirror() {
         >
             <div className="max-w-4xl mx-auto px-6 text-center z-10">
                 <motion.div style={{ opacity, scale }}>
-                    <h2 className="font-serif text-4xl md:text-6xl text-[#EFCAFF] leading-snug mb-8">
-                        You don’t make bad decisions. <br />
-                        You make the <span className="text-[#FFD700] underline decoration-1 underline-offset-8">right decisions</span> <br />
+                    <h2 className="text-4xl md:text-6xl lg:text-[5rem] text-[#FBFBFB] leading-[1.1] tracking-tight font-medium" style={{ fontFamily: "var(--font-display)" }}>
+                        You don&apos;t make <span className="text-white/40 italic">bad</span> decisions. <br />
+                        You make the <span className="relative inline-block mt-2">
+                            <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] to-[#FFF8D6] pr-2">right decisions</span>
+                            <span className="absolute bottom-1 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent"></span>
+                        </span> <br />
                         at the wrong time.
                     </h2>
 

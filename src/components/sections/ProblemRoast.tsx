@@ -27,8 +27,8 @@ export default function ProblemRoast() {
 
             <div className="max-w-6xl w-full px-6 z-10">
                 <motion.div style={{ opacity }} className="text-center mb-20">
-                    <h2 className="text-4xl md:text-6xl text-white mb-6 uppercase tracking-tighter" style={{ fontFamily: "var(--font-unbounded)" }}>
-                        The <span className="text-[#FFD700] italic">Fear</span> Economy
+                    <h2 className="text-5xl md:text-7xl text-[#FBFBFB] mb-8 font-medium tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
+                        The <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A0303] to-[#FF4B4B] italic">Fear</span> Economy
                     </h2>
                     <p className="font-mono text-gray-400 text-lg max-w-2xl mx-auto uppercase tracking-widest">
                         Why your "popup astrologer" needs you to stay broken.

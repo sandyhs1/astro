@@ -26,12 +26,13 @@ export default function Hero() {
                     <motion.h1
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 1, delay: 0.2 }}
-                        className="text-4xl sm:text-5xl md:text-7xl lg:text-[5.5rem] font-black text-white uppercase leading-[1.1] tracking-tighter"
-                        style={{ fontFamily: "var(--font-unbounded)" }}
+                        transition={{ duration: 1.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="text-5xl sm:text-7xl md:text-8xl lg:text-[7rem] text-[#FBFBFB] leading-[1.05] tracking-tight font-medium mb-6"
+                        style={{ fontFamily: 'var(--font-display)' }}
                     >
                         Don&apos;t chase. <br />
-                        <span className="text-[#FFD700] drop-shadow-[0_0_15px_rgba(255,215,0,0.4)]">Attract.</span> <br /> On command.
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#FFF8D6] to-[#af8702] italic pr-2">Attract.</span> <br />
+                        <span className="font-sans font-light tracking-tighter" style={{ fontFamily: 'var(--font-body)' }}>On command.</span>
                     </motion.h1>
 
                     <motion.div

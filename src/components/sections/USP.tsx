@@ -52,9 +52,11 @@ export default function USP() {
                             whileInView={{ x: 0, opacity: 1 }}
                             transition={{ duration: 0.6 }}
                             viewport={{ once: true }}
-                            className="font-serif text-5xl md:text-7xl font-bold text-white mb-8 leading-none"
+                            className="text-6xl md:text-8xl text-white font-medium leading-[1] tracking-tight mb-8" style={{ fontFamily: "var(--font-display)" }}
                         >
-                            The <span className="text-[#FFD700]">Unfair</span> <br /> Advantage.
+                            The <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] to-[#FFF8D6] italic pr-4">Unfair</span> <br />
+                            Advantage.
                         </motion.h2>
                         <motion.p
                             initial={{ x: -50, opacity: 0 }}
