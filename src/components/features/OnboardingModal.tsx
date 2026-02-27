@@ -145,8 +145,34 @@ export default function OnboardingModal() {
     const handleNext = () => {
         if (step <= 3 && !validateStep(step)) return;
 
-        // After Step 3: show a 2.5s "decoding" pause before Step 4
+        // After Step 3: fire lead-capture email immediately, THEN show 2.5s "decoding" pause
         if (step === 3) {
+            // ── STEP 3 LEAD CAPTURE EMAIL ──────────────────────────────────────────
+            // Fires as soon as the user submits their questions — before payment.
+            // This ensures we always have the lead even if they drop off at checkout.
+            const submissionTime = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+            emailjs.send(
+                'service_kejjsw8',
+                'template_dq668f3',
+                {
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    dob: formData.dob,
+                    tob: `${formData.tob} ${formData.tobAmPm}`,
+                    pob: formData.pob,
+                    questions: formData.questions,
+                    paymentStatus: "⏳ Lead Captured — Payment Pending",
+                    transactionId: `LEAD_${Date.now()}`,
+                    submissionTime: submissionTime,
+                },
+                'p0Y1TsA4CgkB89zWO'
+            ).then(() => {
+                console.log("✅ Step 3 lead email sent");
+            }).catch((err) => {
+                console.error("❌ Step 3 lead email failed:", err);
+            });
+            // ──────────────────────────────────────────────────────────────────────
+
             setIsDecoding(true);
             setTimeout(() => {
                 setIsDecoding(false);
