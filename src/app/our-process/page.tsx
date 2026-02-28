@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import { FaCrosshairs, FaSkull, FaChartPie, FaBolt, FaClock, FaCheckCircle, FaExclamationTriangle, FaTerminal } from "react-icons/fa";
+import { FaCrosshairs, FaSkull, FaChartPie, FaBolt, FaClock, FaCheckCircle, FaExclamationTriangle, FaTerminal, FaEye, FaMicroscope } from "react-icons/fa";
 import TheVoid from "@/components/sections/TheVoid";
 
 // --- INTERACTIVE COMPONENTS ---
@@ -58,12 +58,44 @@ const vargaData = [
         borderColor: "border-[#FFD700]/50"
     },
     {
+        id: "D-7",
+        name: "Saptamsa",
+        subtitle: "Legacies & Creations",
+        desc: "Not just children. The D-7 reveals your capacity to create and leave a legacy. If you are building a startup, writing a book, or birthing an idea, the D-7 determines whether your creation thrives or dies in infancy.",
+        color: "from-green-500/20 to-green-900/10",
+        borderColor: "border-green-500/50"
+    },
+    {
+        id: "D-16",
+        name: "Shodashamsa",
+        subtitle: "Vehicles & Disasters",
+        desc: "A highly specific chart detailing extreme comforts or sudden, violent losses regarding vehicles and physical vessels. Most astrologers ignore this, completely missing the mathematical probability of physical accidents.",
+        color: "from-orange-500/20 to-orange-900/10",
+        borderColor: "border-orange-500/50"
+    },
+    {
+        id: "D-24",
+        name: "Chaturvimshamsha",
+        subtitle: "Intellectual Filtration",
+        desc: "The absolute truth of your cognitive capacity. You might have Mercury exalted in D-1, making you sound smart, but a destroyed D-24 means you cannot grasp complex, abstract systems. This separates the imitators from the innovators.",
+        color: "from-teal-500/20 to-teal-900/10",
+        borderColor: "border-teal-500/50"
+    },
+    {
         id: "D-30",
         name: "Trimsamsa",
         subtitle: "The Skeleton Closet",
         desc: "The psychological rot and subconscious curses. This chart maps the trauma you cannot medicate away, hidden diseases, and the inherent flaws in your character that will self-sabotage your greatest wins if left unchecked.",
         color: "from-red-500/20 to-red-900/10",
         borderColor: "border-red-500/50"
+    },
+    {
+        id: "D-40",
+        name: "Khavedamsha",
+        subtitle: "Matrilineal Karma",
+        desc: "The deep, ancestral debt inherited strictly from the mother's bloodline. Certain unexplained blockages in wealth or mental peace map directly back to unfulfilled vows in the maternal geometry.",
+        color: "from-pink-500/20 to-pink-900/10",
+        borderColor: "border-pink-500/50"
     },
     {
         id: "D-60",
@@ -81,12 +113,12 @@ function ShodasavargaScanner() {
     return (
         <div className="bg-[#0a000f] border border-white/10 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] max-w-5xl mx-auto mt-12 transition-all duration-500">
             {/* Header Tabs */}
-            <div className="flex border-b border-white/10 overflow-x-auto hide-scrollbar bg-black/50">
+            <div className="flex border-b border-white/10 overflow-x-auto custom-scrollbar bg-black/50">
                 {vargaData.map((varga, idx) => (
                     <button
                         key={varga.id}
                         onClick={() => setActiveTab(idx)}
-                        className={`flex-1 min-w-[120px] py-4 md:py-6 px-4 text-center border-b-2 font-mono uppercase tracking-widest text-xs md:text-sm transition-all duration-300 ${activeTab === idx ? "border-[#FFD700] text-[#FFD700] bg-white/[0.02]" : "border-transparent text-gray-500 hover:text-white hover:bg-white/[0.01]"
+                        className={`flex-1 min-w-[100px] shrink-0 py-4 px-3 text-center border-b-2 font-mono uppercase tracking-widest text-[10px] md:text-sm transition-all duration-300 ${activeTab === idx ? "border-[#FFD700] text-[#FFD700] bg-white/[0.02]" : "border-transparent text-gray-500 hover:text-white hover:bg-white/[0.01]"
                             }`}
                     >
                         {varga.id}
@@ -120,6 +152,21 @@ function ShodasavargaScanner() {
                     </motion.div>
                 </AnimatePresence>
             </div>
+            <style jsx>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                    height: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: rgba(0,0,0,0.5);
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: rgba(255,255,255,0.1);
+                    border-radius: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255,215,0,0.5);
+                }
+            `}</style>
         </div>
     );
 }
@@ -300,7 +347,52 @@ export default function OurProcessInteractive() {
                 </div>
             </section>
 
-            {/* 5. JAIMINI'S CORE ENGINE */}
+            
+            {/* 5. HIDDEN MECHANICS (Arudha & Padas) */}
+            <section className="py-32 px-6 relative z-10 border-t border-white/5">
+                <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="bg-black/40 border border-[#FFD700]/10 p-8 md:p-12 rounded-2xl flex flex-col justify-center"
+                    >
+                        <FaEye className="text-blue-400 text-3xl mb-6" />
+                        <h3 className="font-serif text-3xl text-white mb-2">Arudha Lagna (AL)</h3>
+                        <p className="font-mono text-xs uppercase tracking-widest text-blue-500 mb-6">The Illusion of Perception</p>
+                        <p className="text-gray-400 leading-relaxed mb-6">
+                            The Lagna is who you. The Arudha Lagna is who the world *thinks* you are. Most astrologers ignore this, leading to massive predictive failures regarding fame and reputation.
+                        </p>
+                        <div className="mt-auto bg-blue-900/10 p-4 border-l-2 border-blue-500/50 rounded-r">
+                            <p className="font-mono text-xs text-blue-200 leading-relaxed">
+                                If you have an impoverished Lagna but a stacked AL, you will be broke but the world will perceive you as royalty. We decode the maya (illusion) attached to your societal standing.
+                            </p>
+                        </div>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.2 }}
+                        className="bg-black/40 border border-[#FFD700]/10 p-8 md:p-12 rounded-2xl flex flex-col justify-center"
+                    >
+                        <FaMicroscope className="text-teal-400 text-3xl mb-6" />
+                        <h3 className="font-serif text-3xl text-white mb-2">Nakshatra Padas</h3>
+                        <p className="font-mono text-xs uppercase tracking-widest text-teal-500 mb-6">The 108 Micro-Frequencies</p>
+                        <p className="text-gray-400 leading-relaxed mb-6">
+                            A zodiac sign is 30 degrees. This is too broad. We drill down into the 27 Nakshatras (13°20') and further into their 4 Padas (3°20' chunks). This is the absolute atomic level of Jyotish.
+                        </p>
+                        <div className="mt-auto bg-teal-900/10 p-4 border-l-2 border-teal-500/50 rounded-r">
+                            <p className="font-mono text-xs text-teal-200 leading-relaxed">
+                                Two people born with Jupiter in Aries will have completely different destinies if one is in Ashwini Pada 1 and the other in Krittika Pada 4. We target the exact Pada logic.
+                            </p>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* 6. JAIMINI'S CORE ENGINE */}
             <section className="py-32 px-6 relative z-10 border-t border-white/5">
                 <div className="max-w-6xl mx-auto text-center mb-16">
                     <FaBolt className="text-[#FFD700] text-4xl mx-auto mb-6" />
@@ -353,7 +445,7 @@ export default function OurProcessInteractive() {
                 </motion.div>
             </section>
 
-            {/* 6. MATRIX OF TIME & ASHTAKAVARGA (Combined dark execution) */}
+            {/* 7. MATRIX OF TIME & ASHTAKAVARGA (Combined dark execution) */}
             <section className="py-32 px-6 relative z-10 bg-[#0a000f] border-t border-b border-white/5">
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,215,0,0.03)_1px,transparent_1px)] bg-[size:100px_100px] pointer-events-none opacity-20 transform -skew-y-12"></div>
 
@@ -391,14 +483,14 @@ export default function OurProcessInteractive() {
                         <FaCrosshairs className="text-[#FFD700] text-3xl mb-6" />
                         <h2 className="font-serif text-4xl text-white mb-4">The Reality Check</h2>
                         <h3 className="text-red-400 font-mono text-xs tracking-[0.2em] uppercase mb-6 font-bold">
-                            Ashtakavarga & Nadi Transits
+                            Ashtakavarga Rekhas & Nadi Transits
                         </h3>
                         <p className="text-gray-400 leading-relaxed mb-6">
                             General astrology claims that Jupiter transiting your 2nd house guarantees wealth. This is mathematically false.
                         </p>
                         <blockquote className="border-l-4 border-red-600 pl-6 my-8 py-2">
                             <p className="text-2xl font-serif text-white italic leading-snug">
-                                "A great transit of Jupiter means absolutely nothing if it hits a house with less than 25 Ashtakavarga points. <span className="text-red-500 font-bold not-italic">It is a bullet fired from an empty gun.</span>"
+                                "A great transit of Jupiter means absolutely nothing if it hits a house with less than 25 Ashtakavarga points (Rekhas). <span className="text-red-500 font-bold not-italic">It is a bullet fired from an empty gun.</span>"
                             </p>
                         </blockquote>
                         <p className="text-gray-400 leading-relaxed">
@@ -408,7 +500,7 @@ export default function OurProcessInteractive() {
                 </div>
             </section>
 
-            {/* 7. THE SUMMARY / EXPOSURE */}
+            {/* 8. THE SUMMARY / EXPOSURE */}
             <section className="py-32 px-6 relative z-10">
                 <div className="max-w-5xl mx-auto bg-[#12011A] border border-[#FFD700]/20 rounded-3xl p-8 md:p-16 text-center shadow-[0_0_100px_rgba(255,215,0,0.05)] relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 bg-white/5 border-b border-l border-white/10 text-gray-500 font-mono text-[10px] uppercase tracking-widest rounded-bl-xl">
@@ -422,6 +514,7 @@ export default function OurProcessInteractive() {
                         <div className="space-y-6">
                             <h3 className="font-mono text-sm uppercase tracking-widest text-gray-500 border-b border-white/10 pb-4">Surface-Level "Astrology"</h3>
                             <ul className="space-y-4 font-light text-gray-400">
+                                <li className="flex gap-3"><FaCheckCircle className="text-gray-600 shrink-0 mt-1" /> Generalizes complete 30° zodiac signs.</li>
                                 <li className="flex gap-3"><FaCheckCircle className="text-gray-600 shrink-0 mt-1" /> Uses only the D-1 Lagna chart.</li>
                                 <li className="flex gap-3"><FaCheckCircle className="text-gray-600 shrink-0 mt-1" /> Calls planets "Good" or "Bad" based on basic signs.</li>
                                 <li className="flex gap-3"><FaCheckCircle className="text-gray-600 shrink-0 mt-1" /> Predicts 10-year Mahadasha periods vaguely.</li>
@@ -433,6 +526,7 @@ export default function OurProcessInteractive() {
                         <div className="space-y-6">
                             <h3 className="font-mono text-sm uppercase tracking-widest text-[#FFD700] border-b border-[#FFD700]/30 pb-4">Our Geometric Synthesis</h3>
                             <ul className="space-y-4 font-light text-white">
+                                <li className="flex gap-3"><FaCheckCircle className="text-[#FFD700] shrink-0 mt-1" /> Drills down into the 108 Nakshatra Padas (3°20' micro-zodiac).</li>
                                 <li className="flex gap-3"><FaCheckCircle className="text-[#FFD700] shrink-0 mt-1" /> Deploys 16 Divisional Charts for exact life mechanics.</li>
                                 <li className="flex gap-3"><FaCheckCircle className="text-[#FFD700] shrink-0 mt-1" /> Calculates exact yield via Shadbala & mathematical strength.</li>
                                 <li className="flex gap-3"><FaCheckCircle className="text-[#FFD700] shrink-0 mt-1" /> Isolates strikes down to Sookshma (days) and transit overlays.</li>
