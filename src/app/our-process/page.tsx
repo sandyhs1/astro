@@ -1,216 +1,444 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
-import { FaCrosshairs, FaSkull, FaChartPie, FaBolt, FaClock, FaCheckCircle } from "react-icons/fa";
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { FaCrosshairs, FaSkull, FaChartPie, FaBolt, FaClock, FaCheckCircle, FaExclamationTriangle, FaTerminal } from "react-icons/fa";
 import TheVoid from "@/components/sections/TheVoid";
 
-const sections = [
+// --- INTERACTIVE COMPONENTS ---
+
+function TypewriterText({ text, delay = 0 }: { text: string, delay?: number }) {
+    const [displayedText, setDisplayedText] = useState("");
+    const [started, setStarted] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setStarted(true), delay * 1000);
+        return () => clearTimeout(timer);
+    }, [delay]);
+
+    useEffect(() => {
+        if (!started) return;
+        let i = 0;
+        const typingInterval = setInterval(() => {
+            if (i < text.length) {
+                setDisplayedText((prev) => prev + text.charAt(i));
+                i++;
+            } else {
+                clearInterval(typingInterval);
+            }
+        }, 30);
+        return () => clearInterval(typingInterval);
+    }, [text, started]);
+
+    return (
+        <span className="inline-block">
+            {displayedText}
+            {started && displayedText.length < text.length && (
+                <span className="inline-block w-2 h-5 bg-[#FFD700] animate-pulse ml-1 align-middle"></span>
+            )}
+        </span>
+    );
+}
+
+const vargaData = [
     {
-        id: "01",
-        icon: <FaCrosshairs className="text-[#FFD700] text-3xl" />,
-        title: "The Illusion of the D-1",
-        subtitle: "Why Most Astrologers Lie to You",
-        content: (
-            <>
-                <p className="text-gray-400 leading-relaxed mb-4">
-                    The D-1 (Lagna Chart) is just the physical shell. Most astrologers live and die by this basic map, diagnosing your entire existence from a surface-level scan.
-                </p>
-                <p className="text-gray-300 font-bold border-l-2 border-[#FFD700] pl-4 italic">
-                    Reading only the D-1 is like diagnosing a car engine by looking at the paint job.
-                </p>
-                <p className="text-gray-400 leading-relaxed mt-4">
-                    If your reading is based solely on the rising sign and D-1 placements, you are receiving an amateur summary, not a cosmic roadmap. We strip the paint and dismantle the engine block.
-                </p>
-            </>
-        )
+        id: "D-9",
+        name: "Navamasa",
+        subtitle: "The DNA & Eventual Reality",
+        desc: "The Lagna chart is the promise; the D-9 is the delivery. If a planet is exalted in D-1 but debilitated in D-9, the promise breaks. It looks good on paper, but fails in execution. This is where we see the actual, inescapable frequency of your life.",
+        color: "from-purple-500/20 to-purple-900/10",
+        borderColor: "border-purple-500/50"
     },
     {
-        id: "02",
-        icon: <FaChartPie className="text-[#FFD700] text-3xl" />,
-        title: "The Shodasavarga Synthesis",
-        subtitle: "The 16-Dimensional X-Ray",
-        content: (
-            <>
-                <p className="text-gray-400 leading-relaxed mb-6">
-                    We deploy exact divisional charts (Vargas) to isolate the precise mechanisms of your karma. The Lagna chart is the promise; the divisional charts are the delivery.
-                </p>
-                <ul className="space-y-4">
-                    <li className="bg-[#1a0524]/50 border border-white/10 p-4 rounded-lg">
-                        <strong className="text-white text-lg block mb-1">D-9 (Navamasa)</strong>
-                        <span className="text-gray-400 text-sm">The DNA and ultimate fruition of life. If a planet is strong in D-1 but dead in D-9, the promise breaks.</span>
-                    </li>
-                    <li className="bg-[#1a0524]/50 border border-white/10 p-4 rounded-lg">
-                        <strong className="text-white text-lg block mb-1">D-10 (Dasamsa)</strong>
-                        <span className="text-gray-400 text-sm">The microscopic mechanics of power, authority, and career collapses. We see exactly where your ambition hits a concrete wall.</span>
-                    </li>
-                    <li className="bg-[#1a0524]/50 border border-white/10 p-4 rounded-lg">
-                        <strong className="text-white text-lg block mb-1">D-30 (Trimsamsa)</strong>
-                        <span className="text-gray-400 text-sm">The skeleton closet. Subconscious curses, hidden diseases, and psychological rot. The trauma you cannot medicate away.</span>
-                    </li>
-                    <li className="bg-[#1a0524]/50 border border-white/10 p-4 rounded-lg">
-                        <strong className="text-white text-lg block mb-1">D-60 (Shashtiamsa)</strong>
-                        <span className="text-gray-400 text-sm">The root karma. What you did in the last lifetime that is actively hunting you in this one.</span>
-                    </li>
-                </ul>
-            </>
-        )
+        id: "D-10",
+        name: "Dasamsa",
+        subtitle: "Microscopic Power Dynamics",
+        desc: "We don't look at your 10th house and guess your career. We open the D-10 to see exactly how you handle authority, when your ambition hits a concrete wall, and the precise mechanics of your public rises and career collapses.",
+        color: "from-[#FFD700]/20 to-[#FFD700]/5",
+        borderColor: "border-[#FFD700]/50"
     },
     {
-        id: "03",
-        icon: <FaSkull className="text-[#FFD700] text-3xl" />,
-        title: "Planetary Autopsy",
-        subtitle: "Beyond 'Exalted' and 'Debilitated'",
-        content: (
-            <>
-                <p className="text-gray-400 leading-relaxed mb-4">
-                    "You have an exalted sun, you will be successful." It is a lie propagated by the ignorant. A planet's dignity is irrelevant if it lacks mathematical power and operational capacity.
-                </p>
-                <p className="text-gray-400 leading-relaxed mb-6">
-                    We execute a full autopsy using <strong className="text-white">Shadbala</strong> (6-fold strength) and <strong className="text-white">Avasthas</strong> (Planetary states). We calculate the exact mathematical yield of every planet.
-                </p>
-                <div className="bg-[#FFD700]/10 border border-[#FFD700]/30 p-5 rounded-lg flex items-start gap-4">
-                    <span className="text-2xl mt-1">⚠️</span>
-                    <p className="text-gray-300 font-mono text-sm leading-relaxed">
-                        <span className="text-[#FFD700] font-bold">EXAMPLE:</span> An exalted Sun at 29 degrees in the 10th house is a dead king (Mrit Avastha). It gives you the ego of a CEO but the bank account of an intern. Looks powerful, yields nothing.
-                    </p>
-                </div>
-            </>
-        )
+        id: "D-30",
+        name: "Trimsamsa",
+        subtitle: "The Skeleton Closet",
+        desc: "The psychological rot and subconscious curses. This chart maps the trauma you cannot medicate away, hidden diseases, and the inherent flaws in your character that will self-sabotage your greatest wins if left unchecked.",
+        color: "from-red-500/20 to-red-900/10",
+        borderColor: "border-red-500/50"
     },
     {
-        id: "04",
-        icon: <FaBolt className="text-[#FFD700] text-3xl" />,
-        title: "Jaimini’s Core Engine",
-        subtitle: "The Soul vs. The World",
-        content: (
-            <>
-                <p className="text-gray-400 leading-relaxed mb-4">
-                    Parashari limits you to the mechanics of circumstance. Jaimini forces you to confront the agony of your soul's agenda.
-                </p>
-                <ul className="space-y-4 mb-4">
-                    <li className="flex gap-3 items-start">
-                        <FaCheckCircle className="text-[#FFD700] mt-1 shrink-0" />
-                        <div>
-                            <strong className="text-white text-sm tracking-wider uppercase">Atmakaraka</strong>
-                            <p className="text-gray-400 text-sm">The soul's agonizing lesson. The absolute ceiling of your spiritual and material evolution.</p>
-                        </div>
-                    </li>
-                    <li className="flex gap-3 items-start">
-                        <FaCheckCircle className="text-[#FFD700] mt-1 shrink-0" />
-                        <div>
-                            <strong className="text-white text-sm tracking-wider uppercase">Amatyakaraka</strong>
-                            <p className="text-gray-400 text-sm">The minister that executes the agenda. The raw planetary force driving your career and survival.</p>
-                        </div>
-                    </li>
-                </ul>
-                <p className="text-gray-300 bg-white/5 p-4 rounded-lg font-mono text-sm border-l-2 border-red-500">
-                    When these two clash (e.g., positioned 6/8 from each other), it creates a life of internal warfare, regardless of how good the Parashari yogas look on paper. We map the friction.
-                </p>
-            </>
-        )
-    },
-    {
-        id: "05",
-        icon: <FaClock className="text-[#FFD700] text-3xl" />,
-        title: "The Matrix of Time",
-        subtitle: "Vimshottari & Micro-Dashas",
-        content: (
-            <>
-                <p className="text-gray-400 leading-relaxed mb-4">
-                    Time is not a circle; it is a highly targeted sequence. We do not just look at the Mahadasha (10-20 year cycles) and offer broad, useless generalizations.
-                </p>
-                <p className="text-gray-400 leading-relaxed mb-6">
-                    We drill down to the <strong className="text-white">Pratyantar</strong> (months) and <strong className="text-white">Sookshma</strong> (days) levels. If a collapse is coming, we track its exact coordinates on the timeline.
-                </p>
-                <div className="bg-[#0f0f0f] border border-[#333] p-5 font-mono text-xs rounded-lg">
-                    <div className="text-[#FFD700] mb-2">{`// TACTICAL INTELLIGENCE`}</div>
-                    <div className="text-gray-400 leading-relaxed">
-                        We pinpoint the exact week your 8th Lord activates your 22nd Drekkana, warning you of specific financial or physical ambushes before they strike. Forewarning is absolute leverage.
-                    </div>
-                </div>
-            </>
-        )
-    },
-    {
-        id: "06",
-        icon: <FaCrosshairs className="text-[#FFD700] text-3xl" />,
-        title: "Ashtakavarga & Nadi Transits",
-        subtitle: "The Reality Check",
-        content: (
-            <>
-                <p className="text-gray-400 leading-relaxed mb-4">
-                    General astrology claims that Jupiter transiting your 2nd house guarantees wealth. This is mathematically false.
-                </p>
-                <p className="text-gray-400 leading-relaxed mb-6">
-                    A "great transit" of Jupiter means absolutely nothing if it hits a house with less than 25 Ashtakavarga points. <strong className="text-white">It is a bullet fired from an empty gun.</strong>
-                </p>
-                <p className="text-gray-400 leading-relaxed">
-                    We use point-based transit overlays to predict concrete events, discarding "vibes." By synthesizing Nadi transit rules with Ashtakavarga thresholds, we separate what <span className="italic">could</span> happen from what <strong className="text-[#FFD700]">will</strong> happen.
-                </p>
-            </>
-        )
+        id: "D-60",
+        name: "Shashtiamsa",
+        subtitle: "The Root Karma",
+        desc: "The ultimate microscopic division. This reveals exactly what you did in the last lifetime that is actively hunting you in this one. This is the bedrock of why certain patterns feel completely inescapable until paid off.",
+        color: "from-blue-500/20 to-blue-900/10",
+        borderColor: "border-blue-500/50"
     }
 ];
 
-export default function OurProcess() {
-    return (
-        <main className="min-h-screen bg-[#12011A] text-white selection:bg-[#FFD700] selection:text-[#12011A] font-sans">
-            {/* Minimalist Grid Background */}
-            <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] pointer-events-none opacity-20"></div>
+function ShodasavargaScanner() {
+    const [activeTab, setActiveTab] = useState(0);
 
-            {/* Header */}
-            <section className="relative pt-32 pb-20 px-6 border-b border-white/5">
-                <div className="max-w-5xl mx-auto text-left md:text-center relative z-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
+    return (
+        <div className="bg-[#0a000f] border border-white/10 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] max-w-5xl mx-auto mt-12 transition-all duration-500">
+            {/* Header Tabs */}
+            <div className="flex border-b border-white/10 overflow-x-auto hide-scrollbar bg-black/50">
+                {vargaData.map((varga, idx) => (
+                    <button
+                        key={varga.id}
+                        onClick={() => setActiveTab(idx)}
+                        className={`flex-1 min-w-[120px] py-4 md:py-6 px-4 text-center border-b-2 font-mono uppercase tracking-widest text-xs md:text-sm transition-all duration-300 ${activeTab === idx ? "border-[#FFD700] text-[#FFD700] bg-white/[0.02]" : "border-transparent text-gray-500 hover:text-white hover:bg-white/[0.01]"
+                            }`}
                     >
-                        <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-black mb-6 uppercase tracking-tighter text-white">
-                            THE <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-500 via-[#FFD700] to-yellow-600">PROTOCOL</span>
+                        {varga.id}
+                    </button>
+                ))}
+            </div>
+
+            {/* Content Area */}
+            <div className={`p-8 md:p-12 relative overflow-hidden transition-colors duration-700 bg-gradient-to-br ${vargaData[activeTab].color}`}>
+                <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl ${vargaData[activeTab].color} blur-[100px] opacity-50`}></div>
+                <div className="absolute top-4 right-6 font-serif text-[8rem] md:text-[12rem] font-black text-white/[0.02] pointer-events-none select-none leading-none">
+                    {vargaData[activeTab].id}
+                </div>
+
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
+                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                        exit={{ opacity: 0, y: -10, filter: "blur(0px)" }}
+                        transition={{ duration: 0.4 }}
+                        className="relative z-10"
+                    >
+                        <h3 className="font-serif text-3xl md:text-5xl font-bold text-white mb-2">{vargaData[activeTab].name}</h3>
+                        <p className={`font-mono text-xs md:text-sm uppercase tracking-[0.2em] font-bold mb-8 inline-block px-3 py-1 border ${vargaData[activeTab].borderColor} bg-black/50 rounded`}>
+                            {vargaData[activeTab].subtitle}
+                        </p>
+                        <p className="text-lg md:text-xl text-gray-300 leading-relaxed max-w-2xl font-light">
+                            {vargaData[activeTab].desc}
+                        </p>
+                    </motion.div>
+                </AnimatePresence>
+            </div>
+        </div>
+    );
+}
+
+
+// --- MAIN PAGE COMPONENT ---
+
+export default function OurProcessInteractive() {
+    const { scrollYProgress } = useScroll();
+    const yHero = useTransform(scrollYProgress, [0, 0.2], [0, 100]);
+    const opacityHero = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+
+    return (
+        <main className="min-h-screen bg-[#050008] text-white selection:bg-[#FFD700] selection:text-[#12011A] font-sans overflow-x-hidden">
+            {/* Minimalist Grid Background */}
+            <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] pointer-events-none opacity-20 z-0"></div>
+
+            {/* 1. HERO - THE HOOK */}
+            <motion.section style={{ y: yHero, opacity: opacityHero }} className="relative min-h-[90vh] flex flex-col items-center justify-center px-6 border-b border-white/5 z-10">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.15] mix-blend-overlay pointer-events-none"></div>
+
+                <div className="max-w-5xl mx-auto text-center relative z-10">
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0, filter: "blur(10px)" }}
+                        animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
+                        transition={{ duration: 1.2, ease: "easeOut" }}
+                    >
+                        <FaCrosshairs className="text-[#FFD700] text-4xl mx-auto mb-8 opacity-80" />
+                        <h1 className="font-serif text-6xl md:text-8xl lg:text-[7rem] font-black mb-6 uppercase tracking-tighter text-white leading-none">
+                            THE <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#FFD700] to-yellow-800">PROTOCOL</span>
                         </h1>
-                        <p className="text-gray-400 max-w-3xl md:mx-auto text-lg md:text-xl font-light leading-relaxed">
-                            We do not deal in hope. We deal in cosmological mechanics. Below is the uncompromising, multi-layered framework used to dismantle your psychological limits and map your stark reality.
+                    </motion.div>
+
+                    <div className="mt-12 p-6 md:p-8 bg-black/40 border border-red-900/30 rounded-xl backdrop-blur-sm max-w-3xl mx-auto inline-block text-left shadow-[0_0_40px_rgba(255,0,0,0.05)] relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-red-600"></div>
+                        <FaTerminal className="text-red-500 mb-4 text-xl" />
+                        <p className="font-mono text-lg md:text-xl text-red-100/90 leading-relaxed">
+                            <TypewriterText text="Astrology was never meant to make you feel good. It is the mathematics of your karma." delay={0.5} />
+                        </p>
+                        <p className="font-mono text-sm text-red-500/70 mt-4 uppercase tracking-widest mt-6 opacity-0 animate-[fadeIn_1s_ease-out_3s_forwards]">
+                            We do not do "vibes". We execute precision cosmology.
+                        </p>
+                    </div>
+                </div>
+
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 3.5, duration: 1 }}
+                    className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gray-500"
+                >
+                    <span className="font-mono text-[10px] uppercase tracking-[0.3em]">Initialize</span>
+                    <div className="w-[1px] h-12 bg-gradient-to-b from-gray-500 to-transparent"></div>
+                </motion.div>
+            </motion.section>
+
+            {/* 2. D-1 ILLUSION */}
+            <section className="py-32 px-6 relative z-10 bg-gradient-to-b from-[#050008] to-[#12011A]">
+                <div className="max-w-4xl mx-auto text-center">
+                    <motion.h2
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        className="font-serif text-4xl md:text-6xl font-bold text-white mb-8"
+                    >
+                        The Illusion of the D-1
+                    </motion.h2>
+                    <motion.p
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ delay: 0.1 }}
+                        className="text-xl md:text-3xl text-gray-400 font-light leading-relaxed mb-12"
+                    >
+                        Reading only the Lagna Chart is like diagnosing a car engine by looking at the paint job.
+                    </motion.p>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.2 }}
+                        className="bg-white/[0.02] border border-white/10 p-8 rounded-2xl text-left"
+                    >
+                        <p className="text-gray-300 leading-relaxed md:text-lg">
+                            Most astrologers live and die by this basic map, diagnosing your entire existence from a surface-level scan. If your reading is based solely on the rising sign and D-1 placements, you are receiving an amateur summary, not a cosmic roadmap. <strong className="text-[#FFD700] block mt-4 text-xl font-serif">We strip the paint and dismantle the engine block.</strong>
                         </p>
                     </motion.div>
                 </div>
             </section>
 
-            {/* The Process Grid */}
-            <section className="py-24 px-6 relative z-10">
+            {/* 3. THE SHODASAVARGA SYNTHESIS */}
+            <section className="py-32 px-6 relative z-10 border-t border-white/5 overflow-hidden">
                 <div className="max-w-6xl mx-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-                        {sections.map((section, idx) => (
-                            <motion.div
-                                key={section.id}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, margin: "-100px" }}
-                                transition={{ duration: 0.5, delay: idx * 0.1 }}
-                                className="group bg-black/40 backdrop-blur-md border border-white/5 rounded-2xl p-8 md:p-10 hover:border-[#FFD700]/30 hover:bg-[#1a0524]/40 transition-all duration-500 overflow-hidden relative"
-                            >
-                                {/* Background Number Watermark */}
-                                <div className="absolute -top-6 -right-4 text-[120px] font-black text-white/[0.02] group-hover:text-[#FFD700]/[0.05] transition-colors duration-500 select-none pointer-events-none font-serif leading-none">
-                                    {section.id}
-                                </div>
+                    <div className="text-center mb-16">
+                        <h2 className="font-serif text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+                            The Shodasavarga Synthesis
+                        </h2>
+                        <p className="text-gray-400 font-mono text-sm uppercase tracking-[0.3em]">
+                            The 16-Dimensional X-Ray
+                        </p>
+                    </div>
 
-                                <div className="relative z-10">
-                                    <div className="mb-6 inline-flex p-3 bg-white/5 rounded-xl border border-white/10 group-hover:bg-[#FFD700]/10 group-hover:border-[#FFD700]/20 transition-all">
-                                        {section.icon}
+                    <motion.div
+                        initial={{ opacity: 0, y: 40 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.7, ease: "easeOut" }}
+                    >
+                        <ShodasavargaScanner />
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* 4. PLANETARY AUTOPSY */}
+            <section className="py-32 px-6 relative z-10 bg-[#0a000f] border-t border-white/5">
+                <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+                    <motion.div
+                        initial={{ opacity: 0, x: -50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        <FaSkull className="text-[#FFD700] text-4xl mb-6" />
+                        <h2 className="font-serif text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+                            Planetary Autopsy
+                        </h2>
+                        <h3 className="text-[#FFD700] font-mono text-xs tracking-[0.2em] uppercase mb-8 font-bold border-l-2 border-[#FFD700] pl-3">
+                            Beyond "Exalted" & "Debilitated"
+                        </h3>
+                        <p className="text-gray-400 text-lg leading-relaxed mb-6">
+                            "You have an exalted sun, you will be successful." It is a lie propagated by the ignorant. A planet's dignity is irrelevant if it lacks mathematical power and operational capacity.
+                        </p>
+                        <p className="text-gray-400 text-lg leading-relaxed">
+                            We execute a full autopsy using <strong className="text-white">Shadbala</strong> (6-fold strength) and <strong className="text-white">Avasthas</strong> (Planetary states). We calculate the exact mathematical yield of every planet.
+                        </p>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                        className="bg-[#12011A] border border-red-900/30 p-8 md:p-10 rounded-2xl relative shadow-[0_0_50px_rgba(255,0,0,0.05)]"
+                    >
+                        <div className="absolute -top-3 left-8 bg-red-900 text-white font-mono text-[10px] uppercase tracking-widest px-3 py-1 rounded shadow-lg flex items-center gap-2">
+                            <FaExclamationTriangle /> LIVE DATA EXAMPLE
+                        </div>
+
+                        <div className="mb-8 mt-4">
+                            <h4 className="text-white font-serif text-2xl mb-1">Exalted Sun <span className="text-gray-500 font-sans text-lg">(10th House)</span></h4>
+                            <p className="font-mono text-xs text-red-400 uppercase tracking-wider mb-6">State: Mrit Avastha (Dead King)</p>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <div className="flex justify-between text-xs font-mono uppercase text-gray-400 mb-2">
+                                        <span>Perceived Power (Ego)</span>
+                                        <span className="text-white">98%</span>
                                     </div>
-                                    <h2 className="text-2xl md:text-3xl font-serif font-bold text-white mb-2 tracking-tight group-hover:text-[#FFD700] transition-colors">
-                                        {section.title}
-                                    </h2>
-                                    <h3 className="text-[#FFD700] font-mono text-xs tracking-[0.2em] uppercase mb-6 font-bold">
-                                        {section.subtitle}
-                                    </h3>
-                                    <div className="text-gray-400 space-y-4 font-light">
-                                        {section.content}
+                                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                                        <motion.div initial={{ width: 0 }} whileInView={{ width: "98%" }} viewport={{ once: true }} transition={{ duration: 1, delay: 0.5 }} className="h-full bg-gray-400"></motion.div>
                                     </div>
                                 </div>
-                            </motion.div>
-                        ))}
+                                <div>
+                                    <div className="flex justify-between text-xs font-mono uppercase text-gray-400 mb-2">
+                                        <span>Actual Mathematical Yield (Bank Account)</span>
+                                        <span className="text-[#FFD700] font-bold">12%</span>
+                                    </div>
+                                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                                        <motion.div initial={{ width: 0 }} whileInView={{ width: "12%" }} viewport={{ once: true }} transition={{ duration: 1, delay: 0.7 }} className="h-full bg-[#FFD700] shadow-[0_0_10px_#FFD700]"></motion.div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p className="text-gray-500 italic text-sm border-t border-white/10 pt-4">
+                            "It gives you the ego of a CEO but the bank account of an intern. Looks powerful, yields nothing."
+                        </p>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* 5. JAIMINI'S CORE ENGINE */}
+            <section className="py-32 px-6 relative z-10 border-t border-white/5">
+                <div className="max-w-6xl mx-auto text-center mb-16">
+                    <FaBolt className="text-[#FFD700] text-4xl mx-auto mb-6" />
+                    <h2 className="font-serif text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+                        Jaimini’s Core Engine
+                    </h2>
+                    <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto font-light leading-relaxed">
+                        Parashari limits you to the mechanics of circumstance. Jaimini forces you to confront the agony of your soul's agenda.
+                    </p>
+                </div>
+
+                <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="bg-black/50 border border-white/10 p-8 md:p-12 rounded-2xl group hover:border-purple-500/30 hover:bg-[#1a0524]/20 transition-all duration-500"
+                    >
+                        <h4 className="font-serif text-3xl text-white mb-2 group-hover:text-purple-400 transition-colors">Atmakaraka</h4>
+                        <p className="font-mono text-xs uppercase tracking-widest text-purple-500 mb-6">The Soul's Director</p>
+                        <p className="text-gray-400 leading-relaxed">
+                            The soul's agonizing lesson. The absolute ceiling of your spiritual and material evolution in this lifetime. Everything flows downstream from this single planet.
+                        </p>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.2 }}
+                        className="bg-black/50 border border-white/10 p-8 md:p-12 rounded-2xl group hover:border-[#FFD700]/30 hover:bg-[#1a1805]/20 transition-all duration-500"
+                    >
+                        <h4 className="font-serif text-3xl text-white mb-2 group-hover:text-[#FFD700] transition-colors">Amatyakaraka</h4>
+                        <p className="font-mono text-xs uppercase tracking-widest text-[#FFD700] mb-6">The Executioner</p>
+                        <p className="text-gray-400 leading-relaxed">
+                            The minister that executes the agenda. The raw planetary force driving your career, survival, and worldly ambition.
+                        </p>
+                    </motion.div>
+                </div>
+
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    className="max-w-3xl mx-auto mt-8 bg-red-900/10 border border-red-900/40 p-6 md:p-8 rounded-2xl text-center"
+                >
+                    <p className="text-red-200/90 font-mono text-sm leading-relaxed">
+                        When these two clash (e.g., positioned 6/8 from each other), it creates a life of <strong className="text-red-400">internal warfare</strong>, regardless of how good the Parashari yogas look on paper. We map the friction.
+                    </p>
+                </motion.div>
+            </section>
+
+            {/* 6. MATRIX OF TIME & ASHTAKAVARGA (Combined dark execution) */}
+            <section className="py-32 px-6 relative z-10 bg-[#0a000f] border-t border-b border-white/5">
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,215,0,0.03)_1px,transparent_1px)] bg-[size:100px_100px] pointer-events-none opacity-20 transform -skew-y-12"></div>
+
+                <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16">
+                    {/* Matrix of Time */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <FaClock className="text-[#FFD700] text-3xl mb-6" />
+                        <h2 className="font-serif text-4xl text-white mb-4">The Matrix of Time</h2>
+                        <p className="text-gray-400 leading-relaxed mb-8">
+                            Time is not a circle; it is a highly targeted sequence. We do not just look at the Mahadasha (10-20 year cycles) and offer broad, useless generalizations. We drill down to the <strong className="text-white">Pratyantar</strong> (months) and <strong className="text-white">Sookshma</strong> (days) levels.
+                        </p>
+
+                        <div className="bg-black/80 border border-green-900/50 p-6 rounded-xl font-mono text-xs md:text-sm text-green-500 shadow-[0_0_30px_rgba(0,255,0,0.03)] relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+                            <div className="mb-3 text-green-400/50 uppercase tracking-widest">// TACTICAL INTELLIGENCE</div>
+                            <p className="leading-relaxed">
+                                &gt; We pinpoint the exact week your 8th Lord activates your 22nd Drekkana.<br /><br />
+                                &gt; Warning dispatched for specific financial or physical ambushes before they strike.<br /><br />
+                                <span className="text-[#FFD700] font-bold">&gt; Forewarning is absolute leverage.</span>
+                            </p>
+                        </div>
+                    </motion.div>
+
+                    {/* Ashtakavarga & Nadi */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.2 }}
+                    >
+                        <FaCrosshairs className="text-[#FFD700] text-3xl mb-6" />
+                        <h2 className="font-serif text-4xl text-white mb-4">The Reality Check</h2>
+                        <h3 className="text-red-400 font-mono text-xs tracking-[0.2em] uppercase mb-6 font-bold">
+                            Ashtakavarga & Nadi Transits
+                        </h3>
+                        <p className="text-gray-400 leading-relaxed mb-6">
+                            General astrology claims that Jupiter transiting your 2nd house guarantees wealth. This is mathematically false.
+                        </p>
+                        <blockquote className="border-l-4 border-red-600 pl-6 my-8 py-2">
+                            <p className="text-2xl font-serif text-white italic leading-snug">
+                                "A great transit of Jupiter means absolutely nothing if it hits a house with less than 25 Ashtakavarga points. <span className="text-red-500 font-bold not-italic">It is a bullet fired from an empty gun.</span>"
+                            </p>
+                        </blockquote>
+                        <p className="text-gray-400 leading-relaxed">
+                            We use point-based transit overlays to predict concrete events, discarding "vibes." By synthesizing Nadi transit rules with Ashtakavarga thresholds, we separate what <span className="italic text-gray-300">could</span> happen from what <strong className="text-[#FFD700]">will</strong> happen.
+                        </p>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* 7. THE SUMMARY / EXPOSURE */}
+            <section className="py-32 px-6 relative z-10">
+                <div className="max-w-5xl mx-auto bg-[#12011A] border border-[#FFD700]/20 rounded-3xl p-8 md:p-16 text-center shadow-[0_0_100px_rgba(255,215,0,0.05)] relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 bg-white/5 border-b border-l border-white/10 text-gray-500 font-mono text-[10px] uppercase tracking-widest rounded-bl-xl">
+                        CONFIDENTIAL PROTOCOL
+                    </div>
+
+                    <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-16">The Absolute Divide</h2>
+
+                    <div className="grid md:grid-cols-2 gap-8 md:gap-16 text-left">
+                        {/* The Scam */}
+                        <div className="space-y-6">
+                            <h3 className="font-mono text-sm uppercase tracking-widest text-gray-500 border-b border-white/10 pb-4">Surface-Level "Astrology"</h3>
+                            <ul className="space-y-4 font-light text-gray-400">
+                                <li className="flex gap-3"><FaCheckCircle className="text-gray-600 shrink-0 mt-1" /> Uses only the D-1 Lagna chart.</li>
+                                <li className="flex gap-3"><FaCheckCircle className="text-gray-600 shrink-0 mt-1" /> Calls planets "Good" or "Bad" based on basic signs.</li>
+                                <li className="flex gap-3"><FaCheckCircle className="text-gray-600 shrink-0 mt-1" /> Predicts 10-year Mahadasha periods vaguely.</li>
+                                <li className="flex gap-3"><FaCheckCircle className="text-gray-600 shrink-0 mt-1" /> Relies on pop-psychology and feel-good validation.</li>
+                            </ul>
+                        </div>
+
+                        {/* The Reality */}
+                        <div className="space-y-6">
+                            <h3 className="font-mono text-sm uppercase tracking-widest text-[#FFD700] border-b border-[#FFD700]/30 pb-4">Our Geometric Synthesis</h3>
+                            <ul className="space-y-4 font-light text-white">
+                                <li className="flex gap-3"><FaCheckCircle className="text-[#FFD700] shrink-0 mt-1" /> Deploys 16 Divisional Charts for exact life mechanics.</li>
+                                <li className="flex gap-3"><FaCheckCircle className="text-[#FFD700] shrink-0 mt-1" /> Calculates exact yield via Shadbala & mathematical strength.</li>
+                                <li className="flex gap-3"><FaCheckCircle className="text-[#FFD700] shrink-0 mt-1" /> Isolates strikes down to Sookshma (days) and transit overlays.</li>
+                                <li className="flex gap-3"><FaCheckCircle className="text-[#FFD700] shrink-0 mt-1" /> Delivers uncompromising reality and tactical leverage.</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </section>
