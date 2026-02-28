@@ -102,7 +102,7 @@ export default function Report() {
                             onClick={openModal}
                         >
                             <p className="font-mono text-xs text-[#FFD700] uppercase tracking-widest mb-3 group-hover:tracking-[0.2em] transition-all">The Cost of Clarity (SoulSync)</p>
-                            <p className="font-serif text-5xl font-bold text-[#FFD700]">₹3,799</p>
+                            <p className="font-serif text-5xl font-bold text-[#FFD700]">₹4,799</p>
                         </div>
                         <p className="mt-8 font-mono text-gray-500 text-sm max-w-xl mx-auto leading-relaxed">
                             Cheaper than a weekend of "distracting yourself" with drinks and bad movies. <br />
@@ -280,7 +280,7 @@ export default function Report() {
                                 THE SOULSYNC BLUEPRINT
                             </h2>
                             <div className="flex justify-center items-end gap-2 mb-4">
-                                <span className="font-serif text-6xl md:text-8xl font-bold text-[#FFD700]">₹3,799</span>
+                                <span className="font-serif text-6xl md:text-8xl font-bold text-[#FFD700]">₹4,799</span>
                                 <span className="font-mono text-gray-500 mb-4 pb-2 text-xl line-through decoration-red-500">₹15,000</span>
                             </div>
                             <p className="font-mono text-gray-400 mb-12 uppercase tracking-widest text-sm">One Payment. Lifetime Clarity.</p>

@@ -18,6 +18,7 @@ export async function POST(req: Request) {
             product_cart: [{
                 product_id: productId,
                 quantity: 1,
+                amount: currency === 'USD' ? 9730 : 479900,
             }],
             customer: {
                 email: customerEmail,

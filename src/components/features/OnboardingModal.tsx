@@ -476,7 +476,7 @@ export default function OnboardingModal() {
                                 className="w-full bg-[#111111] text-white py-4 rounded-xl font-bold text-lg hover:bg-black transition-all shadow-lg flex items-center justify-center gap-3 relative overflow-hidden group"
                             >
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                                <span>Pay in INR (₹3,799)</span>
+                                <span>Pay in INR (₹4,799)</span>
                                 <FaArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
                             </motion.button>
 
@@ -487,7 +487,7 @@ export default function OnboardingModal() {
                                 disabled={isProcessing}
                                 className="w-full bg-white text-[#111111] border-2 border-[#111111] py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all shadow-md flex items-center justify-center gap-3 relative overflow-hidden group"
                             >
-                                <span>Pay in USD ($55.00)</span>
+                                <span>Pay in USD ($97.30)</span>
                                 <FaArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
                             </motion.button>
                         </div>
