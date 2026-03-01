@@ -2,10 +2,12 @@
 
 import React from 'react';
 import TheVoid from '@/components/sections/TheVoid';
+import FloatingLogo from "@/components/ui/FloatingLogo";
 
 export default function SampleReport() {
     return (
         <div className="min-h-screen bg-black text-white font-mono selection:bg-[#FFD700] selection:text-black antialiased">
+            <FloatingLogo position="left" />
 
             <main className="pt-32 pb-24 px-6 md:px-12 max-w-5xl mx-auto">
                 {/* DOSSIER HEADER */}

@@ -3,10 +3,12 @@
 import React from "react";
 import { motion } from "framer-motion";
 import TheVoid from "@/components/sections/TheVoid";
+import FloatingLogo from "@/components/ui/FloatingLogo";
 
 export default function Myths() {
     return (
         <main className="min-h-screen bg-[#12011A] text-white selection:bg-[#FFD700] selection:text-[#12011A]">
+            <FloatingLogo position="left" />
             {/* Header */}
             <section className="py-32 px-6 text-center">
                 <motion.h1

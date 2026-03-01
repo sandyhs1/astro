@@ -4,12 +4,14 @@ import React from "react";
 import { motion } from "framer-motion";
 import TheVoid from "@/components/sections/TheVoid";
 import { useOnboarding } from "@/context/OnboardingContext";
+import FloatingLogo from "@/components/ui/FloatingLogo";
 
 export default function Astrology() {
     const { openModal } = useOnboarding();
 
     return (
         <main className="min-h-screen bg-[#050505] text-white selection:bg-[#FFD700] selection:text-[#050505] font-sans">
+            <FloatingLogo position="left" />
 
             {/* 1. HERO: THE REFLECTION */}
             <section className="relative min-h-[90vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden">

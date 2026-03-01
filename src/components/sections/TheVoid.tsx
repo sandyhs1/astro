@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import LegalModal from '../features/LegalModal';
+import SupportModal from '../features/SupportModal';
 
 export default function TheVoid() {
     const [legalModal, setLegalModal] = useState<{ isOpen: boolean; type: 'terms' | 'privacy' | 'refunds' | null }>({
         isOpen: false,
         type: null
     });
+    const [isSupportOpen, setIsSupportOpen] = useState(false);
 
     const openLegal = (type: 'terms' | 'privacy' | 'refunds') => {
         setLegalModal({ isOpen: true, type });
@@ -30,6 +32,7 @@ export default function TheVoid() {
                     <a href="/astrology" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Astrology</a>
                     <a href="/our-process" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Our Process</a>
                     <a href="/myths" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Myths</a>
+                    <a href="https://quantumkarma.substack.com/" target="_blank" rel="noopener noreferrer" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Blog</a>
                     <button
                         onClick={() => openLegal('refunds')}
                         className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase"
@@ -48,6 +51,12 @@ export default function TheVoid() {
                     >
                         Privacy
                     </button>
+                    <button
+                        onClick={() => setIsSupportOpen(true)}
+                        className="font-mono text-xs text-[#FFD700] hover:text-[#e6c875] transition-colors uppercase font-bold"
+                    >
+                        Support
+                    </button>
                 </div>
             </div>
 
@@ -61,6 +70,10 @@ export default function TheVoid() {
                 isOpen={legalModal.isOpen}
                 type={legalModal.type}
                 onClose={() => setLegalModal({ ...legalModal, isOpen: false })}
+            />
+            <SupportModal
+                isOpen={isSupportOpen}
+                onClose={() => setIsSupportOpen(false)}
             />
         </footer>
     );

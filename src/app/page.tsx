@@ -13,10 +13,12 @@ import InstantGratification from "@/components/sections/InstantGratification";
 import FAQ from "@/components/sections/FAQ";
 import ExclusiveEntry from "@/components/sections/ExclusiveEntry";
 import TheVoid from "@/components/sections/TheVoid";
+import FloatingLogo from "@/components/ui/FloatingLogo";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#12011A]">
+      <FloatingLogo position="right" />
       <Hero />
       <TheSlaughterhouse />
       <TheMirror />

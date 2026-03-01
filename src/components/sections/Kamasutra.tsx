@@ -90,7 +90,7 @@ export default function Kamasutra() {
 
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent group-hover:from-black/90 transition-colors duration-700"></div>
 
-                            <div className="absolute top-8 right-8 text-[8rem] leading-none text-white opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-700 font-medium" style={{ fontFamily: "var(--font-display)" }}>
+                            <div className="absolute top-8 right-8 text-[8rem] leading-none text-white opacity-[0.04] group-hover:opacity-[0.12] transition-opacity duration-700 font-medium select-none pointer-events-none" style={{ fontFamily: "var(--font-display)" }}>
                                 0{card.id}
                             </div>
 

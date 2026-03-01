@@ -2,6 +2,7 @@
 
 import React from 'react';
 import TheVoid from '@/components/sections/TheVoid';
+import FloatingLogo from "@/components/ui/FloatingLogo";
 
 export default function RoadmapPage() {
     const roadmapItems = [
@@ -97,6 +98,7 @@ export default function RoadmapPage() {
 
     return (
         <div className="min-h-screen bg-black text-white selection:bg-[#FFD700] selection:text-black font-sans antialiased overflow-x-hidden">
+            <FloatingLogo position="left" />
 
             {/* HERO SECTION */}
             <section className="relative pt-40 pb-20 px-6 md:px-12 max-w-7xl mx-auto border-b border-[#222]">

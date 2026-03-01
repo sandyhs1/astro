@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test EmailJS</title>
+</head>
+<body>
+    <h1>Testing EmailJS Integration (Lead Mode)</h1>
+    <button onclick="sendTestEmail()">Send Test Lead Email</button>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init("p0Y1TsA4CgkB89zWO");
+        })();
+        
+        function sendTestEmail() {
+            const emailParams = {
+                fullName: "Test User Lead",
+                email: "test@lead.com",
+                dob: "1990-01-01",
+                tob: "12:00 PM",
+                pob: "Test City",
+                questions: "This is a test question from the lead trigger.",
+                paymentStatus: "Pending Payment (Step 3 Complete)",
+                transactionId: "LEAD_TEST_" + Date.now(),
+                submissionTime: new Date().toLocaleString()
+            };
+
+            emailjs.send(
+                'service_kejjsw8',
+                'template_dq668f3',
+                emailParams
+            ).then(function(response) {
+                console.log('SUCCESS!', response.status, response.text);
+                alert("Lead email sent successfully! Check inbox.");
+            }, function(error) {
+                console.log('FAILED...', error);
+                alert("Lead email failed: " + JSON.stringify(error));
+            });
+        }
+    </script>
+</body>
+</html>

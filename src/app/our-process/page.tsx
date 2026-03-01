@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { FaCrosshairs, FaSkull, FaChartPie, FaBolt, FaClock, FaCheckCircle, FaExclamationTriangle, FaTerminal, FaEye, FaMicroscope } from "react-icons/fa";
 import TheVoid from "@/components/sections/TheVoid";
+import FloatingLogo from "@/components/ui/FloatingLogo";
 
 // --- INTERACTIVE COMPONENTS ---
 
@@ -181,6 +182,7 @@ export default function OurProcessInteractive() {
 
     return (
         <main className="min-h-screen bg-[#050008] text-white selection:bg-[#FFD700] selection:text-[#12011A] font-sans overflow-x-hidden">
+            <FloatingLogo position="left" />
             {/* Minimalist Grid Background */}
             <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] pointer-events-none opacity-20 z-0"></div>
 
@@ -347,7 +349,7 @@ export default function OurProcessInteractive() {
                 </div>
             </section>
 
-            
+
             {/* 5. HIDDEN MECHANICS (Arudha & Padas) */}
             <section className="py-32 px-6 relative z-10 border-t border-white/5">
                 <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
