@@ -26,7 +26,7 @@ export default function TheVoid() {
                 </div>
 
                 <div className="mt-12 md:mt-0 flex flex-wrap gap-x-8 gap-y-4 justify-end">
-                    <a href="/report" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Report</a>
+                    <a href="/reviews" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Reviews</a>
                     <a href="/sample-report" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Sample Report</a>
                     <a href="/roadmap" className="font-mono text-xs text-gray-600 hover:text-[#00FF41] transition-colors uppercase">Roadmap</a>
                     <a href="/astrology" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Astrology</a>

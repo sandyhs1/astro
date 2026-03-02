@@ -63,7 +63,7 @@ export default function DashaClock() {
                 </p>
 
                 <button
-                    onClick={() => router.push('/report')}
+                    onClick={() => router.push('/reviews')}
                     className="mt-12 px-10 py-4 border border-[#FFD700] text-[#FFD700] hover:bg-[#FFD700] hover:text-black transition-all duration-300 font-mono text-sm uppercase tracking-widest"
                 >
                     WAKE UP

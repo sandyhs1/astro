@@ -21,8 +21,8 @@ function TypewriterText({ text, delay = 0 }: { text: string, delay?: number }) {
         if (!started) return;
         let i = 0;
         const typingInterval = setInterval(() => {
-            if (i < text.length) {
-                setDisplayedText((prev) => prev + text.charAt(i));
+            if (i <= text.length) {
+                setDisplayedText(text.substring(0, i));
                 i++;
             } else {
                 clearInterval(typingInterval);

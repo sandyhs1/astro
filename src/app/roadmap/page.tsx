@@ -185,7 +185,7 @@ export default function RoadmapPage() {
                         These features will roll out exclusively to early adopters of the Quantum Karma ecosystem.
                     </p>
                     <div className="pt-8">
-                        <a href="/report" className="px-10 py-5 bg-white text-black font-bold text-sm uppercase tracking-[0.3em] hover:bg-[#FFD700] transition-colors inline-block">
+                        <a href="/reviews" className="px-10 py-5 bg-white text-black font-bold text-sm uppercase tracking-[0.3em] hover:bg-[#FFD700] transition-colors inline-block">
                             Get Your Persona Report First
                         </a>
                     </div>

@@ -761,7 +761,7 @@ export default function SampleReport() {
                             </div>
 
                             <div className="pt-16">
-                                <a href="/report" className="group relative px-12 py-5 bg-transparent border-2 border-[#FFD700] text-[#FFD700] text-sm font-bold uppercase tracking-[0.5em] overflow-hidden transition-all duration-300 hover:text-black">
+                                <a href="/reviews" className="group relative px-12 py-5 bg-transparent border-2 border-[#FFD700] text-[#FFD700] text-sm font-bold uppercase tracking-[0.5em] overflow-hidden transition-all duration-300 hover:text-black">
                                     <div className="absolute inset-0 bg-[#FFD700] translate-y-full group-hover:translate-y-0 transition-transform duration-300 -z-10"></div>
                                     GENERATE PERSONA REPORT
                                 </a>

@@ -407,6 +407,42 @@ function TestimonialsSection() {
             title: "psycho-spiritual audit",
             content: "You are fabulous. The depth of this report is insane—it's not just astrology, it's a full psycho-spiritual audit. I walked in skeptical and walked out a believer. 10/10 would recommend to anyone feeling lost."
         },
+        {
+            user: "u/transactional_no_more",
+            time: "4h",
+            title: "accurate ancestral stuff",
+            content: "Thank you I would say this is accurate. I do over think less than I did when I was younger. I cut off many relationships last year due to that transactional feeling. But I do want to find closeness now. Is there any indication of when I could find real love? The ancestral stuff is accurate too"
+        },
+        {
+            user: "u/scared_but_seen",
+            time: "2d",
+            title: "almost too accurate",
+            content: "Okayyy, almost all of it is accurate. Thats scary. Thank you."
+        },
+        {
+            user: "u/skeptic_silenced",
+            time: "1d",
+            title: "surprisingly accurate statements",
+            content: "Thanks for taking time and analyzing my situation. These are surprisingly accurate statements."
+        },
+        {
+            user: "u/spot_on_1000",
+            time: "8h",
+            title: "1000/10 spot on",
+            content: "I’ve never had a reading be sooo spot on before. It’s a bit scary just how accurate some of these are, 1000/10 thank you!"
+        },
+        {
+            user: "u/read_to_filth",
+            time: "5h",
+            title: "read to absolute filth",
+            content: "You just read me to absolute filth and nailed everything farrrrkkk"
+        },
+        {
+            user: "u/freakily_correct",
+            time: "3h",
+            title: "freaky accurate",
+            content: "Honestly your reading was literally spot on in every aspect, it’s actually a bit freaky just how correct you are! You’re gift is incredible and I’m so grateful ☺️"
+        },
     ];
 
     // Row 2: 8 testimonials (Moving LEFT)
@@ -459,13 +495,43 @@ function TestimonialsSection() {
             title: "strategic personality audit",
             content: "i usually cringe at 'soul' stuff but this was surprisingly grounded. logical, structured, and deep. feels like a strategic audit of my personality. 100% accurate."
         },
+        {
+            user: "u/astro_bro_salute",
+            time: "6h",
+            title: "you are an expert brother",
+            content: "Damn bro this is such a detailed explanation. You are an expert, brother 🫡 👏"
+        },
+        {
+            user: "u/holy_shit_wow",
+            time: "7h",
+            title: "holy shit wow",
+            content: "Holy shit I wanted to give this a go for the hell of it but I think you’re actually onto something, wow"
+        },
+        {
+            user: "u/understood_at_last",
+            time: "11h",
+            title: "feels good to be understood",
+            content: "Thank you so much for your time and attention. This is the perfect depiction of my current metal and physical state! Feels good to be understood. Thanks again."
+        },
+        {
+            user: "u/newbie_mindblown",
+            time: "2d",
+            title: "told me the reasons why",
+            content: "I love the way how you have explained everything.. you didn't just show me what's happening but also told me the reason why it's happening.. me being a newbie to astrology don't have much insight about the effect the planets can have on our life...Once again thank you and I truly appreciate you for your time and help !!! 😊🙏🏻"
+        },
+        {
+            user: "u/no_sugarcoating",
+            time: "10h",
+            title: "no sugarcoating truth",
+            content: "Thank you so much, sir, for taking the time to explain everything so honestly and without sugarcoating. Everything you said is absolutely true. I’m truly amazed at how accurate you were. You are genuinely gifted. Once again, thank you so much."
+        },
     ];
 
     return (
         <section className="py-32 bg-[#080808] overflow-hidden border-t border-[#222]">
             <div className="max-w-7xl mx-auto px-6 mb-16 text-center">
-                <h2 className="font-serif text-3xl md:text-5xl font-bold mb-4 text-gray-200">THE HIVEMIND SPEAKS</h2>
-                <p className="font-mono text-gray-500">Real feedback. Unfiltered.</p>
+                <h2 className="font-serif text-3xl md:text-5xl font-bold mb-4 text-gray-200 uppercase">THE SLAUGHTERHOUSE ARCHIVES</h2>
+                <p className="font-mono text-gray-500">Tears, truth, and shattered egos. Real, savage feedback from the frontlines.</p>
             </div>
 
             <div className="flex flex-col gap-8">

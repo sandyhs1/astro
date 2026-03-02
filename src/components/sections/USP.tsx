@@ -72,7 +72,7 @@ export default function USP() {
                         </motion.p>
 
                         <button
-                            onClick={() => router.push('/report')}
+                            onClick={() => router.push('/reviews')}
                             className="px-10 py-4 border border-[#FFD700]/50 text-[#FFD700] hover:bg-[#FFD700] hover:text-black transition-all duration-300 font-mono text-sm uppercase tracking-widest flex items-center gap-4"
                         >
                             <FaCrosshairs className="animate-pulse" />

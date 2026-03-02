@@ -168,7 +168,7 @@ function StackCard({ index, data, progress, range, targetScale }: { index: numbe
 
                             <div className="mt-auto pt-8 border-t border-white/10">
                                 <button
-                                    onClick={() => router.push('/report')}
+                                    onClick={() => router.push('/reviews')}
                                     className="group relative overflow-hidden px-8 py-4 bg-white text-black font-medium uppercase tracking-[0.2em] text-xs transition-all duration-500 float-right hover:text-white shadow-[0_0_30px_rgba(255,255,255,0.1)]"
                                 >
                                     <span className="relative z-10 flex items-center gap-3">
