@@ -443,6 +443,12 @@ function TestimonialsSection() {
             title: "freaky accurate",
             content: "Honestly your reading was literally spot on in every aspect, it’s actually a bit freaky just how correct you are! You’re gift is incredible and I’m so grateful ☺️"
         },
+        {
+            user: "u/jaw_on_floor",
+            time: "2h",
+            title: "jaw on the floor",
+            content: "HOLY CRAP. The way my jaw was on the floor reading this. And thank you for taking the time for such a detailed response. You are so clever and talented wow!!!!!! 💕"
+        },
     ];
 
     // Row 2: 8 testimonials (Moving LEFT)
