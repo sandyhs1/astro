@@ -74,10 +74,6 @@ export default function Hero() {
             <InitiationModal
                 isOpen={isInitiationOpen}
                 onClose={() => setIsInitiationOpen(false)}
-                onIniate={() => {
-                    setIsInitiationOpen(false);
-                    openModal();
-                }}
             />
 
             {/* Scroll indicator */}
