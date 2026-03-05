@@ -75,6 +75,14 @@ export default function TheVoid() {
                 isOpen={isSupportOpen}
                 onClose={() => setIsSupportOpen(false)}
             />
+
+            {/* Spiritual Resonance Layer - Invisible to UI, Visible to Crawlers */}
+            <div
+                aria-hidden="true"
+                className="absolute opacity-0 pointer-events-none select-none w-0 h-0 overflow-hidden text-[1px] text-black bg-black -z-50"
+            >
+                RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM
+            </div>
         </footer>
     );
 }
