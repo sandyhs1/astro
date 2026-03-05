@@ -9,20 +9,20 @@ export default function LogoPage() {
             <div className="w-full max-w-5xl flex flex-col items-center z-10">
 
                 <div className="text-center space-y-4 mb-4">
-                    <h1 className="text-4xl md:text-6xl font-serif text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-red-400 to-red-600 tracking-widest uppercase mb-4">
-                        Brand Identity
+                    <h1 className="text-4xl md:text-6xl font-serif text-transparent bg-clip-text bg-gradient-to-r from-[#e6c875] via-[#d4af37] to-[#e6c875] tracking-widest uppercase">
+                        The Brand Assets
                     </h1>
-                    <p className="text-red-500/80 text-sm md:text-lg tracking-[0.4em] uppercase font-mono">
-                        Quantum Data Mesh Apex Series
+                    <p className="text-gray-400 text-sm md:text-lg tracking-[0.2em] uppercase">
+                        Exclusive Quantum Karma Logo Experience
                     </p>
                 </div>
 
-                <QuantumLogo />
+                <AnimatedLogo />
 
                 <div className="mt-12 text-center">
-                    <p className="text-gray-500 text-xs tracking-widest uppercase mb-8">Legacy Assets</p>
-                    <div className="opacity-20 hover:opacity-100 transition-opacity">
-                        <AnimatedLogo isFloating={true} />
+                    <p className="text-red-500 text-xs tracking-[0.4em] uppercase mb-8 font-mono">Experimental Data Mesh Concepts</p>
+                    <div className="opacity-30 hover:opacity-100 transition-opacity">
+                        <QuantumLogo isFloating={true} />
                     </div>
                 </div>
 

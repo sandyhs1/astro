@@ -2,10 +2,13 @@
 
 import { useOnboarding } from "@/context/OnboardingContext";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { useState } from "react";
+import InitiationModal from "../features/InitiationModal";
 
 export default function Hero() {
     const { openModal } = useOnboarding();
     const { scrollY } = useScroll();
+    const [isInitiationOpen, setIsInitiationOpen] = useState(false);
 
     // Parallax and fade effects on scroll
     const y = useTransform(scrollY, [0, 500], [0, 150]);
@@ -60,13 +63,22 @@ export default function Hero() {
                         whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 215, 0, 0.15)" }}
                         whileTap={{ scale: 0.95 }}
                         transition={{ duration: 0.5, delay: 1.2 }}
-                        onClick={openModal}
+                        onClick={() => setIsInitiationOpen(true)}
                         className="px-8 md:px-10 py-4 md:py-5 bg-[#FFD700]/5 border border-[#FFD700]/40 text-[#FFD700] font-mono uppercase tracking-[0.2em] md:tracking-[0.3em] text-xs md:text-sm hover:text-white hover:border-[#FFD700] transition-all backdrop-blur-md shadow-[0_0_20px_rgba(255,215,0,0.1)] hover:shadow-[0_0_30px_rgba(255,215,0,0.3)]"
                     >
                         [ See My Decision Map ]
                     </motion.button>
                 </div>
             </motion.div>
+
+            <InitiationModal
+                isOpen={isInitiationOpen}
+                onClose={() => setIsInitiationOpen(false)}
+                onIniate={() => {
+                    setIsInitiationOpen(false);
+                    openModal();
+                }}
+            />
 
             {/* Scroll indicator */}
             <motion.div
