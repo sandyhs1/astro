@@ -5,6 +5,8 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useState } from "react";
 import InitiationModal from "../features/InitiationModal";
 
+
+
 export default function Hero() {
     const { openModal } = useOnboarding();
     const { scrollY } = useScroll();
@@ -16,6 +18,49 @@ export default function Hero() {
 
     return (
         <section className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-[#0a0500] z-0">
+            {/* Animated Parallax Mandala Background */}
+            <motion.div
+                style={{ y: useTransform(scrollY, [0, 1000], [0, 150]) }}
+                className="absolute inset-0 z-0 pointer-events-none opacity-[0.15] md:opacity-[0.25] mix-blend-screen flex items-center justify-center overflow-hidden"
+            >
+                {/* Glowing Radiant Light Rays behind Mandala */}
+                <div className="absolute w-[120vw] h-[120vw] md:w-[80vw] md:h-[80vw] max-w-[900px] max-h-[900px] bg-[radial-gradient(ellipse_at_center,rgba(255,215,0,0.15)_0%,transparent_60%)] origin-center animate-[spin_120s_linear_infinite]" />
+                <div className="absolute w-[100vw] h-[100vw] md:w-[60vw] md:h-[60vw] max-w-[800px] max-h-[800px] bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0deg,rgba(255,215,0,0.05)_45deg,transparent_90deg,rgba(255,215,0,0.05)_135deg,transparent_180deg,rgba(255,215,0,0.05)_225deg,transparent_270deg,rgba(255,215,0,0.05)_315deg,transparent_360deg)] mix-blend-screen origin-center animate-[spin_240s_linear_infinite_reverse]" />
+
+                {/* Floating Mystical Particles */}
+                {Array.from({ length: 30 }).map((_, i) => (
+                    <motion.div
+                        key={i}
+                        className="absolute w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-[#FFD700] mix-blend-screen shadow-[0_0_15px_rgba(255,215,0,0.8)]"
+                        initial={{
+                            x: (Math.random() - 0.5) * 800,
+                            y: (Math.random() - 0.5) * 800,
+                            scale: Math.random() * 0.5 + 0.5,
+                            opacity: Math.random() * 0.3 + 0.2
+                        }}
+                        animate={{
+                            x: (Math.random() - 0.5) * 1000,
+                            y: (Math.random() - 0.5) * 1000,
+                            opacity: [0.1, 0.7, 0.1],
+                            scale: [0.5, 1.2, 0.5]
+                        }}
+                        transition={{
+                            duration: Math.random() * 10 + 10,
+                            repeat: Infinity,
+                            repeatType: "reverse",
+                            ease: "easeInOut"
+                        }}
+                    />
+                ))}
+
+                {/* The Mandala */}
+                <motion.img
+                    src="/hero-bg.png"
+                    alt="Vedic Astrology Mandala Background"
+                    className="w-[100vw] h-[100vw] md:w-[70vw] md:h-[70vw] max-w-[800px] max-h-[800px] object-cover origin-center drop-shadow-[0_0_40px_rgba(255,215,0,0.25)] brightness-75 contrast-125 [mask-image:radial-gradient(circle_at_center,black_45%,transparent_70%)] relative z-10"
+                />
+            </motion.div>
+
             {/* Ambient Lighting / Quantum Void Effects */}
             <div className="absolute right-[-10%] top-[-10%] w-[60vh] h-[60vh] bg-[#FFD700]/10 blur-[150px] rounded-full pointer-events-none mix-blend-screen"></div>
             <div className="absolute left-[-10%] bottom-[-10%] w-[60vh] h-[60vh] bg-yellow-600/10 blur-[150px] rounded-full pointer-events-none mix-blend-screen"></div>
