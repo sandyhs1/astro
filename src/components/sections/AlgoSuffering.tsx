@@ -16,8 +16,31 @@ export default function AlgoSuffering() {
 
     return (
         <section ref={containerRef} className="relative min-h-[120vh] bg-[#12011A] flex items-center justify-center overflow-hidden py-24">
-            {/* Matrix-like Background */}
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(18,1,26,0.9),rgba(18,1,26,0.9)),url('https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-20"></div>
+            {/* Looping Hypnotic Background Animation */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                <motion.div
+                    animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 180, 270, 360] }}
+                    transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                    className="absolute -top-[50%] -left-[50%] w-[200%] h-[200%] bg-[conic-gradient(from_90deg_at_50%_50%,#050010_0%,#300060_50%,#050010_100%)] opacity-40 mix-blend-screen"
+                ></motion.div>
+                
+                <motion.div animate={{ y: [0, -30, 0], opacity: [0.1, 0.4, 0.1] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,215,0,0.2)_0%,transparent_60%)]"></motion.div>
+                
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:3rem_3rem] [transform:perspective(500px)_rotateX(60deg)_translateY(-100px)_translateZ(-200px)] opacity-30 [mask-image:linear-gradient(to_bottom,transparent,black)]"></div>
+                
+                {Array.from({ length: 20 }).map((_, i) => (
+                    <motion.div
+                        key={i}
+                        initial={{ y: '100vh', x: (Math.random() - 0.5) * 500 }}
+                        animate={{ y: '-20vh', x: (Math.random() - 0.5) * 500, opacity: [0, 0.6, 0] }}
+                        transition={{ duration: Math.random() * 8 + 6, repeat: Infinity, ease: "linear", delay: Math.random() * 5 }}
+                        className="absolute bottom-0 w-1.5 h-1.5 rounded-full bg-[#FFD700] mix-blend-screen shadow-[0_0_10px_rgba(255,215,0,0.8)]"
+                        style={{ left: `${Math.random() * 100}%` }}
+                    />
+                ))}
+            </div>
+            {/* Color Overlay for Text Readability */}
+            <div className="absolute inset-0 bg-[#05000a]/70 z-0"></div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl w-full px-6 z-10 items-center">
                 {/* Logic Gate Visuals - Parallax Up */}

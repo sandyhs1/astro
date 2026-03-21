@@ -71,7 +71,7 @@ export default function Kamasutra() {
                     </motion.div>
                 </div>
 
-                <motion.div style={{ x }} className="flex gap-8 md:gap-16 pl-6 md:pl-24 pr-[10vw] pt-24 items-center h-full">
+                <motion.div style={{ x }} className="flex w-max flex-nowrap gap-8 md:gap-16 pl-6 md:pl-24 pr-[10vw] pt-24 items-center h-full">
                     {cards.map((card, idx) => (
                         <div
                             key={card.id}
