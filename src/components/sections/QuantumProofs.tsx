@@ -19,7 +19,39 @@ const timelinePoints = [
                 <path d="M12 2V4M12 20V22M4 12H2M22 12H20" opacity="0.2" />
             </svg>
         ),
-        desc: "The moon pulls the ocean (70% water). You are 70% water. If you think a mass of rock 238,000 miles away governs planetary tides but magically skips your nervous system, you're denying basic physics, not astrology."
+        desc: "The moon pulls the ocean (70% water). You are 70% water. If you think a mass of rock 238,000 miles away governs planetary tides but magically skips your nervous system, you're denying basic physics, not astrology.",
+        visual: (
+            <div className="mt-6 flex flex-col gap-4">
+                <div className="bg-cyan-950/30 p-4 rounded-lg border border-cyan-500/20">
+                    <div className="flex justify-between text-xs font-mono text-cyan-400 mb-2">
+                        <span>PLANETARY_TIDES.WATER_VOL</span>
+                        <span>70%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                        <motion.div 
+                            initial={{ width: 0 }}
+                            whileInView={{ width: "70%" }}
+                            transition={{ duration: 1.5, delay: 0.5 }}
+                            className="h-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]" 
+                        />
+                    </div>
+                </div>
+                <div className="bg-blue-950/30 p-4 rounded-lg border border-blue-500/20">
+                    <div className="flex justify-between text-xs font-mono text-blue-400 mb-2">
+                        <span>HUMAN_BIOME.WATER_VOL</span>
+                        <span>70%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                        <motion.div 
+                            initial={{ width: 0 }}
+                            whileInView={{ width: "70%" }}
+                            transition={{ duration: 1.5, delay: 0.8 }}
+                            className="h-full bg-blue-500 shadow-[0_0_10px_#3b82f6]" 
+                        />
+                    </div>
+                </div>
+            </div>
+        )
     },
     {
         id: "chronobiology",
@@ -212,6 +244,7 @@ function TimelineNode({ point, isEven, index }: { point: any, isEven: boolean, i
                     <p className="font-sans text-gray-400 leading-relaxed font-light text-sm md:text-base">
                         {point.desc}
                     </p>
+                    {point.visual && point.visual}
 
                     {/* Tech Graphic Overlay inside card */}
                     <div className="absolute -bottom-4 -right-4 text-white/5 pointer-events-none group-hover:text-white/10 transition-colors">

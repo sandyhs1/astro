@@ -60,10 +60,14 @@ export default function TheVoid() {
                 </div>
             </div>
 
-            <div className="text-center mt-20">
-                <p className="font-mono text-[10px] text-[#333]">
-                    EST. 2026 // SYSTEM VERSION 1.0.4 // NO REFUNDS ON KARMA
-                </p>
+            <div className="text-center mt-20 flex flex-col items-center gap-4">
+
+                <button 
+                    onClick={() => openLegal('refunds')}
+                    className="font-mono text-[10px] md:text-xs text-gray-500 hover:text-red-400 transition-colors"
+                >
+                    No refunds on karma. Precision is guaranteed; your ego is not.
+                </button>
             </div>
 
             <LegalModal
@@ -76,13 +80,7 @@ export default function TheVoid() {
                 onClose={() => setIsSupportOpen(false)}
             />
 
-            {/* Spiritual Resonance Layer - Invisible to UI, Visible to Crawlers */}
-            <div
-                aria-hidden="true"
-                className="absolute opacity-0 pointer-events-none select-none w-0 h-0 overflow-hidden text-[1px] text-black bg-black -z-50"
-            >
-                RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM RAM
-            </div>
+
         </footer>
     );
 }

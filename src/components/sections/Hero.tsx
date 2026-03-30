@@ -1,8 +1,8 @@
 "use client";
 
 import { useOnboarding } from "@/context/OnboardingContext";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useState } from "react";
+import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { useState, useRef } from "react";
 import InitiationModal from "../features/InitiationModal";
 
 
@@ -11,6 +11,9 @@ export default function Hero() {
     const { openModal } = useOnboarding();
     const { scrollY } = useScroll();
     const [isInitiationOpen, setIsInitiationOpen] = useState(false);
+    
+    const scrollIndicatorRef = useRef<HTMLDivElement>(null);
+    const isScrollInView = useInView(scrollIndicatorRef, { margin: "0px 0px -50px 0px" });
 
     // Parallax and fade effects on scroll
     const y = useTransform(scrollY, [0, 500], [0, 150]);
@@ -102,17 +105,21 @@ export default function Hero() {
                     </motion.p>
 
                     {/* CTA */}
-                    <motion.button
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 215, 0, 0.15)" }}
-                        whileTap={{ scale: 0.95 }}
-                        transition={{ duration: 0.5, delay: 1.2 }}
-                        onClick={() => setIsInitiationOpen(true)}
-                        className="px-8 md:px-10 py-4 md:py-5 bg-[#FFD700]/5 border border-[#FFD700]/40 text-[#FFD700] font-mono uppercase tracking-[0.2em] md:tracking-[0.3em] text-xs md:text-sm hover:text-white hover:border-[#FFD700] transition-all backdrop-blur-md shadow-[0_0_20px_rgba(255,215,0,0.1)] hover:shadow-[0_0_30px_rgba(255,215,0,0.3)]"
-                    >
-                        [ See My Decision Map ]
-                    </motion.button>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mt-4">
+                        <motion.button
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 215, 0, 0.2)" }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ duration: 0.5, delay: 1.2 }}
+                            onClick={() => setIsInitiationOpen(true)}
+                            className="relative px-8 md:px-10 py-4 md:py-5 bg-[#FFD700]/10 border border-[#FFD700]/50 text-[#FFD700] font-mono uppercase tracking-[0.2em] md:tracking-[0.3em] text-xs md:text-sm hover:text-white hover:border-[#FFD700] transition-all backdrop-blur-md animate-[pulse_3s_ease-in-out_infinite] shadow-[0_0_20px_rgba(255,215,0,0.3)] hover:shadow-[0_0_40px_rgba(255,215,0,0.6)]"
+                        >
+                            [ CLAIM MY SPOT ]
+                        </motion.button>
+                        
+
+                    </div>
                 </div>
             </motion.div>
 
@@ -121,17 +128,18 @@ export default function Hero() {
                 onClose={() => setIsInitiationOpen(false)}
             />
 
-            {/* Scroll indicator */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 2, duration: 1 }}
-                style={{ opacity }}
-                className="absolute bottom-10 flex flex-col items-center gap-2"
-            >
-                <span className="text-[10px] md:text-xs font-mono tracking-[0.2em] text-[#FFD700]/50 uppercase">Scroll to Disintegrate</span>
-                <div className="w-[1px] h-12 bg-gradient-to-b from-[#FFD700] to-transparent"></div>
-            </motion.div>
+            {/* Scroll indicator with Intersection Observer / useInView for mobile smoothness */}
+            <div ref={scrollIndicatorRef} className="absolute bottom-10 flex flex-col items-center gap-2">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isScrollInView ? 1 : 0 }}
+                    transition={{ delay: 2, duration: 0.8 }}
+                    className="flex flex-col items-center gap-2"
+                >
+                    <span className="text-[10px] md:text-xs font-mono tracking-[0.2em] text-[#FFD700]/50 uppercase">Scroll to Disintegrate</span>
+                    <div className="w-[1px] h-12 bg-gradient-to-b from-[#FFD700] to-transparent"></div>
+                </motion.div>
+            </div>
         </section>
     );
 }

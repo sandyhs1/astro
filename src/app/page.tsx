@@ -3,6 +3,7 @@ import TheSlaughterhouse from "@/components/sections/TheSlaughterhouse";
 import TheMirror from "@/components/sections/TheMirror";
 import USP from "@/components/sections/USP";
 import TheStack from "@/components/sections/TheStack";
+
 import Benefits from "@/components/sections/Benefits";
 import MathVsMyth from "@/components/sections/MathVsMyth";
 import QuantumProofs from "@/components/sections/QuantumProofs";
@@ -24,6 +25,7 @@ export default function Home() {
       <TheMirror />
       <USP />
       <TheStack />
+
       <Benefits />
       <MathVsMyth />
       <QuantumProofs />

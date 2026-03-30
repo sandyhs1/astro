@@ -92,7 +92,7 @@ export default function FontsPage() {
 
     return (
         <>
-            <style>{`@import url('https://fonts.googleapis.com/css2?family=${allFonts}&display=swap');`}</style>
+            <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?family=${allFonts}&display=swap`} />
             <div style={{ minHeight: "100vh", background: "#08000d", padding: "4rem 1.5rem" }}>
                 <div style={{ maxWidth: "860px", margin: "0 auto" }}>
                     <p style={{ fontFamily: "monospace", color: "#FFD700", fontSize: "0.65rem", letterSpacing: "0.4em", textTransform: "uppercase", marginBottom: "0.5rem" }}>

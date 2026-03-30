@@ -26,7 +26,7 @@ export default function ExclusiveEntry() {
 
                     <button
                         onClick={openModal}
-                        className="px-12 py-5 bg-[#12011A] text-white text-lg font-bold uppercase tracking-widest hover:scale-105 transition-transform duration-300 shadow-2xl"
+                        className="relative px-12 py-5 bg-[#12011A] text-[#FFD700] text-lg font-bold uppercase tracking-widest hover:scale-105 transition-all duration-300 shadow-[0_0_30px_rgba(18,1,26,0.3)] hover:shadow-[0_0_50px_rgba(18,1,26,0.5)] animate-[pulse_3s_ease-in-out_infinite] hover:text-white"
                     >
                         CLAIM MY SPOT
                     </button>

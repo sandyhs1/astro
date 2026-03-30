@@ -20,7 +20,9 @@
     "react-dom": "19.2.3",
     "react-icons": "^5.5.0",
     "sass": "^1.97.3",
-    "tailwind-merge": "^3.4.0"
+    "swisseph-wasm": "^0.0.5",
+    "tailwind-merge": "^3.4.0",
+    "vedic-astro": "^0.1.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

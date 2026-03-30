@@ -6,51 +6,65 @@ import { useRouter } from "next/navigation";
 
 const stackCards = [
     {
-        title: "The Calibration",
-        subtitle: "Step 01",
+        title: "Forensic Decoding",
+        subtitle: "Phase 01",
         description: (
             <>
-                A 4-minute error shifts your entire destiny grid. We don&apos;t do horoscopes. We do <span className="text-white italic">forensic soul audits</span>. Precision is the only variable that matters.
+                We don&apos;t stop at basic D1 or D9 charts. We analyze <span className="text-[#D4AF37] italic">all Shodashavarga charts</span>, precise planetary degrees, Upapada Lagnas, ASV tables, Chalit, and Dashas for terrifying accuracy.
             </>
         ),
-        color: "#050505", // Obsidian
-        glow: "rgba(212, 175, 55, 0.15)", // Gold glow
+        color: "#050505", 
+        glow: "rgba(34, 211, 238, 0.15)", // Cyan glow
         insight: {
-            theme: "Protocol: Time_Lock",
-            revelation: "Validating star chart alignment. Ensuring absolute precision before target lock.",
-            command: "Lock Target"
+            theme: "Protocol: Sub_Atomic",
+            revelation: "Scraping multiple dimensional layers of the birth chart. Precision is the only variable."
         }
     },
     {
-        title: "The Download",
-        subtitle: "Step 02",
+        title: "Wealth & Career Architecture",
+        subtitle: "Phase 02",
         description: (
             <>
-                We calculate <span className="text-[#D4AF37] italic">algorithms</span>, not predictions. See your exact patterns in Love, Wealth, and Vitality. It&apos;s not magic. It&apos;s <span className="text-white font-medium">behavioral surveillance</span>.
+                Discover the hyper-specific algorithms of your <span className="text-white font-medium">Career Trajectory</span> and <span className="text-[#D4AF37] italic">Wealth Activation Periods</span>. Do the right thing at the exact right moment.
             </>
         ),
-        color: "#0D0A0A", // Very dark crimson tint
-        glow: "rgba(138, 3, 3, 0.2)", // Crimson glow
+        color: "#0B0805", 
+        glow: "rgba(212, 175, 55, 0.2)", // Gold glow
         insight: {
-            theme: "Protocol: Future_Architecture",
-            revelation: "Mapping subconscious wiring and forthcoming volatility events across all sectors.",
-            command: "Decode Now"
+            theme: "Protocol: Resource_Map",
+            revelation: "Identifying impending economic windfalls and mapping extreme high-leverage cycles."
         }
     },
     {
-        title: "The Execution",
-        subtitle: "Step 03",
+        title: "Karmic & Shadow Integration",
+        subtitle: "Phase 03",
         description: (
             <>
-                Timing is leverage. Reaction is mastery. We show you exactly <span className="text-[#D4AF37] italic">when to strike</span> and <span className="text-white font-medium">how to pivot</span>. Stop guessing. <span className="text-white italic font-medium">Dominate.</span>
+                Map your <span className="text-white italic">Relationship Karma</span> and deploy crucial <span className="text-red-400 font-medium ml-1">Psychological Shadow Work</span> to eradicate the recurring blind spots sabotaging your success.
             </>
         ),
-        color: "#121212", // Slightly lighter obsidian
-        glow: "rgba(255, 255, 255, 0.1)", // Pearl glow
+        color: "#0D0A0A", 
+        glow: "rgba(248, 113, 113, 0.15)", // Red glow
         insight: {
-            theme: "Protocol: Neural_Rewrite",
-            revelation: "Optimizing reaction delays. Aligning ego with cosmic authority for total dominion.",
-            command: "Execute"
+            theme: "Protocol: Ego_Death",
+            revelation: "Reverse-engineering subconscious limits and psychological wiring algorithms."
+        }
+    },
+    {
+        title: "Human Crafted Precision",
+        subtitle: "Phase 04",
+        description: (
+            <>
+                Zero bots. Zero templates. Every single calculation is completely <span className="text-[#D4AF37] italic">human-interpreted</span>. Receive your elite dossier and <span className="text-white font-medium">Action Plan</span> within 4 - 6 hours.
+            </>
+        ),
+        color: "#121212", 
+        glow: "rgba(255, 255, 255, 0.15)", // Pearl/White glow
+        insight: {
+            theme: "Protocol: Human_Intelligence",
+            revelation: "Ensuring 100% human validation. Delivery locked within a 4 to 6-hour surgical window.",
+            processFlow: "Input your birth details - Ask your questions - Kindly pay the Dakshina - Submit",
+            command: "Authorize"
         }
     }
 ];
@@ -65,14 +79,14 @@ export default function TheStack() {
     return (
         <div ref={containerRef} className="bg-[#050505] relative w-full pt-10">
             {stackCards.map((card, i) => {
-                const targetScale = 1 - (stackCards.length - i) * 0.04;
+                const targetScale = 1 - (stackCards.length - 1 - i) * 0.04;
                 return (
                     <StackCard
                         key={i}
                         index={i}
                         data={card}
                         progress={scrollYProgress}
-                        range={[i * 0.25, 1]}
+                        range={[i * (1 / stackCards.length), 1]}
                         targetScale={targetScale}
                     />
                 );
@@ -164,19 +178,35 @@ function StackCard({ index, data, progress, range, targetScale }: { index: numbe
                                 <p className="text-xl md:text-2xl text-white/70 font-light leading-relaxed italic" style={{ fontFamily: "var(--font-body)" }}>
                                     &quot;{data.insight.revelation}&quot;
                                 </p>
+
+                                {data.insight.processFlow && (
+                                    <div className="mt-8 font-mono text-xs md:text-sm text-[#FFD700] tracking-widest uppercase border-l-2 border-[#FFD700]/50 pl-4 py-3 bg-[#FFD700]/5">
+                                        <div className="text-white/50 mb-3 text-[10px]">EXECUTION_FLOW:</div>
+                                        <div className="flex flex-wrap gap-y-2 items-center">
+                                            {data.insight.processFlow.split(' - ').map((step: string, idx: number, arr: any[]) => (
+                                                <span key={idx} className="flex items-center">
+                                                    <span className="text-white/90">{step}</span>
+                                                    {idx < arr.length - 1 && <span className="mx-2 text-[#FFD700]/50 text-[10px]">►</span>}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="mt-auto pt-8 border-t border-white/10">
-                                <button
-                                    onClick={() => router.push('/reviews')}
-                                    className="group relative overflow-hidden px-8 py-4 bg-white text-black font-medium uppercase tracking-[0.2em] text-xs transition-all duration-500 float-right hover:text-white shadow-[0_0_30px_rgba(255,255,255,0.1)]"
-                                >
-                                    <span className="relative z-10 flex items-center gap-3">
-                                        {data.insight.command}
-                                    </span>
-                                    <div className="absolute inset-0 bg-[#D4AF37] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[0.16,1,0.3,1] z-0"></div>
-                                </button>
-                            </div>
+                            {data.insight.command && (
+                                <div className="mt-auto pt-8 border-t border-white/10">
+                                    <button
+                                        onClick={() => router.push('/reviews')}
+                                        className="group relative overflow-hidden px-8 py-4 bg-white text-black font-medium uppercase tracking-[0.2em] text-xs transition-all duration-500 float-right hover:text-white shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+                                    >
+                                        <span className="relative z-10 flex items-center gap-3">
+                                            {data.insight.command}
+                                        </span>
+                                        <div className="absolute inset-0 bg-[#D4AF37] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[0.16,1,0.3,1] z-0"></div>
+                                    </button>
+                                </div>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>

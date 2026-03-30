@@ -31,7 +31,7 @@ const archetypes = [
             </svg>
         ),
         frontDesc: "Convinces you that wearing a specific yellow sapphire will cure your bankruptcy.",
-        truthDesc: "It's a shiny rock, not a financial plan. True wealth requires ruthless strategy and execution, not magic stones."
+        truthDesc: "A yellow sapphire is a rock, not a financial strategy. True wealth requires ruthless strategy and execution, not magic stones."
     },
     {
         id: "fortune-cookie",
@@ -85,9 +85,15 @@ export default function TheSlaughterhouse() {
                             Astrology isn't a scam. <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A0303] to-[#FF4B4B] relative inline-block">
                                 Your astrologer is.
-                                {/* Glitch effect overlay on text */}
-                                <span className="absolute top-0 left-0 w-full h-full text-[#FF4B4B] opacity-50 mix-blend-screen translate-x-[2px] translate-y-[2px] blur-[1px]">Your astrologer is.</span>
-                                <span className="absolute top-0 left-0 w-full h-full text-white opacity-50 mix-blend-difference -translate-x-[2px] -translate-y-[2px]">Your astrologer is.</span>
+                                {/* Clean Glitch effect overlay on text */}
+                                <motion.span 
+                                    animate={{ x: [-2, 2, -1, 1, 0], opacity: [1, 0.8, 1, 0.9, 1] }} 
+                                    transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                                    className="absolute top-0 left-0 w-full h-full text-[#FF4B4B] opacity-50 mix-blend-screen -z-10 blur-[1px]"
+                                    aria-hidden="true"
+                                >
+                                    Your astrologer is.
+                                </motion.span>
                             </span>
                         </h2>
                     </div>
@@ -102,19 +108,6 @@ export default function TheSlaughterhouse() {
                     ))}
                 </div>
 
-                {/* Slogan Scroller */}
-                <div className="mt-32 overflow-hidden relative border-y border-red-500/20 py-4 bg-red-500/5">
-                    <motion.div style={{ x: xLeft }} className="whitespace-nowrap">
-                        <span className="text-[3rem] md:text-[5rem] text-[#12011A] stroke-text font-black opacity-40 tracking-tighter uppercase" style={{ fontFamily: "var(--font-unbounded)" }}>
-                            STOP FUNDING YOUR OWN DESTRUCTION. STOP FUNDING YOUR OWN DESTRUCTION.
-                        </span>
-                    </motion.div>
-                    <motion.div style={{ x: xRight }} className="whitespace-nowrap absolute top-4 left-0">
-                        <span className="text-[3rem] md:text-[5rem] text-transparent stroke-danger fade-danger font-black tracking-tighter uppercase" style={{ fontFamily: "var(--font-unbounded)" }}>
-                            THEY SELL FEAR, WE SELL DATA. THEY SELL FEAR, WE SELL DATA.
-                        </span>
-                    </motion.div>
-                </div>
             </div>
 
             <style jsx global>{`
