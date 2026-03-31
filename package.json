@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+    "@supabase/supabase-js": "^2.78.0",
     "clsx": "^2.1.1",
     "dodopayments": "^2.19.0",
     "framer-motion": "^12.33.0",

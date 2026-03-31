@@ -181,6 +181,28 @@ export default function OnboardingModal() {
             return;
         }
 
+        if (step === 4) {
+            // Save lead to Supabase *just before* the payment step (Step 5)
+            // Non-blocking approach: Send and don't await, let UI proceed unhindered
+            const tobString = formData.tob ? `${formData.tob} ${formData.tobAmPm}` : '';
+            fetch('/api/save-lead', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    dob: formData.dob,
+                    tob: tobString,
+                    pob: formData.pob,
+                    questions: formData.questions,
+                    paymentStatus: 'pending',
+                })
+            }).catch(err => console.error("Failed to capture Supabase lead:", err));
+
+            setStep(5);
+            return;
+        }
+
         if (step < 5) {
             setStep(step + 1);
         } else {
