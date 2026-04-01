@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-    throw new Error('Supabase environment variables are missing.');
-}
-
-// Create a Supabase client with the service role key to bypass RLS
-// DO NOT use this service role key in client-side code!
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
 export async function POST(req: Request) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+        console.error('❌ Supabase environment variables are missing.');
+        return NextResponse.json({ error: 'Database configuration missing' }, { status: 500 });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
     try {
         const body = await req.json();
         
