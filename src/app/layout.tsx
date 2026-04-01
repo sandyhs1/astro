@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, DM_Mono, Libre_Baskerville, Jost, Unbounded, Manrope } from "next/font/google";
+import { Playfair_Display, DM_Mono, Libre_Baskerville, Jost, Unbounded, Manrope, Syne, Space_Grotesk, Cormorant_Garamond, Outfit, Bricolage_Grotesque, Epilogue, Cinzel, Afacad, Bodoni_Moda, Italiana } from "next/font/google";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -37,6 +37,17 @@ const manrope = Manrope({
   subsets: ["latin"],
   weight: ["300", "400", "500"],
 });
+
+const syne = Syne({ variable: "--font-syne", subsets: ["latin"] });
+const spaceGrotesk = Space_Grotesk({ variable: "--font-space", subsets: ["latin"] });
+const cormorantGaramond = Cormorant_Garamond({ variable: "--font-cormorant", subsets: ["latin"], weight: ["300", "400", "600", "700"] });
+const outfit = Outfit({ variable: "--font-outfit", subsets: ["latin"] });
+const bricolageGrotesque = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"] });
+const epilogue = Epilogue({ variable: "--font-epilogue", subsets: ["latin"] });
+const cinzel = Cinzel({ variable: "--font-cinzel", subsets: ["latin"] });
+const afacad = Afacad({ variable: "--font-afacad", subsets: ["latin"] });
+const bodoniModa = Bodoni_Moda({ variable: "--font-bodoni", subsets: ["latin"] });
+const italiana = Italiana({ variable: "--font-italiana", subsets: ["latin"], weight: ["400"] });
 
 export const metadata: Metadata = {
   title: "Most Astrology Is Emotional Fraud. This Isn’t.",
@@ -78,7 +89,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         suppressHydrationWarning
-        className={`${playfair.variable} ${dmMono.variable} ${libreBaskerville.variable} ${jost.variable} ${unbounded.variable} ${manrope.variable} antialiased bg-[#12011A] text-white selection:bg-[#FFD700] selection:text-[#12011A]`}
+        className={`${playfair.variable} ${dmMono.variable} ${libreBaskerville.variable} ${jost.variable} ${unbounded.variable} ${manrope.variable} ${syne.variable} ${spaceGrotesk.variable} ${cormorantGaramond.variable} ${outfit.variable} ${bricolageGrotesque.variable} ${epilogue.variable} ${cinzel.variable} ${afacad.variable} ${bodoniModa.variable} ${italiana.variable} antialiased bg-[#12011A] text-white selection:bg-[#FFD700] selection:text-[#12011A]`}
       >
         <OnboardingProvider>
           <SmoothScroll>{children}</SmoothScroll>

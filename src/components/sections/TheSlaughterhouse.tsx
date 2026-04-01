@@ -81,15 +81,17 @@ export default function TheSlaughterhouse() {
             <div className="max-w-7xl w-full px-6 z-10">
                 <motion.div style={{ opacity }} className="text-center mb-24 relative">
                     <div className="inline-block relative">
-                        <h2 className="text-5xl md:text-8xl text-[#FBFBFB] mb-6 font-bold tracking-tighter" style={{ fontFamily: "var(--font-display)" }}>
-                            Astrology isn't a scam. <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A0303] to-[#FF4B4B] relative inline-block">
+                        <h2 className="font-[family-name:var(--font-cinzel)] uppercase leading-[1.2] mb-6">
+                            <span className="block font-medium text-[clamp(1.8rem,4vw,4.2rem)] tracking-[0.12em] text-white/80">
+                                Astrology isn&apos;t a scam.
+                            </span>
+                            <span className="block font-bold text-[clamp(2rem,4.5vw,4.8rem)] tracking-[0.1em] text-transparent bg-clip-text bg-gradient-to-r from-[#8A0303] via-[#FF4B4B] to-[#8A0303] relative">
                                 Your astrologer is.
-                                {/* Clean Glitch effect overlay on text */}
-                                <motion.span 
-                                    animate={{ x: [-2, 2, -1, 1, 0], opacity: [1, 0.8, 1, 0.9, 1] }} 
+                                {/* Cinematic glitch glow */}
+                                <motion.span
+                                    animate={{ x: [-2, 2, -1, 1, 0], opacity: [1, 0.8, 1, 0.9, 1] }}
                                     transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
-                                    className="absolute top-0 left-0 w-full h-full text-[#FF4B4B] opacity-50 mix-blend-screen -z-10 blur-[1px]"
+                                    className="absolute top-0 left-0 w-full h-full text-[#FF4B4B] opacity-40 mix-blend-screen -z-10 blur-[1px]"
                                     aria-hidden="true"
                                 >
                                     Your astrologer is.

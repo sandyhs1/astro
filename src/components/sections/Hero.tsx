@@ -1,145 +1,112 @@
 "use client";
 
-import { useOnboarding } from "@/context/OnboardingContext";
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
-import { useState, useRef } from "react";
+import { useScroll, useTransform, motion } from "framer-motion";
+import { useRef, useState } from "react";
 import InitiationModal from "../features/InitiationModal";
 
-
-
 export default function Hero() {
-    const { openModal } = useOnboarding();
-    const { scrollY } = useScroll();
+    const ref = useRef(null);
+    const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
     const [isInitiationOpen, setIsInitiationOpen] = useState(false);
-    
-    const scrollIndicatorRef = useRef<HTMLDivElement>(null);
-    const isScrollInView = useInView(scrollIndicatorRef, { margin: "0px 0px -50px 0px" });
 
-    // Parallax and fade effects on scroll
-    const y = useTransform(scrollY, [0, 500], [0, 150]);
-    const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+    // Slightly taller initial bars so title has more breathing room from top
+    const topBarH = useTransform(scrollYProgress, [0, 0.4], ["8vh", "50vh"]);
+    const botBarH = useTransform(scrollYProgress, [0, 0.4], ["8vh", "50vh"]);
+    const scale = useTransform(scrollYProgress, [0, 0.4], [1, 0.9]);
+    const opacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
 
     return (
-        <section className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-[#0a0500] z-0">
-            {/* Animated Parallax Mandala Background */}
-            <motion.div
-                style={{ y: useTransform(scrollY, [0, 1000], [0, 150]) }}
-                className="absolute inset-0 z-0 pointer-events-none opacity-[0.15] md:opacity-[0.25] mix-blend-screen flex items-center justify-center overflow-hidden"
-            >
-                {/* Glowing Radiant Light Rays behind Mandala */}
-                <div className="absolute w-[120vw] h-[120vw] md:w-[80vw] md:h-[80vw] max-w-[900px] max-h-[900px] bg-[radial-gradient(ellipse_at_center,rgba(255,215,0,0.15)_0%,transparent_60%)] origin-center animate-[spin_120s_linear_infinite]" />
-                <div className="absolute w-[100vw] h-[100vw] md:w-[60vw] md:h-[60vw] max-w-[800px] max-h-[800px] bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0deg,rgba(255,215,0,0.05)_45deg,transparent_90deg,rgba(255,215,0,0.05)_135deg,transparent_180deg,rgba(255,215,0,0.05)_225deg,transparent_270deg,rgba(255,215,0,0.05)_315deg,transparent_360deg)] mix-blend-screen origin-center animate-[spin_240s_linear_infinite_reverse]" />
+        <section ref={ref} className="relative w-full h-[160vh] bg-black">
+            <div className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center bg-[#020202]">
 
-                {/* Floating Mystical Particles */}
-                {Array.from({ length: 30 }).map((_, i) => (
-                    <motion.div
-                        key={i}
-                        className="absolute w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-[#FFD700] mix-blend-screen shadow-[0_0_15px_rgba(255,215,0,0.8)]"
-                        initial={{
-                            x: (Math.random() - 0.5) * 800,
-                            y: (Math.random() - 0.5) * 800,
-                            scale: Math.random() * 0.5 + 0.5,
-                            opacity: Math.random() * 0.3 + 0.2
-                        }}
-                        animate={{
-                            x: (Math.random() - 0.5) * 1000,
-                            y: (Math.random() - 0.5) * 1000,
-                            opacity: [0.1, 0.7, 0.1],
-                            scale: [0.5, 1.2, 0.5]
-                        }}
-                        transition={{
-                            duration: Math.random() * 10 + 10,
-                            repeat: Infinity,
-                            repeatType: "reverse",
-                            ease: "easeInOut"
-                        }}
-                    />
-                ))}
-
-                {/* The Mandala */}
-                <motion.img
-                    src="/hero-bg.png"
-                    alt="Vedic Astrology Mandala Background"
-                    className="w-[100vw] h-[100vw] md:w-[70vw] md:h-[70vw] max-w-[800px] max-h-[800px] object-cover origin-center drop-shadow-[0_0_40px_rgba(255,215,0,0.25)] brightness-75 contrast-125 [mask-image:radial-gradient(circle_at_center,black_45%,transparent_70%)] relative z-10"
+                {/* Slow ambient sweep */}
+                <motion.div
+                    animate={{ left: ["-60%", "160%"] }}
+                    transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+                    className="absolute top-0 bottom-0 w-[35vw] bg-gradient-to-r from-transparent via-white/[0.025] to-transparent skew-x-[-15deg] pointer-events-none blur-2xl z-0"
                 />
-            </motion.div>
 
-            {/* Ambient Lighting / Quantum Void Effects */}
-            <div className="absolute right-[-10%] top-[-10%] w-[60vh] h-[60vh] bg-[#FFD700]/10 blur-[150px] rounded-full pointer-events-none mix-blend-screen"></div>
-            <div className="absolute left-[-10%] bottom-[-10%] w-[60vh] h-[60vh] bg-yellow-600/10 blur-[150px] rounded-full pointer-events-none mix-blend-screen"></div>
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[linear-gradient(to_right,#FFD700_1px,transparent_1px),linear-gradient(to_bottom,#FFD700_1px,transparent_1px)] bg-[size:48px_48px]"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(255,215,0,0.03),transparent)] pointer-events-none z-0" />
 
-            <motion.div
-                style={{ y, opacity }}
-                className="z-10 flex flex-col justify-center px-6 md:px-12 lg:px-24 max-w-7xl w-full mx-auto"
-            >
-                <div className="flex flex-col gap-8 md:gap-10 items-start">
-                    <motion.h1
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 1.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                        className="text-5xl sm:text-7xl md:text-8xl lg:text-[7rem] text-[#FBFBFB] leading-[1.05] tracking-tight font-medium mb-6"
-                        style={{ fontFamily: 'var(--font-display)' }}
+                <motion.div
+                    style={{ scale, opacity }}
+                    className="z-10 flex flex-col items-center justify-center text-center px-6 w-full"
+                >
+                    {/* Overline */}
+                    <motion.p
+                        initial={{ opacity: 0, letterSpacing: "0.8em" }}
+                        animate={{ opacity: 0.4, letterSpacing: "0.55em" }}
+                        transition={{ duration: 2.5, delay: 0.3 }}
+                        className="font-[family-name:var(--font-cinzel)] text-[0.6rem] text-white tracking-[0.55em] uppercase mb-10"
                     >
-                        Don&apos;t chase. <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#FFF8D6] to-[#af8702] italic pr-2">Attract.</span> <br />
-                        <span className="font-sans font-light tracking-tighter" style={{ fontFamily: 'var(--font-body)' }}>On command.</span>
+                        Vedic Intelligence
+                    </motion.p>
+
+                    {/* Main Title — The Sovereign */}
+                    <motion.h1
+                        initial={{ opacity: 0, y: 24 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 1.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                        className="font-[family-name:var(--font-cinzel)] uppercase leading-[1.15] mt-6"
+                    >
+                        <span className="block font-medium text-[clamp(2rem,5.5vw,5.5rem)] tracking-[0.18em] text-white/90">
+                            Don&apos;t chase.
+                        </span>
+                        <span className="block font-bold text-[clamp(3rem,8vw,8.5rem)] tracking-[0.1em] text-transparent bg-clip-text bg-gradient-to-r from-[#C9A84C] via-[#F5E6A3] to-[#C9A84C] leading-[1.05] my-1">
+                            Attract.
+                        </span>
+                        <span className="block font-light text-[clamp(1rem,2.5vw,2.2rem)] tracking-[0.45em] text-white/60 mt-1">
+                            On Command.
+                        </span>
                     </motion.h1>
 
+                    {/* Divider */}
                     <motion.div
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: "8rem" }}
-                        transition={{ duration: 1, delay: 0.6 }}
-                        className="h-[2px] bg-[#FFD700] w-24 md:w-32"
-                    ></motion.div>
+                        initial={{ scaleY: 0 }}
+                        animate={{ scaleY: 1 }}
+                        transition={{ duration: 1.2, delay: 1.2, ease: "easeOut" }}
+                        className="w-px h-14 bg-gradient-to-b from-transparent via-white/20 to-transparent my-8 origin-top"
+                    />
 
+                    {/* Subtext — clearly legible */}
                     <motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ duration: 1, delay: 0.8 }}
-                        className="text-sm md:text-lg text-[#FFD700]/60 max-w-2xl leading-relaxed font-light tracking-wide uppercase"
-                        style={{ fontFamily: "var(--font-manrope)" }}
+                        transition={{ duration: 1.5, delay: 1.5 }}
+                        className="font-[family-name:var(--font-cinzel)] font-light text-white/70 text-[0.65rem] tracking-[0.35em] uppercase max-w-xs leading-[2.4] text-center mb-3"
                     >
-                        The universe has favorites. Be one of them. <br />
-                        <span className="text-white bg-[#FFD700]/5 border border-[#FFD700]/20 px-3 py-1.5 md:py-1 mt-4 inline-block rounded md:whitespace-nowrap normal-case">We map your personal &apos;God Mode&apos; cycles so you never waste energy on a bad day again.</span>
+                        The universe has favorites. Be one of them.
+                    </motion.p>
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1.5, delay: 1.8 }}
+                        className="font-[family-name:var(--font-manrope)] font-light text-white/45 text-[0.7rem] tracking-[0.12em] max-w-sm leading-[2.4] text-center mb-12"
+                    >
+                        We map your personal &apos;God Mode&apos; cycles so you never waste energy on a bad day again.
                     </motion.p>
 
                     {/* CTA */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mt-4">
-                        <motion.button
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 215, 0, 0.2)" }}
-                            whileTap={{ scale: 0.95 }}
-                            transition={{ duration: 0.5, delay: 1.2 }}
-                            onClick={() => setIsInitiationOpen(true)}
-                            className="relative px-8 md:px-10 py-4 md:py-5 bg-[#FFD700]/10 border border-[#FFD700]/50 text-[#FFD700] font-mono uppercase tracking-[0.2em] md:tracking-[0.3em] text-xs md:text-sm hover:text-white hover:border-[#FFD700] transition-all backdrop-blur-md animate-[pulse_3s_ease-in-out_infinite] shadow-[0_0_20px_rgba(255,215,0,0.3)] hover:shadow-[0_0_40px_rgba(255,215,0,0.6)]"
-                        >
-                            [ CLAIM MY SPOT ]
-                        </motion.button>
-                        
-
-                    </div>
-                </div>
-            </motion.div>
-
-            <InitiationModal
-                isOpen={isInitiationOpen}
-                onClose={() => setIsInitiationOpen(false)}
-            />
-
-            {/* Scroll indicator with Intersection Observer / useInView for mobile smoothness */}
-            <div ref={scrollIndicatorRef} className="absolute bottom-10 flex flex-col items-center gap-2">
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: isScrollInView ? 1 : 0 }}
-                    transition={{ delay: 2, duration: 0.8 }}
-                    className="flex flex-col items-center gap-2"
-                >
-                    <span className="text-[10px] md:text-xs font-mono tracking-[0.2em] text-[#FFD700]/50 uppercase">Scroll to Disintegrate</span>
-                    <div className="w-[1px] h-12 bg-gradient-to-b from-[#FFD700] to-transparent"></div>
+                    <motion.button
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1.2, delay: 2.1 }}
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setIsInitiationOpen(true)}
+                        className="group relative px-10 py-4 border border-white/15 text-white/60 hover:text-white hover:border-white/30 uppercase tracking-[0.4em] text-[0.6rem] font-[family-name:var(--font-cinzel)] transition-all duration-500 overflow-hidden"
+                    >
+                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+                        Initiate Sequence
+                    </motion.button>
                 </motion.div>
+
+                {/* Letterbox bars */}
+                <motion.div style={{ height: topBarH }} className="absolute top-0 left-0 w-full bg-black z-50 pointer-events-none" />
+                <motion.div style={{ height: botBarH }} className="absolute bottom-0 left-0 w-full bg-black z-50 pointer-events-none" />
             </div>
+
+            <InitiationModal isOpen={isInitiationOpen} onClose={() => setIsInitiationOpen(false)} />
         </section>
     );
 }

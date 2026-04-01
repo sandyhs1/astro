@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaTimes, FaArrowRight, FaCheck, FaLock, FaShieldAlt } from "react-icons/fa";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 import emailjs from '@emailjs/browser';
 
 // 24 distinct identity insights — selected by a multi-factor hash of birth data
@@ -65,24 +66,43 @@ export default function OnboardingModal() {
     const [step, setStep] = useState(1);
     const [showPayment, setShowPayment] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [showRazorpayIframe, setShowRazorpayIframe] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [countdown, setCountdown] = useState(60);
     const [wowRevealed, setWowRevealed] = useState(false);
-    const [isDecoding, setIsDecoding] = useState(false); // micro-pause between step 3 → 4
+    const [isDecoding, setIsDecoding] = useState(false);
     const wowTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const [formData, setFormData] = useState({
-        fullName: "",
-        email: "",
-        dob: "",
-        tob: "",
-        tobAmPm: "AM",
-        pob: "",
-        questions: ""
-    });
+
+    // ─── Individual field states for zero-lag input ────────────────────────────
+    // Using separate states instead of a single object prevents spreading on
+    // every keystroke – the single biggest cause of form sluggishness.
+    const [fullName, setFullName] = useState("");
+    const [email, setEmail] = useState("");
+    const [dob, setDob] = useState("");
+    const [tob, setTob] = useState("");
+    const [tobAmPm, setTobAmPm] = useState("AM");
+    const [pob, setPob] = useState("");
+    const [questions, setQuestions] = useState("");
+
+    // Stable formData object — only reconstructed when we actually need it
+    // (on submit / payment). Not used in onChange handlers.
+    const formData = useMemo(() => ({
+        fullName, email, dob, tob, tobAmPm, pob, questions
+    }), [fullName, email, dob, tob, tobAmPm, pob, questions]);
+
     const [error, setError] = useState<string | null>(null);
 
-    const firstName = formData.fullName.trim().split(" ")[0] || "you";
-    const identityInsight = generateIdentityInsight(formData.dob, formData.fullName, formData.pob);
+    const firstName = useMemo(() => fullName.trim().split(" ")[0] || "you", [fullName]);
+    const identityInsight = useMemo(() => generateIdentityInsight(dob, fullName, pob), [dob, fullName, pob]);
+
+    // Stable onChange handlers — no re-creation on every render
+    const handleFullName = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value), []);
+    const handleEmail = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value), []);
+    const handleDob = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setDob(e.target.value), []);
+    const handleTob = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setTob(e.target.value), []);
+    const handleTobAmPm = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setTobAmPm(e.target.value), []);
+    const handlePob = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setPob(e.target.value), []);
+    const handleQuestions = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => setQuestions(e.target.value), []);
 
     // Clear error when changing steps
     useEffect(() => {
@@ -221,7 +241,13 @@ export default function OnboardingModal() {
             if (savedData) {
                 try {
                     const parsedData = JSON.parse(savedData);
-                    setFormData(parsedData);
+                    setFullName(parsedData.fullName || "");
+                    setEmail(parsedData.email || "");
+                    setDob(parsedData.dob || "");
+                    setTob(parsedData.tob || "");
+                    setTobAmPm(parsedData.tobAmPm || "AM");
+                    setPob(parsedData.pob || "");
+                    setQuestions(parsedData.questions || "");
                     setShowSuccess(true);
 
                     // Trigger email notification automatically
@@ -235,7 +261,7 @@ export default function OnboardingModal() {
                         tob: `${parsedData.tob} ${parsedData.tobAmPm}`,
                         pob: parsedData.pob,
                         questions: parsedData.questions,
-                        paymentStatus: "Success (Automated Dodo)",
+                        paymentStatus: "Success (Automated Gateway Payment)",
                         transactionId: transactionId,
                         submissionTime: submissionTime
                     };
@@ -260,39 +286,14 @@ export default function OnboardingModal() {
         }
     }, [showSuccess]);
 
-    const handleDodoPayment = async (currency: 'INR' | 'USD') => {
+    const handleRazorpayPayment = async () => {
         setIsProcessing(true);
-
-        const productId = currency === 'USD'
-            ? process.env.NEXT_PUBLIC_DODO_PRODUCT_ID_USD
-            : process.env.NEXT_PUBLIC_DODO_PRODUCT_ID_INR;
-
-        // Persist form data before redirecting
+        // Save form data before leaving
         localStorage.setItem('onboardingFormData', JSON.stringify(formData));
-
-        try {
-            const response = await fetch('/api/create-dodo-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    productId,
-                    customerEmail: formData.email,
-                    customerName: formData.fullName,
-                    currency
-                }),
-            });
-
-            const data = await response.json();
-            if (data.checkout_url) {
-                window.location.href = data.checkout_url;
-            } else {
-                throw new Error(data.error || "Failed to get checkout URL");
-            }
-        } catch (error) {
-            console.error("Dodo Payment Error:", error);
-            alert("Payment initialization failed. Please try again.");
-            setIsProcessing(false);
-        }
+        // Razorpay blocks iframes (X-Frame-Options: DENY) — open in new tab instead
+        window.open(razorpayPaymentLink, '_blank', 'noopener,noreferrer');
+        setShowRazorpayIframe(true); // Show the "I paid" confirmation overlay
+        setIsProcessing(false);
     };
 
     const handleVerification = async () => {
@@ -337,21 +338,21 @@ export default function OnboardingModal() {
         setShowPayment(false);
         setShowSuccess(false);
         setWowRevealed(false);
-        setFormData({
-            fullName: "",
-            email: "",
-            dob: "",
-            tob: "",
-            tobAmPm: "AM",
-            pob: "",
-            questions: ""
-        });
+        setFullName("");
+        setEmail("");
+        setDob("");
+        setTob("");
+        setTobAmPm("AM");
+        setPob("");
+        setQuestions("");
     };
 
     const handleCloseSuccess = () => {
         handleClose();
         router.push('/myths');
     };
+
+    const razorpayPaymentLink = "https://razorpay.com/payment-link/plink_SXrL6hUxIpAjCc";
 
     if (!isOpen && !showSuccess) return null;
 
@@ -483,35 +484,35 @@ export default function OnboardingModal() {
                             <div>
                                 <h4 className="font-bold text-sm text-gray-800 mb-1">Global Payment Suite</h4>
                                 <p className="text-xs text-gray-600 leading-relaxed">
-                                    Choose your preferred currency. Secure payment processed globally via Dodo Payments.
+                                    Choose your preferred currency. Secure payment processed globally via Razorpay & Polar.sh.
                                 </p>
                             </div>
                         </div>
 
-                        {/* Payment Buttons — DO NOT MODIFY */}
+                        {/* Payment Target Buttons */}
                         <div className="grid grid-cols-1 gap-3">
                             <motion.button
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
-                                onClick={() => handleDodoPayment('INR')}
+                                onClick={handleRazorpayPayment}
                                 disabled={isProcessing}
                                 className="w-full bg-[#111111] text-white py-4 rounded-xl font-bold text-lg hover:bg-black transition-all shadow-lg flex items-center justify-center gap-3 relative overflow-hidden group"
                             >
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                                <span>Pay in INR (₹4,799)</span>
+                                <span>Pay in INR (₹4,799) - Razorpay</span>
                                 <FaArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
                             </motion.button>
 
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => handleDodoPayment('USD')}
-                                disabled={isProcessing}
+                            <a
+                                href="https://buy.polar.sh/polar_cl_EFeCp21opdRhscmMBhyZd9kdQDSj2uVuuk48l2GTHNq"
+                                data-polar-checkout
+                                data-polar-checkout-theme="dark"
+                                onClick={() => { localStorage.setItem('onboardingFormData', JSON.stringify(formData)); }}
                                 className="w-full bg-white text-[#111111] border-2 border-[#111111] py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all shadow-md flex items-center justify-center gap-3 relative overflow-hidden group"
                             >
-                                <span>Pay in USD ($97.30)</span>
+                                <span>Pay in USD ($74) - Polar</span>
                                 <FaArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
-                            </motion.button>
+                            </a>
                         </div>
 
                         <div className="border-t border-gray-100 pt-4 mt-6">
@@ -546,11 +547,84 @@ export default function OnboardingModal() {
         );
     }
 
+    // ─── RAZORPAY PAYMENT CONFIRMATION OVERLAY ────────────────────────────────
+    if (showRazorpayIframe) {
+        return (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="fixed inset-0 z-[120] flex items-center justify-center bg-black/95 backdrop-blur-xl p-6"
+            >
+                <motion.div
+                    initial={{ scale: 0.95, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    className="w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden"
+                >
+                    {/* Header */}
+                    <div className="border-b border-white/8 px-6 py-5 flex items-center justify-between">
+                        <span className="font-[family-name:var(--font-cinzel)] text-white/60 text-xs tracking-[0.4em] uppercase">Payment</span>
+                        <button onClick={() => setShowRazorpayIframe(false)} className="text-white/30 hover:text-white transition-colors">
+                            <FaTimes />
+                        </button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="px-6 py-10 text-center">
+                        {/* Pulsing indicator */}
+                        <div className="relative w-16 h-16 mx-auto mb-8">
+                            <motion.div
+                                animate={{ scale: [1, 1.6, 1], opacity: [0.5, 0, 0.5] }}
+                                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                className="absolute inset-0 rounded-full border border-[#C9A84C]/40"
+                            />
+                            <motion.div
+                                animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0, 0.3] }}
+                                transition={{ duration: 2, delay: 0.5, repeat: Infinity, ease: "easeInOut" }}
+                                className="absolute inset-0 rounded-full border border-[#C9A84C]/20"
+                            />
+                            <div className="w-full h-full rounded-full bg-[#C9A84C]/10 flex items-center justify-center">
+                                <FaLock className="text-[#C9A84C] text-lg" />
+                            </div>
+                        </div>
+
+                        <p className="font-[family-name:var(--font-cinzel)] text-white/90 text-sm tracking-[0.2em] uppercase mb-3">
+                            Secure checkout opened
+                        </p>
+                        <p className="font-[family-name:var(--font-manrope)] text-white/40 text-xs leading-relaxed mb-10">
+                            Complete your payment in the tab that just opened.<br />
+                            Once done, return here and confirm below.
+                        </p>
+
+                        {/* Confirm button */}
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={handleVerification}
+                            disabled={isProcessing}
+                            className="w-full py-4 bg-[#C9A84C] text-black font-[family-name:var(--font-cinzel)] text-xs tracking-[0.35em] uppercase font-bold rounded-xl hover:bg-[#F5E6A3] transition-colors flex items-center justify-center gap-3 mb-3"
+                        >
+                            <FaCheck className="text-sm" />
+                            I&apos;ve Paid Successfully
+                        </motion.button>
+
+                        <button
+                            onClick={() => window.open(razorpayPaymentLink, '_blank', 'noopener,noreferrer')}
+                            className="w-full py-3 text-white/30 hover:text-white/60 font-[family-name:var(--font-cinzel)] text-[0.6rem] tracking-[0.3em] uppercase transition-colors"
+                        >
+                            Reopen payment page
+                        </button>
+                    </div>
+                </motion.div>
+            </motion.div>
+        );
+    }
+
     // ─── MAIN ONBOARDING MODAL ─────────────────────────────────────────────────
     const totalSteps = 5;
 
     return (
         <AnimatePresence>
+            <Script src="https://cdn.jsdelivr.net/npm/@polar-sh/checkout@0.1/dist/embed.global.js" strategy="lazyOnload" data-auto-init />
             {isOpen && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -653,7 +727,7 @@ export default function OnboardingModal() {
                                                 <input
                                                     type="text"
                                                     value={formData.fullName}
-                                                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                                    onChange={handleFullName}
                                                     className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
                                                     placeholder="What do people call you?"
                                                 />
@@ -663,7 +737,7 @@ export default function OnboardingModal() {
                                                 <input
                                                     type="email"
                                                     value={formData.email}
-                                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                    onChange={handleEmail}
                                                     className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
                                                     placeholder="Where should we send your report?"
                                                 />
@@ -697,7 +771,7 @@ export default function OnboardingModal() {
                                                     <input
                                                         type="date"
                                                         value={formData.dob}
-                                                        onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                                                        onChange={handleDob}
                                                         className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
                                                     />
                                                 </div>
@@ -707,12 +781,12 @@ export default function OnboardingModal() {
                                                         <input
                                                             type="time"
                                                             value={formData.tob}
-                                                            onChange={(e) => setFormData({ ...formData, tob: e.target.value })}
+                                                            onChange={handleTob}
                                                             className="w-2/3 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
                                                         />
                                                         <select
                                                             value={formData.tobAmPm}
-                                                            onChange={(e) => setFormData({ ...formData, tobAmPm: e.target.value })}
+                                                            onChange={handleTobAmPm}
                                                             className="w-1/3 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
                                                         >
                                                             <option value="AM">AM</option>
@@ -727,7 +801,7 @@ export default function OnboardingModal() {
                                                 <input
                                                     type="text"
                                                     value={formData.pob}
-                                                    onChange={(e) => setFormData({ ...formData, pob: e.target.value })}
+                                                    onChange={handlePob}
                                                     className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
                                                     placeholder="Where did you enter this chaos called Earth?"
                                                 />
@@ -771,7 +845,7 @@ export default function OnboardingModal() {
                                         <div>
                                             <textarea
                                                 value={formData.questions}
-                                                onChange={(e) => setFormData({ ...formData, questions: e.target.value })}
+                                                onChange={handleQuestions}
                                                 className="w-full h-40 md:h-48 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors resize-none text-sm md:text-base rounded-lg"
                                                 placeholder="Ask us anything — love, career, life direction, patterns you can't shake. The more specific you are, the more precise your report. (e.g. Why do I attract unavailable partners? When will I get promoted? Is this year good for marriage?)"
                                             />
