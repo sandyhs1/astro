@@ -12,11 +12,16 @@ const plans = [
     desc: 'The reality check package. Get the exact timelines for your life.',
     icon: Zap,
     features: [
-      'Complete Birth Chart Decoding',
-      '5-Year Career Trajectory',
-      'Relationship Karma & Timing',
-      'Wealth Activation Periods',
+      'Complete Shodashavarga (D-1 to D-16) Audit',
+      '3-Year High-Resolution Career Trajectory',
+      'Relationship Karma & Red-Flag Mapping',
+      'The 12-Month Crisis Avoidance Map',
+      'Dasha Transition Timeline & Impacts',
+      'Powerful Custom Mantras',
+      'DIY Rituals at Home',
       'Private PDF Download',
+      'Email Support',
+      'Guaranteed Delivery within 24 hours',
     ],
     popular: false,
     accentColor: 'hsl(245,60%,55%)',
@@ -28,11 +33,19 @@ const plans = [
     desc: 'For those who want zero surprises. Every single detail mapped out.',
     icon: Crown,
     features: [
-      'Everything in Essential',
-      'Psychological Shadow Work',
-      'Customized Action Plan',
-      'Human-Verified Analysis',
-      'Priority delivery options',
+      'Everything in the Essential Plan +',
+      'Direct WhatsApp Support Access',
+      '3 Direct Follow-Up Questions (Valid 7 days)',
+      '- 3 months free Early Access to our upcoming YNTRA WebApp (75+ features)*',
+      'Deep Psychological Shadow Work & Trauma Coding',
+      'Generational Curses & Ancestral Debt Decoding',
+      'Double Human-Verified Analysis',
+      'Exact Marriage / Separation Timelines',
+      'Love Life & Relationship Analysis Data',
+      'Favorable Property & Real-Estate Windows',
+      'Custom Corporate/Business Scaling Strategy',
+      'Recurring Patterns & Loops Identified',
+      'The No-BS Clarity Guarantee',
     ],
     popular: true,
     accentColor: 'hsl(30,80%,55%)',
@@ -126,13 +139,13 @@ export default function PricingSection() {
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24, flexGrow: 1 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20, flexGrow: 1 }}>
                   {p.features.map((f, j) => (
                     <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                      <div style={{ width: 18, height: 18, borderRadius: '50%', background: p.popular ? grad : 'hsl(240,15%,20%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                        <Check size={10} color={p.popular ? '#fff' : 'hsl(30,80%,55%)'} />
+                      <div style={{ width: 16, height: 16, borderRadius: '50%', background: p.popular ? grad : 'hsl(240,15%,20%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                        <Check size={10} color={p.popular ? '#fff' : 'hsl(30,80%,55%)'} strokeWidth={3} />
                       </div>
-                      <span style={{ color: 'hsl(40 33% 97% / 0.8)', fontSize: '0.8125rem', lineHeight: 1.4 }}>{f}</span>
+                      <span style={{ color: 'hsl(40 33% 97% / 0.85)', fontSize: '0.8125rem', lineHeight: 1.35, letterSpacing: '-0.01em' }}>{f}</span>
                     </div>
                   ))}
                 </div>

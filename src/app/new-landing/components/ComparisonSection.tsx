@@ -10,7 +10,7 @@ const comp = [
   { f:'Tells you exactly which month you might get laid off', t:false, u:true },
   { f:'Explains why your last relationship failed', t:false, u:true },
   { f:'Secretly takes a 30% cut from the jeweler', t:true, u:false },
-  { f:'50+ pages of hard data and timelines', t:false, u:true },
+  { f:'Dynamic, hyper-personalized report and timelines', t:false, u:true },
   { f:'Actionable advice for your bank account', t:false, u:true },
   { f:'One-time honest price', t:false, u:true },
 ];
