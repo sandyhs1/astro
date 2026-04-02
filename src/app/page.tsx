@@ -1,41 +1,44 @@
-import Hero from "@/components/sections/Hero";
-import TheSlaughterhouse from "@/components/sections/TheSlaughterhouse";
-import TheMirror from "@/components/sections/TheMirror";
-import USP from "@/components/sections/USP";
-import TheStack from "@/components/sections/TheStack";
-
-import Benefits from "@/components/sections/Benefits";
-import MathVsMyth from "@/components/sections/MathVsMyth";
-import QuantumProofs from "@/components/sections/QuantumProofs";
-import Kamasutra from "@/components/sections/Kamasutra";
-import DashaClock from "@/components/sections/DashaClock";
-import AlgoSuffering from "@/components/sections/AlgoSuffering";
-import InstantGratification from "@/components/sections/InstantGratification";
-import FAQ from "@/components/sections/FAQ";
-import ExclusiveEntry from "@/components/sections/ExclusiveEntry";
-import TheVoid from "@/components/sections/TheVoid";
-import FloatingLogo from "@/components/ui/FloatingLogo";
+import './new-landing/new-landing.css';
+import Navbar from './new-landing/components/Navbar';
+import HeroSection from './new-landing/components/HeroSection';
+import MarqueeSection from './new-landing/components/MarqueeSection';
+import ProblemSection from './new-landing/components/ProblemSection';
+import FearFactorySection from './new-landing/components/FearFactorySection';
+import SavageQuoteSection from './new-landing/components/SavageQuoteSection';
+import TruthBombSection from './new-landing/components/TruthBombSection';
+import IntroSection from './new-landing/components/IntroSection';
+import LifeDomainsSection from './new-landing/components/LifeDomainsSection';
+import HowItWorksSection from './new-landing/components/HowItWorksSection';
+import StackCardsSection from './new-landing/components/StackCardsSection';
+import ComparisonSection from './new-landing/components/ComparisonSection';
+import SocialProofBar from './new-landing/components/SocialProofBar';
+import TestimonialsSection from './new-landing/components/TestimonialsSection';
+import PricingSection from './new-landing/components/PricingSection';
+import FAQSection from './new-landing/components/FAQSection';
+import CTASection from './new-landing/components/CTASection';
+import FooterSection from './new-landing/components/FooterSection';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#12011A]">
-      <FloatingLogo position="right" />
-      <Hero />
-      <TheSlaughterhouse />
-      <TheMirror />
-      <USP />
-      <TheStack />
-
-      <Benefits />
-      <MathVsMyth />
-      <QuantumProofs />
-      <Kamasutra />
-      <DashaClock />
-      <AlgoSuffering />
-      <InstantGratification />
-      <FAQ />
-      <ExclusiveEntry />
-      <TheVoid />
-    </main>
+    <div className="nl-root">
+      <Navbar />
+      <HeroSection />
+      <MarqueeSection />
+      <ProblemSection />
+      <FearFactorySection />
+      <SavageQuoteSection />
+      <TruthBombSection />
+      <IntroSection />
+      <LifeDomainsSection />
+      <HowItWorksSection />
+      <StackCardsSection />
+      <ComparisonSection />
+      <SocialProofBar />
+      <TestimonialsSection />
+      <PricingSection />
+      <FAQSection />
+      <CTASection />
+      <FooterSection />
+    </div>
   );
 }

@@ -6,29 +6,32 @@ import { useRouter } from "next/navigation";
 
 const features = [
     {
-        icon: <FaDatabase className="text-4xl text-[#FFD700]" />,
+        icon: <FaDatabase className="text-3xl text-[#D4AF37]" />,
         title: "Decision Intelligence",
         desc: (
-            <span className="block text-[#FFD700] font-bold text-lg mt-1">
-                Not Astrology.
+            <span className="block text-[#1a1a1a]/80 font-medium text-sm mt-1 font-[family-name:var(--font-outfit)]">
+                Not generic astrology. Raw mathematical inputs decoded for strategic execution.
             </span>
         ),
     },
     {
-        icon: <FaCrosshairs className="text-4xl text-[#FFD700]" />,
-        // Not 'what will happen' but 'how you create outcomes' card
-        title: "Not 'what will happen to you.'",
+        icon: <FaCrosshairs className="text-3xl text-[#D4AF37]" />,
+        title: "Forensic Pattern Recognition",
         desc: (
-            <div className="font-mono text-xs text-gray-400 leading-relaxed">
-                But <span className="text-white font-bold">&apos;how you repeatedly create outcomes.&apos;</span>
-                <span className="block mt-2 text-gray-500">Your patterns are predictable. We make them visible.</span>
+            <div className="font-[family-name:var(--font-outfit)] text-sm text-[#1a1a1a]/70 leading-relaxed mt-1">
+                We don't tell you <span className="text-[#1a1a1a] font-semibold">&apos;what will happen to you.&apos;</span>
+                <span className="block mt-1">We reveal exact psychological cycles so you can circumvent them.</span>
             </div>
         ),
     },
     {
-        icon: <FaSatellite className="text-4xl text-[#FFD700]" />,
-        title: "Your psychology runs in cycles.",
-        desc: "Your calendar ignores it.",
+        icon: <FaSatellite className="text-3xl text-[#D4AF37]" />,
+        title: "Macro-Cycle Navigation",
+        desc: (
+            <span className="block text-[#1a1a1a]/70 text-sm mt-1 font-[family-name:var(--font-outfit)] leading-relaxed">
+                Your psychology runs in rigid planetary cycles. Your calendar ignores it. We sync them.
+            </span>
+        )
     },
 ];
 
@@ -36,65 +39,69 @@ export default function USP() {
     const router = useRouter();
 
     return (
-        <section className="min-h-screen bg-[#12011A] flex flex-col items-center justify-center py-24 relative overflow-hidden">
+        <section className="min-h-screen bg-[#FAFAF7] flex flex-col items-center justify-center py-24 relative overflow-hidden border-y border-[#1a1a1a]/5">
 
-            {/* HUD Grid Background */}
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(18,1,26,0.9),rgba(18,1,26,0.9)),url('https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-10"></div>
-            <div className="absolute inset-0 opacity-20 pointer-events-none bg-[linear-gradient(to_right,#FFD700_1px,transparent_1px),linear-gradient(to_bottom,#FFD700_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+            {/* Premium Light Background */}
+            <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:60px_60px]"></div>
+            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-[#FAFAF7] to-transparent pointer-events-none"></div>
 
             <div className="max-w-7xl w-full px-6 z-10">
-                <div className="flex flex-col md:flex-row gap-16 items-center">
+                <div className="flex flex-col md:flex-row gap-16 md:gap-24 items-center">
 
                     {/* Text Side */}
                     <div className="md:w-1/2">
                         <motion.h2
                             initial={{ x: -50, opacity: 0 }}
                             whileInView={{ x: 0, opacity: 1 }}
-                            transition={{ duration: 0.6 }}
+                            transition={{ duration: 0.8 }}
                             viewport={{ once: true }}
-                            className="text-6xl md:text-8xl text-white font-medium leading-[1] tracking-tight mb-8" style={{ fontFamily: "var(--font-display)" }}
+                            className="text-5xl md:text-7xl text-[#1a1a1a] font-medium leading-[1.1] tracking-tight mb-8" style={{ fontFamily: "var(--font-display)" }}
                         >
                             The <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] to-[#FFF8D6] italic pr-4">Unfair</span> <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#B8860B] italic pr-4 font-bold">Unfair</span> <br />
                             Advantage.
                         </motion.h2>
-                        <motion.p
+                        <motion.div
                             initial={{ x: -50, opacity: 0 }}
                             whileInView={{ x: 0, opacity: 1 }}
-                            transition={{ duration: 0.6, delay: 0.2 }}
+                            transition={{ duration: 0.8, delay: 0.2 }}
                             viewport={{ once: true }}
-                            className="font-mono text-gray-400 text-lg leading-relaxed mb-12"
+                            className="font-[family-name:var(--font-outfit)] font-light text-[#1a1a1a]/70 text-base md:text-lg leading-[1.8] mb-12"
                         >
-                            Astrology is the original psychology. Quantum Karma is a <span className="text-white border-b border-[#FFD700]">surveillance system</span> for your destiny.
+                            Astrology is the original mapping system of human psychology. Our blueprint is a <span className="text-[#1a1a1a] font-medium border-b border-[#D4AF37]/50 pb-1">predictive architectural model</span> for your destiny.
                             <br /><br />
-                            While others look at the stars and make a wish, we look at the data and execute a command.
-                            This isn't about feeling good. It's about being right.
-                        </motion.p>
+                            While others look at the stars and make a wish, we look at the data and execute a calculated command. This isn't about spiritual comfort. It's about precision engineering.
+                        </motion.div>
 
-                        <button
+                        <motion.button
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ duration: 0.8, delay: 0.4 }}
+                            viewport={{ once: true }}
                             onClick={() => router.push('/reviews')}
-                            className="px-10 py-4 border border-[#FFD700]/50 text-[#FFD700] hover:bg-[#FFD700] hover:text-black transition-all duration-300 font-mono text-sm uppercase tracking-widest flex items-center gap-4"
+                            className="group relative px-10 py-4 bg-white border border-[#1a1a1a]/10 text-[#1a1a1a] hover:border-[#1a1a1a] transition-all duration-500 font-mono text-xs uppercase tracking-[0.2em] flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.05)] font-[family-name:var(--font-space)]"
                         >
-                            <FaCrosshairs className="animate-pulse" />
-                            Acquire Target
-                        </button>
+                            <span className="absolute inset-0 bg-[#FAFAF7] -z-10 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
+                            <FaCrosshairs className="text-[#D4AF37] group-hover:animate-spin" />
+                            <span>Read Case Studies</span>
+                        </motion.button>
                     </div>
 
                     {/* Features Side */}
-                    <div className="md:w-1/2 space-y-8">
+                    <div className="md:w-1/2 space-y-6">
                         {features.map((item, i) => (
                             <motion.div
                                 key={i}
                                 initial={{ x: 50, opacity: 0 }}
                                 whileInView={{ x: 0, opacity: 1 }}
-                                transition={{ duration: 0.5, delay: 0.3 + (i * 0.1) }}
+                                transition={{ duration: 0.6, delay: 0.3 + (i * 0.1) }}
                                 viewport={{ once: true }}
-                                className="flex gap-6 p-6 border border-white/5 bg-white/5 backdrop-blur-sm rounded-lg hover:border-[#FFD700]/30 transition-colors"
+                                className="flex gap-6 p-8 border border-[#1a1a1a]/5 bg-white shadow-[0_15px_40px_rgba(0,0,0,0.04)] rounded-2xl hover:border-[#D4AF37]/30 hover:shadow-[0_20px_50px_rgba(212,175,55,0.08)] transition-all duration-500 group"
                             >
-                                <div className="shrink-0 pt-1">{item.icon}</div>
+                                <div className="shrink-0 pt-1 transition-transform duration-500 group-hover:scale-110">{item.icon}</div>
                                 <div>
-                                    <h3 className="font-serif text-xl text-white mb-2">{item.title}</h3>
-                                    <div className="font-mono text-xs text-gray-400 leading-relaxed">{item.desc}</div>
+                                    <h3 className="font-[family-name:var(--font-display)] text-xl md:text-2xl text-[#1a1a1a] mb-2 font-medium">{item.title}</h3>
+                                    <div>{item.desc}</div>
                                 </div>
                             </motion.div>
                         ))}

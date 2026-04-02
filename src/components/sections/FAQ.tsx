@@ -27,7 +27,7 @@ const topFAQs = [
     },
     {
         q: "Is this just AI hallucinating answers?",
-        a: "Hell no. AI is just the delivery boy. The logic is pure, hard coded Vedic math. The \"roast\" is AI; the data is undisputed astronomical fact."
+        a: "Hell no. AI is just the delivery boy. The logic is pure, hard coded Vedic math. The delivery is AI; the data is undisputed astronomical fact."
     },
     {
         q: "Why do I need my exact birth time?",
@@ -66,7 +66,7 @@ const allFAQs = [
         a: "We calculate your personal luck cycles. If you use that to buy meme coins, that's on you. But yes, timing is everything."
     },
     {
-        q: "Why 'SoulSync'?",
+        q: "Why accurate data?",
         a: "Because your ego is out of sync with your source code. Re-align or stay glitched."
     },
     {
@@ -124,15 +124,15 @@ export default function FAQ() {
     const col2 = topFAQs.slice(5, 10);
 
     return (
-        <section className="bg-[#12011A] py-24 px-6 relative overflow-hidden">
-            {/* Background noise */}
-            <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+        <section className="bg-[#FAFAF7] py-24 px-6 relative overflow-hidden">
+            {/* Soft background noise overlay */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] blend-multiply"></div>
 
             <div className="max-w-7xl mx-auto z-10 relative">
                 <div className="text-center mb-16">
-                    <p className="font-mono text-[#FFD700] text-sm tracking-[0.3em] uppercase mb-4">The Interrogation Room</p>
-                    <h2 className="font-serif text-4xl md:text-6xl text-white font-bold">
-                        Questions You're <br /> <span className="text-[#FFD700]">Afraid To Ask</span>.
+                    <p className="font-mono text-[#D4AF37] text-sm tracking-[0.3em] uppercase mb-4 font-[family-name:var(--font-space)]">The Interrogation Room</p>
+                    <h2 className="font-serif text-4xl md:text-6xl text-[#1a1a1a] font-medium font-[family-name:var(--font-display)]">
+                        Questions You're <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#B8860B]">Afraid To Ask</span>.
                     </h2>
                 </div>
 
@@ -164,7 +164,7 @@ export default function FAQ() {
                 <div className="mt-16 text-center">
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="px-10 py-4 border border-[#FFD700]/30 text-[#FFD700] hover:bg-[#FFD700] hover:text-black transition-all duration-300 font-mono text-xs uppercase tracking-widest backdrop-blur-sm"
+                        className="px-10 py-5 border border-[#1a1a1a]/10 text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white hover:border-[#1a1a1a] transition-all duration-500 font-mono text-xs uppercase tracking-widest bg-white shadow-[0_10px_30px_rgba(0,0,0,0.05)] font-[family-name:var(--font-space)]"
                     >
                         Reveal all answers
                     </button>
@@ -178,39 +178,39 @@ export default function FAQ() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-lg"
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md"
                         onClick={() => setIsModalOpen(false)}
                     >
                         <motion.div
-                            initial={{ scale: 0.9, y: 20 }}
+                            initial={{ scale: 0.95, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.9, y: 20 }}
-                            className="bg-[#12011A] w-full max-w-4xl h-[85vh] overflow-y-auto rounded-xl border border-[#FFD700]/20 p-8 md:p-12 relative"
+                            exit={{ scale: 0.95, y: 20 }}
+                            className="bg-[#FAFAF7] w-full max-w-4xl h-[85vh] overflow-y-auto rounded-3xl border border-[#D4AF37]/20 p-8 md:p-12 relative shadow-[0_20px_60px_rgba(0,0,0,0.15)]"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
+                                className="absolute top-6 right-6 text-[#1a1a1a]/50 hover:text-[#1a1a1a] transition-colors"
                             >
                                 <FaTimes size={24} />
                             </button>
 
-                            <h3 className="font-serif text-3xl md:text-4xl text-white mb-10 text-center">Archive: <span className="text-[#FFD700]">Declassified</span></h3>
+                            <h3 className="font-serif text-3xl md:text-4xl text-[#1a1a1a] mb-10 text-center font-[family-name:var(--font-display)]">Archive: <span className="text-[#D4AF37]">Declassified</span></h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-8">
                                     {allFAQs.slice(0, 13).map((item, i) => (
                                         <div key={i}>
-                                            <h4 className="font-serif text-lg text-[#FFD700] mb-2">{item.q}</h4>
-                                            <p className="font-mono text-sm text-gray-400 leading-relaxed">{item.a}</p>
+                                            <h4 className="font-serif text-lg text-[#1a1a1a] font-medium mb-2 font-[family-name:var(--font-display)]">{item.q}</h4>
+                                            <p className="font-sans text-sm text-[#1a1a1a]/70 leading-relaxed font-[family-name:var(--font-outfit)]">{item.a}</p>
                                         </div>
                                     ))}
                                 </div>
                                 <div className="space-y-8">
                                     {allFAQs.slice(13).map((item, i) => (
                                         <div key={i}>
-                                            <h4 className="font-serif text-lg text-[#FFD700] mb-2">{item.q}</h4>
-                                            <p className="font-mono text-sm text-gray-400 leading-relaxed">{item.a}</p>
+                                            <h4 className="font-serif text-lg text-[#1a1a1a] font-medium mb-2 font-[family-name:var(--font-display)]">{item.q}</h4>
+                                            <p className="font-sans text-sm text-[#1a1a1a]/70 leading-relaxed font-[family-name:var(--font-outfit)]">{item.a}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -225,13 +225,13 @@ export default function FAQ() {
 
 function FAQItem({ item, isOpen, onClick }: { item: any, isOpen: boolean, onClick: () => void }) {
     return (
-        <div className="border border-white/10 bg-white/5 rounded-lg overflow-hidden transition-all duration-300 hover:border-[#FFD700]/30">
+        <div className={`border rounded-xl overflow-hidden transition-all duration-300 ${isOpen ? 'border-[#D4AF37]/40 bg-white shadow-lg' : 'border-[#1a1a1a]/5 bg-white/50 hover:border-[#1a1a1a]/20 hover:bg-white'}`}>
             <button
                 onClick={onClick}
                 className="w-full flex items-center justify-between p-6 text-left"
             >
-                <span className="font-serif text-lg text-white pr-4">{item.q}</span>
-                <span className="text-[#FFD700] shrink-0">
+                <span className={`font-serif text-lg pr-4 font-[family-name:var(--font-display)] transition-colors ${isOpen ? 'text-[#1a1a1a]' : 'text-[#1a1a1a]/80'}`}>{item.q}</span>
+                <span className={`shrink-0 transition-colors ${isOpen ? 'text-[#D4AF37]' : 'text-[#1a1a1a]/40'}`}>
                     {isOpen ? <FaMinus size={12} /> : <FaPlus size={12} />}
                 </span>
             </button>
@@ -244,7 +244,7 @@ function FAQItem({ item, isOpen, onClick }: { item: any, isOpen: boolean, onClic
                         transition={{ duration: 0.3 }}
                         className="overflow-hidden"
                     >
-                        <div className="p-6 pt-0 font-mono text-sm text-gray-400 leading-relaxed border-t border-white/5 mx-6 mt-2 pb-6">
+                        <div className="p-6 pt-0 font-sans text-base text-[#1a1a1a]/70 leading-relaxed border-t border-[#1a1a1a]/5 mx-6 mt-2 pb-6 font-light font-[family-name:var(--font-outfit)]">
                             {item.a}
                         </div>
                     </motion.div>

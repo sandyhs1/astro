@@ -1,0 +1,47 @@
+/* Custom tokens for the new landing page */
+.nl-root {
+  --color-brand-100: hsl(245, 60%, 28%);
+  --color-brand-200: hsl(270, 60%, 40%);
+  --color-accent-100: hsl(30, 80%, 55%);
+  --color-accent-200: hsl(15, 85%, 58%);
+  --color-accent-300: hsl(5, 90%, 62%);
+  --color-surface: hsl(40, 20%, 92%);
+  --color-text-main: hsl(240, 20%, 8%);
+  --color-text-muted: hsl(240, 10%, 46%);
+  
+  background-color: #FAFAF7;
+  color: var(--color-text-main);
+  font-family: inherit;
+  overflow-x: clip;
+}
+
+/* Animations */
+@keyframes nl-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes nl-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes nl-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes nl-pulse-glow {
+  0%, 100% { opacity: 0.5; box-shadow: 0 0 40px 0 hsl(245 60% 28% / 0.3); }
+  50% { opacity: 1; box-shadow: 0 0 80px 20px hsl(30 80% 55% / 0.4); }
+}
+
+/* Typography styles to ensure Google imports don't clash with global CSS, 
+   using inline clamps in React most places, but basic resets here */
+.nl-root h1, .nl-root h2, .nl-root h3, .nl-root h4, .nl-root h5, .nl-root h6 {
+  margin: 0;
+}
+
+.nl-root p {
+  margin: 0;
+}

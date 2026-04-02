@@ -5,77 +5,96 @@ import { FaTimes, FaCheck } from "react-icons/fa";
 
 export default function MathVsMyth() {
     return (
-        <section className="min-h-screen py-24 bg-[#0a020f] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+        <section className="min-h-[80vh] py-24 bg-[#FAFAF7] flex flex-col items-center justify-center px-4 relative overflow-hidden border-y border-[#1a1a1a]/5">
             {/* Background Glyphs (Decorative) */}
-            <div className="absolute inset-0 opacity-5 pointer-events-none flex items-center justify-center overflow-hidden">
-                <span className="text-[20rem] font-serif leading-none rotate-12">ॐ</span>
-                <span className="text-[20rem] font-mono leading-none -rotate-12 absolute right-0">∑</span>
+            <div className="absolute inset-0 opacity-[0.02] pointer-events-none flex items-center justify-center overflow-hidden text-[#1a1a1a]">
+                <span className="text-[20rem] md:text-[30rem] font-serif leading-none rotate-12 blur-[2px]">ॐ</span>
+                <span className="text-[20rem] md:text-[30rem] font-mono leading-none -rotate-12 absolute right-[-5%] blur-[2px]">∑</span>
             </div>
 
-            <div className="z-10 w-full max-w-6xl">
+            <div className="z-10 w-full max-w-5xl">
                 <div className="text-center mb-16">
-                    <h2 className="font-serif text-4xl md:text-6xl text-white mb-4">Feelings vs. Facts.</h2>
-                    <p className="font-mono text-[#FFD700] uppercase tracking-widest">Why your horoscope is useless</p>
+                    <h2 className="font-[family-name:var(--font-cinzel)] text-4xl md:text-5xl text-[#1a1a1a] mb-4 font-medium tracking-wide">Feelings vs. Facts.</h2>
+                    <p className="font-[family-name:var(--font-space)] text-[#D4AF37] uppercase tracking-widest text-xs md:text-sm">Why generic horoscopes are useless</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                     {/* Western / Myth Card */}
                     <motion.div
-                        initial={{ x: -50, opacity: 0 }}
+                        initial={{ x: -30, opacity: 0 }}
                         whileInView={{ x: 0, opacity: 1 }}
-                        transition={{ duration: 0.6 }}
+                        transition={{ duration: 0.8 }}
                         viewport={{ once: true }}
-                        className="p-8 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm"
+                        className="p-8 md:p-10 rounded-[2rem] border border-[#1a1a1a]/5 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.03)]"
                     >
-                        <h3 className="font-serif text-3xl mb-6 text-gray-400">Generic Pop-Astrology</h3>
-                        <ul className="space-y-4 font-mono text-sm text-gray-400">
-                            <li className="flex items-start gap-3">
-                                <FaTimes className="mt-1 text-red-500 shrink-0" />
+                        <h3 className="font-[family-name:var(--font-display)] text-2xl mb-6 text-[#1a1a1a]/60 font-medium">Generic Pop-Astrology</h3>
+                        <ul className="space-y-6 font-[family-name:var(--font-outfit)] text-base text-[#1a1a1a]/70">
+                            <li className="flex items-start gap-4">
+                                <span className="bg-red-50 text-red-600 p-1.5 rounded-full mt-0.5 shrink-0">
+                                    <FaTimes className="text-sm" />
+                                </span>
                                 <span>Sells you fear ("Mercury Retrograde is coming!")</span>
                             </li>
-                            <li className="flex items-start gap-3">
-                                <FaTimes className="mt-1 text-red-500 shrink-0" />
+                            <li className="flex items-start gap-4">
+                                <span className="bg-red-50 text-red-600 p-1.5 rounded-full mt-0.5 shrink-0">
+                                    <FaTimes className="text-sm" />
+                                </span>
                                 <span>Vague Compliments ("You're such a leader")</span>
                             </li>
-                            <li className="flex items-start gap-3">
-                                <FaTimes className="mt-1 text-red-500 shrink-0" />
-                                <span>Treats you like a victim of the stars.</span>
+                            <li className="flex items-start gap-4">
+                                <span className="bg-red-50 text-red-600 p-1.5 rounded-full mt-0.5 shrink-0">
+                                    <FaTimes className="text-sm" />
+                                </span>
+                                <span>Treats you like a helpless victim of planetary weather.</span>
                             </li>
-                            <li className="flex items-start gap-3">
-                                <FaTimes className="mt-1 text-red-500 shrink-0" />
-                                <span>Keeps you addicted to daily validation.</span>
+                            <li className="flex items-start gap-4">
+                                <span className="bg-red-50 text-red-600 p-1.5 rounded-full mt-0.5 shrink-0">
+                                    <FaTimes className="text-sm" />
+                                </span>
+                                <span>Keeps you addicted to daily external validation.</span>
                             </li>
                         </ul>
                     </motion.div>
 
                     {/* Vedic / Math Card */}
                     <motion.div
-                        initial={{ x: 50, opacity: 0 }}
+                        initial={{ x: 30, opacity: 0 }}
                         whileInView={{ x: 0, opacity: 1 }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
                         viewport={{ once: true }}
-                        className="p-8 rounded-xl border border-[#FFD700] bg-[#12011A] shadow-[0_0_30px_rgba(255,215,0,0.1)] relative"
+                        className="p-8 md:p-10 rounded-[2rem] border border-[#D4AF37]/40 bg-white shadow-[0_20px_50px_rgba(212,175,55,0.08)] relative overflow-hidden"
                     >
-                        <div className="absolute -top-3 right-8 bg-[#FFD700] text-[#12011A] text-xs font-bold px-3 py-1 uppercase tracking-wider">
-                            The SoulSync Advantage
+                        {/* Premium Gradient Top Line */}
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#B8860B]" />
+                        
+                        <div className="absolute top-0 right-8 bg-gradient-to-b from-[#D4AF37] to-[#B8860B] text-white text-[10px] font-bold px-4 pt-4 pb-2 rounded-b-lg shadow-md uppercase tracking-[0.2em] font-[family-name:var(--font-space)]">
+                            Our Advantage
                         </div>
-                        <h3 className="font-serif text-3xl mb-6 text-white">Quantum Karma Precision</h3>
-                        <ul className="space-y-4 font-mono text-sm text-white">
-                            <li className="flex items-start gap-3">
-                                <FaCheck className="mt-1 text-[#FFD700] shrink-0" />
-                                <span>Gives you tactical timelines ("Act on Nov 12").</span>
+                        <h3 className="font-[family-name:var(--font-display)] text-3xl mb-6 text-[#1a1a1a] font-medium pt-2">Forensic Precision</h3>
+                        <ul className="space-y-6 font-[family-name:var(--font-outfit)] text-base text-[#1a1a1a]/80">
+                            <li className="flex items-start gap-4">
+                                <span className="bg-green-50 text-green-700 border border-green-200 p-1.5 rounded-full mt-0.5 shrink-0">
+                                    <FaCheck className="text-sm" />
+                                </span>
+                                <span className="font-medium">Identifies unyielding mathematical truths.</span>
                             </li>
-                            <li className="flex items-start gap-3">
-                                <FaCheck className="mt-1 text-[#FFD700] shrink-0" />
-                                <span>Exposes your brutal weaknesses so you fix them.</span>
+                            <li className="flex items-start gap-4">
+                                <span className="bg-green-50 text-green-700 border border-green-200 p-1.5 rounded-full mt-0.5 shrink-0">
+                                    <FaCheck className="text-sm" />
+                                </span>
+                                <span>Exposes brutal behavioral weaknesses so you can finally fix them.</span>
                             </li>
-                            <li className="flex items-start gap-3">
-                                <FaCheck className="mt-1 text-[#FFD700] shrink-0" />
-                                <span>Hands you the weapon to fight back.</span>
+                            <li className="flex items-start gap-4">
+                                <span className="bg-green-50 text-green-700 border border-green-200 p-1.5 rounded-full mt-0.5 shrink-0">
+                                    <FaCheck className="text-sm" />
+                                </span>
+                                <span>Provides exact timeline coordinates for strategic strikes.</span>
                             </li>
-                            <li className="flex items-start gap-3">
-                                <FaCheck className="mt-1 text-[#FFD700] shrink-0" />
-                                <span>Optimizes your life for maximum ROI.</span>
+                            <li className="flex items-start gap-4">
+                                <span className="bg-green-50 text-green-700 border border-green-200 p-1.5 rounded-full mt-0.5 shrink-0">
+                                    <FaCheck className="text-sm" />
+                                </span>
+                                <span>Optimizes macro-decisions for exponential personal ROI.</span>
                             </li>
                         </ul>
                     </motion.div>

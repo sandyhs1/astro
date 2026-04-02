@@ -9,54 +9,50 @@ export default function Hero() {
     const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
     const [isInitiationOpen, setIsInitiationOpen] = useState(false);
 
-    // Slightly taller initial bars so title has more breathing room from top
+    // Keep the letterbox bar animation logic since user likes scroll animations
     const topBarH = useTransform(scrollYProgress, [0, 0.4], ["8vh", "50vh"]);
     const botBarH = useTransform(scrollYProgress, [0, 0.4], ["8vh", "50vh"]);
     const scale = useTransform(scrollYProgress, [0, 0.4], [1, 0.9]);
     const opacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
 
     return (
-        <section ref={ref} className="relative w-full h-[160vh] bg-black">
-            <div className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center bg-[#020202]">
+        <section ref={ref} className="relative w-full h-[160vh] bg-[#FAFAF7]">
+            <div className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center bg-[#FAFAF7]">
 
-                {/* Slow ambient sweep */}
-                <motion.div
-                    animate={{ left: ["-60%", "160%"] }}
-                    transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
-                    className="absolute top-0 bottom-0 w-[35vw] bg-gradient-to-r from-transparent via-white/[0.025] to-transparent skew-x-[-15deg] pointer-events-none blur-2xl z-0"
-                />
-
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(255,215,0,0.03),transparent)] pointer-events-none z-0" />
+                {/* Soft warm gradient orbs */}
+                <div className="absolute top-[10%] left-[10%] w-[45vw] h-[45vw] rounded-full bg-[#FFF3E0]/70 blur-[100px] pointer-events-none" />
+                <div className="absolute bottom-[10%] right-[10%] w-[40vw] h-[40vw] rounded-full bg-[#E8D5B7]/50 blur-[120px] pointer-events-none" />
 
                 <motion.div
                     style={{ scale, opacity }}
-                    className="z-10 flex flex-col items-center justify-center text-center px-6 w-full"
+                    className="z-10 flex flex-col items-center justify-center text-center px-4 md:px-6 w-full max-w-5xl mx-auto"
                 >
                     {/* Overline */}
-                    <motion.p
-                        initial={{ opacity: 0, letterSpacing: "0.8em" }}
-                        animate={{ opacity: 0.4, letterSpacing: "0.55em" }}
-                        transition={{ duration: 2.5, delay: 0.3 }}
-                        className="font-[family-name:var(--font-cinzel)] text-[0.6rem] text-white tracking-[0.55em] uppercase mb-10"
-                    >
-                        Vedic Intelligence
-                    </motion.p>
-
-                    {/* Main Title — The Sovereign */}
-                    <motion.h1
-                        initial={{ opacity: 0, y: 24 }}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 1.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                        className="font-[family-name:var(--font-cinzel)] uppercase leading-[1.15] mt-6"
+                        transition={{ duration: 1, delay: 0.3 }}
+                        className="flex items-center justify-center gap-3 mb-6 md:mb-10"
                     >
-                        <span className="block font-medium text-[clamp(2rem,5.5vw,5.5rem)] tracking-[0.18em] text-white/90">
-                            Don&apos;t chase.
+                        <div className="w-4 md:w-8 h-[1px] bg-[#1a1a1a]/30" />
+                        <span className="text-[#1a1a1a]/60 text-[9px] md:text-[11px] tracking-[0.2em] md:tracking-[0.45em] uppercase font-[family-name:var(--font-space)]">
+                            Ancient Vedic Mathematics
                         </span>
-                        <span className="block font-bold text-[clamp(3rem,8vw,8.5rem)] tracking-[0.1em] text-transparent bg-clip-text bg-gradient-to-r from-[#C9A84C] via-[#F5E6A3] to-[#C9A84C] leading-[1.05] my-1">
-                            Attract.
+                        <div className="w-4 md:w-8 h-[1px] bg-[#1a1a1a]/30" />
+                    </motion.div>
+
+                    {/* Main Title */}
+                    <motion.h1
+                        initial={{ opacity: 0, y: 40 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                        className="font-[family-name:var(--font-cinzel)] uppercase leading-tight mt-2"
+                    >
+                        <span className="block font-medium text-[clamp(1.5rem,4vw,3.5rem)] tracking-[0.1em] text-[#1a1a1a]">
+                            Your Destiny Is Not
                         </span>
-                        <span className="block font-light text-[clamp(1rem,2.5vw,2.2rem)] tracking-[0.45em] text-white/60 mt-1">
-                            On Command.
+                        <span className="block font-bold text-[clamp(2.2rem,6vw,5.5rem)] tracking-[0.05em] text-transparent bg-clip-text bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#B8860B] leading-tight my-1 pb-2">
+                            A Coincidence.
                         </span>
                     </motion.h1>
 
@@ -65,25 +61,25 @@ export default function Hero() {
                         initial={{ scaleY: 0 }}
                         animate={{ scaleY: 1 }}
                         transition={{ duration: 1.2, delay: 1.2, ease: "easeOut" }}
-                        className="w-px h-14 bg-gradient-to-b from-transparent via-white/20 to-transparent my-8 origin-top"
+                        className="w-[1px] h-10 md:h-16 bg-gradient-to-b from-transparent via-[#1a1a1a]/20 to-transparent my-6 md:my-8 origin-top"
                     />
 
-                    {/* Subtext — clearly legible */}
+                    {/* Subtext */}
                     <motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 1.5, delay: 1.5 }}
-                        className="font-[family-name:var(--font-cinzel)] font-light text-white/70 text-[0.65rem] tracking-[0.35em] uppercase max-w-xs leading-[2.4] text-center mb-3"
+                        className="font-[family-name:var(--font-cinzel)] font-light text-[#1a1a1a]/80 text-[0.7rem] md:text-[0.8rem] tracking-[0.2em] md:tracking-[0.3em] uppercase max-w-lg leading-[2] md:leading-[2.4] text-center mb-4"
                     >
-                        The universe has favorites. Be one of them.
+                        5,000-year-old algorithms dictated by mechanics.
                     </motion.p>
                     <motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 1.5, delay: 1.8 }}
-                        className="font-[family-name:var(--font-manrope)] font-light text-white/45 text-[0.7rem] tracking-[0.12em] max-w-sm leading-[2.4] text-center mb-12"
+                        className="font-[family-name:var(--font-outfit)] font-light text-[#1a1a1a]/60 text-[0.9rem] md:text-[1rem] tracking-[0.05em] max-w-2xl leading-[1.6] md:leading-[1.8] text-center mb-10 md:mb-14 px-2"
                     >
-                        We map your personal &apos;God Mode&apos; cycles so you never waste energy on a bad day again.
+                        We calculate the exact mathematical blueprint of your life trajectory. No gemstones. No fear mongering. Just raw, uncompromising data decoded from the moment you took your first breath.
                     </motion.p>
 
                     {/* CTA */}
@@ -94,16 +90,18 @@ export default function Hero() {
                         whileHover={{ scale: 1.04 }}
                         whileTap={{ scale: 0.97 }}
                         onClick={() => setIsInitiationOpen(true)}
-                        className="group relative px-10 py-4 border border-white/15 text-white/60 hover:text-white hover:border-white/30 uppercase tracking-[0.4em] text-[0.6rem] font-[family-name:var(--font-cinzel)] transition-all duration-500 overflow-hidden"
+                        className="group relative px-8 md:px-12 py-4 md:py-5 bg-[#1a1a1a] text-[#FAFAF7] uppercase tracking-[0.2em] text-[0.6rem] md:text-[0.7rem] font-[family-name:var(--font-space)] transition-all duration-500 overflow-hidden shadow-[0_10px_30px_rgba(26,26,26,0.15)] hover:shadow-[0_15px_40px_rgba(184,134,11,0.2)]"
                     >
-                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-                        Initiate Sequence
+                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+                        <span className="relative z-10 flex items-center gap-2 md:gap-3">
+                            Decode Your Blueprint
+                        </span>
                     </motion.button>
                 </motion.div>
 
-                {/* Letterbox bars */}
-                <motion.div style={{ height: topBarH }} className="absolute top-0 left-0 w-full bg-black z-50 pointer-events-none" />
-                <motion.div style={{ height: botBarH }} className="absolute bottom-0 left-0 w-full bg-black z-50 pointer-events-none" />
+                {/* Letterbox bars - using light mode friendly overlay if needed */}
+                <motion.div style={{ height: topBarH }} className="absolute top-0 left-0 w-full bg-white z-50 pointer-events-none" />
+                <motion.div style={{ height: botBarH }} className="absolute bottom-0 left-0 w-full bg-white z-50 pointer-events-none" />
             </div>
 
             <InitiationModal isOpen={isInitiationOpen} onClose={() => setIsInitiationOpen(false)} />
