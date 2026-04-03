@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Zap, Crown, X, ChevronRight, MessageCircle } from 'lucide-react';
 import AnimatedSection from './AnimatedSection';
@@ -92,6 +92,14 @@ const completeFullSections = [
 // ─── MANY MORE MODAL (Light Theme) ──────────────────────────────────────────
 
 function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal: () => void }) {
+  useEffect(() => {
+    const originalOverflow = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   let featureCount = 0;
   const sectionColors = [
     { bg: '#EFF6FF', border: '#BFDBFE', accent: '#1D4ED8', dot: '#3B82F6' },
@@ -126,9 +134,9 @@ function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal:
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
           display: 'flex',
-          alignItems: 'baseline', // allows the child to scale with content without centering cutoff
+          alignItems: 'flex-start', // CRITICAL FIX: flex-start prevents top-clipping when child is taller than screen
           justifyContent: 'center',
-          padding: '2rem 1rem',
+          padding: '4vh 1rem', // Space at top and bottom
         }}
       >
         <motion.div
