@@ -122,6 +122,9 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
   return createPortal(
     <div
       onClick={onClose}
+      onWheel={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      data-lenis-prevent="true"
       style={{
         /* The absolute god-tier wrapper that captures everything */
         position: 'fixed',
