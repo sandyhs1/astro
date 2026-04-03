@@ -8,27 +8,27 @@ import { useOnboarding } from '@/context/OnboardingContext';
 // ─── DATA ───────────────────────────────────────────────────────────────────
 
 const essentialFeatures = [
-  'Full Shodashavarga (D-1 to D-16) Structural Audit: A foundational breakdown of your physical and psychological hardware.',
-  '3-Year High-Resolution Career Trajectory: Quarterly mapping of "Push" vs. "Pause" phases in professional growth.',
-  'Relationship Karma & Behavioral Red-Flag Mapping: Identification of recurring toxic patterns in your 7th house.',
-  '12-Month Crisis Avoidance Map: A month-by-month risk assessment for health, finance, and conflict.',
-  'Dasha Transition Impact Reports: Analyzing the shift from Mahadasha to Antardasha with surgical precision.',
-  'Ashtakvarga "Energy Budget": A numerical table showing exactly how much planetary "fuel" you have for specific tasks.',
-  'Personalized "Neutralization" Protocols: Action-based remedies (no stones, no expensive rituals).',
-  'The "Hidden Enemy" Audit: Identifying 6th-house triggers that manifest as workplace sabotage or legal friction.',
-  'Wealth Activation Windows: Pinpointing the specific months where the 2nd and 11th house lords are most potent.',
-  'Private PDF Dossier: A clean, data-heavy report delivered within 24 hours.',
+  { badge: 'Shodashavarga', title: 'Complete Structural Audit', detail: 'A foundational breakdown of your physical & psychological hardware (D-1 to D-16).' },
+  { badge: 'Dashas', title: '3-Year Premium Trajectory', detail: 'Quarterly mapping of "Push" vs. "Pause" phases in your professional growth.' },
+  { badge: '7th House', title: 'Relationship Red-Flags', detail: 'Identification of recurring toxic patterns in your partnerships.' },
+  { badge: 'Transit', title: '12-Month Crisis Map', detail: 'Month-by-month risk assessment for health, finance, and conflict.' },
+  { badge: 'Antardasha', title: 'Transition Impact Reports', detail: 'Analyzing major time-period shifts with surgical precision.' },
+  { badge: 'Ashtakvarga', title: 'Planetary "Energy Budget"', detail: 'A numerical table showing exactly how much fuel you have for specific tasks.' },
+  { badge: 'Remedies', title: 'Personalized Neutralizations', detail: 'Action-based protocols (no expensive stones, no rituals).' },
+  { badge: '6th House', title: 'The "Hidden Enemy" Audit', detail: 'Identifying triggers that manifest as workplace sabotage or legal friction.' },
+  { badge: 'Dhana Yoga', title: 'Wealth Activation Windows', detail: 'Pinpointing the exact months your wealth houses are most potent.' },
+  { badge: 'Dossier', title: 'Private PDF Delivery', detail: 'A clean, data-heavy executive report delivered in 24 hours.' },
 ];
 
 const completePreviewFeatures = [
-  'Everything in the Essential Plan +',
-  'Full D-60 (Shastiamsa) Analysis: The most critical chart that reveals past-life baggage.',
-  'Marriage & Separation Timelines: Using Upapada Lagna to predict the quality and duration of unions.',
-  'Deep Shadow Work (Trauma Coding): Using Saturn and Ketu to identify subconscious self-sabotage loops.',
-  'Corporate/Business Scaling Strategy: When to launch, when to scale, and when to exit.',
-  '3 Direct WhatsApp Follow-Up Questions: Human-verified, data-driven answers (valid for 7 days).',
-  'Priority 12-Hour "Emergency" Delivery: Internally prioritised for immediate clarity.',
-  '6 Months YNTRA WebApp Free Access: Early access to our upcoming Webapp.*',
+  { badge: 'Essential', title: 'Everything in Essential Plan', detail: 'Plus all the advanced features below.' },
+  { badge: 'Shastiamsa', title: 'Full D-60 Timeline Analysis', detail: 'The most critical chart revealing past-life baggage.' },
+  { badge: 'Upapada Lagna', title: 'Marriage & Separation Timelines', detail: 'Predicting the exact quality and duration of unions.' },
+  { badge: 'Shadow Work', title: 'Deep Trauma Coding', detail: 'Using Saturn/Ketu to identify subconscious self-sabotage loops.' },
+  { badge: 'Strategy', title: 'Corporate Scaling Strategy', detail: 'When to launch, when to scale, and when to exit.' },
+  { badge: 'Support', title: '3 WhatsApp Follow-Ups', detail: 'Human-verified, data-driven answers (valid for 7 days).' },
+  { badge: 'Priority', title: '12-Hour Emergency Delivery', detail: 'Internally prioritised for immediate clarity.' },
+  { badge: 'App', title: '6 Months YNTRA WebApp', detail: 'Early free access to our upcoming Webapp.*' },
 ];
 
 const completeFullSections = [
@@ -433,26 +433,43 @@ export default function PricingSection() {
                   </div>
 
                   {/* Features list */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 20, flexGrow: 1 }}>
-                    {p.features.map((f, j) => {
-                      const colonIdx = f.indexOf(': ');
-                      const title = colonIdx > -1 ? f.slice(0, colonIdx) : f;
-                      const detail = colonIdx > -1 ? f.slice(colonIdx + 2) : null;
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20, flexGrow: 1 }}>
+                    {p.features.map((f: any, j) => {
                       return (
-                        <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
+                        <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                           <div style={{
-                            width: 17, height: 17, borderRadius: '50%',
+                            width: 18, height: 18, borderRadius: '50%',
                             background: p.popular ? grad : 'hsl(240,15%,20%)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            flexShrink: 0, marginTop: 2,
+                            flexShrink: 0, marginTop: 4,
                           }}>
                             <Check size={10} color={p.popular ? '#fff' : 'hsl(30,80%,55%)'} strokeWidth={3} />
                           </div>
-                          <span style={{ color: 'hsl(40 33% 97% / 0.85)', fontSize: '0.8125rem', lineHeight: 1.45, letterSpacing: '-0.01em' }}>
-                            {detail
-                              ? <><strong style={{ color: 'hsl(40,33%,97%)', fontWeight: 600 }}>{title}</strong>: {detail}</>
-                              : title}
-                          </span>
+                      
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+                              {f.badge && (
+                                <span style={{
+                                  background: 'hsl(40 80% 55% / 0.12)',
+                                  color: 'hsl(40,90%,60%)',
+                                  border: '1px solid hsl(40 80% 55% / 0.25)',
+                                  padding: '2px 8px', borderRadius: 6,
+                                  fontSize: '0.625rem', fontWeight: 800, textTransform: 'uppercase',
+                                  fontFamily: 'monospace', letterSpacing: '0.05em'
+                                }}>
+                                  {f.badge}
+                                </span>
+                              )}
+                              <span style={{ color: p.popular ? 'hsl(40,33%,97%)' : 'hsl(40,33%,92%)', fontSize: '0.85rem', fontWeight: 700, lineHeight: 1.3 }}>
+                                {f.title}
+                              </span>
+                            </div>
+                            {f.detail && (
+                              <span style={{ color: 'hsl(40 33% 97% / 0.55)', fontSize: '0.75rem', lineHeight: 1.4 }}>
+                                {f.detail}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
