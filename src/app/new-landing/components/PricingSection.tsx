@@ -35,56 +35,56 @@ const completeFullSections = [
   {
     title: 'I. Advanced Predicative Data',
     items: [
-      'Full D-60 (Shastiamsa) Analysis: The most critical chart that reveals past-life baggage and the "why" behind current struggles.',
-      'Marriage & Separation Timelines: Using Upapada Lagna to predict the exact quality and duration of unions.',
-      'Property & Real-Estate Windows: Data on when to buy, sell, or avoid land disputes.',
-      'Stock Market & Investment Risk Profile: Your innate planetary "speculation" score.',
-      'Generational Curse (Rina) Decoding: Identifying inherited ancestral patterns using the 9th house and Rahu/Ketu.',
-      'Foreign Settlement Probability: Analysis of the 4th, 9th, and 12th houses for migration data.',
-      'Litigation & Conflict Risk Analysis: Mapping periods where the 6th house is under siege.',
-      'Progeny & Legacy Karma: Timeline for children and the energetic impact on your career.',
+      { badge: 'Shastiamsa', title: 'Full D-60 Timeline Analysis', detail: 'The most critical chart that reveals past-life baggage and the "why" behind current struggles.' },
+      { badge: 'Upapada Lagna', title: 'Marriage & Separation Timelines', detail: 'Predicting the exact quality and duration of unions.' },
+      { badge: 'Real-Estate', title: 'Property Windows', detail: 'Data on when to buy, sell, or avoid land disputes.' },
+      { badge: 'Speculation', title: 'Stock Market Risk Profile', detail: 'Your innate planetary "speculation" score.' },
+      { badge: 'Lineage', title: 'Generational Curse (Rina) Decoding', detail: 'Identifying inherited ancestral patterns using the 9th house and Rahu/Ketu.' },
+      { badge: 'Migration', title: 'Foreign Settlement Probability', detail: 'Analysis of the 4th, 9th, and 12th houses for migration data.' },
+      { badge: '6th House', title: 'Litigation & Conflict Risk', detail: 'Mapping periods where the 6th house is under siege.' },
+      { badge: 'Progeny', title: 'Legacy Karma Timeline', detail: 'Timeline for children and the energetic impact on your career.' },
     ],
   },
   {
     title: 'II. Psychological & Shadow Work',
     items: [
-      'Deep Shadow Work (Trauma Coding): Using Saturn and Ketu to identify subconscious self-sabotage loops.',
-      'Recurring Life Loops Identified: Highlighting why you keep dating the same person or losing the same job.',
-      '"Soul Source Code" (Atmakaraka Analysis): Your primary life lesson and how to stop fighting it.',
-      'Ego-Dissolution Windows: Identifying periods for spiritual reset and mental health prioritisation.',
-      'Nadi-Amsa Purpose Discovery: Using Nadi systems to find the specific "sub-breath" of your destiny.',
+      { badge: 'Subconscious', title: 'Deep Shadow Work', detail: 'Using Saturn and Ketu to identify subconscious self-sabotage loops.' },
+      { badge: 'Patterns', title: 'Recurring Life Loops', detail: 'Highlighting why you keep dating the same person or losing the same job.' },
+      { badge: 'Atmakaraka', title: '"Soul Source Code"', detail: 'Your primary life lesson and how to stop fighting it.' },
+      { badge: 'Mental Reset', title: 'Ego-Dissolution Windows', detail: 'Identifying periods for spiritual reset and mental health prioritisation.' },
+      { badge: 'Nadi-Amsa', title: 'Sub-breath Destiny Discovery', detail: 'Using Nadi systems to find the specific "sub-breath" of your destiny.' },
     ],
   },
   {
     title: 'III. Strategic Business & Scaling',
     items: [
-      'Corporate/Business Scaling Strategy: When to launch, when to scale, and when to exit.',
-      'Hiring/Partnership Compatibility: Using Arudha Lagna to see who will actually help your public image.',
-      'Competitor Vulnerability Windows: Knowing when your rivals are in a weakening cycle.',
-      'Leadership Style Audit: Analysis of your Sun/Mars strength for authority management.',
+      { badge: 'Strategy', title: 'Corporate Scaling', detail: 'When to launch, when to scale, and when to exit.' },
+      { badge: 'Arudha Lagna', title: 'Hiring/Partnership Compatibility', detail: 'Knowing who will actually help your public image.' },
+      { badge: 'Competition', title: 'Rival Vulnerability Windows', detail: 'Knowing when your rivals are in a weakening cycle.' },
+      { badge: 'Authority', title: 'Leadership Style Audit', detail: 'Analysis of your Sun/Mars strength for authority management.' },
     ],
   },
   {
     title: 'IV. Technical & Interactive Support',
     items: [
-      '3 Direct WhatsApp Follow-Up Questions: Human-verified, data-driven answers (valid for 7 days).',
-      'Priority 12-Hour "Emergency" Delivery: Internally prioritised for immediate clarity.',
-      '6 Months YNTRA WebApp Free Access: Early access to our upcoming Webapp.*',
-      'Monthly "Transit Watch" Notifications: 3 months of alerts for major planetary shifts (e.g., Saturn Retrograde).',
+      { badge: 'Support', title: '3 WhatsApp Follow-Ups', detail: 'Human-verified, data-driven answers (valid for 7 days).' },
+      { badge: 'Priority', title: '12-Hour Emergency Delivery', detail: 'Internally prioritised for immediate clarity.' },
+      { badge: 'App', title: '6 Months YNTRA WebApp', detail: 'Early free access to our upcoming Webapp.*' },
+      { badge: 'Alerts', title: 'Monthly "Transit Watch"', detail: '3 months of notifications for major planetary shifts (e.g., Saturn Retrograde).' },
     ],
   },
   {
     title: 'V. The "Grand Master" Secrets',
     items: [
-      'Gulika/Mandi Poison Points: Identifying the "invisible" points in your chart that cause sudden delays.',
-      'Pushkar Navamsa Mapping: Finding the exact degrees where your planets become "super-powered" despite looking weak.',
-      'Vargottama Utilisation Guide: How to use planets that occupy the same sign in D-1 and D-9.',
-      'Specific Tithi/Nakshatra Neutralisers: Micro-remedies based on your birth lunar day.',
-      'Longevity & Maraka Precautions: Straight talk on high-risk health periods.',
-      'Education & Skill Acquisition Windows: When your mind is most receptive to new certifications or degrees.',
-      'Public Perception (Arudha) vs. Reality: How the world sees you versus who you actually are.',
-      'The "Bhrigu" Point Identification: A singular, specific point in your life that indicates your ultimate destiny trigger.',
-      'No-BS Executive Summary: A one-page "Cheat Sheet" for the next 5 years of your life.',
+      { badge: 'Mandi', title: 'Gulika Poison Points', detail: 'Identifying the "invisible" points in your chart that cause sudden delays.' },
+      { badge: 'Pushkar', title: 'Navamsa Mapping', detail: 'Finding exact degrees where weak planets become "super-powered".' },
+      { badge: 'Vargottama', title: 'Utilisation Guide', detail: 'How to use planets that occupy the same sign in D-1 and D-9.' },
+      { badge: 'Neutralizers', title: 'Specific Tithi Micro-remedies', detail: 'Micro-remedies based on your birth lunar day.' },
+      { badge: 'Maraka', title: 'Longevity Precautions', detail: 'Straight talk on high-risk health periods.' },
+      { badge: 'Skill', title: 'Education Acquisition Windows', detail: 'When your mind is most receptive to new certifications or degrees.' },
+      { badge: 'Arudha', title: 'Public Perception vs Reality', detail: 'How the world sees you versus who you actually are.' },
+      { badge: 'Bhrigu', title: 'Destiny Point Identification', detail: 'A singular specific point indicating your ultimate destiny trigger.' },
+      { badge: 'Cheat Sheet', title: 'No-BS Executive Summary', detail: 'A one-page cheat sheet for the next 5 years of your life.' },
     ],
   },
 ];
@@ -103,39 +103,48 @@ function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal:
 
   return (
     <AnimatePresence>
-      {/* Overlay */}
+      {/* Static Overlay Background */}
       <motion.div
-        key="modal-overlay"
+        key="modal-overlay-bg"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, zIndex: 2000,
+          position: 'fixed', inset: 0, zIndex: 1999,
           background: 'rgba(15, 15, 30, 0.75)',
           backdropFilter: 'blur(8px)',
           WebkitBackdropFilter: 'blur(8px)',
+        }}
+      />
+
+      {/* Scrolling Container for iOS/Mobile stability */}
+      <div
+        key="modal-scroll-container"
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 2000,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'baseline', // allows the child to scale with content without centering cutoff
           justifyContent: 'center',
-          padding: '1rem',
+          padding: '2rem 1rem',
         }}
       >
-        {/* Modal Card — scrolls internally */}
         <motion.div
           key="modal-card"
-          initial={{ opacity: 0, y: 30, scale: 0.97 }}
+          initial={{ opacity: 0, y: 40, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 16, scale: 0.98 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
+          exit={{ opacity: 0, y: 20, scale: 0.98 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
           onClick={(e) => e.stopPropagation()}
           style={{
+            position: 'relative',
             width: '100%', maxWidth: 720,
             background: '#FAFAF8',
             borderRadius: 20,
             boxShadow: '0 24px 80px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.06)',
             overflow: 'hidden',
-            maxHeight: '90vh',
             display: 'flex',
             flexDirection: 'column',
           }}
@@ -217,33 +226,44 @@ function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal:
                     </span>
                   </div>
                   {/* Items */}
-                  <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {section.items.map((item, ii) => {
+                  <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {section.items.map((item: any, ii) => {
                       featureCount++;
                       const num = featureCount;
-                      const colonIdx = item.indexOf(': ');
-                      const title = colonIdx > -1 ? item.slice(0, colonIdx) : item;
-                      const detail = colonIdx > -1 ? item.slice(colonIdx + 2) : null;
                       return (
-                        <div key={ii} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                        <div key={ii} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                           <div style={{
                             flexShrink: 0, width: 22, height: 22,
                             borderRadius: 6, background: '#fff',
                             border: `1.5px solid ${col.border}`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '0.6rem', fontWeight: 800, color: col.accent,
+                            fontSize: '0.65rem', fontWeight: 800, color: col.accent,
                             fontFamily: 'monospace', marginTop: 1,
                           }}>
                             {num}
                           </div>
-                          <div>
-                            <p style={{ margin: 0, fontWeight: 700, color: '#111827', fontSize: '0.8125rem', lineHeight: 1.45 }}>
-                              {title}
-                            </p>
-                            {detail && (
-                              <p style={{ margin: '2px 0 0', color: '#6B7280', fontSize: '0.75rem', lineHeight: 1.5 }}>
-                                {detail}
-                              </p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+                              {item.badge && (
+                                <span style={{
+                                  background: col.bg,
+                                  color: col.accent,
+                                  border: `1px solid ${col.border}`,
+                                  padding: '2px 8px', borderRadius: 6,
+                                  fontSize: '0.625rem', fontWeight: 800, textTransform: 'uppercase',
+                                  fontFamily: 'monospace', letterSpacing: '0.05em'
+                                }}>
+                                  {item.badge}
+                                </span>
+                              )}
+                              <span style={{ color: '#111827', fontSize: '0.85rem', fontWeight: 800, lineHeight: 1.3 }}>
+                                {item.title}
+                              </span>
+                            </div>
+                            {item.detail && (
+                              <span style={{ color: '#4B5563', fontSize: '0.75rem', lineHeight: 1.45 }}>
+                                {item.detail}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -280,7 +300,7 @@ function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal:
             </button>
           </div>
         </motion.div>
-      </motion.div>
+      </div>
     </AnimatePresence>
   );
 }
