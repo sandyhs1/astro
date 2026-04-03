@@ -23,13 +23,11 @@ export default function CTASection() {
               <Sparkles size={40} color="hsl(40,33%,97%)" />
             </motion.div>
             
-            <h2 style={{ fontFamily:"'Space Grotesk',sans-serif", fontSize:'clamp(2.5rem,6vw,4.5rem)', fontWeight:700, color:'hsl(240,20%,8%)', lineHeight:1.1 }}>
-              Your chart isn't<br />
-              mystical.<br />
-              <span style={{ background:grad, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>It's just data.</span>
+            <h2 style={{ fontFamily:"'Space Grotesk',sans-serif", fontSize:'clamp(2.5rem,6vw,4.5rem)', fontWeight:700, color:'hsl(240,20%,8%)', lineHeight:1.1, maxWidth: 500, margin: '0 auto' }}>
+              Your chart isn't mystical. <span style={{ background:grad, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>It's just data.</span>
             </h2>
             
-            <p style={{ fontSize:'1.25rem', color:'hsl(240,10%,46%)', maxWidth:600, margin:'0 auto', lineHeight:1.7 }}>
+            <p style={{ fontSize:'1.25rem', color:'hsl(240,10%,46%)', maxWidth: 420, margin:'0 auto', lineHeight:1.7 }}>
               Stop paying for fear. Start investing in clarity. Your Quantum Karma report is waiting and it's got more truth than most astrologers deliver in a lifetime.
             </p>
             
