@@ -1,5 +1,5 @@
 'use client';
-const phrases = ['NO BS. NO CRYSTALS.','NO ₹21,000 RINGS','NO FAKE REMEDIES','NO "SHANI IS ANGRY" SCAMS','KNOW WHEN YOU\'LL GET FIRED','KNOW WHEN YOU\'LL GO BROKE','JUST RAW DATA','JUST REAL TIMELINES'];
+const phrases = ['NO BS. NO CRYSTALS.','NO ₹21,000 RINGS','NO FAKE REMEDIES','NO "SHANI IS ANGRY" SCAMS','STOP GETTING SCAMMED','STOP WASTING YOUR MONEY','JUST RAW DATA','JUST REAL TIMELINES'];
 export default function MarqueeSection() {
   return (
     <section style={{ padding:'1.5rem 0', background:'hsl(240,20%,8%)', overflow:'hidden' }}>
