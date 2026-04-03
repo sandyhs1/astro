@@ -24,7 +24,8 @@ export default function CTASection() {
             </motion.div>
             
             <h2 style={{ fontFamily:"'Space Grotesk',sans-serif", fontSize:'clamp(2.5rem,6vw,4.5rem)', fontWeight:700, color:'hsl(240,20%,8%)', lineHeight:1.1 }}>
-              Your chart isn't mystical.<br/>
+              Your chart isn't<br />
+              mystical.<br />
               <span style={{ background:grad, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>It's just data.</span>
             </h2>
             

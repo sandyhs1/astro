@@ -143,8 +143,8 @@ export default function FAQSection() {
                         The Interrogation Room
                     </span>
                     <h2 className="text-4xl md:text-6xl font-bold" style={{ color: 'hsl(240,20%,8%)', fontFamily: "'Space Grotesk',sans-serif" }}>
-                        Questions You're <br /> 
-                        <span style={{ background: 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Afraid To Ask.</span>
+                        Questions you should <br /> 
+                        <span style={{ background: 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>definitely ask.</span>
                     </h2>
                 </AnimatedSection>
 
