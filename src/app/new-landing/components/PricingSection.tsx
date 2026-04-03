@@ -138,10 +138,8 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
       }}
     >
       <div
-        onClick={(e) => e.stopPropagation()}
-        onWheel={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()}
         data-lenis-prevent="true"
+        onClick={(e) => e.stopPropagation()}
         style={{
           boxSizing: 'border-box',
           width: '100%',
@@ -187,11 +185,13 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
 
         {/* Scrollable List Content Area */}
         <div style={{ 
-          padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px',
-          overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch'
+          padding: '28px', 
+          overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch',
+          display: 'block', // CRITICAL: using block instead of flex prevents children from being crushed to 0 height
         }}>
-          {completeFullSections.map((section, si) => {
-            const col = sectionColors[si % sectionColors.length];
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {completeFullSections.map((section, si) => {
+              const col = sectionColors[si % sectionColors.length];
             return (
               <div key={si} style={{ background: col.bg, border: `1px solid ${col.border}`, borderRadius: '16px', overflow: 'hidden' }}>
                 <div style={{ padding: '12px 18px', borderBottom: `1px solid ${col.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -240,6 +240,7 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
               </div>
             );
           })}
+          </div>
         </div>
 
         {/* Fixed Footer */}
