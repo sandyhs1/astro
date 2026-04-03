@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaTimes, FaArrowRight, FaCheck, FaLock, FaShieldAlt } from "react-icons/fa";
+import { FaTimes, FaArrowRight, FaCheck, FaLock, FaShieldAlt, FaChevronLeft } from "react-icons/fa";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import emailjs from '@emailjs/browser';
 
-// 24 distinct identity insights — selected by a multi-factor hash of birth data
-// so every user sees something different based on THEIR actual information.
 const IDENTITY_INSIGHTS: string[] = [
     "You carry a quiet intensity that most people mistake for stillness.",
     "You've been the most capable person in the room for years — but rarely the loudest.",
@@ -37,12 +35,6 @@ const IDENTITY_INSIGHTS: string[] = [
     "You feel things fully — you just choose carefully who gets to see that.",
 ];
 
-/**
- * Derives a unique insight for this user using birth month, birth day,
- * the length of their name, and the first character of their birthplace.
- * Two users who type the same questions will almost certainly see
- * different insights because the selection is driven by their birth data.
- */
 function generateIdentityInsight(dob: string, fullName: string, pob: string): string {
     const date = new Date(dob);
     const month = isNaN(date.getMonth()) ? 0 : date.getMonth();           // 0–11
@@ -53,17 +45,18 @@ function generateIdentityInsight(dob: string, fullName: string, pob: string): st
     return IDENTITY_INSIGHTS[index];
 }
 
-const fadeUp = {
-    initial: { opacity: 0, y: 16 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -8 },
-    transition: { duration: 0.35, ease: "easeOut" as const },
+const slideAnim = {
+    initial: { opacity: 0, x: 20 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -20 },
+    transition: { duration: 0.3, ease: "easeOut" },
 };
 
 export default function OnboardingModal() {
     const { isOpen, closeModal } = useOnboarding();
     const router = useRouter();
     const [step, setStep] = useState(1);
+    
     const [showPayment, setShowPayment] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [showRazorpayIframe, setShowRazorpayIframe] = useState(false);
@@ -71,38 +64,23 @@ export default function OnboardingModal() {
     const [countdown, setCountdown] = useState(60);
     const [wowRevealed, setWowRevealed] = useState(false);
     const [isDecoding, setIsDecoding] = useState(false);
+
     const wowTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // ─── Individual field states for zero-lag input ────────────────────────────
-    // Using separate states instead of a single object prevents spreading on
-    // every keystroke – the single biggest cause of form sluggishness.
-    const [fullName, setFullName] = useState("");
-    const [email, setEmail] = useState("");
-    const [dob, setDob] = useState("");
-    const [tob, setTob] = useState("");
-    const [tobAmPm, setTobAmPm] = useState("AM");
-    const [pob, setPob] = useState("");
-    const [questions, setQuestions] = useState("");
-
-    // Stable formData object — only reconstructed when we actually need it
-    // (on submit / payment). Not used in onChange handlers.
-    const formData = useMemo(() => ({
-        fullName, email, dob, tob, tobAmPm, pob, questions
-    }), [fullName, email, dob, tob, tobAmPm, pob, questions]);
+    // ZERO-LAG DATA CACHE
+    const dataRef = useRef({
+        fullName: "",
+        email: "",
+        dob: "",
+        tob: "",
+        tobAmPm: "AM",
+        pob: "",
+        questions: ""
+    });
 
     const [error, setError] = useState<string | null>(null);
-
-    const firstName = useMemo(() => fullName.trim().split(" ")[0] || "you", [fullName]);
-    const identityInsight = useMemo(() => generateIdentityInsight(dob, fullName, pob), [dob, fullName, pob]);
-
-    // Stable onChange handlers — no re-creation on every render
-    const handleFullName = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value), []);
-    const handleEmail = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value), []);
-    const handleDob = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setDob(e.target.value), []);
-    const handleTob = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setTob(e.target.value), []);
-    const handleTobAmPm = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setTobAmPm(e.target.value), []);
-    const handlePob = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setPob(e.target.value), []);
-    const handleQuestions = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => setQuestions(e.target.value), []);
+    const [userFirstName, setUserFirstName] = useState("there");
+    const [identityInsight, setIdentityInsight] = useState("");
 
     // Clear error when changing steps
     useEffect(() => {
@@ -120,7 +98,7 @@ export default function OnboardingModal() {
         };
     }, [step]);
 
-    // Handle countdown and auto-redirect
+    // Handle countdown
     useEffect(() => {
         let timer: NodeJS.Timeout;
         if (showSuccess) {
@@ -138,100 +116,7 @@ export default function OnboardingModal() {
         return () => clearInterval(timer);
     }, [showSuccess]);
 
-    const validateStep = (currentStep: number) => {
-        setError(null);
-        if (currentStep === 1) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!formData.fullName.trim() || !emailRegex.test(formData.email.trim())) {
-                setError("Please enter your full name and a valid email address (e.g. you@example.com).");
-                return false;
-            }
-        }
-        if (currentStep === 2) {
-            if (!formData.dob || !formData.tob || !formData.pob.trim()) {
-                setError("We need your date, time, and place of birth to continue.");
-                return false;
-            }
-        }
-        if (currentStep === 3) {
-            if (!formData.questions.trim() || formData.questions.length < 10) {
-                setError("Share a little more — even a few sentences help us personalise your report.");
-                return false;
-            }
-        }
-        return true;
-    };
-
-    const handleNext = () => {
-        if (step <= 3 && !validateStep(step)) return;
-
-        // After Step 3: fire lead-capture email immediately, THEN show 2.5s "decoding" pause
-        if (step === 3) {
-            // ── STEP 3 LEAD CAPTURE EMAIL ──────────────────────────────────────────
-            // Fires as soon as the user submits their questions — before payment.
-            // This ensures we always have the lead even if they drop off at checkout.
-            const submissionTime = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-            emailjs.send(
-                'service_kejjsw8',
-                'template_dq668f3',
-                {
-                    fullName: formData.fullName,
-                    email: formData.email,
-                    dob: formData.dob,
-                    tob: `${formData.tob} ${formData.tobAmPm}`,
-                    pob: formData.pob,
-                    questions: formData.questions,
-                    paymentStatus: "⏳ Lead Captured — Payment Pending",
-                    transactionId: `LEAD_${Date.now()}`,
-                    submissionTime: submissionTime,
-                },
-                'p0Y1TsA4CgkB89zWO'
-            ).then(() => {
-                console.log("✅ Step 3 lead email sent");
-            }).catch((err) => {
-                console.error("❌ Step 3 lead email failed:", err);
-            });
-            // ──────────────────────────────────────────────────────────────────────
-
-            setIsDecoding(true);
-            setTimeout(() => {
-                setIsDecoding(false);
-                setStep(4);
-            }, 2500);
-            return;
-        }
-
-        if (step === 4) {
-            // Save lead to Supabase *just before* the payment step (Step 5)
-            // Non-blocking approach: Send and don't await, let UI proceed unhindered
-            const tobString = formData.tob ? `${formData.tob} ${formData.tobAmPm}` : '';
-            fetch('/api/save-lead', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    fullName: formData.fullName,
-                    email: formData.email,
-                    dob: formData.dob,
-                    tob: tobString,
-                    pob: formData.pob,
-                    questions: formData.questions,
-                    paymentStatus: 'pending',
-                })
-            }).catch(err => console.error("Failed to capture Supabase lead:", err));
-
-            setStep(5);
-            return;
-        }
-
-        if (step < 5) {
-            setStep(step + 1);
-        } else {
-            // Step 5 CTA → trigger payment modal (existing logic)
-            setShowPayment(true);
-        }
-    };
-
-    // Handle automated success from Dodo redirect
+    // Automated success from Dodo redirect
     useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search);
         const status = searchParams.get('status');
@@ -241,44 +126,25 @@ export default function OnboardingModal() {
             if (savedData) {
                 try {
                     const parsedData = JSON.parse(savedData);
-                    setFullName(parsedData.fullName || "");
-                    setEmail(parsedData.email || "");
-                    setDob(parsedData.dob || "");
-                    setTob(parsedData.tob || "");
-                    setTobAmPm(parsedData.tobAmPm || "AM");
-                    setPob(parsedData.pob || "");
-                    setQuestions(parsedData.questions || "");
+                    dataRef.current = parsedData;
                     setShowSuccess(true);
 
-                    // Trigger email notification automatically
-                    const transactionId = `DODO_${Date.now()}`;
-                    const submissionTime = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-
                     const emailParams = {
-                        fullName: parsedData.fullName,
-                        email: parsedData.email,
-                        dob: parsedData.dob,
-                        tob: `${parsedData.tob} ${parsedData.tobAmPm}`,
-                        pob: parsedData.pob,
-                        questions: parsedData.questions,
+                        fullName: dataRef.current.fullName,
+                        email: dataRef.current.email,
+                        dob: dataRef.current.dob,
+                        tob: `${dataRef.current.tob} ${dataRef.current.tobAmPm}`,
+                        pob: dataRef.current.pob,
+                        questions: dataRef.current.questions,
                         paymentStatus: "Success (Automated Gateway Payment)",
-                        transactionId: transactionId,
-                        submissionTime: submissionTime
+                        transactionId: `DODO_${Date.now()}`,
+                        submissionTime: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
                     };
 
-                    emailjs.send(
-                        'service_kejjsw8',
-                        'template_dq668f3',
-                        emailParams,
-                        'p0Y1TsA4CgkB89zWO'
-                    ).then(() => {
-                        console.log("✅ Automated Success Email sent");
-                        // Clean up
-                        localStorage.removeItem('onboardingFormData');
-                        window.history.replaceState({}, document.title, "/");
-                    }).catch(error => {
-                        console.error("❌ Email error:", error);
-                    });
+                    emailjs.send('service_kejjsw8', 'template_dq668f3', emailParams, 'p0Y1TsA4CgkB89zWO');
+                    
+                    localStorage.removeItem('onboardingFormData');
+                    window.history.replaceState({}, document.title, "/");
                 } catch (e) {
                     console.error("Failed to parse saved onboarding data", e);
                 }
@@ -286,44 +152,127 @@ export default function OnboardingModal() {
         }
     }, [showSuccess]);
 
-    const handleRazorpayPayment = async () => {
+    const handleStepSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setError(null);
+        const formData = new FormData(e.currentTarget);
+
+        // -- Validation & Data Cache Update --
+
+        if (step === 1) {
+            const name = formData.get("fullName") as string;
+            const email = formData.get("email") as string;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!name.trim() || !emailRegex.test(email.trim())) {
+                setError("Please enter a valid name and email.");
+                return;
+            }
+            dataRef.current.fullName = name;
+            dataRef.current.email = email;
+            setUserFirstName(name.trim().split(" ")[0]);
+            setStep(2);
+        } 
+        else if (step === 2) {
+            const dob = formData.get("dob") as string;
+            const tob = formData.get("tob") as string;
+            const tobAmPm = formData.get("tobAmPm") as string;
+            const pob = formData.get("pob") as string;
+
+            if (!dob || !tob || !pob.trim()) {
+                setError("We need your date, time, and place of birth to continue.");
+                return;
+            }
+            dataRef.current.dob = dob;
+            dataRef.current.tob = tob;
+            dataRef.current.tobAmPm = tobAmPm;
+            dataRef.current.pob = pob;
+            setIdentityInsight(generateIdentityInsight(dob, dataRef.current.fullName, pob));
+            setStep(3);
+        }
+        else if (step === 3) {
+            const qs = formData.get("questions") as string;
+            if (!qs.trim() || qs.length < 10) {
+                setError("Please share a bit more context so we can personalise your report.");
+                return;
+            }
+            dataRef.current.questions = qs;
+
+            // Send initial lead capture email
+            emailjs.send(
+                'service_kejjsw8',
+                'template_dq668f3',
+                {
+                    fullName: dataRef.current.fullName,
+                    email: dataRef.current.email,
+                    dob: dataRef.current.dob,
+                    tob: `${dataRef.current.tob} ${dataRef.current.tobAmPm}`,
+                    pob: dataRef.current.pob,
+                    questions: dataRef.current.questions,
+                    paymentStatus: "⏳ Lead Captured — Payment Pending",
+                    transactionId: `LEAD_${Date.now()}`,
+                    submissionTime: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+                },
+                'p0Y1TsA4CgkB89zWO'
+            ).catch(console.error);
+
+            setIsDecoding(true);
+            setTimeout(() => {
+                setIsDecoding(false);
+                setStep(4);
+            }, 2500);
+        }
+    };
+
+    const handleNextNonForm = () => {
+        if (step === 4) {
+            // Log supabase lead here as per original code
+            fetch('/api/save-lead', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    fullName: dataRef.current.fullName,
+                    email: dataRef.current.email,
+                    dob: dataRef.current.dob,
+                    tob: `${dataRef.current.tob} ${dataRef.current.tobAmPm}`,
+                    pob: dataRef.current.pob,
+                    questions: dataRef.current.questions,
+                    paymentStatus: 'pending',
+                })
+            }).catch(console.error);
+
+            setStep(5);
+        } else if (step === 5) {
+            setShowPayment(true);
+        }
+    };
+
+    const handleRazorpayPayment = () => {
         setIsProcessing(true);
-        // Save form data before leaving
-        localStorage.setItem('onboardingFormData', JSON.stringify(formData));
-        // Razorpay blocks iframes (X-Frame-Options: DENY) — open in new tab instead
+        localStorage.setItem('onboardingFormData', JSON.stringify(dataRef.current));
         window.open(razorpayPaymentLink, '_blank', 'noopener,noreferrer');
-        setShowRazorpayIframe(true); // Show the "I paid" confirmation overlay
+        setShowRazorpayIframe(true);
         setIsProcessing(false);
     };
 
     const handleVerification = async () => {
         setIsProcessing(true);
-
-        const transactionId = `MANUAL_${Date.now()}`;
-        const submissionTime = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-
         const emailParams = {
-            fullName: formData.fullName,
-            email: formData.email,
-            dob: formData.dob,
-            tob: `${formData.tob} ${formData.tobAmPm}`,
-            pob: formData.pob,
-            questions: formData.questions,
+            fullName: dataRef.current.fullName,
+            email: dataRef.current.email,
+            dob: dataRef.current.dob,
+            tob: `${dataRef.current.tob} ${dataRef.current.tobAmPm}`,
+            pob: dataRef.current.pob,
+            questions: dataRef.current.questions,
             paymentStatus: "User Reported Success (Manual Verify)",
-            transactionId: transactionId,
-            submissionTime: submissionTime
+            transactionId: `MANUAL_${Date.now()}`,
+            submissionTime: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
         };
 
         try {
-            await emailjs.send(
-                'service_kejjsw8',
-                'template_dq668f3',
-                emailParams,
-                'p0Y1TsA4CgkB89zWO'
-            );
-            console.log("✅ Email sent successfully");
+            await emailjs.send('service_kejjsw8', 'template_dq668f3', emailParams, 'p0Y1TsA4CgkB89zWO');
         } catch (error) {
-            console.error("❌ EmailJS Error:", error);
+            console.error("EmailJS Error:", error);
         }
 
         setIsProcessing(false);
@@ -338,13 +287,7 @@ export default function OnboardingModal() {
         setShowPayment(false);
         setShowSuccess(false);
         setWowRevealed(false);
-        setFullName("");
-        setEmail("");
-        setDob("");
-        setTob("");
-        setTobAmPm("AM");
-        setPob("");
-        setQuestions("");
+        dataRef.current = { fullName: "", email: "", dob: "", tob: "", tobAmPm: "AM", pob: "", questions: "" };
     };
 
     const handleCloseSuccess = () => {
@@ -356,76 +299,24 @@ export default function OnboardingModal() {
 
     if (!isOpen && !showSuccess) return null;
 
-    // ─── SUCCESS SCREEN ────────────────────────────────────────────────────────
+    // ----- SUCCESS SCREEN -----
     if (showSuccess) {
-        const successFirstName = formData.fullName.trim().split(" ")[0] || "friend";
         return (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4"
-            >
-                <motion.div
-                    initial={{ scale: 0.8, y: 50 }}
-                    animate={{ scale: 1, y: 0 }}
-                    className="w-full max-w-lg bg-gradient-to-b from-[#0a0a0a] to-[#12011A] border border-[#FFD700] rounded-2xl p-8 md:p-12 text-center relative overflow-hidden"
-                >
-                    {/* Progress Bar */}
-                    <div className="absolute top-0 left-0 h-1 bg-[#FFD700]" style={{ width: `${(countdown / 60) * 100}%`, transition: "width 1s linear" }}></div>
-
-                    <button
-                        onClick={handleCloseSuccess}
-                        className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
-                    >
-                        <FaTimes />
-                    </button>
-
-                    <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: "spring" }}
-                        className="w-20 h-20 mx-auto mb-6 bg-[#FFD700] rounded-full flex items-center justify-center shadow-[0_0_30px_#FFD700]"
-                    >
-                        <FaCheck className="text-black text-3xl" />
-                    </motion.div>
-
-                    <motion.h2
-                        {...fadeUp}
-                        transition={{ delay: 0.3 }}
-                        className="font-serif text-3xl md:text-4xl text-white mb-2"
-                    >
-                        Done ✔️
-                    </motion.h2>
-
-                    <motion.p
-                        {...fadeUp}
-                        transition={{ delay: 0.4 }}
-                        className="font-serif text-lg text-[#FFD700] mb-6"
-                    >
-                        Your chart is now in analysis mode.
-                    </motion.p>
-
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6 text-left space-y-3">
-                        <p className="font-mono text-sm text-gray-300 leading-relaxed">
-                            Hey <span className="text-[#FFD700]">{successFirstName}</span>, the humans are working on your report now 🐾
-                        </p>
-                        <p className="font-mono text-xs text-[#FFD700] border-t border-white/10 pt-3">
-                            Expected delivery: within 24 hours.
-                        </p>
-                        <p className="font-mono text-xs text-gray-500 leading-relaxed">
-                            You don't need to check anything — we'll email you when it's ready.
-                        </p>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-[#FAFAF7]/95 backdrop-blur-md p-4">
+                <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="w-full max-w-sm bg-white rounded-2xl p-6 md:p-8 shadow-xl text-center border border-gray-100 relative">
+                    <button onClick={handleCloseSuccess} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><FaTimes /></button>
+                    <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                        <FaCheck className="text-green-600 text-2xl" />
                     </div>
-
-                    <p className="font-mono text-xs text-gray-500 mb-6 leading-relaxed">
-                        Redirecting in <span className="text-[#FFD700] font-bold">{countdown}s</span>…
-                    </p>
-
-                    <button
-                        onClick={handleCloseSuccess}
-                        className="w-full bg-white/10 hover:bg-white/20 text-white font-mono text-xs uppercase tracking-widest py-3 rounded-lg border border-white/10 transition-colors"
-                    >
+                    <h2 className="font-serif text-2xl text-gray-900 mb-2">Done ✔️</h2>
+                    <p className="text-sm text-gray-600 mb-4 tracking-tight">Your chart is now in analysis mode.</p>
+                    <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 mb-4 text-left">
+                        <p className="text-sm text-gray-800 mb-2">Hey <span className="font-bold">{dataRef.current.fullName.split(' ')[0] || 'Friend'}</span>,</p>
+                        <p className="text-xs text-gray-600 mb-2">The humans are working on your report now. Expected delivery: within 24 hours.</p>
+                        <p className="text-[10px] text-gray-400 mt-2 border-t border-gray-200 pt-2">No need to check back. We'll email you.</p>
+                    </div>
+                    <p className="text-xs text-gray-400 mb-4">Redirecting in <b>{countdown}s</b>…</p>
+                    <button onClick={handleCloseSuccess} className="w-full bg-gray-900 text-white font-medium text-sm py-3 rounded-lg hover:bg-gray-800 transition-colors">
                         Thank You
                     </button>
                 </motion.div>
@@ -433,193 +324,74 @@ export default function OnboardingModal() {
         );
     }
 
-    // ─── PAYMENT MODAL ─────────────────────────────────────────────────────────
+    // ----- PAYMENT MODAL -----
     if (showPayment) {
-        const payFirstName = formData.fullName.trim().split(" ")[0] || "friend";
         return (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="fixed inset-0 z-[110] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4"
-            >
-                <motion.div
-                    initial={{ scale: 0.95, y: 20 }}
-                    animate={{ scale: 1, y: 0 }}
-                    className="w-full max-w-md bg-white rounded-xl overflow-hidden shadow-2xl relative"
-                >
-                    {/* Trust Header Badge */}
-                    <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-3 py-1 flex items-center gap-1.5">
-                        <FaShieldAlt className="text-white text-xs" />
-                        <span className="text-[10px] font-bold text-white tracking-wider uppercase">Official Partner</span>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[110] flex items-center justify-center bg-[#FAFAF7]/95 backdrop-blur-md p-4">
+                <motion.div initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-sm bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-200 relative">
+                    <div className="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center">
+                        <span className="text-xs font-bold text-gray-800 uppercase tracking-widest flex items-center gap-2">
+                            <FaShieldAlt className="text-blue-500" /> Secure Checkout
+                        </span>
+                        <button onClick={() => setShowPayment(false)} className="text-gray-400 hover:text-gray-600"><FaTimes /></button>
                     </div>
-
-                    {/* Header */}
-                    <div className="bg-[#000000] p-4 text-white sticky top-0">
-                        <button onClick={() => setShowPayment(false)} className="opacity-70 hover:opacity-100">
-                            <FaTimes />
-                        </button>
-                    </div>
-
-                    {/* Payment Body */}
-                    <div className="p-6 -mt-4 bg-white rounded-t-2xl relative z-10 w-full space-y-4">
-
-                        {/* Trust bullets */}
-                        <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-2 space-y-2">
-                            {[
-                                "Human-reviewed analysis",
-                                "No fear-based upsells",
-                                "Delivered within 24 hours",
-                            ].map((item) => (
+                    <div className="p-5 space-y-4">
+                        <div className="space-y-2 mb-4">
+                            {["Human-reviewed analysis", "No fear-based upsells", "Delivered within 24 hours"].map((item) => (
                                 <div key={item} className="flex items-center gap-2 text-xs text-gray-700">
-                                    <FaCheck className="text-green-500 flex-shrink-0" />
-                                    <span>{item}</span>
+                                    <FaCheck className="text-green-500" /> <span>{item}</span>
                                 </div>
                             ))}
                         </div>
-
-                        <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-2 flex items-start gap-3">
-                            <div className="bg-gray-100 p-2 rounded-full mt-0.5">
-                                <FaLock className="text-gray-600 text-sm" />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-sm text-gray-800 mb-1">Global Payment Suite</h4>
-                                <p className="text-xs text-gray-600 leading-relaxed">
-                                    Choose your preferred currency. Secure payment processed globally via Razorpay & Polar.sh.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Payment Target Buttons */}
                         <div className="grid grid-cols-1 gap-3">
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={handleRazorpayPayment}
-                                disabled={isProcessing}
-                                className="w-full bg-[#111111] text-white py-4 rounded-xl font-bold text-lg hover:bg-black transition-all shadow-lg flex items-center justify-center gap-3 relative overflow-hidden group"
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                                <span>Pay in INR (₹4,799) - Razorpay</span>
-                                <FaArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
-                            </motion.button>
-
-                            <a
-                                href="https://buy.polar.sh/polar_cl_EFeCp21opdRhscmMBhyZd9kdQDSj2uVuuk48l2GTHNq"
-                                data-polar-checkout
-                                data-polar-checkout-theme="dark"
-                                onClick={() => { localStorage.setItem('onboardingFormData', JSON.stringify(formData)); }}
-                                className="w-full bg-white text-[#111111] border-2 border-[#111111] py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all shadow-md flex items-center justify-center gap-3 relative overflow-hidden group"
-                            >
-                                <span>Pay in USD ($74) - Polar</span>
-                                <FaArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
+                            <button onClick={handleRazorpayPayment} disabled={isProcessing} className="w-full bg-[#111111] text-white py-3.5 rounded-xl font-bold text-sm hover:bg-gray-900 transition-all flex items-center justify-center gap-3">
+                                Pay in INR (₹4,799) <FaArrowRight className="text-xs" />
+                            </button>
+                            <a href="https://buy.polar.sh/polar_cl_EFeCp21opdRhscmMBhyZd9kdQDSj2uVuuk48l2GTHNq" data-polar-checkout data-polar-checkout-theme="light" onClick={() => localStorage.setItem('onboardingFormData', JSON.stringify(dataRef.current))} className="w-full bg-white text-gray-900 border border-gray-300 py-3.5 rounded-xl font-bold text-sm hover:bg-gray-50 flex items-center justify-center gap-3">
+                                Pay in USD ($74) <FaArrowRight className="text-xs" />
                             </a>
                         </div>
-
-                        <div className="border-t border-gray-100 pt-4 mt-6">
-                            <p className="text-xs text-center text-gray-500 mb-3 font-medium">After completing payment, verify below:</p>
-                            <button
-                                onClick={handleVerification}
-                                disabled={isProcessing}
-                                className="w-full bg-green-50 text-green-700 border border-green-200 py-3 rounded-lg font-bold text-sm hover:bg-green-100 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {isProcessing ? "Verifying…" : (
-                                    <>
-                                        <FaCheck /> <span>I Have Completed Payment</span>
-                                    </>
-                                )}
+                        <div className="border-t border-gray-100 pt-4 mt-2">
+                            <p className="text-[10px] text-center text-gray-500 mb-2 uppercase tracking-wide">After payment</p>
+                            <button onClick={handleVerification} disabled={isProcessing} className="w-full bg-gray-50 text-gray-700 border border-gray-200 py-3 rounded-xl font-bold text-sm hover:bg-gray-100 flex items-center justify-center gap-2">
+                                {isProcessing ? "Verifying…" : <> <FaCheck className="text-green-500"/> I Have Completed Payment</>}
                             </button>
                         </div>
-
-                        <div className="mt-6 flex flex-col items-center gap-2">
-                            <div className="flex items-center justify-center gap-4 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                                <span className="border border-gray-200 rounded px-2 py-1 text-[10px] font-bold text-gray-400">UPI</span>
-                                <span className="border border-gray-200 rounded px-2 py-1 text-[10px] font-bold text-gray-400">VISA</span>
-                                <span className="border border-gray-200 rounded px-2 py-1 text-[10px] font-bold text-gray-400">MasterCard</span>
-                                <span className="border border-gray-200 rounded px-2 py-1 text-[10px] font-bold text-gray-400">RuPay</span>
-                            </div>
-                            <p className="text-[10px] text-gray-400 flex items-center gap-1 mt-2">
-                                <FaLock className="text-gray-300" /> 256-Bit SSL Encrypted Connection
-                            </p>
-                        </div>
+                        <p className="text-[10px] text-gray-400 text-center flex items-center justify-center gap-1 mt-2">
+                            <FaLock /> 256-Bit SSL Encrypted
+                        </p>
                     </div>
                 </motion.div>
             </motion.div>
         );
     }
 
-    // ─── RAZORPAY PAYMENT CONFIRMATION OVERLAY ────────────────────────────────
+    // ----- RAZORPAY VERIFICATION IFRAME HUD -----
     if (showRazorpayIframe) {
         return (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="fixed inset-0 z-[120] flex items-center justify-center bg-black/95 backdrop-blur-xl p-6"
-            >
-                <motion.div
-                    initial={{ scale: 0.95, y: 20 }}
-                    animate={{ scale: 1, y: 0 }}
-                    className="w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden"
-                >
-                    {/* Header */}
-                    <div className="border-b border-white/8 px-6 py-5 flex items-center justify-between">
-                        <span className="font-[family-name:var(--font-cinzel)] text-white/60 text-xs tracking-[0.4em] uppercase">Payment</span>
-                        <button onClick={() => setShowRazorpayIframe(false)} className="text-white/30 hover:text-white transition-colors">
-                            <FaTimes />
-                        </button>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[120] flex items-center justify-center bg-gray-900/95 backdrop-blur-md p-6">
+                <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="w-full max-w-sm bg-white rounded-2xl overflow-hidden p-6 text-center">
+                    <button onClick={() => setShowRazorpayIframe(false)} className="absolute top-4 right-4 text-gray-400"><FaTimes /></button>
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center relative">
+                        <FaLock className="text-gray-600 text-xl" />
+                        <div className="absolute inset-0 rounded-full border-2 border-dashed border-gray-300 animate-[spin_4s_linear_infinite]" />
                     </div>
-
-                    {/* Body */}
-                    <div className="px-6 py-10 text-center">
-                        {/* Pulsing indicator */}
-                        <div className="relative w-16 h-16 mx-auto mb-8">
-                            <motion.div
-                                animate={{ scale: [1, 1.6, 1], opacity: [0.5, 0, 0.5] }}
-                                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                className="absolute inset-0 rounded-full border border-[#C9A84C]/40"
-                            />
-                            <motion.div
-                                animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0, 0.3] }}
-                                transition={{ duration: 2, delay: 0.5, repeat: Infinity, ease: "easeInOut" }}
-                                className="absolute inset-0 rounded-full border border-[#C9A84C]/20"
-                            />
-                            <div className="w-full h-full rounded-full bg-[#C9A84C]/10 flex items-center justify-center">
-                                <FaLock className="text-[#C9A84C] text-lg" />
-                            </div>
-                        </div>
-
-                        <p className="font-[family-name:var(--font-cinzel)] text-white/90 text-sm tracking-[0.2em] uppercase mb-3">
-                            Secure checkout opened
-                        </p>
-                        <p className="font-[family-name:var(--font-manrope)] text-white/40 text-xs leading-relaxed mb-10">
-                            Complete your payment in the tab that just opened.<br />
-                            Once done, return here and confirm below.
-                        </p>
-
-                        {/* Confirm button */}
-                        <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={handleVerification}
-                            disabled={isProcessing}
-                            className="w-full py-4 bg-[#C9A84C] text-black font-[family-name:var(--font-cinzel)] text-xs tracking-[0.35em] uppercase font-bold rounded-xl hover:bg-[#F5E6A3] transition-colors flex items-center justify-center gap-3 mb-3"
-                        >
-                            <FaCheck className="text-sm" />
-                            I&apos;ve Paid Successfully
-                        </motion.button>
-
-                        <button
-                            onClick={() => window.open(razorpayPaymentLink, '_blank', 'noopener,noreferrer')}
-                            className="w-full py-3 text-white/30 hover:text-white/60 font-[family-name:var(--font-cinzel)] text-[0.6rem] tracking-[0.3em] uppercase transition-colors"
-                        >
-                            Reopen payment page
-                        </button>
-                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Secure checkout opened</h3>
+                    <p className="text-sm text-gray-600 mb-6 font-medium leading-relaxed">
+                        Complete your payment in the tab that just opened. Once done, confirm here.
+                    </p>
+                    <button onClick={handleVerification} disabled={isProcessing} className="w-full py-4 bg-[#FFD700] text-black font-bold rounded-xl text-sm mb-3">
+                        I've Paid Successfully
+                    </button>
+                    <button onClick={() => window.open(razorpayPaymentLink, '_blank', 'noopener,noreferrer')} className="text-xs text-gray-500 underline">
+                        Reopen payment page
+                    </button>
                 </motion.div>
             </motion.div>
         );
     }
 
-    // ─── MAIN ONBOARDING MODAL ─────────────────────────────────────────────────
+    // ----- MAIN ONBOARDING MODAL -----
     const totalSteps = 5;
 
     return (
@@ -630,384 +402,189 @@ export default function OnboardingModal() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4"
+                    className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-[#FAFAF7]/95 backdrop-blur-sm md:p-4"
                 >
-                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
-
                     <motion.div
-                        initial={{ scale: 0.95, y: 20 }}
-                        animate={{ scale: 1, y: 0 }}
-                        exit={{ scale: 0.95, y: 20 }}
-                        className="w-full max-w-2xl bg-[#0a0a0a] border border-[#FFD700]/20 rounded-2xl overflow-hidden relative shadow-[0_0_50px_rgba(255,215,0,0.1)] max-h-[90vh] overflow-y-auto"
+                        initial={{ y: "100%" }}
+                        animate={{ y: 0 }}
+                        exit={{ y: "100%" }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        className="w-full max-w-md bg-white border-t md:border border-gray-200 rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
                     >
                         {/* Header */}
-                        <div className="flex justify-between items-center p-4 md:p-6 border-b border-white/10 bg-white/5 sticky top-0 z-10">
-                            <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-pulse"></div>
-                                <span className="font-mono text-[#FFD700] text-xs md:text-sm tracking-widest uppercase">
-                                    Step {step}/{totalSteps}
-                                </span>
-                            </div>
-                            {/* Progress dots */}
-                            <div className="flex gap-1.5 absolute left-1/2 -translate-x-1/2">
+                        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+                            <div className="flex gap-1.5 flex-1 max-w-[200px]">
                                 {Array.from({ length: totalSteps }).map((_, i) => (
-                                    <div
-                                        key={i}
-                                        className={`h-1.5 rounded-full transition-all duration-300 ${i < step ? "bg-[#FFD700] w-5" : "bg-white/20 w-1.5"}`}
-                                    />
+                                    <div key={i} className={`h-1 rounded-full transition-all duration-300 flex-1 ${i < step ? "bg-indigo-900" : "bg-gray-100"}`} />
                                 ))}
                             </div>
-                            <button onClick={handleClose} className="text-gray-500 hover:text-white transition-colors">
-                                <FaTimes />
+                            <button onClick={handleClose} className="text-gray-400 hover:text-gray-800 p-2 -mr-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
+                                <FaTimes className="text-sm" />
                             </button>
                         </div>
 
-                        {/* Content */}
-                        <div className="p-6 md:p-12">
-
+                        {/* Scrolling Body content */}
+                        <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar block">
                             <AnimatePresence mode="wait">
 
-                                {/* ── DECODING MICRO-PAUSE (Step 3 → 4) ─────────── */}
                                 {isDecoding && (
-                                    <motion.div
-                                        key="decoding"
-                                        initial={{ opacity: 0, scale: 0.96 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.96 }}
-                                        transition={{ duration: 0.4 }}
-                                        className="flex flex-col items-center justify-center gap-8 py-16 text-center"
-                                    >
-                                        {/* Pulsing gold rings */}
-                                        <div className="relative flex items-center justify-center">
-                                            {[0, 0.3, 0.6].map((delay, i) => (
-                                                <motion.div
-                                                    key={i}
-                                                    animate={{ scale: [1, 1.8, 1], opacity: [0.6, 0, 0.6] }}
-                                                    transition={{ duration: 2, delay, repeat: Infinity, ease: "easeInOut" }}
-                                                    className="absolute w-16 h-16 rounded-full border border-[#FFD700]/40"
-                                                />
-                                            ))}
-                                            <span className="text-3xl relative z-10">✨</span>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest">
-                                                Just a moment…
-                                            </p>
-                                            <p className="font-serif text-2xl text-white leading-snug">
-                                                Your details are being<br />
-                                                <span className="text-[#FFD700]">stacked & decoded</span> 🔮
-                                            </p>
-                                            <p className="font-mono text-xs text-gray-500 pt-1">
-                                                Mapping your chart patterns…
-                                            </p>
-                                        </div>
+                                    <motion.div key="decode" {...slideAnim} className="flex flex-col items-center justify-center text-center py-10 space-y-4">
+                                        <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-900 rounded-full animate-spin mx-auto mb-4" />
+                                        <h2 className="text-xl font-serif text-gray-900">Stacking & Decoding...</h2>
+                                        <p className="text-sm text-gray-500">Mapping your chart patterns</p>
                                     </motion.div>
                                 )}
 
-                                {/* ── STEP 1: Name + Email ───────────────────────── */}
                                 {!isDecoding && step === 1 && (
-
-                                    <motion.div
-                                        key="step1"
-                                        {...fadeUp}
-                                        className="space-y-6"
-                                    >
-                                        <div className="space-y-1">
-                                            <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest mb-3">Hey 👋</p>
-                                            <h2 className="font-serif text-2xl md:text-3xl text-white leading-snug">
+                                    <motion.form key="step1" {...slideAnim} onSubmit={handleStepSubmit} className="space-y-6">
+                                        <div>
+                                            <p className="uppercase text-[10px] tracking-widest text-indigo-900 font-bold mb-2">Step 1</p>
+                                            <h2 className="font-serif text-2xl md:text-3xl text-gray-900 mb-2 leading-tight">
                                                 I'll help build your life map.
-                                                <br />
-                                                <span className="text-gray-400 text-xl md:text-2xl">This takes just a minute.</span>
                                             </h2>
+                                            <p className="text-sm text-gray-600 block">This takes roughly a minute.</p>
                                         </div>
-                                        <div className="space-y-4 pt-2">
+                                        <div className="space-y-4">
                                             <div>
-                                                <label className="block font-mono text-xs text-gray-500 mb-2 uppercase tracking-widest">Your name</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.fullName}
-                                                    onChange={handleFullName}
-                                                    className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
-                                                    placeholder="What do people call you?"
-                                                />
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Legal Name</label>
+                                                <input required name="fullName" type="text" defaultValue={dataRef.current.fullName} className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-gray-900 text-sm focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all" placeholder="John Doe" />
                                             </div>
                                             <div>
-                                                <label className="block font-mono text-xs text-gray-500 mb-2 uppercase tracking-widest">Your email</label>
-                                                <input
-                                                    type="email"
-                                                    value={formData.email}
-                                                    onChange={handleEmail}
-                                                    className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
-                                                    placeholder="Where should we send your report?"
-                                                />
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Best Email</label>
+                                                <input required name="email" type="email" defaultValue={dataRef.current.email} className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-gray-900 text-sm focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all" placeholder="john@example.com" />
                                             </div>
                                         </div>
-                                    </motion.div>
+                                        {/* Action Area Fixed inline */}
+                                        <div className="pt-4 mt-4 block">
+                                            {error && <p className="text-xs text-red-500 mb-3 font-medium bg-red-50 p-2 rounded-lg">{error}</p>}
+                                            <button type="submit" className="w-full bg-gray-900 hover:bg-black text-white font-medium py-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
+                                                Continue <FaArrowRight className="text-[10px]" />
+                                            </button>
+                                        </div>
+                                    </motion.form>
                                 )}
 
-                                {/* ── STEP 2: Birth Details ─────────────────────── */}
                                 {!isDecoding && step === 2 && (
-                                    <motion.div
-                                        key="step2"
-                                        {...fadeUp}
-                                        className="space-y-6"
-                                    >
-                                        <div className="space-y-1">
-                                            <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest mb-3">
-                                                Nice to meet you, {firstName} ✨
-                                            </p>
-                                            <h2 className="font-serif text-2xl md:text-3xl text-white leading-snug">
-                                                When did your story begin?
+                                    <motion.form key="step2" {...slideAnim} onSubmit={handleStepSubmit} className="space-y-6">
+                                        <div>
+                                            <p className="uppercase text-[10px] tracking-widest text-indigo-900 font-bold mb-2">Step 2</p>
+                                            <h2 className="font-serif text-2xl md:text-3xl text-gray-900 mb-1 leading-tight">
+                                                When did your story begin, {userFirstName}?
                                             </h2>
-                                            <p className="font-mono text-xs text-gray-400 pt-1">
-                                                Even approximate times work — we'll connect the dots.
-                                            </p>
+                                            <p className="text-sm text-gray-600 block">Provide approximate times if unsure.</p>
                                         </div>
-                                        <div className="space-y-4 pt-2">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block font-mono text-xs text-gray-500 mb-2 uppercase tracking-widest">Date of birth</label>
-                                                    <input
-                                                        type="date"
-                                                        value={formData.dob}
-                                                        onChange={handleDob}
-                                                        className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block font-mono text-xs text-gray-500 mb-2 uppercase tracking-widest">Birth time</label>
-                                                    <div className="flex gap-2">
-                                                        <input
-                                                            type="time"
-                                                            value={formData.tob}
-                                                            onChange={handleTob}
-                                                            className="w-2/3 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
-                                                        />
-                                                        <select
-                                                            value={formData.tobAmPm}
-                                                            onChange={handleTobAmPm}
-                                                            className="w-1/3 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-mono focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
-                                                        >
-                                                            <option value="AM">AM</option>
-                                                            <option value="PM">PM</option>
-                                                        </select>
-                                                    </div>
-                                                    <p className="text-[10px] text-gray-600 mt-1 font-mono">That's okay if you're unsure — we'll work with what we have.</p>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Date of Birth</label>
+                                                <input required name="dob" type="date" defaultValue={dataRef.current.dob} className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-gray-900 text-sm outline-none transition-all focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Time of Birth</label>
+                                                <div className="flex gap-2">
+                                                    <input required name="tob" type="time" defaultValue={dataRef.current.tob} className="flex-1 bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-gray-900 text-sm outline-none transition-all focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600" />
+                                                    <select name="tobAmPm" defaultValue={dataRef.current.tobAmPm} className="w-24 bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-gray-900 text-sm outline-none shrink-0 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600">
+                                                        <option value="AM">AM</option>
+                                                        <option value="PM">PM</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="block font-mono text-xs text-gray-500 mb-2 uppercase tracking-widest">Place of birth</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.pob}
-                                                    onChange={handlePob}
-                                                    className="w-full bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors text-sm md:text-base rounded-lg"
-                                                    placeholder="Where did you enter this chaos called Earth?"
-                                                />
+                                                <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Place of Birth</label>
+                                                <input required name="pob" type="text" defaultValue={dataRef.current.pob} className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-gray-900 text-sm outline-none transition-all focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600" placeholder="City, State, Country" />
                                             </div>
                                         </div>
-
-                                        {/* Double-check callout */}
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 8 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.5 }}
-                                            className="flex items-start gap-3 bg-[#FFD700]/8 border border-[#FFD700]/25 rounded-xl p-4 mt-2"
-                                        >
-                                            <span className="text-[#FFD700] text-base mt-0.5">🔍</span>
-                                            <div>
-                                                <p className="font-mono text-xs text-[#FFD700] font-semibold mb-1 uppercase tracking-wider">Double-check before continuing</p>
-                                                <p className="font-mono text-xs text-gray-400 leading-relaxed">
-                                                    These details directly shape your report. Even a small error — especially the birth time — can affect the accuracy of your analysis.
-                                                </p>
+                                        <div className="pt-4 mt-4 block">
+                                            {error && <p className="text-xs text-red-500 mb-3 font-medium bg-red-50 p-2 rounded-lg">{error}</p>}
+                                            <div className="flex gap-3">
+                                                <button type="button" onClick={() => setStep(1)} className="p-4 bg-gray-50 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all">
+                                                    <FaChevronLeft className="text-sm" />
+                                                </button>
+                                                <button type="submit" className="flex-1 bg-gray-900 hover:bg-black text-white font-medium py-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
+                                                    Next <FaArrowRight className="text-[10px]" />
+                                                </button>
                                             </div>
-                                        </motion.div>
-                                    </motion.div>
+                                        </div>
+                                    </motion.form>
                                 )}
 
-                                {/* ── STEP 3: Questions / Problem ───────────────── */}
                                 {!isDecoding && step === 3 && (
-                                    <motion.div
-                                        key="step3"
-                                        {...fadeUp}
-                                        className="space-y-6"
-                                    >
-                                        <div className="space-y-1">
-                                            <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest mb-3">Almost there 💖</p>
-                                            <h2 className="font-serif text-2xl md:text-3xl text-white leading-snug">
-                                                What made you come here today, {firstName}?
+                                    <motion.form key="step3" {...slideAnim} onSubmit={handleStepSubmit} className="space-y-6">
+                                        <div>
+                                            <p className="uppercase text-[10px] tracking-widest text-indigo-900 font-bold mb-2">Step 3</p>
+                                            <h2 className="font-serif text-2xl md:text-3xl text-gray-900 mb-2 leading-tight">
+                                                What made you come here today?
                                             </h2>
-                                            <p className="font-mono text-xs text-gray-400 pt-1">
-                                                This is a safe space. The more you share, the sharper your report.
-                                            </p>
+                                            <p className="text-sm text-gray-600">The more specific you are, the sharper your report.</p>
                                         </div>
                                         <div>
-                                            <textarea
-                                                value={formData.questions}
-                                                onChange={handleQuestions}
-                                                className="w-full h-40 md:h-48 bg-white/5 border border-white/10 p-3 md:p-4 text-white font-serif focus:border-[#FFD700] focus:outline-none transition-colors resize-none text-sm md:text-base rounded-lg"
-                                                placeholder="Ask us anything — love, career, life direction, patterns you can't shake. The more specific you are, the more precise your report. (e.g. Why do I attract unavailable partners? When will I get promoted? Is this year good for marriage?)"
-                                            />
+                                            <textarea required name="questions" defaultValue={dataRef.current.questions} className="w-full h-32 md:h-40 bg-gray-50 border border-gray-200 p-4 rounded-xl text-gray-900 text-sm focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all resize-none" placeholder="Ask about career shifts, relationship loops, or life direction..." />
                                         </div>
-                                    </motion.div>
+                                        <div className="pt-4 mt-4 block">
+                                            {error && <p className="text-xs text-red-500 mb-3 font-medium bg-red-50 p-2 rounded-lg">{error}</p>}
+                                            <div className="flex gap-3">
+                                                <button type="button" onClick={() => setStep(2)} className="p-4 bg-gray-50 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all">
+                                                    <FaChevronLeft className="text-sm" />
+                                                </button>
+                                                <button type="submit" className="flex-1 bg-gray-900 hover:bg-black text-white font-medium py-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
+                                                    Process My Data
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </motion.form>
                                 )}
 
-                                {/* ── STEP 4: Identity Hook ─────────────────────── */}
                                 {!isDecoding && step === 4 && (
-                                    <motion.div
-                                        key="step4"
-                                        {...fadeUp}
-                                        className="space-y-8 py-4"
-                                    >
-                                        <div className="space-y-3">
-                                            <p className="font-mono text-[#FFD700] text-xs uppercase tracking-widest">One quick thing, {firstName}…</p>
-                                            <h2 className="font-serif text-2xl md:text-3xl text-white leading-snug">
+                                    <motion.div key="step4" {...slideAnim} className="space-y-6">
+                                        <div>
+                                            <p className="uppercase text-[10px] tracking-widest text-orange-600 font-bold mb-2">Observation</p>
+                                            <h2 className="font-serif text-2xl md:text-3xl text-gray-900 leading-tight">
                                                 I'm already noticing a pattern.
                                             </h2>
                                         </div>
-
-                                        <motion.div
-                                            initial={{ opacity: 0, scale: 0.97 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ delay: 0.4, duration: 0.5 }}
-                                            className="bg-gradient-to-br from-[#FFD700]/10 to-[#FFD700]/5 border border-[#FFD700]/30 rounded-2xl p-6 md:p-8"
-                                        >
-                                            <p className="font-serif text-xl md:text-2xl text-white leading-relaxed">
-                                                "{identityInsight}"
-                                            </p>
-                                        </motion.div>
-
-                                        <motion.p
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{ delay: 0.8 }}
-                                            className="font-mono text-xs text-gray-500 leading-relaxed"
-                                        >
-                                            This is an observation, not a prediction. Your full report goes much deeper.
-                                        </motion.p>
+                                        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 md:p-6 shadow-sm">
+                                            <p className="font-serif text-lg text-gray-800 leading-relaxed italic">"{identityInsight}"</p>
+                                        </div>
+                                        <p className="text-xs text-gray-500 leading-relaxed font-medium">
+                                            This is a surface observation. The full report maps the timeline.
+                                        </p>
+                                        <div className="pt-4 mt-4 block">
+                                            <button onClick={handleNextNonForm} className="w-full bg-gray-900 hover:bg-black text-white font-medium py-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
+                                                Continue <FaArrowRight className="text-[10px]" />
+                                            </button>
+                                        </div>
                                     </motion.div>
                                 )}
 
-                                {/* ── STEP 5: WOW Moment ────────────────────────── */}
                                 {!isDecoding && step === 5 && (
-                                    <motion.div
-                                        key="step5"
-                                        {...fadeUp}
-                                        className="space-y-8 py-4"
-                                    >
-                                        <AnimatePresence mode="wait">
-                                            {!wowRevealed ? (
-                                                /* Loading state */
-                                                <motion.div
-                                                    key="loading"
-                                                    initial={{ opacity: 0 }}
-                                                    animate={{ opacity: 1 }}
-                                                    exit={{ opacity: 0 }}
-                                                    className="flex flex-col items-center gap-6 py-8"
-                                                >
-                                                    {/* Pulsing dots loader */}
-                                                    <div className="flex gap-2">
-                                                        {[0, 0.2, 0.4].map((delay, i) => (
-                                                            <motion.div
-                                                                key={i}
-                                                                animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
-                                                                transition={{ duration: 1.2, delay, repeat: Infinity, ease: "easeInOut" }}
-                                                                className="w-3 h-3 rounded-full bg-[#FFD700]"
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <p className="font-serif text-xl md:text-2xl text-white text-center leading-relaxed">
-                                                        Hmm… give me a second, {firstName}.
-                                                        <br />
-                                                        <span className="text-gray-400 text-lg">Connecting the dots…</span>
-                                                    </p>
-                                                </motion.div>
-                                            ) : (
-                                                /* Revealed state */
-                                                <motion.div
-                                                    key="revealed"
-                                                    initial={{ opacity: 0, y: 12 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ duration: 0.5 }}
-                                                    className="space-y-6"
-                                                >
-
-                                                    {/* Cute reassurance */}
-                                                    <div className="text-center space-y-2">
-                                                        <p className="text-4xl">🌟</p>
-                                                        <p className="font-serif text-xl md:text-2xl text-white leading-relaxed">
-                                                            You're in good hands, {firstName}.
-                                                        </p>
-                                                        <p className="font-mono text-xs text-gray-400 leading-relaxed">
-                                                            Your report is being prepared personally — no algorithms, no auto-generated fluff.
-                                                        </p>
-                                                    </div>
-
-                                                    {/* Trust bullets */}
-                                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
-                                                        {[
-                                                            { icon: "✔", text: "Human-reviewed analysis" },
-                                                            { icon: "✔", text: "No fear-based upsells" },
-                                                            { icon: "✔", text: "Delivered within 24 hours" },
-                                                        ].map(({ icon, text }) => (
-                                                            <div key={text} className="flex items-center gap-3">
-                                                                <span className="text-[#FFD700] font-bold text-sm">{icon}</span>
-                                                                <span className="font-mono text-sm text-gray-300">{text}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
+                                    <motion.div key="step5" {...slideAnim} className="space-y-6">
+                                        {!wowRevealed ? (
+                                            <div className="flex flex-col items-center gap-4 py-8">
+                                                <div className="flex gap-2 mb-2">
+                                                    {[0, 0.15, 0.3].map((d, i) => (
+                                                        <motion.div key={i} animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 1, delay: d }} className="w-2.5 h-2.5 rounded-full bg-indigo-900" />
+                                                    ))}
+                                                </div>
+                                                <p className="font-serif text-xl border-b border-transparent text-gray-900 text-center">Give me a second...</p>
+                                                <p className="text-sm text-gray-500">Connecting the dots...</p>
+                                            </div>
+                                        ) : (
+                                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 py-4">
+                                                <div className="text-center space-y-3 mb-6">
+                                                    <span className="text-3xl block">🙏</span>
+                                                    <h2 className="font-serif text-2xl text-gray-900">You're in good hands.</h2>
+                                                    <p className="text-sm text-gray-500 block leading-relaxed px-4">Your report is drafted personally by humans, not algorithms.</p>
+                                                </div>
+                                                <div className="pt-2 mt-4 block">
+                                                    <button onClick={handleNextNonForm} className="w-full bg-[#FFD700] hover:bg-yellow-400 text-gray-900 font-bold py-4 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
+                                                        Unlock My Full Report <FaLock className="text-xs opacity-70" />
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        )}
                                     </motion.div>
                                 )}
 
                             </AnimatePresence>
-
-                            {/* Error Message */}
-                            <AnimatePresence>
-                                {error && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0 }}
-                                        className="mt-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg flex items-start gap-3"
-                                    >
-                                        <FaTimes className="text-red-500 mt-1 flex-shrink-0" />
-                                        <p className="font-mono text-xs text-red-400 leading-relaxed">{error}</p>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            {/* Footer Controls */}
-                            <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
-                                {step > 1 ? (
-                                    <button
-                                        onClick={() => setStep(step - 1)}
-                                        className="text-gray-500 hover:text-white font-mono text-xs uppercase tracking-widest transition-colors"
-                                    >
-                                        Back
-                                    </button>
-                                ) : <div />}
-
-                                {/* Step 5 CTA only shows after reveal */}
-                                {step === 5 && !wowRevealed ? (
-                                    <div />
-                                ) : (
-                                    <button
-                                        onClick={handleNext}
-                                        className="flex items-center gap-2 bg-[#FFD700] text-black px-6 md:px-8 py-3 font-bold uppercase tracking-widest hover:bg-white transition-colors text-xs md:text-sm rounded-sm"
-                                    >
-                                        {step === 4
-                                            ? "Continue"
-                                            : step === 5
-                                                ? <>Unlock My Full Report <FaArrowRight /></>
-                                                : <>Next <FaArrowRight /></>}
-                                    </button>
-                                )}
-                            </div>
-
                         </div>
                     </motion.div>
                 </motion.div>
