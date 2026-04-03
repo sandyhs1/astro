@@ -137,12 +137,12 @@ export default function FAQSection() {
 
     return (
         <section id="faq" className="py-24 md:py-32 relative overflow-hidden" style={{ background: '#FAFAF7' }}>
-            <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="max-w-7xl mx-auto px-2 md:px-6 relative z-10">
                 <AnimatedSection className="text-center mb-16 space-y-4">
                     <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold tracking-widest uppercase uppercase" style={{ background: 'hsl(245 60% 28% / 0.1)', color: 'hsl(245,60%,28%)' }}>
                         The Interrogation Room
                     </span>
-                    <h2 className="text-4xl md:text-6xl font-bold" style={{ color: 'hsl(240,20%,8%)', fontFamily: "'Space Grotesk',sans-serif" }}>
+                    <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold px-1" style={{ color: 'hsl(240,20%,8%)', fontFamily: "'Space Grotesk',sans-serif" }}>
                         Questions you should <br /> 
                         <span style={{ background: 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>definitely ask.</span>
                     </h2>
