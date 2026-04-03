@@ -19,7 +19,7 @@ export default function ProblemSection() {
             <span style={{ display:'inline-block', padding:'0.375rem 1rem', borderRadius:999, background:'hsl(5 90% 62% / 0.1)', color:'hsl(5,90%,62%)', fontSize:'0.875rem', fontWeight:600, marginBottom:16 }}>THE UGLY TRUTH</span>
             <h2 style={{ fontFamily:"'Space Grotesk',sans-serif", fontSize:'clamp(2rem,5vw,3.5rem)', fontWeight:700, color:'hsl(240,20%,8%)', marginBottom:16 }}>
               The industry is a<br/>
-              <span style={{ background:'linear-gradient(135deg,hsl(30,80%,55%),hsl(15,85%,58%),hsl(5,90%,62%))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>₹50,000 crore fear factory.</span>
+              <span style={{ background:'linear-gradient(135deg,hsl(30,80%,55%),hsl(15,85%,58%),hsl(5,90%,62%))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>$4.5+ Billion fear factory.</span>
             </h2>
             <p style={{ color:'hsl(240,10%,46%)', fontSize:'1.125rem', maxWidth:600, margin:'0 auto' }}>They don't read your chart. They read your insecurities. Here's exactly how they hustle millions of Indians every single day.</p>
           </div>
