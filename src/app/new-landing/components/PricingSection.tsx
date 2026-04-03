@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Zap, Crown, X, ChevronRight } from 'lucide-react';
+import { Check, Zap, Crown, X, ChevronRight, MessageCircle } from 'lucide-react';
 import AnimatedSection from './AnimatedSection';
 import { useOnboarding } from '@/context/OnboardingContext';
 
@@ -26,7 +26,7 @@ const completePreviewFeatures = [
   'Marriage & Separation Timelines: Using Upapada Lagna to predict the quality and duration of unions.',
   'Deep Shadow Work (Trauma Coding): Using Saturn and Ketu to identify subconscious self-sabotage loops.',
   'Corporate/Business Scaling Strategy: When to launch, when to scale, and when to exit.',
-  '3 Direct WhatsApp Follow-Up Questions (valid for 7 days).',
+  '3 Direct WhatsApp Follow-Up Questions: Human-verified, data-driven answers (valid for 7 days).',
   'Priority 12-Hour "Emergency" Delivery: Internally prioritised for immediate clarity.',
   '6 Months YNTRA WebApp Free Access: Early access to our upcoming Webapp.*',
 ];
@@ -89,182 +89,190 @@ const completeFullSections = [
   },
 ];
 
-// ─── RAZORPAY HELPER ────────────────────────────────────────────────────────
+// ─── MANY MORE MODAL (Light Theme) ──────────────────────────────────────────
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
-
-async function loadRazorpayScript(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (window.Razorpay) return resolve(true);
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
-
-async function initiateRazorpayCheckout({
-  amountPaise,
-  plan,
-  description,
-  keyId,
-  onSuccess,
-  onError,
-}: {
-  amountPaise: number;
-  plan: string;
-  description: string;
-  keyId: string;
-  onSuccess: (data: any) => void;
-  onError: (msg: string) => void;
-}) {
-  const loaded = await loadRazorpayScript();
-  if (!loaded) return onError('Failed to load Razorpay. Please check your connection.');
-
-  const res = await fetch('/api/razorpay-order', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: amountPaise, currency: 'INR', plan }),
-  });
-
-  const data = await res.json();
-  if (!res.ok || !data.orderId) return onError(data.error || 'Failed to create order');
-
-  const rzp = new window.Razorpay({
-    key: keyId,
-    amount: data.amount,
-    currency: data.currency,
-    order_id: data.orderId,
-    name: 'YNTRA',
-    description,
-    image: '/favicon.ico',
-    theme: { color: '#1a1a2e' },
-    handler: (response: any) => onSuccess(response),
-    modal: { ondismiss: () => {} },
-  });
-  rzp.open();
-}
-
-// ─── MANY MORE MODAL ────────────────────────────────────────────────────────
-
-function ManyMoreModal({ onClose }: { onClose: () => void }) {
-  const grad = 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))';
+function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal: () => void }) {
   let featureCount = 0;
+  const sectionColors = [
+    { bg: '#EFF6FF', border: '#BFDBFE', accent: '#1D4ED8', dot: '#3B82F6' },
+    { bg: '#F5F3FF', border: '#DDD6FE', accent: '#6D28D9', dot: '#7C3AED' },
+    { bg: '#FFF7ED', border: '#FED7AA', accent: '#C2410C', dot: '#EA580C' },
+    { bg: '#F0FDF4', border: '#BBF7D0', accent: '#15803D', dot: '#16A34A' },
+    { bg: '#FDF4FF', border: '#E9D5FF', accent: '#7E22CE', dot: '#9333EA' },
+  ];
 
   return (
     <AnimatePresence>
+      {/* Overlay */}
       <motion.div
+        key="modal-overlay"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, zIndex: 1000,
-          background: 'rgba(8,8,20,0.92)',
-          backdropFilter: 'blur(12px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '1rem',
+          position: 'fixed', inset: 0, zIndex: 2000,
+          background: 'rgba(15, 15, 30, 0.75)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          padding: '2vh 1rem',
+          overflowY: 'auto',
         }}
       >
+        {/* Modal Card — scrolls as part of overlay */}
         <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.95 }}
+          key="modal-card"
+          initial={{ opacity: 0, y: 30, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.97 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
+          exit={{ opacity: 0, y: 16, scale: 0.98 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
           onClick={(e) => e.stopPropagation()}
           style={{
             width: '100%', maxWidth: 720,
-            maxHeight: '90vh', overflowY: 'auto',
-            background: 'hsl(240,20%,10%)',
-            border: '1px solid hsl(240,15%,22%)',
+            background: '#FAFAF8',
             borderRadius: 20,
-            padding: '2rem',
-            position: 'relative',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.06)',
+            overflow: 'hidden',
+            marginTop: 'auto',
+            marginBottom: 'auto',
           }}
         >
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem', gap: 16 }}>
-            <div>
-              <div style={{ display: 'inline-block', padding: '4px 14px', borderRadius: 999, background: 'hsl(30 80% 55% / 0.2)', color: 'hsl(30,80%,55%)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 10 }}>
-                COMPLETE REALITY CHECK · 30 DELIVERABLES
-              </div>
-              <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 'clamp(1.25rem,3vw,1.75rem)', fontWeight: 700, color: 'hsl(40,33%,97%)', lineHeight: 1.2 }}>
-                The Executive Life Audit.<br />
-                <span style={{ background: grad, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Total transparency. Zero surprises.</span>
-              </h2>
-            </div>
-            <button
-              onClick={onClose}
-              style={{ flexShrink: 0, width: 36, height: 36, borderRadius: '50%', background: 'hsl(240,15%,20%)', border: '1px solid hsl(240,15%,28%)', color: 'hsl(40 33% 97% / 0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <X size={16} />
-            </button>
-          </div>
-
-          {/* Sections */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            {completeFullSections.map((section, si) => (
-              <div key={si}>
+          {/* Sticky Header */}
+          <div style={{
+            padding: '1.5rem 1.75rem 1.25rem',
+            background: '#fff',
+            borderBottom: '1px solid #E5E7EB',
+            position: 'sticky', top: 0, zIndex: 10,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+              <div>
                 <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  padding: '6px 14px', borderRadius: 8,
-                  background: 'hsl(240,15%,18%)',
-                  border: '1px solid hsl(240,15%,28%)',
-                  marginBottom: 14,
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '4px 12px', borderRadius: 999,
+                  background: 'linear-gradient(135deg,#4F46E5,#7C3AED)',
+                  marginBottom: 10,
                 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: grad }} />
-                  <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: '0.8125rem', fontWeight: 700, color: 'hsl(30,80%,65%)', letterSpacing: '0.04em' }}>
-                    {section.title}
+                  <Crown size={11} color="#fff" />
+                  <span style={{ color: '#fff', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em' }}>
+                    COMPLETE REALITY CHECK · 30 DELIVERABLES
                   </span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {section.items.map((item, ii) => {
-                    featureCount++;
-                    const num = featureCount;
-                    const [title, detail] = item.split(': ');
-                    return (
-                      <div key={ii} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                        <div style={{
-                          flexShrink: 0, width: 24, height: 24, borderRadius: 6,
-                          background: 'hsl(240,15%,20%)', border: '1px solid hsl(240,15%,30%)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '0.625rem', fontWeight: 700, color: 'hsl(30,80%,65%)', fontFamily: 'monospace',
-                          marginTop: 1,
-                        }}>
-                          {num}
-                        </div>
-                        <div>
-                          <span style={{ fontWeight: 600, color: 'hsl(40,33%,92%)', fontSize: '0.8125rem', lineHeight: 1.5 }}>{title}</span>
-                          {detail && <span style={{ color: 'hsl(40 33% 97% / 0.5)', fontSize: '0.75rem', display: 'block', marginTop: 2, lineHeight: 1.45 }}>{detail}</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 'clamp(1.1rem,2.5vw,1.5rem)', fontWeight: 800, color: '#0F172A', lineHeight: 1.25, margin: 0 }}>
+                  The Executive Life Audit.{' '}
+                  <span style={{ color: '#6D28D9' }}>Total transparency. Zero surprises.</span>
+                </h2>
+                <p style={{ marginTop: 6, fontSize: '0.8125rem', color: '#6B7280', lineHeight: 1.5 }}>
+                  Every deliverable below is human-interpreted — not AI-generated. Delivered within 12 hours.
+                </p>
               </div>
-            ))}
+              <button
+                onClick={onClose}
+                style={{
+                  flexShrink: 0, width: 34, height: 34, borderRadius: '50%',
+                  background: '#F3F4F6', border: '1px solid #E5E7EB',
+                  color: '#374151', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#E5E7EB')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#F3F4F6')}
+              >
+                <X size={15} />
+              </button>
+            </div>
           </div>
 
-          {/* CTA */}
-          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid hsl(240,15%,20%)', textAlign: 'center' }}>
-            <p style={{ color: 'hsl(40 33% 97% / 0.45)', fontSize: '0.8125rem', marginBottom: 16 }}>
+          {/* Scrollable Content */}
+          <div style={{ padding: '1.5rem 1.75rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {completeFullSections.map((section, si) => {
+              const col = sectionColors[si % sectionColors.length];
+              return (
+                <div key={si} style={{
+                  borderRadius: 14,
+                  border: `1px solid ${col.border}`,
+                  background: col.bg,
+                  overflow: 'hidden',
+                }}>
+                  {/* Section Header */}
+                  <div style={{
+                    padding: '10px 16px',
+                    background: col.bg,
+                    borderBottom: `1px solid ${col.border}`,
+                    display: 'flex', alignItems: 'center', gap: 8,
+                  }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: col.dot, flexShrink: 0 }} />
+                    <span style={{
+                      fontFamily: "'Space Grotesk',sans-serif",
+                      fontSize: '0.8rem', fontWeight: 700,
+                      color: col.accent, letterSpacing: '0.04em',
+                    }}>
+                      {section.title}
+                    </span>
+                  </div>
+                  {/* Items */}
+                  <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {section.items.map((item, ii) => {
+                      featureCount++;
+                      const num = featureCount;
+                      const colonIdx = item.indexOf(': ');
+                      const title = colonIdx > -1 ? item.slice(0, colonIdx) : item;
+                      const detail = colonIdx > -1 ? item.slice(colonIdx + 2) : null;
+                      return (
+                        <div key={ii} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                          <div style={{
+                            flexShrink: 0, width: 22, height: 22,
+                            borderRadius: 6, background: '#fff',
+                            border: `1.5px solid ${col.border}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '0.6rem', fontWeight: 800, color: col.accent,
+                            fontFamily: 'monospace', marginTop: 1,
+                          }}>
+                            {num}
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, fontWeight: 700, color: '#111827', fontSize: '0.8125rem', lineHeight: 1.45 }}>
+                              {title}
+                            </p>
+                            {detail && (
+                              <p style={{ margin: '2px 0 0', color: '#6B7280', fontSize: '0.75rem', lineHeight: 1.5 }}>
+                                {detail}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Sticky CTA Footer */}
+          <div style={{
+            padding: '1.25rem 1.75rem',
+            background: '#fff',
+            borderTop: '1px solid #E5E7EB',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+            position: 'sticky', bottom: 0,
+          }}>
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: '#6B7280', textAlign: 'center' }}>
               All 30 deliverables. One report. Delivered within 12 hours.
             </p>
             <button
-              onClick={onClose}
+              onClick={() => { onClose(); openModal(); }}
               style={{
-                padding: '0.875rem 2.5rem', borderRadius: 12,
-                background: grad, border: 'none',
-                color: '#fff', fontFamily: "'Space Grotesk',sans-serif",
+                padding: '0.8rem 2.25rem', borderRadius: 12,
+                background: 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))',
+                border: 'none', color: '#fff',
+                fontFamily: "'Space Grotesk',sans-serif",
                 fontSize: '0.9375rem', fontWeight: 700, cursor: 'pointer',
               }}
             >
-              I Want This Report →
+              Get This Report →
             </button>
           </div>
         </motion.div>
@@ -278,31 +286,8 @@ function ManyMoreModal({ onClose }: { onClose: () => void }) {
 export default function PricingSection() {
   const { openModal } = useOnboarding();
   const [showModal, setShowModal] = useState(false);
-  const [testLoading, setTestLoading] = useState(false);
-  const [testMsg, setTestMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const grad = 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))';
-  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
-
-  const handleTestPayment = async () => {
-    setTestLoading(true);
-    setTestMsg(null);
-    await initiateRazorpayCheckout({
-      amountPaise: 1000, // ₹10 = 1000 paise
-      plan: 'test',
-      description: '₹10 Test Payment — YNTRA',
-      keyId,
-      onSuccess: (data) => {
-        setTestMsg({ type: 'success', text: `✅ Payment successful! ID: ${data.razorpay_payment_id}` });
-        setTestLoading(false);
-      },
-      onError: (msg) => {
-        setTestMsg({ type: 'error', text: `❌ ${msg}` });
-        setTestLoading(false);
-      },
-    });
-    setTestLoading(false);
-  };
 
   const plans = [
     {
@@ -314,8 +299,8 @@ export default function PricingSection() {
       features: essentialFeatures,
       popular: false,
       accentColor: 'hsl(245,60%,55%)',
-      previewCount: essentialFeatures.length,
       showMore: false,
+      highlight: null,
     },
     {
       name: 'Complete Reality Check',
@@ -326,14 +311,18 @@ export default function PricingSection() {
       features: completePreviewFeatures,
       popular: true,
       accentColor: 'hsl(30,80%,55%)',
-      previewCount: completePreviewFeatures.length,
       showMore: true,
+      highlight: {
+        icon: MessageCircle,
+        text: '10 Specific Questions Answered',
+        sub: 'You choose them. We decode them — directly from your chart.',
+      },
     },
   ];
 
   return (
     <>
-      {showModal && <ManyMoreModal onClose={() => setShowModal(false)} />}
+      {showModal && <ManyMoreModal onClose={() => setShowModal(false)} openModal={openModal} />}
 
       <section
         id="pricing"
@@ -407,6 +396,32 @@ export default function PricingSection() {
                     </p>
                   </div>
 
+                  {/* Highlight Feature Badge */}
+                  {p.highlight && (
+                    <div style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 10,
+                      padding: '12px 14px', borderRadius: 12, marginBottom: 18,
+                      background: 'hsl(30 80% 55% / 0.12)',
+                      border: '1px solid hsl(30 80% 55% / 0.35)',
+                    }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                        background: 'hsl(30,80%,55%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <p.highlight.icon size={15} color="#fff" />
+                      </div>
+                      <div>
+                        <p style={{ margin: 0, fontFamily: "'Space Grotesk',sans-serif", fontSize: '0.875rem', fontWeight: 700, color: 'hsl(30,80%,70%)' }}>
+                          {p.highlight.text}
+                        </p>
+                        <p style={{ margin: '3px 0 0', fontSize: '0.75rem', color: 'hsl(40 33% 97% / 0.5)', lineHeight: 1.4 }}>
+                          {p.highlight.sub}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Price */}
                   <div style={{ marginBottom: 22 }}>
                     <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: '2.25rem', fontWeight: 700, color: 'hsl(40,33%,97%)' }}>
@@ -420,12 +435,13 @@ export default function PricingSection() {
                   {/* Features list */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 20, flexGrow: 1 }}>
                     {p.features.map((f, j) => {
-                      const [title, detail] = f.split(': ');
+                      const colonIdx = f.indexOf(': ');
+                      const title = colonIdx > -1 ? f.slice(0, colonIdx) : f;
+                      const detail = colonIdx > -1 ? f.slice(colonIdx + 2) : null;
                       return (
                         <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
                           <div style={{
-                            width: 17, height: 17,
-                            borderRadius: '50%',
+                            width: 17, height: 17, borderRadius: '50%',
                             background: p.popular ? grad : 'hsl(240,15%,20%)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             flexShrink: 0, marginTop: 2,
@@ -433,7 +449,9 @@ export default function PricingSection() {
                             <Check size={10} color={p.popular ? '#fff' : 'hsl(30,80%,55%)'} strokeWidth={3} />
                           </div>
                           <span style={{ color: 'hsl(40 33% 97% / 0.85)', fontSize: '0.8125rem', lineHeight: 1.45, letterSpacing: '-0.01em' }}>
-                            {detail ? <><strong style={{ color: 'hsl(40,33%,97%)', fontWeight: 600 }}>{title}</strong>: {detail}</> : title}
+                            {detail
+                              ? <><strong style={{ color: 'hsl(40,33%,97%)', fontWeight: 600 }}>{title}</strong>: {detail}</>
+                              : title}
                           </span>
                         </div>
                       );
@@ -446,14 +464,15 @@ export default function PricingSection() {
                         onClick={() => setShowModal(true)}
                         style={{
                           display: 'inline-flex', alignItems: 'center', gap: 5,
-                          marginTop: 6, padding: '6px 14px',
+                          marginTop: 8, padding: '7px 14px',
                           borderRadius: 999,
                           background: 'hsl(30 80% 55% / 0.12)',
                           border: '1px solid hsl(30 80% 55% / 0.35)',
                           color: 'hsl(30,80%,65%)',
                           fontSize: '0.75rem', fontWeight: 700,
                           cursor: 'pointer', letterSpacing: '0.03em',
-                          transition: 'background 0.2s, border-color 0.2s',
+                          transition: 'background 0.2s',
+                          alignSelf: 'flex-start',
                         }}
                         onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'hsl(30 80% 55% / 0.22)'; }}
                         onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'hsl(30 80% 55% / 0.12)'; }}
@@ -487,74 +506,9 @@ export default function PricingSection() {
             ))}
           </div>
 
-          {/* ₹10 Razorpay Test Section */}
-          <AnimatedSection delay={0.3}>
-            <div style={{
-              marginTop: 48,
-              padding: '28px 32px',
-              borderRadius: 16,
-              background: 'hsl(240,15%,11%)',
-              border: '1px dashed hsl(240,15%,28%)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 12,
-              textAlign: 'center',
-            }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.12em', color: 'hsl(30,80%,65%)', textTransform: 'uppercase' }}>
-                💳 Live Payment Gateway Test — ₹10
-              </span>
-              <p style={{ color: 'hsl(40 33% 97% / 0.55)', fontSize: '0.875rem', maxWidth: 480 }}>
-                Verify the live payment gateway end-to-end. This charges exactly ₹10 to a real card.
-              </p>
-              <motion.button
-                id="razorpay-test-btn"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={handleTestPayment}
-                disabled={testLoading}
-                style={{
-                  padding: '0.75rem 2rem',
-                  borderRadius: 10,
-                  background: testLoading ? 'hsl(240,15%,22%)' : 'hsl(245,60%,55%)',
-                  border: 'none',
-                  color: '#fff',
-                  fontFamily: "'Space Grotesk',sans-serif",
-                  fontSize: '0.9375rem',
-                  fontWeight: 700,
-                  cursor: testLoading ? 'not-allowed' : 'pointer',
-                  transition: 'background 0.2s',
-                  minWidth: 220,
-                }}
-              >
-                {testLoading ? 'Opening Checkout…' : 'Test Payment — ₹10'}
-              </motion.button>
-
-              {testMsg && (
-                <motion.p
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  style={{
-                    fontSize: '0.8125rem',
-                    color: testMsg.type === 'success' ? 'hsl(142,60%,55%)' : 'hsl(0,80%,65%)',
-                    fontFamily: 'monospace',
-                    background: testMsg.type === 'success' ? 'hsl(142 60% 55% / 0.1)' : 'hsl(0 80% 65% / 0.1)',
-                    padding: '8px 14px', borderRadius: 8, maxWidth: 480,
-                  }}
-                >
-                  {testMsg.text}
-                </motion.p>
-              )}
-
-              <p style={{ fontSize: '0.7rem', color: 'hsl(40 33% 97% / 0.25)', marginTop: 4 }}>
-                Live mode · Real card required · ₹10 will be charged · Refundable manually from dashboard
-              </p>
-            </div>
-          </AnimatedSection>
-
           {/* Trust note */}
-          <AnimatedSection delay={0.4}>
-            <p style={{ textAlign: 'center', marginTop: 36, fontSize: '0.875rem', color: 'hsl(40 33% 97% / 0.35)', fontFamily: 'var(--font-mono), monospace' }}>
+          <AnimatedSection delay={0.3}>
+            <p style={{ textAlign: 'center', marginTop: 40, fontSize: '0.875rem', color: 'hsl(40 33% 97% / 0.35)', fontFamily: 'var(--font-mono), monospace' }}>
               Limited to 52 reports/day to maintain human verification standards. · No refunds on karma.
             </p>
           </AnimatedSection>
