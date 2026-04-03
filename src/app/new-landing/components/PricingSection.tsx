@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Zap, Crown, X, ChevronRight, MessageCircle } from 'lucide-react';
 import AnimatedSection from './AnimatedSection';
@@ -101,6 +101,14 @@ function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal:
     { bg: '#FDF4FF', border: '#E9D5FF', accent: '#7E22CE', dot: '#9333EA' },
   ];
 
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
   return (
     <AnimatePresence>
       {/* Overlay */}
@@ -116,13 +124,12 @@ function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal:
           backdropFilter: 'blur(8px)',
           WebkitBackdropFilter: 'blur(8px)',
           display: 'flex',
-          alignItems: 'flex-start',
+          alignItems: 'center', // Center vertically
           justifyContent: 'center',
-          padding: '2vh 1rem',
-          overflowY: 'auto',
+          padding: '1rem',
         }}
       >
-        {/* Modal Card — scrolls as part of overlay */}
+        {/* Modal Card — internal scrolling */}
         <motion.div
           key="modal-card"
           initial={{ opacity: 0, y: 30, scale: 0.97 }}
@@ -132,12 +139,13 @@ function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal:
           onClick={(e) => e.stopPropagation()}
           style={{
             width: '100%', maxWidth: 720,
+            maxHeight: 'calc(100vh - 2rem)', // Max height fits screen with padding
             background: '#FAFAF8',
             borderRadius: 20,
             boxShadow: '0 24px 80px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.06)',
-            overflow: 'hidden',
-            marginTop: 'auto',
-            marginBottom: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden', // Wrapper hides outer overflow
           }}
         >
           {/* Sticky Header */}
@@ -185,8 +193,14 @@ function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal:
             </div>
           </div>
 
-          {/* Scrollable Content */}
-          <div style={{ padding: '1.5rem 1.75rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Scrollable Content (Takes remaining space) */}
+          <div style={{
+            padding: '1.5rem 1.75rem 2rem',
+            display: 'flex', flexDirection: 'column', gap: '1.5rem',
+            overflowY: 'auto', // This makes it scroll seamlessly
+            flex: 1,
+            WebkitOverflowScrolling: 'touch', // Smooth momentum scroll on iOS
+          }}>
             {completeFullSections.map((section, si) => {
               const col = sectionColors[si % sectionColors.length];
               return (
