@@ -28,7 +28,7 @@ export default function HeroSection() {
           </motion.h1>
           <motion.p initial={{opacity:0,y:30}} animate={{opacity:1,y:0}} transition={{duration:0.6,delay:0.3}}
             style={{ fontSize:'1.125rem', color:'hsl(240,10%,46%)', maxWidth:480, lineHeight:1.7 }}>
-            Stop guessing when to switch jobs, when a relationship is a trap, or when the market will eat your savings. <span style={{ color:'hsl(240,20%,8%)', fontWeight:600 }}>Quantum Karma</span> tells you exactly which months are safe to push, and when to sit completely still. No pandit required.
+            The astrology industry sells you fear wrapped in gemstones. <span style={{ color:'hsl(240,20%,8%)', fontWeight:600 }}>Quantum Karma</span> gives you the actual blueprint — your triggers, your peak phases, your strike windows. No pandit required.
           </motion.p>
           <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:0.6,delay:0.5}}
             style={{ display:'flex', flexWrap:'wrap', gap:16 }}>

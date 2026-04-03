@@ -21,7 +21,7 @@ export default function StackCardsSection() {
             What you actually<br/>
             <span style={{ background:'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>get in the report.</span>
           </h2>
-          <div style={{ position:'relative', height:400 }}>
+          <div style={{ position:'relative', height:480 }}>
             {cards.map((c, i) => {
               const progress = useTransform(scrollYProgress, [i / cards.length, (i + 1) / cards.length], [0, 1]);
               const y = useTransform(progress, [0, 1], [300, 0]);
@@ -29,10 +29,10 @@ export default function StackCardsSection() {
               const opacity = useTransform(scrollYProgress, [(i + 1) / cards.length, (i + 2) / cards.length], [1, 0.5]);
 
               return (
-                <motion.div key={i} style={{ y: i === 0 ? 0 : y, scale, opacity: i === cards.length - 1 ? 1 : opacity, position:'absolute', inset:0, padding:40, borderRadius:24, background:c.grad, color:'hsl(40,33%,97%)', boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+                <motion.div key={i} style={{ y: i === 0 ? 0 : y, scale, opacity: i === cards.length - 1 ? 1 : opacity, position:'absolute', inset:0, padding:'clamp(24px, 6vw, 40px)', borderRadius:24, background:c.grad, color:'hsl(40,33%,97%)', boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)', display:'flex', flexDirection:'column', justifyContent:'center' }}>
                   <span style={{ fontSize:'0.875rem', fontWeight:500, opacity:0.7, textTransform:'uppercase', letterSpacing:'0.05em' }}>Component {i + 1}</span>
-                  <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontSize:'clamp(1.8rem,4vw,3rem)', fontWeight:700, marginTop:16, marginBottom:16 }}>{c.title}</h3>
-                  <p style={{ fontSize:'max(1.125rem, 16px)', opacity:0.85, maxWidth:600, lineHeight:1.7 }}>{c.desc}</p>
+                  <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontSize:'clamp(1.5rem,4vw,3rem)', fontWeight:700, marginTop:12, marginBottom:12 }}>{c.title}</h3>
+                  <p style={{ fontSize:'clamp(0.95rem, 3.5vw, 1.125rem)', opacity:0.85, maxWidth:600, lineHeight:1.6 }}>{c.desc}</p>
                 </motion.div>
               );
             })}
