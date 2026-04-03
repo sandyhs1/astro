@@ -45,7 +45,7 @@ function generateIdentityInsight(dob: string, fullName: string, pob: string): st
     return IDENTITY_INSIGHTS[index];
 }
 
-const slideAnim = {
+const slideAnim: any = {
     initial: { opacity: 0, x: 20 },
     animate: { opacity: 1, x: 0 },
     exit: { opacity: 0, x: -20 },
