@@ -122,11 +122,7 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
   return createPortal(
     <div
       onClick={onClose}
-      onWheel={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
-      data-lenis-prevent="true"
       style={{
-        /* The absolute god-tier wrapper that captures everything */
         position: 'fixed',
         top: 0, left: 0, right: 0, bottom: 0,
         zIndex: 999999,
@@ -134,34 +130,36 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         
-        /* This makes the ENTIRE dark overlay a native scrollable webpage essentially */
-        overflowY: 'scroll',
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain',
-        
-        /* Proper padding so the white card doesn't hit the absolute edges */
-        padding: '5vh 20px 8vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
         boxSizing: 'border-box',
-        display: 'block', // STRICTLY block, zero flex math to ruin bounding boxes
       }}
     >
       <div
-        onClick={(e) => e.stopPropagation()} // don't close when clicking the white card
+        onClick={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        data-lenis-prevent="true"
         style={{
-          /* The raw card container */
           boxSizing: 'border-box',
           width: '100%',
           maxWidth: '680px',
-          margin: '0 auto', // Centers block elements horizontally perfectly
           backgroundColor: '#FAFAF8',
           borderRadius: '24px',
           border: '1px solid #E5E7EB',
           boxShadow: '0 40px 100px rgba(0,0,0,0.4)',
+          
+          /* CRITICAL: Enforce maximum height and flex layout for internal scrolling */
+          maxHeight: '85vh',
+          display: 'flex',
+          flexDirection: 'column',
           position: 'relative',
         }}
       >
-        {/* Raw Header */}
-        <div style={{ padding: '24px 28px', borderBottom: '1px solid #E5E7EB', backgroundColor: '#fff', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}>
+        {/* Fixed Header */}
+        <div style={{ padding: '24px 28px', borderBottom: '1px solid #E5E7EB', backgroundColor: '#fff', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', flexShrink: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999, background: '#4F46E5', marginBottom: 12 }}>
@@ -187,8 +185,11 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
           </div>
         </div>
 
-        {/* Raw List Content Area (Grows organically without bounding limits) */}
-        <div style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {/* Scrollable List Content Area */}
+        <div style={{ 
+          padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px',
+          overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch'
+        }}>
           {completeFullSections.map((section, si) => {
             const col = sectionColors[si % sectionColors.length];
             return (
@@ -241,8 +242,8 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
           })}
         </div>
 
-        {/* Raw Footer */}
-        <div style={{ padding: '0 28px 28px' }}>
+        {/* Fixed Footer */}
+        <div style={{ padding: '20px 28px 24px', flexShrink: 0, backgroundColor: '#FAFAF8', borderBottomLeftRadius: '24px', borderBottomRightRadius: '24px' }}>
           <button
             onClick={() => { onClose(); openModal(); }}
             style={{
