@@ -91,12 +91,16 @@ const completeFullSections = [
 
 // ─── MANY MORE MODAL (Light Theme) ──────────────────────────────────────────
 
-function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal: () => void }) {
+function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openModal: () => void }) {
   useEffect(() => {
-    const originalOverflow = window.getComputedStyle(document.body).overflow;
+    // Aggressively lock both HTML and Body, standard trick to freeze background on strict iOS devices
+    const origHtmlOverflow = document.documentElement.style.overflow;
+    const origBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = originalOverflow;
+      document.documentElement.style.overflow = origHtmlOverflow;
+      document.body.style.overflow = origBodyOverflow;
     };
   }, []);
 
@@ -110,206 +114,139 @@ function ManyMoreModal({ onClose, openModal }: { onClose: () => void; openModal:
   ];
 
   return (
-    <AnimatePresence>
-      {/* Static Overlay Background */}
-      <motion.div
-        key="modal-overlay-bg"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 1999,
-          background: 'rgba(15, 15, 30, 0.75)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-        }}
-      />
-
-      {/* Scrolling Container for iOS/Mobile stability */}
+    <div
+      onClick={onClose}
+      style={{
+        /* The absolute god-tier wrapper that captures everything */
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        zIndex: 999999,
+        backgroundColor: 'rgba(10, 10, 15, 0.85)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        
+        /* This makes the ENTIRE dark overlay a native scrollable webpage essentially */
+        overflowY: 'scroll',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
+        
+        /* Proper padding so the white card doesn't hit the absolute edges */
+        padding: '5vh 20px 8vh',
+        boxSizing: 'border-box',
+        display: 'block', // STRICTLY block, zero flex math to ruin bounding boxes
+      }}
+    >
       <div
-        key="modal-scroll-container"
-        onClick={onClose}
+        onClick={(e) => e.stopPropagation()} // don't close when clicking the white card
         style={{
-          position: 'fixed', inset: 0, zIndex: 2000,
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          display: 'flex',
-          alignItems: 'flex-start', // CRITICAL FIX: flex-start prevents top-clipping when child is taller than screen
-          justifyContent: 'center',
-          padding: '4vh 1rem', // Space at top and bottom
+          /* The raw card container */
+          boxSizing: 'border-box',
+          width: '100%',
+          maxWidth: '680px',
+          margin: '0 auto', // Centers block elements horizontally perfectly
+          backgroundColor: '#FAFAF8',
+          borderRadius: '24px',
+          border: '1px solid #E5E7EB',
+          boxShadow: '0 40px 100px rgba(0,0,0,0.4)',
+          position: 'relative',
         }}
       >
-        <motion.div
-          key="modal-card"
-          initial={{ opacity: 0, y: 40, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.98 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            position: 'relative',
-            width: '100%', maxWidth: 720,
-            background: '#FAFAF8',
-            borderRadius: 20,
-            boxShadow: '0 24px 80px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.06)',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {/* Header */}
-          <div style={{
-            padding: '1.5rem 1.75rem 1.25rem',
-            background: '#fff',
-            borderBottom: '1px solid #E5E7EB',
-            flexShrink: 0,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-              <div>
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '4px 12px', borderRadius: 999,
-                  background: 'linear-gradient(135deg,#4F46E5,#7C3AED)',
-                  marginBottom: 10,
-                }}>
-                  <Crown size={11} color="#fff" />
-                  <span style={{ color: '#fff', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em' }}>
-                    COMPLETE REALITY CHECK · 30 DELIVERABLES
-                  </span>
-                </div>
-                <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 'clamp(1.1rem,2.5vw,1.5rem)', fontWeight: 800, color: '#0F172A', lineHeight: 1.25, margin: 0 }}>
-                  The Executive Life Audit.{' '}
-                  <span style={{ color: '#6D28D9' }}>Total transparency. Zero surprises.</span>
-                </h2>
-                <p style={{ marginTop: 6, fontSize: '0.8125rem', color: '#6B7280', lineHeight: 1.5 }}>
-                  Every deliverable below is human-interpreted — not AI-generated. Delivered within 12 hours.
-                </p>
+        {/* Raw Header */}
+        <div style={{ padding: '24px 28px', borderBottom: '1px solid #E5E7EB', backgroundColor: '#fff', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999, background: '#4F46E5', marginBottom: 12 }}>
+                <Crown size={12} color="#fff" />
+                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.08em' }}>COMPLETE REALITY CHECK</span>
               </div>
-              <button
-                onClick={onClose}
-                style={{
-                  flexShrink: 0, width: 34, height: 34, borderRadius: '50%',
-                  background: '#F3F4F6', border: '1px solid #E5E7EB',
-                  color: '#374151', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#E5E7EB')}
-                onMouseLeave={e => (e.currentTarget.style.background = '#F3F4F6')}
-              >
-                <X size={15} />
-              </button>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', fontFamily: "'Space Grotesk', sans-serif" }}>
+                The Executive Life Audit
+              </h2>
+              <p style={{ margin: '8px 0 0', fontSize: '0.85rem', color: '#4B5563', lineHeight: 1.5 }}>
+                All 30 deliverables. Human-interpreted. Delivered within 12 hours.
+              </p>
             </div>
-          </div>
-
-          {/* Scrollable Content */}
-          <div style={{ 
-            padding: '1.5rem 1.75rem 2rem', 
-            display: 'flex', flexDirection: 'column', gap: '1.5rem',
-            overflowY: 'auto', flex: 1,
-          }}>
-            {completeFullSections.map((section, si) => {
-              const col = sectionColors[si % sectionColors.length];
-              return (
-                <div key={si} style={{
-                  borderRadius: 14,
-                  border: `1px solid ${col.border}`,
-                  background: col.bg,
-                  overflow: 'hidden',
-                }}>
-                  {/* Section Header */}
-                  <div style={{
-                    padding: '10px 16px',
-                    background: col.bg,
-                    borderBottom: `1px solid ${col.border}`,
-                    display: 'flex', alignItems: 'center', gap: 8,
-                  }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: col.dot, flexShrink: 0 }} />
-                    <span style={{
-                      fontFamily: "'Space Grotesk',sans-serif",
-                      fontSize: '0.8rem', fontWeight: 700,
-                      color: col.accent, letterSpacing: '0.04em',
-                    }}>
-                      {section.title}
-                    </span>
-                  </div>
-                  {/* Items */}
-                  <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    {section.items.map((item: any, ii) => {
-                      featureCount++;
-                      const num = featureCount;
-                      return (
-                        <div key={ii} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                          <div style={{
-                            flexShrink: 0, width: 22, height: 22,
-                            borderRadius: 6, background: '#fff',
-                            border: `1.5px solid ${col.border}`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '0.65rem', fontWeight: 800, color: col.accent,
-                            fontFamily: 'monospace', marginTop: 1,
-                          }}>
-                            {num}
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-                              {item.badge && (
-                                <span style={{
-                                  background: col.bg,
-                                  color: col.accent,
-                                  border: `1px solid ${col.border}`,
-                                  padding: '2px 8px', borderRadius: 6,
-                                  fontSize: '0.625rem', fontWeight: 800, textTransform: 'uppercase',
-                                  fontFamily: 'monospace', letterSpacing: '0.05em'
-                                }}>
-                                  {item.badge}
-                                </span>
-                              )}
-                              <span style={{ color: '#111827', fontSize: '0.85rem', fontWeight: 800, lineHeight: 1.3 }}>
-                                {item.title}
-                              </span>
-                            </div>
-                            {item.detail && (
-                              <span style={{ color: '#4B5563', fontSize: '0.75rem', lineHeight: 1.45 }}>
-                                {item.detail}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* CTA Footer */}
-          <div style={{
-            padding: '1.25rem 1.75rem',
-            background: '#fff',
-            borderTop: '1px solid #E5E7EB',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
-            flexShrink: 0,
-          }}>
-            <p style={{ margin: 0, fontSize: '0.8125rem', color: '#6B7280', textAlign: 'center' }}>
-              All 30 deliverables. One report. Delivered within 12 hours.
-            </p>
-            <button
-              onClick={() => { onClose(); openModal(); }}
+            <button 
+              onClick={onClose}
               style={{
-                padding: '0.8rem 2.25rem', borderRadius: 12,
-                background: 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))',
-                border: 'none', color: '#fff',
-                fontFamily: "'Space Grotesk',sans-serif",
-                fontSize: '0.9375rem', fontWeight: 700, cursor: 'pointer',
+                width: '36px', height: '36px', background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, color: '#4B5563'
               }}
             >
-              Get This Report →
+              <X size={16} />
             </button>
           </div>
-        </motion.div>
+        </div>
+
+        {/* Raw List Content Area (Grows organically without bounding limits) */}
+        <div style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {completeFullSections.map((section, si) => {
+            const col = sectionColors[si % sectionColors.length];
+            return (
+              <div key={si} style={{ background: col.bg, border: `1px solid ${col.border}`, borderRadius: '16px', overflow: 'hidden' }}>
+                <div style={{ padding: '12px 18px', borderBottom: `1px solid ${col.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: col.dot }} />
+                  <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '0.85rem', fontWeight: 700, color: col.accent, letterSpacing: '0.04em' }}>
+                    {section.title}
+                  </span>
+                </div>
+                
+                <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {section.items.map((item: any, ii) => {
+                    featureCount++;
+                    const num = featureCount;
+                    return (
+                      <div key={ii} style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+                        <div style={{
+                          flexShrink: 0, width: '24px', height: '24px', borderRadius: '6px', background: '#fff', border: `1.5px solid ${col.border}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800, color: col.accent, fontFamily: 'monospace'
+                        }}>
+                          {num}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '-1px' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+                            {item.badge && (
+                              <span style={{
+                                background: col.bg, color: col.accent, border: `1px solid ${col.border}`, padding: '2px 8px', borderRadius: '6px',
+                                fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', fontFamily: 'monospace', letterSpacing: '0.04em'
+                              }}>
+                                {item.badge}
+                              </span>
+                            )}
+                            <span style={{ color: '#111827', fontSize: '0.9rem', fontWeight: 800, lineHeight: 1.3 }}>
+                              {item.title}
+                            </span>
+                          </div>
+                          {item.detail && (
+                            <span style={{ color: '#4B5563', fontSize: '0.8rem', lineHeight: 1.5 }}>
+                              {item.detail}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Raw Footer */}
+        <div style={{ padding: '0 28px 28px' }}>
+          <button
+            onClick={() => { onClose(); openModal(); }}
+            style={{
+              width: '100%', padding: '18px', background: 'linear-gradient(135deg, hsl(245,60%,28%), hsl(30,80%,55%))', color: '#fff', border: 'none', borderRadius: '14px',
+              fontSize: '1rem', fontWeight: 800, fontFamily: "'Space Grotesk', sans-serif", cursor: 'pointer',
+              boxShadow: '0 10px 25px rgba(255,130,50,0.2)'
+            }}
+          >
+            Get This Report Now →
+          </button>
+        </div>
       </div>
-    </AnimatePresence>
+    </div>
   );
 }
 
@@ -354,7 +291,13 @@ export default function PricingSection() {
 
   return (
     <>
-      {showModal && <ManyMoreModal onClose={() => setShowModal(false)} openModal={openModal} />}
+      {/* Modal */}
+      {showModal && (
+        <RawFeaturesModal
+          onClose={() => setShowModal(false)}
+          openModal={openModal}
+        />
+      )}
 
       <section
         id="pricing"
