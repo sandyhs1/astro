@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Zap, Crown, X, ChevronRight, MessageCircle } from 'lucide-react';
 import AnimatedSection from './AnimatedSection';
@@ -92,7 +93,10 @@ const completeFullSections = [
 // ─── MANY MORE MODAL (Light Theme) ──────────────────────────────────────────
 
 function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openModal: () => void }) {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     // Aggressively lock both HTML and Body, standard trick to freeze background on strict iOS devices
     const origHtmlOverflow = document.documentElement.style.overflow;
     const origBodyOverflow = document.body.style.overflow;
@@ -113,7 +117,9 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
     { bg: '#FDF4FF', border: '#E9D5FF', accent: '#7E22CE', dot: '#9333EA' },
   ];
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       onClick={onClose}
       style={{
@@ -246,7 +252,8 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
