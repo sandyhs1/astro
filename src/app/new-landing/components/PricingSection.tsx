@@ -501,11 +501,11 @@ export default function PricingSection() {
               gap: 12,
               textAlign: 'center',
             }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.12em', color: 'hsl(245,60%,65%)', textTransform: 'uppercase' }}>
-                🔬 Razorpay Integration Test
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.12em', color: 'hsl(30,80%,65%)', textTransform: 'uppercase' }}>
+                💳 Live Payment Gateway Test — ₹10
               </span>
               <p style={{ color: 'hsl(40 33% 97% / 0.55)', fontSize: '0.875rem', maxWidth: 480 }}>
-                Verify the payment gateway is live before going full-price. This charges exactly ₹10.
+                Verify the live payment gateway end-to-end. This charges exactly ₹10 to a real card.
               </p>
               <motion.button
                 id="razorpay-test-btn"
@@ -547,7 +547,7 @@ export default function PricingSection() {
               )}
 
               <p style={{ fontSize: '0.7rem', color: 'hsl(40 33% 97% / 0.25)', marginTop: 4 }}>
-                Test mode · Uses Razorpay test credentials · No real money charged in test mode
+                Live mode · Real card required · ₹10 will be charged · Refundable manually from dashboard
               </p>
             </div>
           </AnimatedSection>
