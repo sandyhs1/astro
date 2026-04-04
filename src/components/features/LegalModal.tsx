@@ -31,6 +31,39 @@ export default function LegalModal({ isOpen, onClose, type }: LegalModalProps) {
 
 Last updated: 15 February 2026
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 MARKET DATA SOURCES & REFERENCES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. The Astrology Market (Core Services & Apps)
+These numbers represent the direct market for consultations, horoscopes, and AI-driven predictions.
+
+• Global Astrology Market: $22.8 Billion
+  Source: Allied Market Research (2026 Forecast)
+  Context: This covers the total global expenditure on astrological services, digital 
+  platforms, and specialized consulting.
+
+• Indian Astrology Market: $4.5 Billion
+  Source: Expert Market Research (EMR) / FICCI-KPMG Reports
+  Context: This represents the organized and semi-organized sector of practitioners 
+  and digital "Faith-Tech" platforms in India.
+
+2. The Rituals & Remedies Market (The "Hidden" Giant)
+This is often where the highest margins exist. It includes gemstones, Vastu products, 
+pooja services, and remedial items.
+
+• Global Spiritual & Remedial Market: $21.5 Billion
+  Source: Business Research Insights (2026)
+  Note: This is driven by the rising "Wellness" trend in the West and traditional 
+  remedies in the East.
+
+• Indian Rituals & Religious Services Market: $58.5 Billion
+  Source: IMARC Group (India Religious and Spiritual Market Report)
+  Note: India is the world leader here. This includes the massive "Remedial" economy 
+  (Gemstones, Rudraksha, and organized Yagya/Pooja services).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 Welcome. Read this properly. Not because we enjoy legal pages — but because clarity prevents future drama.
 
 By using this website or purchasing a report from Quantum Karma, you agree to everything written below. If something here feels uncomfortable, don’t use the service. No hard feelings.

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import AnimatedSection from './AnimatedSection';
 
 const stats = [
-  { number:'$4.5B+', label:'Astrology market in India', sub:'Mostly built on fear' },
+  { number:'$58B+', label:'India\'s Rituals/Remedies Market', sub:'Built on fear' },
   { number:'89%', label:'Recommend expensive gems', sub:'With zero data to back it up' },
   { number:'3 in 4', label:'Indians consulted astrologers', sub:'And got absolutely scammed' },
   { number:'₹15,000+', label:'Avg. spent on remedies/yr', sub:'Per worried individual' },
