@@ -47,8 +47,8 @@ export default function MathModal({ isOpen, onClose }: MathModalProps) {
                                     <Sparkles className="w-6 h-6 text-amber-500" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">High-Precision Data Audits</h2>
-                                    <p className="text-gray-600 font-medium text-sm md:text-base mt-1">Complete Reality Check of a sophisticated intelligence report rather than a horoscope.</p>
+                                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">The Math Behind The Magic</h2>
+                                    <p className="text-gray-600 font-medium text-sm md:text-base mt-1">Why precision matters when reading your life's blueprint.</p>
                                 </div>
                             </div>
                             <button
@@ -63,134 +63,177 @@ export default function MathModal({ isOpen, onClose }: MathModalProps) {
                         <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar" data-lenis-prevent>
                             <div className="space-y-12">
 
-                                {/* USP Section */}
-                                <div className="bg-gradient-to-br from-indigo-50 to-rose-50 p-6 md:p-8 rounded-2xl border border-indigo-100 relative overflow-hidden">
-                                    <div className="absolute -right-10 -top-10 text-indigo-500/10 pointer-events-none">
+                                {/* Top Section - Why 99% is Useless */}
+                                <div className="bg-gradient-to-br from-rose-50 to-amber-50 p-6 md:p-8 rounded-2xl border-2 border-rose-200 relative overflow-hidden">
+                                    <div className="absolute -right-10 -top-10 text-rose-500/10 pointer-events-none">
                                         <Sparkles size={120} />
                                     </div>
-                                    <h3 className="text-xl font-bold text-indigo-900 mb-3 flex items-center gap-2">
-                                        <CheckCircle2 className="text-indigo-500" />
-                                        The Secret USP: Chalit Chart Mastery
+                                    <h3 className="text-2xl font-bold text-rose-900 mb-4">
+                                        Why 99% of Astrology is Mathematically Useless.
                                     </h3>
-                                    <p className="text-indigo-800/80 leading-relaxed font-medium">
-                                        We use the Chalit (Actual Bhava) position. If a planet is at 29 degrees in the 1st house, it has already moved to the 2nd house. Most apps miss this. This Hard Fact makes the user realize every other app they've used is mathematically wrong.
-                                    </p>
+                                    <div className="space-y-4 text-gray-800 leading-relaxed font-medium">
+                                        <p>
+                                            Standard astrology apps use the D-1 chart. Every person born in the same 2-hour window shares that chart. They use the D-9, which stays the same for 15 minutes.
+                                        </p>
+                                        <p>
+                                            The Complete Reality Check uses the <strong className="text-rose-700">D-60 (Shastiamsa)</strong>. This chart changes every 2 minutes. It is the only data set that explains why twins have different lives.
+                                        </p>
+                                        <p className="text-rose-800 font-bold">
+                                            If your report isn't looking at your D-60, it's not reading your life - it's reading a template for 500,000 other people.
+                                        </p>
+                                    </div>
                                 </div>
 
+                                {/* Main Title */}
                                 <div className="text-center">
-                                    <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">The Technical Specification</h2>
-                                    <p className="text-rose-500 font-bold mt-2 text-lg">30 Data-Audit Features</p>
+                                    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">THE ENGINE</h2>
+                                    <p className="text-amber-600 font-bold mt-2 text-xl">Deterministic Life-Calculation Logic</p>
                                 </div>
 
-                                {/* I. Advanced Predictive Engineering */}
+                                {/* 01. Astronomical Data Integrity */}
                                 <section>
                                     <h3 className="text-2xl font-bold text-gray-800 border-b-2 border-amber-200 pb-3 mb-6 flex items-center gap-3">
-                                        <span className="text-amber-500">I.</span> Advanced Predictive Engineering
+                                        <span className="text-amber-500">01.</span> Astronomical Data Integrity (The Input)
                                     </h3>
-                                    <ul className="space-y-5">
-                                        {[
-                                            { t: "D-60 (Shastiamsa) Forensic Audit", d: "The most granular divisional chart. We decode the Moola (Root) karma that D-1 and D-9 cannot see. This is the ultimate Why behind your unexplainable life patterns." },
-                                            { t: "Upapada Lagna (UL) Lifecycle Mapping", d: "We don't predict love; we calculate the functional lifespan and legal stability of marital contracts. Identifying the specific Antardasha that triggers union or dissolution." },
-                                            { t: "Real-Estate Liquidity Windows", d: "Analysis of the 4th House and Mars-Saturn vectors to identify the exact months for capital deployment in property or high-risk exits." },
-                                            { t: "Investment Volatility Index", d: "Calculating your 5th and 11th House Speculation Scores to determine if your chart supports high-leverage trading or requires conservative asset allocation." },
-                                            { t: "Karmic Debt (Rina) Algorithm", d: "Identifying the 6th/9th house Inherited Liabilities using Rahu/Ketu nodes to see where you are paying for ancestral financial or health patterns." },
-                                            { t: "Migration & Displacement Probability", d: "Calculating the 4th House (Home) vs. 12th House (Foreign) strength to predict permanent relocation or temporary exile timelines." },
-                                            { t: "Litigation & Conflict Latency", d: "A 6th House stress-test to identify periods of high vulnerability to legal sabotage, tax audits, or workplace disputes." },
-                                            { t: "Legacy & Lineage Continuity", d: "Using the 5th House and Saptamsa (D-7) to map the energetic quality and timing of progeny or the creation of long-term intellectual property." }
-                                        ].map((item, idx) => (
-                                            <li key={idx} className="bg-gray-50/80 p-5 rounded-2xl border border-gray-100 hover:border-amber-200 transition-colors shadow-sm">
-                                                <strong className="text-gray-900 block text-lg mb-2">{item.t}:</strong>
-                                                <span className="text-gray-600 leading-relaxed font-medium">{item.d}</span>
+                                    <div className="bg-gray-50/80 p-6 rounded-2xl border border-gray-100 space-y-4">
+                                        <p className="text-gray-700 leading-relaxed font-medium">
+                                            We do not use "estimated" planetary positions found in standard API wrappers. Our engine calculates coordinates based on the <strong>Swiss Ephemeris</strong>, the gold standard in physical astronomy, corrected for:
+                                        </p>
+                                        <ul className="space-y-3 ml-4">
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">True Chitra Paksha (Lahiri) Ayanamsa:</strong> Precision-corrected for the Earth's axial precession (50.3 arc-seconds per year).
                                             </li>
-                                        ))}
-                                    </ul>
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">Geocentric Parallax:</strong> Adjusting planetary longitudes based on the observer's specific latitude and longitude, not just the city center.
+                                            </li>
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">Topocentric Refraction:</strong> Correcting for atmospheric bending of light at the exact moment of the first breath.
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </section>
 
-                                {/* II. Neuro-Psychological & Shadow Architecture */}
+                                {/* 02. The Shodasavarga */}
                                 <section>
-                                    <h3 className="text-2xl font-bold text-gray-800 border-b-2 border-rose-200 pb-3 mb-6 mt-12 flex items-center gap-3">
-                                        <span className="text-rose-500">II.</span> Neuro-Psychological & Shadow Architecture
+                                    <h3 className="text-2xl font-bold text-gray-800 border-b-2 border-rose-200 pb-3 mb-6 flex items-center gap-3">
+                                        <span className="text-rose-500">02.</span> The Shodasavarga + Higher-Order Matrix
                                     </h3>
-                                    <ul className="space-y-5">
-                                        {[
-                                            { t: "Saturn-Ketu Trauma Coding", d: "Identifying the specific Memory Nodes in your chart where past trauma manifests as current self-sabotage." },
-                                            { t: "Behavioral Loop Identification", d: "A recursive analysis of the 8th House to identify the Life Loops (repeating mistakes in money/love) and the specific dasha that breaks them." },
-                                            { t: "Atmakaraka Source Code Extraction", d: "Identifying your highest-degree planet to reveal your core Operating System and the primary resistance you will face until death." },
-                                            { t: "Ego-Dissolution (12th House) Windows", d: "Mapping periods of Identity Death where isolation or spiritual reset is mandatory for the next growth cycle." },
-                                            { t: "Nadi-Amsa Micro-Purpose Mapping", d: "Using the 150 Nadi-Amsas to find the hyper-specific archetype of your destiny that regular Rashi charts miss by a mile." }
-                                        ].map((item, idx) => (
-                                            <li key={idx} className="bg-gray-50/80 p-5 rounded-2xl border border-gray-100 hover:border-rose-200 transition-colors shadow-sm">
-                                                <strong className="text-gray-900 block text-lg mb-2">{item.t}:</strong>
-                                                <span className="text-gray-600 leading-relaxed font-medium">{item.d}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                    <div className="bg-gray-50/80 p-6 rounded-2xl border border-gray-100 space-y-4">
+                                        <p className="text-gray-700 leading-relaxed font-medium">
+                                            Most systems stop at the D-1. We run a <strong>Recursive Multi-Chart Audit</strong>. Every question you ask is routed through its specific high-resolution divisional coordinate.
+                                        </p>
+                                        <p className="text-gray-700 leading-relaxed font-medium">
+                                            <strong className="text-gray-900">Contextual Varga Routing:</strong> If you ask about wealth, we prioritize the D-2 (Hora) and D-11 (Rudramsa). If you ask about property, we audit the D-4 (Chaturthamsa). We don't guess; we zoom into the specific mathematical division of the house in question.
+                                        </p>
+                                    </div>
                                 </section>
 
-                                {/* III. Strategic Enterprise & Leadership */}
+                                {/* 03. Bhava Chalit */}
                                 <section>
-                                    <h3 className="text-2xl font-bold text-gray-800 border-b-2 border-amber-200 pb-3 mb-6 mt-12 flex items-center gap-3">
-                                        <span className="text-amber-500">III.</span> Strategic Enterprise & Leadership
+                                    <h3 className="text-2xl font-bold text-gray-800 border-b-2 border-amber-200 pb-3 mb-6 flex items-center gap-3">
+                                        <span className="text-amber-500">03.</span> Bhava Chalit: The True House Vector
                                     </h3>
-                                    <ul className="space-y-5">
-                                        {[
-                                            { t: "Business Scaling Vector", d: "Analyzing the 10th House and Artha-Trikona to determine the exact month for VC funding, product launch, or market pivot." },
-                                            { t: "AL (Arudha Lagna) Brand Compatibility", d: "Calculating how the public perceives you versus your true self. Essential for founders who need to manage their Authority Image." },
-                                            { t: "Competitor Vulnerability Audit", d: "Using the 6th House from Lagna and AL to see when your rivals are in a Weak Transit (your window to strike)." },
-                                            { t: "Authority (Dig Bala) Assessment", d: "Measuring the Directional Strength of your Sun and Mars to determine if you are wired for CEO-level leadership or Lone Wolf execution." }
-                                        ].map((item, idx) => (
-                                            <li key={idx} className="bg-gray-50/80 p-5 rounded-2xl border border-gray-100 hover:border-amber-200 transition-colors shadow-sm">
-                                                <strong className="text-gray-900 block text-lg mb-2">{item.t}:</strong>
-                                                <span className="text-gray-600 leading-relaxed font-medium">{item.d}</span>
+                                    <div className="bg-gray-50/80 p-6 rounded-2xl border border-gray-100 space-y-4">
+                                        <p className="text-gray-700 leading-relaxed font-medium">
+                                            The "Sign-House" system is a simplified abstraction for the masses. We use <strong>Bhava Chalit (Cusp-based Calculation)</strong>.
+                                        </p>
+                                        <ul className="space-y-3 ml-4">
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">The Logic:</strong> Signs are fixed 30° blocks. Houses (Bhavas) are dynamic.
                                             </li>
-                                        ))}
-                                    </ul>
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">The Difference:</strong> A planet at 28° in the 1st House is mathematically functioning in the 2nd House.
+                                            </li>
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">The Result:</strong> We identify wealth and career results that "General" astrologers miss because they are looking at the wrong house entirely.
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </section>
 
-                                {/* IV. Executive Support & Interactive Data */}
+                                {/* 04. Ashtakvarga */}
                                 <section>
-                                    <h3 className="text-2xl font-bold text-gray-800 border-b-2 border-rose-200 pb-3 mb-6 mt-12 flex items-center gap-3">
-                                        <span className="text-rose-500">IV.</span> Executive Support & Interactive Data
+                                    <h3 className="text-2xl font-bold text-gray-800 border-b-2 border-rose-200 pb-3 mb-6 flex items-center gap-3">
+                                        <span className="text-rose-500">04.</span> Ashtakvarga: The Probability Algorithm
                                     </h3>
-                                    <ul className="space-y-5">
-                                        {[
-                                            { t: "Direct WhatsApp Tactical Access", d: "3 high-priority follow-ups for real-world decision-making (e.g., Should I sign this contract on Tuesday?)." },
-                                            { t: "12-Hour Emergency Response Protocol", d: "Your data is moved to the front of the compute queue for immediate delivery." },
-                                            { t: "YNTRA WebApp Lifetime Dashboard", d: "Access to your real-time Personal Transit Weather updated every hour." },
-                                            { t: "Monthly Macro-Shift Notifications", d: "Tactical alerts on major shifts like Saturn/Jupiter retrogrades and how they specifically hit your 10th and 11th houses." }
-                                        ].map((item, idx) => (
-                                            <li key={idx} className="bg-gray-50/80 p-5 rounded-2xl border border-gray-100 hover:border-rose-200 transition-colors shadow-sm">
-                                                <strong className="text-gray-900 block text-lg mb-2">{item.t}:</strong>
-                                                <span className="text-gray-600 leading-relaxed font-medium">{item.d}</span>
+                                    <div className="bg-gray-50/80 p-6 rounded-2xl border border-gray-100 space-y-4">
+                                        <p className="text-gray-700 leading-relaxed font-medium">
+                                            We quantify the "Benefic Strength" of every house using a 0-8 point system for all 7 planets (Totaling 337 points).
+                                        </p>
+                                        <ul className="space-y-3 ml-4">
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">Active Windows (28+ Points):</strong> Periods where effort yields a 1.5x return.
                                             </li>
-                                        ))}
-                                    </ul>
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">Dead Zones (&lt;20 Points):</strong> Periods where any investment or risk results in unavoidable leakage.
+                                            </li>
+                                        </ul>
+                                        <p className="text-gray-700 leading-relaxed font-medium">
+                                            We overlay these points onto your current transits to determine the exact probability of success for your specific inquiry.
+                                        </p>
+                                    </div>
                                 </section>
 
-                                {/* V. The Secret Data Points */}
+                                {/* 05. 5-Tier Dasha Recursion */}
                                 <section>
-                                    <h3 className="text-2xl font-bold text-gray-800 border-b-2 border-amber-200 pb-3 mb-6 mt-12 flex items-center gap-3">
-                                        <span className="text-amber-500">V.</span> The Secret Data Points
+                                    <h3 className="text-2xl font-bold text-gray-800 border-b-2 border-amber-200 pb-3 mb-6 flex items-center gap-3">
+                                        <span className="text-amber-500">05.</span> 5-Tier Dasha Recursion (Time-Lord Calculation)
                                     </h3>
-                                    <ul className="space-y-5">
-                                        {[
-                                            { t: "Gulika/Mandi Poison Point Mapping", d: "Identifying the invisible points of Sudden Friction in your chart that cause 90% of project delays." },
-                                            { t: "Pushkar Navamsa Optimization", d: "Locating the hidden degrees where your Weak planets actually become high-performers. Most astrologers miss this and misdiagnose failures." },
-                                            { t: "Vargottama Power Vectors", d: "Identifying planets that occupy the same sign in D-1 and D-9, creating Unbreakable strengths in your personality." },
-                                            { t: "Lunar Tithi/Nakshatra Neutralization", d: "Micro-remedies based on the mathematical phase of the moon at birth—fixing the Internal Tide of your emotions." },
-                                            { t: "Maraka (Death-Inflicting) Risk Analysis", d: "High-resolution monitoring of the 2nd and 7th house lords for periods of peak physical vulnerability." },
-                                            { t: "Cognitive Acquisition Windows", d: "Using the 4th/5th house and Mercury to identify when your brain is most capable of learning complex new skill sets (AI, Coding, Strategy)." },
-                                            { t: "Public Image (Arudha) Correction", d: "A strategy on how to align your Inner Reality with your Social Perception to stop the Imposter Syndrome loop." },
-                                            { t: "The Bhrigu Point (Destiny Trigger)", d: "Calculating the exact degree in your chart that, when touched by a transit, changes your life forever." },
-                                            { t: "5-Year Executive Life Roadmap", d: "A one-page Decision Matrix for the next 60 months." }
-                                        ].map((item, idx) => (
-                                            <li key={idx} className="bg-gray-50/80 p-5 rounded-2xl border border-gray-100 hover:border-amber-200 transition-colors shadow-sm">
-                                                <strong className="text-gray-900 block text-lg mb-2">{item.t}:</strong>
-                                                <span className="text-gray-600 leading-relaxed font-medium">{item.d}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                    <div className="bg-gray-50/80 p-6 rounded-2xl border border-gray-100 space-y-4">
+                                        <p className="text-gray-700 leading-relaxed font-medium">
+                                            We don't provide "Yearly Horoscopes." We calculate the Vimshottari Dasha down to the 5th level of recursion.
+                                        </p>
+                                        <ul className="space-y-2 ml-4">
+                                            <li className="text-gray-700"><strong className="text-gray-900">Mahadasha:</strong> The 10-20 year trend.</li>
+                                            <li className="text-gray-700"><strong className="text-gray-900">Antardasha:</strong> The 1-3 year pivot.</li>
+                                            <li className="text-gray-700"><strong className="text-gray-900">Pratyantardasha:</strong> The monthly scene.</li>
+                                            <li className="text-gray-700"><strong className="text-gray-900">Sookshma Dasha:</strong> The weekly trigger.</li>
+                                            <li className="text-gray-700"><strong className="text-gray-900">Prana Dasha:</strong> The daily event.</li>
+                                        </ul>
+                                    </div>
                                 </section>
+
+                                {/* 06. Computational Source Code */}
+                                <section>
+                                    <h3 className="text-2xl font-bold text-gray-800 border-b-2 border-rose-200 pb-3 mb-6 flex items-center gap-3">
+                                        <span className="text-rose-500">06.</span> Computational Source Code
+                                    </h3>
+                                    <div className="bg-gray-50/80 p-6 rounded-2xl border border-gray-100 space-y-4">
+                                        <p className="text-gray-700 leading-relaxed font-medium">
+                                            Our logic is hard-coded from the primary source texts of Vedic Mathematical Astronomy:
+                                        </p>
+                                        <ul className="space-y-3 ml-4">
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">Brihat Parashara Hora Shastra (BPHS):</strong> For the 16-divisional algorithmic framework.
+                                            </li>
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">Jaimini Sutras:</strong> For Chara Karaka (Variable Significator) trajectory mapping.
+                                            </li>
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">Surya Siddhanta:</strong> For the orbital mechanics of the Upagrahas (Gulika/Mandi).
+                                            </li>
+                                            <li className="text-gray-700">
+                                                <strong className="text-gray-900">Phaladeepika:</strong> For clinical results and health diagnostic data.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </section>
+
+                                {/* AUTHENTICITY STAMP - Highlighted Section */}
+                                <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-rose-50 p-8 rounded-2xl border-2 border-indigo-300 relative overflow-hidden shadow-lg">
+                                    <div className="absolute -right-10 -bottom-10 text-indigo-500/10 pointer-events-none">
+                                        <CheckCircle2 size={150} />
+                                    </div>
+                                    <div className="relative">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <CheckCircle2 className="text-indigo-600 w-8 h-8" />
+                                            <h3 className="text-2xl font-bold text-indigo-900">AUTHENTICITY STAMP</h3>
+                                        </div>
+                                        <p className="text-indigo-900 text-lg leading-relaxed font-semibold">
+                                            This is a deterministic reconstruction of the space-time coordinates at your birth. We do not use "Intuition." We use <strong>Sphuta (Longitudes)</strong>, <strong>Bala (Strength)</strong>, and <strong>Kala (Time)</strong>. If the birth data is accurate, the data output is unavoidable.
+                                        </p>
+                                    </div>
+                                </div>
 
                             </div>
                         </div>
