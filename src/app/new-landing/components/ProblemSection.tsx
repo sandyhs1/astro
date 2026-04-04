@@ -16,10 +16,7 @@ const scams = [
 
 export default function ProblemSection() {
   return (
-    <section id="problem" style={{ padding:'6rem 1.5rem', background:'linear-gradient(180deg, hsl(40,33%,97%) 0%, hsl(40,20%,94%) 100%)', position:'relative', overflow:'hidden' }}>
-      {/* Decorative background elements */}
-      <div style={{ position:'absolute', top:'-10%', right:'-5%', width:'40%', height:'60%', background:'radial-gradient(circle, hsl(5,90%,62%,0.08) 0%, transparent 70%)', pointerEvents:'none' }} />
-      <div style={{ position:'absolute', bottom:'-10%', left:'-5%', width:'40%', height:'60%', background:'radial-gradient(circle, hsl(270,60%,40%,0.08) 0%, transparent 70%)', pointerEvents:'none' }} />
+    <section id="problem" style={{ padding:'6rem 1.5rem', background:'hsl(40,33%,97%)', position:'relative', overflow:'hidden' }}>
       
       <div style={{ maxWidth:1280, margin:'0 auto', position:'relative' }}>
         <AnimatedSection>
@@ -44,19 +41,19 @@ export default function ProblemSection() {
           </div>
         </AnimatedSection>
 
-        {/* Enhanced Grid with better spacing and visual hierarchy */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(min(100%, 320px),1fr))', gap:28, marginBottom:48 }}>
+        {/* Grid: 4 boxes per row */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:24 }}>
           {scams.map(({Icon,title,desc,color,bg},i)=>(
             <AnimatedSection key={i} delay={i*0.08}>
               <motion.div 
-                whileHover={{y:-8, scale:1.02, boxShadow:'0 20px 60px -10px hsl(240 20% 8% / 0.15)'}} 
+                whileHover={{y:-4, boxShadow:'0 12px 40px -8px hsl(240 20% 8% / 0.12)'}} 
                 transition={{ type:'spring', stiffness:300, damping:20 }}
                 style={{ 
-                  padding:'32px 28px', 
-                  borderRadius:20, 
+                  padding:'24px 20px', 
+                  borderRadius:16, 
                   background:'#fff', 
-                  border:`2px solid ${bg.replace('0.1', '0.2')}`,
-                  boxShadow:'0 10px 40px -10px hsl(240 20% 8% / 0.08)', 
+                  border:`1px solid ${bg.replace('0.1', '0.15')}`,
+                  boxShadow:'0 4px 20px -4px hsl(240 20% 8% / 0.06)', 
                   cursor:'default',
                   position:'relative',
                   overflow:'hidden',
@@ -65,92 +62,60 @@ export default function ProblemSection() {
                   flexDirection:'column'
                 }}
               >
-                {/* Decorative corner accent */}
-                <div style={{ position:'absolute', top:0, right:0, width:80, height:80, background:`linear-gradient(135deg, ${bg}, transparent)`, borderRadius:'0 20px 0 100%', opacity:0.4 }} />
-                
-                {/* Icon with enhanced styling */}
+                {/* Icon */}
                 <div style={{ 
-                  width:56, 
-                  height:56, 
-                  borderRadius:14, 
-                  background:`linear-gradient(135deg, ${bg}, ${bg.replace('0.1', '0.2')})`, 
+                  width:48, 
+                  height:48, 
+                  borderRadius:12, 
+                  background:`linear-gradient(135deg, ${bg}, ${bg.replace('0.1', '0.15')})`, 
                   display:'flex', 
                   alignItems:'center', 
                   justifyContent:'center', 
-                  marginBottom:20,
-                  boxShadow:`0 8px 20px -8px ${color}`,
+                  marginBottom:16,
                   position:'relative',
                   zIndex:1
                 }}>
-                  <Icon size={28} color={color} strokeWidth={2.5} />
+                  <Icon size={24} color={color} strokeWidth={2.5} />
                 </div>
 
                 {/* Content */}
                 <div style={{ flex:1, display:'flex', flexDirection:'column', position:'relative', zIndex:1 }}>
                   <h3 style={{ 
                     fontFamily:"'Space Grotesk',sans-serif", 
-                    fontSize:'1.15rem', 
+                    fontSize:'1.05rem', 
                     fontWeight:700, 
                     color:'hsl(240,20%,8%)', 
-                    marginBottom:12,
+                    marginBottom:10,
                     lineHeight:1.3
                   }}>
                     {title}
                   </h3>
                   <p style={{ 
                     color:'hsl(240,10%,46%)', 
-                    lineHeight:1.7, 
-                    fontSize:'0.95rem',
+                    lineHeight:1.6, 
+                    fontSize:'0.9rem',
                     margin:0
                   }}>
                     {desc}
                   </p>
                 </div>
-
-                {/* Bottom accent line */}
-                <div style={{ 
-                  position:'absolute', 
-                  bottom:0, 
-                  left:0, 
-                  right:0, 
-                  height:3, 
-                  background:`linear-gradient(90deg, ${color}, transparent)`,
-                  opacity:0.6
-                }} />
               </motion.div>
             </AnimatedSection>
           ))}
         </div>
 
-        {/* Call-to-action footer */}
-        <AnimatedSection delay={0.6}>
-          <motion.div
-            whileHover={{ scale:1.02 }}
-            style={{
-              textAlign:'center',
-              padding:'32px 40px',
-              borderRadius:20,
-              background:'linear-gradient(135deg, hsl(240,20%,8%), hsl(245,60%,28%))',
-              border:'1px solid hsl(240,15%,15%)',
-              boxShadow:'0 20px 60px -15px hsl(240,20%,8%,0.4)',
-              position:'relative',
-              overflow:'hidden'
-            }}
-          >
-            <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 30% 50%, hsl(30,80%,55%,0.1), transparent 60%)', pointerEvents:'none' }} />
-            <p style={{ 
-              fontFamily:"'Space Grotesk',sans-serif", 
-              fontSize:'1.25rem', 
-              fontWeight:600, 
-              color:'hsl(40,33%,97%)', 
-              margin:0,
-              position:'relative',
-              zIndex:1
-            }}>
-              Ready to see what <span style={{ color:'hsl(30,80%,55%)', fontWeight:700 }}>real astrology</span> looks like?
-            </p>
-          </motion.div>
-        </AnimatedSection>
+        <style jsx>{`
+          @media (max-width: 1024px) {
+            div[style*="gridTemplateColumns"] {
+              grid-template-columns: repeat(2, 1fr) !important;
+            }
+          }
+          @media (max-width: 640px) {
+            div[style*="gridTemplateColumns"] {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        `}</style>
       </div>
     </section>
   );
