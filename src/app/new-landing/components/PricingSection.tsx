@@ -8,94 +8,59 @@ import { useOnboarding } from '@/context/OnboardingContext';
 
 // ─── DATA ───────────────────────────────────────────────────────────────────
 
-// First 3 rows (visible features - showing ~9 features in 3 columns = 3 rows)
+// First 8 visible features (main pricing section)
 const visibleFeatures = [
-  { badge: 'Amatyakaraka', title: 'Amatyakaraka (AmK) Pivot Timing', detail: 'Identifying the exact Antardasha windows when your professional authority planet triggers a status shift.' },
-  { badge: '10th House', title: '10th House Power Windows', detail: 'Mapping the specific months where planetary Dig Bala (directional strength) favors a move over stagnation.' },
-  { badge: 'Dasamsa', title: 'Dasamsa (D-10) Structural Audit', detail: 'A cold analysis of your professional varga to determine if your karma supports leadership or specialized labor.' },
-  { badge: 'Upapada', title: 'Upapada Lagna (UL) Contract Integrity', detail: 'Predicting the functional lifespan and legal stability of marital unions based on the UL and its Padas.' },
-  { badge: 'Darakaraka', title: 'Darakaraka (DK) Persona Mapping', detail: 'Decoding the psychological archetype of your partner and the specific timing of the 7th House activation.' },
-  { badge: 'Navamsa', title: 'Navamsa (D-9) Fruit Analysis', detail: 'Revealing the "hidden" quality of your relationships—what manifests after the initial attraction phase ends.' },
-  { badge: 'Indu', title: 'Indu Lagna Prosperity Surge', detail: 'Pinpointing the specific planetary periods mathematically wired for sudden financial inflow and asset accumulation.' },
-  { badge: 'Ashtakvarga', title: 'Ashtakvarga Energy Budgeting', detail: 'A numerical breakdown of your wealth houses to predict months of financial "leakage" vs. "retention."' },
-  { badge: 'Hora', title: 'Hora (D-2) Wealth Segregation', detail: 'Identifying if your chart is optimized for active income (labor) or passive wealth (investments/inheritance).' },
-];
-
-// All features (for modal)
-const allFeatures = [
-  { badge: 'Amatyakaraka', title: 'Amatyakaraka (AmK) Pivot Timing', detail: 'Identifying the exact Antardasha windows when your professional authority planet triggers a status shift.' },
-  { badge: '10th House', title: '10th House Power Windows', detail: 'Mapping the specific months where planetary Dig Bala (directional strength) favors a move over stagnation.' },
-  { badge: 'Dasamsa', title: 'Dasamsa (D-10) Structural Audit', detail: 'A cold analysis of your professional varga to determine if your karma supports leadership or specialized labor.' },
-  { badge: 'Upapada', title: 'Upapada Lagna (UL) Contract Integrity', detail: 'Predicting the functional lifespan and legal stability of marital unions based on the UL and its Padas.' },
-  { badge: 'Darakaraka', title: 'Darakaraka (DK) Persona Mapping', detail: 'Decoding the psychological archetype of your partner and the specific timing of the 7th House activation.' },
-  { badge: 'Navamsa', title: 'Navamsa (D-9) Fruit Analysis', detail: 'Revealing the "hidden" quality of your relationships—what manifests after the initial attraction phase ends.' },
-  { badge: 'Indu', title: 'Indu Lagna Prosperity Surge', detail: 'Pinpointing the specific planetary periods mathematically wired for sudden financial inflow and asset accumulation.' },
-  { badge: 'Ashtakvarga', title: 'Ashtakvarga Energy Budgeting', detail: 'A numerical breakdown of your wealth houses to predict months of financial "leakage" vs. "retention."' },
-  { badge: 'Hora', title: 'Hora (D-2) Wealth Segregation', detail: 'Identifying if your chart is optimized for active income (labor) or passive wealth (investments/inheritance).' },
-  { badge: 'Arudha', title: 'Arudha Lagna (AL) Market Perception', detail: 'Aligning your public brand and "image" timing with the strength of your AL and 11th house gains.' },
-  { badge: 'Chara', title: 'Chara Dasha Exit Windows', detail: 'Using Jaimini systems to predict the most favorable years for business pivots, scaling, or high-value exits.' },
-  { badge: '6th House', title: '6th House Litigation Shield', detail: 'Mapping potential windows for tax audits, legal friction, or hidden workplace sabotage before they hit.' },
-  { badge: 'Badhaka', title: 'Badhaka & Maraka Risk Mapping', detail: 'Locating the planetary periods where your physical vitality reaches a structural low in the Bhava Chalit.' },
-  { badge: '8th House', title: '8th House Transformation Triggers', detail: 'Predicting periods of sudden physical or psychological upheaval that demand immediate "neutralization."' },
-  { badge: 'Shastiamsa', title: 'Shastiamsa (D-60) Event Timeline', detail: 'Accessing the most sensitive divisional chart to explain "Act of God" events and inexplicable life shifts.' },
-  { badge: 'Atmakaraka', title: 'Atmakaraka (AK) Soul-Mandate', detail: 'Identifying the "King" of your chart and the specific psychological hunger that drives your decision-making.' },
-  { badge: 'Karmic', title: 'Karmic Shadow Coding', detail: 'Using the Saturn/Ketu axis to identify the subconscious self-sabotage loops that repeat every 9 or 18 years.' },
+  { badge: 'D-60', title: 'D-60 (Shastiamsa) Audit', detail: 'The "Twin-Killer" chart. The final word on your actual destiny.' },
+  { badge: 'Upapada', title: 'Upapada Lagna (UL) Lifecycle', detail: 'Mapping the functional lifespan and legal stability of marriage/partnerships.' },
+  { badge: 'Real-Estate', title: 'Real-Estate & Asset Timelines', detail: 'Exact windows for property acquisition or exit.' },
+  { badge: 'Investment', title: 'Investment Volatility Index', detail: 'Calculating your innate "Speculation Score" (Safe vs. High Leverage).' },
+  { badge: 'Karmic Debt', title: 'Karmic Debt (Rina)', detail: 'Identifying inherited family liabilities using Rahu/Ketu nodes.' },
+  { badge: 'Migration', title: 'Foreign Settlement Probability', detail: 'Analyzing 4th/9th/12th house vectors for migration.' },
+  { badge: 'Litigation', title: 'Litigation & Conflict Latency', detail: 'A stress-test of your 6th house for legal or tax vulnerabilities.' },
+  { badge: 'Progeny', title: 'Progeny & Legacy Karma', detail: 'Timeline for children and long-term intellectual property creation.' },
 ];
 
 const completeFullSections = [
   {
-    title: 'I. Advanced Predicative Data',
+    title: 'II. Psychological & Shadow Architecture',
     items: [
-      { badge: 'Shastiamsa', title: 'Full D-60 Timeline Analysis', detail: 'The most critical chart that reveals past-life baggage and the "why" behind current struggles.' },
-      { badge: 'Upapada Lagna', title: 'Marriage & Separation Timelines', detail: 'Predicting the exact quality and duration of unions.' },
-      { badge: 'Real-Estate', title: 'Property Windows', detail: 'Data on when to buy, sell, or avoid land disputes.' },
-      { badge: 'Speculation', title: 'Stock Market Risk Profile', detail: 'Your innate planetary "speculation" score.' },
-      { badge: 'Lineage', title: 'Generational Curse (Rina) Decoding', detail: 'Identifying inherited ancestral patterns using the 9th house and Rahu/Ketu.' },
-      { badge: 'Migration', title: 'Foreign Settlement Probability', detail: 'Analysis of the 4th, 9th, and 12th houses for migration data.' },
-      { badge: '6th House', title: 'Litigation & Conflict Risk', detail: 'Mapping periods where the 6th house is under siege.' },
-      { badge: 'Progeny', title: 'Legacy Karma Timeline', detail: 'Timeline for children and the energetic impact on your career.' },
+      { badge: 'Trauma', title: 'Saturn-Ketu Trauma Coding', detail: 'Identifying the specific memory nodes where past trauma blocks current growth.' },
+      { badge: 'Loops', title: 'Behavioral Loop Identification', detail: 'A recursive analysis of the 8th House to find why you repeat mistakes.' },
+      { badge: 'Atmakaraka', title: 'Atmakaraka "Source Code" Extraction', detail: 'Identifying your soul\'s primary mission and greatest resistance.' },
+      { badge: '12th House', title: 'Ego-Dissolution (12th H) Windows', detail: 'Mapping periods for isolation, spiritual reset, and mental health.' },
+      { badge: 'Nadi-Amsa', title: 'Nadi-Amsa Micro-Purpose Mapping', detail: 'Finding the hyper-specific "archetype" of your destiny.' },
     ],
   },
   {
-    title: 'II. Psychological & Shadow Work',
+    title: 'III. Strategic Enterprise & Brand (for founders)',
     items: [
-      { badge: 'Subconscious', title: 'Deep Shadow Work', detail: 'Using Saturn and Ketu to identify subconscious self-sabotage loops.' },
-      { badge: 'Patterns', title: 'Recurring Life Loops', detail: 'Highlighting why you keep dating the same person or losing the same job.' },
-      { badge: 'Atmakaraka', title: '"Soul Source Code"', detail: 'Your primary life lesson and how to stop fighting it.' },
-      { badge: 'Mental Reset', title: 'Ego-Dissolution Windows', detail: 'Identifying periods for spiritual reset and mental health prioritisation.' },
-      { badge: 'Nadi-Amsa', title: 'Sub-breath Destiny Discovery', detail: 'Using Nadi systems to find the specific "sub-breath" of your destiny.' },
+      { badge: '10th House', title: 'Business Scaling Vector', detail: 'Analyzing the 10th House for product launches or market pivots.' },
+      { badge: 'Arudha', title: 'Arudha Lagna (AL) Reputation Audit', detail: 'How the world sees you vs. how you see yourself.' },
+      { badge: 'Competition', title: 'Competitor Vulnerability Windows', detail: 'Knowing when your rivals\' charts are in a "weak transit" cycle.' },
+      { badge: 'Dig Bala', title: 'Authority (Dig Bala) Assessment', detail: 'Measuring your "Directional Strength" for leadership roles.' },
     ],
   },
   {
-    title: 'III. Strategic Business & Scaling',
+    title: 'IV. More...',
     items: [
-      { badge: 'Strategy', title: 'Corporate Scaling', detail: 'When to launch, when to scale, and when to exit.' },
-      { badge: 'Arudha Lagna', title: 'Hiring/Partnership Compatibility', detail: 'Knowing who will actually help your public image.' },
-      { badge: 'Competition', title: 'Rival Vulnerability Windows', detail: 'Knowing when your rivals are in a weakening cycle.' },
-      { badge: 'Authority', title: 'Leadership Style Audit', detail: 'Analysis of your Sun/Mars strength for authority management.' },
+      { badge: 'Bhrigu', title: 'The Bhrigu Point (Destiny Trigger)', detail: 'The exact degree that, when touched, changes your life forever.' },
+      { badge: 'Gulika', title: 'Gulika/Mandi Poison Points', detail: 'Identifying the invisible points that cause "unexplainable" project delays.' },
+      { badge: 'Pushkar', title: 'Pushkar Navamsa Optimization', detail: 'Locating hidden degrees where "Weak" planets become "Super-Powered."' },
+      { badge: 'Vargottama', title: 'Vargottama Power Vectors', detail: 'Identifying unbreakable strengths (planets in the same sign in D-1 & D-9).' },
+      { badge: 'Tithi', title: 'Lunar Tithi Neutralization', detail: 'Fixing the "Internal Tide" of your emotions based on birth lunar phase.' },
+      { badge: 'Maraka', title: 'Maraka Risk Audit', detail: 'High-res monitoring of the 2nd and 7th houses for health vulnerability.' },
+      { badge: 'Learning', title: 'Cognitive Skill Acquisition Windows', detail: 'When your mind is most receptive to learning AI, coding, or strategy.' },
+      { badge: 'Roadmap', title: '5-Year Executive Roadmap', detail: 'A one-page "Decision Matrix" for the next 60 months.' },
     ],
   },
   {
-    title: 'IV. Technical & Interactive Support',
+    title: 'V. VIP Support & Access',
     items: [
-      { badge: 'Support', title: '3 WhatsApp Follow-Ups', detail: 'Human-verified, data-driven answers (valid for 7 days).' },
-      { badge: 'Priority', title: '12-Hour Emergency Delivery', detail: 'Internally prioritised for immediate clarity.' },
-      { badge: 'App', title: '6 Months YNTRA WebApp', detail: 'Early free access to our upcoming Webapp.*' },
-      { badge: 'Alerts', title: 'Monthly "Transit Watch"', detail: '3 months of notifications for major planetary shifts (e.g., Saturn Retrograde).' },
-    ],
-  },
-  {
-    title: 'V. The "Grand Master" Secrets',
-    items: [
-      { badge: 'Mandi', title: 'Gulika Poison Points', detail: 'Identifying the "invisible" points in your chart that cause sudden delays.' },
-      { badge: 'Pushkar', title: 'Navamsa Mapping', detail: 'Finding exact degrees where weak planets become "super-powered".' },
-      { badge: 'Vargottama', title: 'Utilisation Guide', detail: 'How to use planets that occupy the same sign in D-1 and D-9.' },
-      { badge: 'Neutralizers', title: 'Specific Tithi Micro-remedies', detail: 'Micro-remedies based on your birth lunar day.' },
-      { badge: 'Maraka', title: 'Longevity Precautions', detail: 'Straight talk on high-risk health periods.' },
-      { badge: 'Skill', title: 'Education Acquisition Windows', detail: 'When your mind is most receptive to new certifications or degrees.' },
-      { badge: 'Arudha', title: 'Public Perception vs Reality', detail: 'How the world sees you versus who you actually are.' },
-      { badge: 'Bhrigu', title: 'Destiny Point Identification', detail: 'A singular specific point indicating your ultimate destiny trigger.' },
-      { badge: 'Cheat Sheet', title: 'No-BS Executive Summary', detail: 'A one-page cheat sheet for the next 5 years of your life.' },
+      { badge: 'WhatsApp', title: '3 Direct WhatsApp Tactical Questions', detail: 'Human-verified answers for real-world decision making.' },
+      { badge: 'Priority', title: '12-Hour Priority Delivery', detail: 'Moved to the front of the compute queue.' },
+      { badge: 'YNTRA', title: 'Early Free Access to our upcoming YNTRA WebApp', detail: 'Be among the first to experience our revolutionary platform.' },
+      { badge: 'Summary', title: 'No-BS Executive Summary', detail: 'A brutal, one-page "Bottom Line" summary for the CEO in a hurry.' },
+      { badge: 'No Scams', title: 'No expensive gemstones, no expansive poojs, no fear mongering', detail: 'Just pure, actionable intelligence based on your chart.' },
     ],
   },
 ];
@@ -338,7 +303,7 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
                 The Executive Life Audit
               </h2>
               <p style={{ margin: '8px 0 0', fontSize: '0.85rem', color: '#4B5563', lineHeight: 1.5 }}>
-                All 30 deliverables. Human-interpreted. Delivered within 12 hours.
+                All 29 deliverables. Human-interpreted. Delivered within 12 hours.
               </p>
             </div>
             <button 
@@ -832,7 +797,7 @@ export default function PricingSection() {
                     }}
                   >
                     <ChevronRight size={14} />
-                    See Full 30+ Deliverables Breakdown
+                    See Full 29 Deliverables Breakdown
                   </button>
                 </div>
 
