@@ -580,7 +580,7 @@ export default function PricingSection() {
                         fontWeight: 700, 
                         color: 'hsl(270,60%,75%)' 
                       }}>
-                        No gemstones. No pujas. No motives.
+                        Your Full-scale life audit and intelligence report.
                       </p>
                       <p style={{ 
                         margin: '2px 0 0', 
@@ -588,7 +588,7 @@ export default function PricingSection() {
                         color: 'hsl(40 33% 97% / 0.6)', 
                         lineHeight: 1.3 
                       }}>
-                        Just powerful custom mantras & DIY rituals.
+                        Delivered to your inbox in 4–6 hours. Read it. Apply it. Win.
                       </p>
                     </div>
                   </div>
