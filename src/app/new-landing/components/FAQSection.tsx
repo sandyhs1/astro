@@ -214,11 +214,19 @@ export default function FAQSection() {
                             initial={{ scale: 0.95, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.95, y: 20 }}
-                            className="w-full max-w-5xl h-[85vh] overflow-y-auto rounded-3xl relative"
-                            style={{ background: '#FAFAF7', border: '1px solid hsl(40,15%,88%)', boxShadow: '0 25px 60px -10px rgba(0,0,0,0.4)' }}
+                            data-lenis-prevent
+                            className="w-full max-w-5xl rounded-3xl relative flex flex-col"
+                            style={{ 
+                                background: '#FAFAF7', 
+                                border: '1px solid hsl(40,15%,88%)', 
+                                boxShadow: '0 25px 60px -10px rgba(0,0,0,0.4)',
+                                maxHeight: '85vh',
+                                height: '85vh'
+                            }}
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="sticky top-0 right-0 p-6 flex justify-end" style={{ background: 'linear-gradient(to bottom, #FAFAF7 80%, transparent 100%)', zIndex: 10 }}>
+                            {/* Fixed Header with Close Button */}
+                            <div className="sticky top-0 right-0 p-6 flex justify-end flex-shrink-0" style={{ background: 'linear-gradient(to bottom, #FAFAF7 80%, transparent 100%)', zIndex: 10 }}>
                                 <button
                                     onClick={() => setIsModalOpen(false)}
                                     style={{ background: 'hsl(40 20% 92% / 0.8)', border: 'none', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
@@ -228,7 +236,14 @@ export default function FAQSection() {
                                 </button>
                             </div>
 
-                            <div className="px-8 md:px-16 pb-16 pt-2">
+                            {/* Scrollable Content Area */}
+                            <div 
+                                className="flex-1 overflow-y-auto px-8 md:px-16 pb-16 pt-2"
+                                style={{
+                                    overflowY: 'auto',
+                                    WebkitOverflowScrolling: 'touch'
+                                }}
+                            >
                                 <h3 className="text-3xl md:text-5xl font-bold mb-12 text-center" style={{ color: 'hsl(240,20%,8%)', fontFamily: "'Space Grotesk',sans-serif" }}>
                                     Archive: <span style={{ background: 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Declassified</span>
                                 </h3>
