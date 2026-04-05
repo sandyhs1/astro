@@ -1,415 +1,319 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Terminal, Zap } from 'lucide-react';
 import Link from 'next/link';
+import { ArrowLeft, Terminal } from 'lucide-react';
 
 export default function AboutPage() {
-  const [mounted, setMounted] = useState(false);
-  const [visibleSections, setVisibleSections] = useState<number[]>([]);
-  const [counterValue, setCounterValue] = useState(0);
+  const [bootSequence, setBootSequence] = useState<number>(0);
+  const [isBooted, setIsBooted] = useState(false);
+  const [truthsCounter, setTruthsCounter] = useState(0);
 
   useEffect(() => {
-    setMounted(true);
-    // Animate sections appearing one by one
-    const timers = [0, 800, 1600, 2400].map((delay, index) =>
-      setTimeout(() => setVisibleSections(prev => [...prev, index]), delay)
-    );
+    // 56000 counter logic
+    if (isBooted) {
+      let current = 0;
+      const target = 56000;
+      const duration = 2000; // 2 seconds
+      const increment = target / (duration / 16); // 60fps
 
-    // Animate counter
-    const counterInterval = setInterval(() => {
-      setCounterValue(prev => {
-        if (prev >= 56000) {
-          clearInterval(counterInterval);
-          return 56000;
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+          setTruthsCounter(target);
+          clearInterval(timer);
+        } else {
+          setTruthsCounter(Math.floor(current));
         }
-        return prev + 1000;
-      });
-    }, 30);
+      }, 16);
+      return () => clearInterval(timer);
+    }
+  }, [isBooted]);
 
-    return () => {
-      timers.forEach(clearTimeout);
-      clearInterval(counterInterval);
-    };
+  useEffect(() => {
+    // Terminal boot simulation
+    const steps = [
+      800,  // Initial pause
+      400,  // Initialize protocols
+      600,  // Load data points
+      500,  // Connect logic engine
+      400,  // Ready to boot
+    ];
+
+    let totalDelay = 0;
+    steps.forEach((delay, index) => {
+      totalDelay += delay;
+      setTimeout(() => {
+        setBootSequence(index + 1);
+        if (index === steps.length - 1) {
+          setTimeout(() => setIsBooted(true), 600);
+        }
+      }, totalDelay);
+    });
   }, []);
 
-  if (!mounted) return null;
+  if (!isBooted) {
+    return (
+      <div className="min-h-screen bg-[#12011A] text-white font-mono flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {/* Subtle grid background to match terminal feel */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        
+        <div className="w-full max-w-2xl bg-black/60 border border-white/10 p-6 sm:p-8 rounded-lg shadow-2xl backdrop-blur-sm z-10">
+          <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+            <Terminal className="text-[#FFD700]" size={20} />
+            <span className="text-[#FFD700] text-sm tracking-[0.2em] font-bold">SYSTEM BOOT</span>
+          </div>
+          
+          <div className="space-y-3 text-sm sm:text-base text-white/70">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: bootSequence >= 1 ? 1 : 0 }}>
+              <span className="text-green-500 mr-2">{'>'}</span> Loading logic_engine_v2... <span className="text-white/40">[OK]</span>
+            </motion.div>
+            
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: bootSequence >= 2 ? 1 : 0 }}>
+              <span className="text-green-500 mr-2">{'>'}</span> Stripping dogma.config... <span className="text-amber-500">[REMOVED]</span>
+            </motion.div>
 
-  const redactedWords = [
-    { original: 'Destiny', replacement: 'Data-Point' },
-    { original: 'Blessings', replacement: 'Vector' },
-    { original: 'Miracle', replacement: 'Activation Window' },
-  ];
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: bootSequence >= 3 ? 1 : 0 }}>
+              <span className="text-green-500 mr-2">{'>'}</span> Fetching 10,000 data points... <span className="text-white/40">[OK]</span>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: bootSequence >= 4 ? 1 : 0 }}>
+              <span className="text-green-500 mr-2">{'>'}</span> Overriding matrix... <span className="text-red-500 animate-pulse">[HACKING]</span>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: bootSequence >= 5 ? 1 : 0 }} className="pt-4 text-[#FFD700]">
+              <span className="text-green-500 mr-2">{'>'}</span> Status: OPERATIONAL. 
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(180deg, hsl(240,20%,8%) 0%, hsl(240,25%,12%) 100%)',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      {/* Animated Grid Background */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        backgroundImage: 'linear-gradient(hsl(240,15%,15%) 1px, transparent 1px), linear-gradient(90deg, hsl(240,15%,15%) 1px, transparent 1px)',
-        backgroundSize: '50px 50px',
-        opacity: 0.3,
-        pointerEvents: 'none'
-      }} />
-
-      {/* Glowing Orbs */}
-      <div style={{ position: 'absolute', top: '10%', right: '10%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, hsl(30,80%,55%) 0%, transparent 70%)', opacity: 0.1, filter: 'blur(80px)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', bottom: '20%', left: '5%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, hsl(270,60%,50%) 0%, transparent 70%)', opacity: 0.08, filter: 'blur(100px)', pointerEvents: 'none' }} />
-
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '4rem 1.5rem', position: 'relative', zIndex: 1 }}>
-        {/* Back Button */}
-        <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'hsl(40,33%,70%)', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 600, marginBottom: 48, transition: 'color 0.2s' }}
-          onMouseEnter={e => e.currentTarget.style.color = 'hsl(30,80%,55%)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'hsl(40,33%,70%)'}>
-          <ArrowLeft size={16} />
-          Back to Home
-        </Link>
-
-        {/* Terminal Header */}
-        <motion.div
+    <div className="min-h-screen bg-[#12011A] text-white selection:bg-[#FFD700] selection:text-black font-sans relative overflow-x-hidden">
+      {/* Background Noise & Grain */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] mix-blend-screen bg-noise" />
+      
+      <div className="max-w-4xl mx-auto px-6 py-12 sm:py-24 relative z-10">
+        
+        {/* Navigation */}
+        <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{
-            background: 'hsl(240,20%,10%)',
-            border: '1px solid hsl(240,15%,20%)',
-            borderRadius: 16,
-            padding: '16px 24px',
-            marginBottom: 48,
-            fontFamily: 'monospace'
-          }}
+          transition={{ duration: 0.6 }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <Terminal size={16} color="hsl(30,80%,55%)" />
-            <span style={{ color: 'hsl(30,80%,55%)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em' }}>SYSTEM BOOT</span>
+          <Link href="/" className="inline-flex items-center gap-2 text-white/50 hover:text-[#FFD700] transition-colors text-sm font-mono tracking-widest uppercase mb-16 sm:mb-24">
+            <ArrowLeft size={16} />
+            Abort & Return
+          </Link>
+        </motion.div>
+
+        {/* Header Block */}
+        <motion.header
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="mb-20 sm:mb-32"
+        >
+          <h1 className="text-5xl sm:text-7xl font-bold tracking-tighter text-white mb-6 leading-[1.1]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-[#FFD700]">
+              ABOUT
+            </span>
+          </h1>
+          <div className="w-16 h-1 bg-[#FFD700] mb-8" />
+        </motion.header>
+
+        {/* Section: The $4.5B Fear Factory */}
+        <ContentSection title="The $4.5B Fear Factory" delay={0.4}>
+          <p>
+            I spent years watching the astrology industry operate, and I realized it wasn't a science—it was a <span className="text-red-400 font-bold">$4.5 Billion fear factory.</span> I saw people in their 20s and 30s—founders, creators, and professionals—walking into rooms with genuine pain, only to be met with "Shani is angry" and a ₹50,000 gemstone recommendation. 
+          </p>
+          <p>
+            The "Gurus" weren't reading charts; they were reading insecurities. They were selling "hope" because hope is a high-margin product.
+          </p>
+        </ContentSection>
+
+        {/* Section: The Glitch */}
+        <ContentSection title="The Glitch" delay={0.6}>
+          <p>
+            I stopped looking for <RedactedWord cliche="blessings" technical="Vectors" /> and started looking at the Math. Vedic Astrology isn't a religion; it's a <span className="text-[#FFD700] font-mono whitespace-nowrap bg-[#FFD700]/10 px-2 py-0.5 rounded">Deterministic Coordinate System</span>. The planets are just the hands on a cosmic clock. They don't make things happen; they tell you what time it is.
+          </p>
+          <div className="my-8 p-6 sm:p-8 bg-black/40 border-l-2 border-[#FFD700] backdrop-blur-md">
+            <p className="text-lg sm:text-xl text-white/90 leading-relaxed m-0 font-medium italic">
+              I found the "Glitch in the Matrix"—the industry was ignoring 90% of the data because it was too hard to explain to the masses. 
+            </p>
+            <p className="mt-4 text-white/70">
+              They ignored the <span className="font-mono text-[#FFD700]">D-60 (Shastiamsa)</span> which changes every 120 seconds. They ignored the <span className="font-mono text-[#FFD700]">Bhava Chalit</span> which proves your planets might be in a different house entirely. They chose the easy lie over the complex truth.
+            </p>
           </div>
-          <div style={{ color: 'hsl(40,33%,70%)', fontSize: '0.875rem', lineHeight: 1.8 }}>
-            <div><span style={{ color: 'hsl(120,60%,50%)' }}>{'>'}</span> Loading truth_engine.exe...</div>
-            <div><span style={{ color: 'hsl(120,60%,50%)' }}>{'>'}</span> Initializing reality_check_protocol...</div>
-            <div><span style={{ color: 'hsl(120,60%,50%)' }}>{'>'}</span> Status: <span style={{ color: 'hsl(30,80%,55%)' }}>OPERATIONAL</span></div>
+        </ContentSection>
+
+        {/* Section: The Manifesto */}
+        <ContentSection title="The Manifesto" delay={0.8}>
+          <p>
+            I built Quantum Karma for the people who hate being lied to. We don't do "vibrations." We don't do <RedactedWord cliche="miracles." technical="Activation Windows." /> We do Life Intelligence. We process over 10,000 data points to reconstruct the exact space-time coordinates of your birth. We provide a surgical audit of your life's hardware.
+          </p>
+          <ul className="mt-8 space-y-4 font-mono text-sm sm:text-base text-white/80">
+            <li className="flex items-start gap-4 p-4 border border-white/10 rounded-lg hover:border-[#FFD700]/50 transition-colors bg-white/[0.02]">
+              <span className="text-red-500 mt-1">{'[!]'}</span>
+              <span>If you're in a "Dead Zone," we tell you.</span>
+            </li>
+            <li className="flex items-start gap-4 p-4 border border-white/10 rounded-lg hover:border-[#FFD700]/50 transition-colors bg-white/[0.02]">
+              <span className="text-red-500 mt-1">{'[!]'}</span>
+              <span>If your relationship is a "Karmic Debt," we show you.</span>
+            </li>
+            <li className="flex items-start gap-4 p-4 border border-white/10 rounded-lg hover:border-[#FFD700]/50 transition-colors bg-white/[0.02]">
+              <span className="text-[#FFD700] mt-1">{'[+]'}</span>
+              <span>If your career window is opening in 4 months, we give you the timeframes.</span>
+            </li>
+          </ul>
+        </ContentSection>
+
+        {/* Section: The Bottom Line */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8 }}
+          className="mt-20 sm:mt-32 p-8 sm:p-12 relative overflow-hidden ring-1 ring-white/10 rounded-2xl bg-gradient-to-br from-black/80 to-[#12011A]"
+        >
+          {/* Subtle flare */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 blur-[100px] pointer-events-none" />
+          
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-white tracking-tight">The Bottom Line</h2>
+          
+          <div className="space-y-6 text-lg text-white/80 leading-relaxed font-light">
+            <p>
+              <RedactedWord cliche="Destiny" technical="Data" isCapitalized /> is for people who are too lazy to read their own data. Strategy is for the people who want to win.
+            </p>
+            <p>
+              We provide the Tide Chart. Whether you choose to swim with the current or drown fighting it is up to you. But after this report, you can never claim you didn't see the wave coming.
+            </p>
+            <p className="text-xl sm:text-2xl text-white font-bold tracking-tight mt-12 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-[#FFD700]">
+              Stop guessing. Start striking.
+            </p>
           </div>
         </motion.div>
 
-        {/* Main Title */}
-        <AnimatePresence>
-          {visibleSections.includes(0) && (
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              style={{ marginBottom: 64 }}
-            >
-              <h1 style={{
-                fontFamily: "'Space Grotesk',sans-serif",
-                fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
-                fontWeight: 800,
-                color: 'hsl(40,33%,97%)',
-                lineHeight: 1.1,
-                marginBottom: 24,
-                letterSpacing: '-0.02em'
-              }}>
-                About <span style={{ 
-                  background: 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}>Quantum Karma</span>
-              </h1>
-              <div style={{ width: 80, height: 4, background: 'linear-gradient(90deg, hsl(30,80%,55%), transparent)', borderRadius: 2 }} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Counter Metric */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, delay: 0.3 }}
+          className="mt-20 sm:mt-32 grid grid-cols-1 md:grid-cols-2 gap-8"
+        >
+          <div className="flex flex-col items-center justify-center p-8 border border-white/5 rounded-2xl bg-black/40">
+            <span className="text-5xl font-bold text-red-500 tracking-tighter mb-4">0</span>
+            <span className="text-xs sm:text-sm font-mono text-white/50 uppercase tracking-widest text-center">
+              Total Gemstones<br/>Recommended
+            </span>
+          </div>
+          <div className="flex flex-col items-center justify-center p-8 border border-[#FFD700]/20 rounded-2xl bg-[#FFD700]/[0.02] shadow-[0_0_30px_rgba(255,215,0,0.05)] relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,215,0,0.1),transparent_70%)]" />
+            <span className="text-5xl font-bold text-[#FFD700] tracking-tighter mb-4 relative z-10">
+              {truthsCounter.toLocaleString()}+
+            </span>
+            <span className="text-xs sm:text-sm font-mono text-[#FFD700]/70 uppercase tracking-widest text-center relative z-10">
+              Total Truths<br/>Delivered
+            </span>
+          </div>
+        </motion.div>
 
-        {/* Content Sections */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
-          {/* Section 1: The Problem */}
-          <AnimatePresence>
-            {visibleSections.includes(1) && (
-              <ContentSection
-                title="The $4.5B Fear Factory"
-                content="I spent years watching the astrology industry operate, and I realized it wasn't a science—it was a $4.5 Billion fear factory. I saw people in their 20s and 30s—founders, creators, and professionals—walking into rooms with genuine pain, only to be met with 'Shani is angry' and a ₹50,000 gemstone recommendation. The 'Gurus' weren't reading charts; they were reading insecurities. They were selling 'hope' because hope is a high-margin product."
-                delay={0}
-              />
-            )}
-          </AnimatePresence>
+        {/* Signature */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, delay: 0.6 }}
+          className="mt-24 sm:mt-40 text-center pb-20"
+        >
+          <p className="text-white/40 font-mono text-sm uppercase tracking-[0.3em] mb-4">
+            Calculated by Logic. Not by Dogma.
+          </p>
+          <div className="text-5xl sm:text-6xl text-white font-serif italic tracking-wide">
+            Sandesh
+          </div>
+        </motion.div>
 
-          {/* Section 2: The Glitch */}
-          <AnimatePresence>
-            {visibleSections.includes(2) && (
-              <ContentSection
-                title="The Glitch"
-                content="I stopped looking for 'blessings' and started looking at the Math. Vedic Astrology isn't a religion; it's a Deterministic Coordinate System. The planets are just the hands on a cosmic clock. They don't make things happen; they tell you what time it is."
-                highlight="I found the 'Glitch in the Matrix'—the industry was ignoring 90% of the data because it was too hard to explain to the masses. They ignored the D-60 (Shastiamsa) which changes every 120 seconds. They ignored the Bhava Chalit which proves your planets might be in a different house entirely. They chose the easy lie over the complex truth."
-                delay={0.2}
-              />
-            )}
-          </AnimatePresence>
-
-          {/* Section 3: The Manifesto */}
-          <AnimatePresence>
-            {visibleSections.includes(2) && (
-              <ContentSection
-                title="The Manifesto"
-                content="I built Quantum Karma for the people who hate being lied to. We don't do 'vibrations.' We don't do 'daily horoscopes.' We do Life Intelligence. We process over 10,000 data points to reconstruct the exact space-time coordinates of your birth. We provide a surgical audit of your life's hardware."
-                bullets={[
-                  'If you\'re in a "Dead Zone," we tell you.',
-                  'If your relationship is a "Karmic Debt," we show you.',
-                  'If your career window is opening in 4 months, we give you the timeframes.'
-                ]}
-                delay={0.4}
-              />
-            )}
-          </AnimatePresence>
-
-          {/* Section 4: The Bottom Line */}
-          <AnimatePresence>
-            {visibleSections.includes(3) && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                style={{
-                  background: 'linear-gradient(135deg, hsl(245,60%,28%) 0%, hsl(270,60%,40%) 50%, hsl(30,80%,55%) 100%)',
-                  padding: 48,
-                  borderRadius: 24,
-                  border: '1px solid hsl(30,80%,55%)',
-                  boxShadow: '0 20px 60px -10px rgba(255,130,50,0.3)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-              >
-                <div style={{ position: 'absolute', top: 0, right: 0, width: 200, height: 200, background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-                
-                <h3 style={{
-                  fontFamily: "'Space Grotesk',sans-serif",
-                  fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-                  fontWeight: 800,
-                  color: '#fff',
-                  marginBottom: 24,
-                  letterSpacing: '-0.01em'
-                }}>
-                  The Bottom Line
-                </h3>
-                <p style={{ color: 'rgba(255,255,255,0.95)', fontSize: '1.125rem', lineHeight: 1.8, marginBottom: 24 }}>
-                  Fate is for people who are too lazy to read their own data. Strategy is for the people who want to win.
-                </p>
-                <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '1.05rem', lineHeight: 1.8, marginBottom: 24 }}>
-                  We provide the Tide Chart. Whether you choose to swim with the current or drown fighting it is up to you. But after this report, you can never claim you didn't see the wave coming.
-                </p>
-                <p style={{ 
-                  color: '#fff', 
-                  fontSize: '1.25rem', 
-                  fontWeight: 700, 
-                  fontFamily: "'Space Grotesk',sans-serif",
-                  letterSpacing: '0.02em'
-                }}>
-                  Stop guessing. Start striking.
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Counter Metrics */}
-          <AnimatePresence>
-            {visibleSections.includes(3) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.8 }}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                  gap: 24,
-                  marginTop: 48
-                }}
-              >
-                <MetricCard
-                  label="Total Gemstones Recommended"
-                  value="0"
-                  color="hsl(0,70%,55%)"
-                />
-                <MetricCard
-                  label="Total Truths Delivered"
-                  value={`${counterValue.toLocaleString()}+`}
-                  color="hsl(120,60%,50%)"
-                  animated
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Signature */}
-          <AnimatePresence>
-            {visibleSections.includes(3) && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 1 }}
-                style={{
-                  marginTop: 64,
-                  paddingTop: 48,
-                  borderTop: '1px solid hsl(240,15%,20%)',
-                  textAlign: 'center'
-                }}
-              >
-                <p style={{
-                  color: 'hsl(40,33%,60%)',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  marginBottom: 16
-                }}>
-                  Calculated by Logic. Not by Dogma.
-                </p>
-                <div style={{
-                  fontFamily: "'Brush Script MT', cursive",
-                  fontSize: '2.5rem',
-                  background: 'linear-gradient(135deg, hsl(30,80%,55%), hsl(270,60%,50%))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  fontWeight: 400,
-                  fontStyle: 'italic'
-                }}>
-                  Sandesh
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
       </div>
     </div>
   );
 }
 
-function ContentSection({ title, content, highlight, bullets, delay = 0 }: {
-  title: string;
-  content: string;
-  highlight?: string;
-  bullets?: string[];
-  delay?: number;
-}) {
+// ------------------------------------
+// Inline Components
+// ------------------------------------
+
+const ContentSection = ({ title, children, delay }: { title: string, children: React.ReactNode, delay: number }) => (
+  <motion.section
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-100px" }}
+    transition={{ duration: 0.8, delay }}
+    className="mb-16 sm:mb-24 last:mb-0"
+  >
+    <div className="flex items-center gap-4 mb-8">
+      <div className="w-8 h-[1px] bg-red-500/50" />
+      <h2 className="text-xl sm:text-2xl font-mono text-red-400 uppercase tracking-widest">{title}</h2>
+    </div>
+    <div className="space-y-6 text-lg sm:text-xl text-white/80 leading-relaxed font-light pl-0 sm:pl-12">
+      {children}
+    </div>
+  </motion.section>
+);
+
+const RedactedWord = ({ cliche, technical, isCapitalized = false }: { cliche: string; technical: string; isCapitalized?: boolean }) => {
+  const [isRedacted, setIsRedacted] = useState(false);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -30 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.6, delay }}
-      style={{
-        background: 'hsl(240,20%,10%)',
-        border: '1px solid hsl(240,15%,18%)',
-        borderRadius: 20,
-        padding: 40,
-        position: 'relative',
-        overflow: 'hidden'
+    <motion.span 
+      className="inline-flex items-center gap-2 "
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-50px" }}
+      onViewportEnter={() => {
+        // Redact after a short delay of seeing it
+        setTimeout(() => setIsRedacted(true), 800);
       }}
     >
-      <div style={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', background: 'linear-gradient(180deg, hsl(30,80%,55%), hsl(270,60%,50%))', borderRadius: '4px 0 0 4px' }} />
+      <span className="relative inline-block px-1">
+        <span className={`transition-all duration-300 ${isRedacted ? 'text-white/30 truncate' : 'text-white font-bold'}`}>
+          {cliche}
+        </span>
+        {/* Redacted Strike line */}
+        <motion.span 
+          className="absolute top-1/2 left-0 h-[3px] bg-red-600 z-10 w-full rounded"
+          initial={{ scaleX: 0, originX: 0 }}
+          animate={{ scaleX: isRedacted ? 1 : 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+        />
+        {/* Extra glitch burst purely visual */}
+        {isRedacted && (
+          <motion.span 
+            className="absolute inset-0 bg-red-500/30 blur-sm mix-blend-screen"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          />
+        )}
+      </span>
       
-      <h3 style={{
-        fontFamily: "'Space Grotesk',sans-serif",
-        fontSize: 'clamp(1.5rem, 3vw, 2rem)',
-        fontWeight: 800,
-        color: 'hsl(40,33%,97%)',
-        marginBottom: 20,
-        letterSpacing: '-0.01em'
-      }}>
-        {title}
-      </h3>
-      
-      <p style={{
-        color: 'hsl(40,33%,80%)',
-        fontSize: '1.05rem',
-        lineHeight: 1.8,
-        marginBottom: highlight || bullets ? 24 : 0
-      }}>
-        {content}
-      </p>
-
-      {highlight && (
-        <div style={{
-          background: 'hsl(30,80%,55% / 0.1)',
-          border: '1px solid hsl(30,80%,55% / 0.3)',
-          borderRadius: 12,
-          padding: 20,
-          marginTop: 24
-        }}>
-          <p style={{
-            color: 'hsl(30,80%,70%)',
-            fontSize: '1rem',
-            lineHeight: 1.8,
-            fontWeight: 500,
-            margin: 0
-          }}>
-            {highlight}
-          </p>
-        </div>
-      )}
-
-      {bullets && (
-        <ul style={{ listStyle: 'none', padding: 0, margin: '24px 0 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {bullets.map((bullet, i) => (
-            <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <Zap size={16} color="hsl(30,80%,55%)" style={{ marginTop: 4, flexShrink: 0 }} />
-              <span style={{ color: 'hsl(40,33%,80%)', fontSize: '1rem', lineHeight: 1.7 }}>{bullet}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </motion.div>
+      {/* Target Word Appears */}
+      <AnimatePresence>
+        {isRedacted && (
+          <motion.span
+            initial={{ opacity: 0, x: -10, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className={`font-mono text-[#FFD700] text-sm sm:text-base border border-[#FFD700]/30 bg-[#FFD700]/10 px-1.5 py-0.5 rounded shadow-[0_0_10px_rgba(255,215,0,0.2)] whitespace-nowrap`}
+          >
+            {technical}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </motion.span>
   );
-}
-
-function MetricCard({ label, value, color, animated = false }: {
-  label: string;
-  value: string;
-  color: string;
-  animated?: boolean;
-}) {
-  return (
-    <div style={{
-      background: 'hsl(240,20%,10%)',
-      border: `2px solid ${color}`,
-      borderRadius: 16,
-      padding: 32,
-      textAlign: 'center',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        background: `radial-gradient(circle at 50% 50%, ${color}15 0%, transparent 70%)`,
-        pointerEvents: 'none'
-      }} />
-      
-      <p style={{
-        color: 'hsl(40,33%,70%)',
-        fontSize: '0.875rem',
-        fontWeight: 600,
-        letterSpacing: '0.05em',
-        textTransform: 'uppercase',
-        marginBottom: 12
-      }}>
-        {label}
-      </p>
-      
-      <p style={{
-        fontFamily: "'Space Grotesk',sans-serif",
-        fontSize: 'clamp(2.5rem, 5vw, 4rem)',
-        fontWeight: 800,
-        color,
-        margin: 0,
-        lineHeight: 1
-      }}>
-        {value}
-      </p>
-    </div>
-  );
-}
+};
