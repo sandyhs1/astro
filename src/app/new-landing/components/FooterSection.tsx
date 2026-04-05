@@ -18,6 +18,7 @@ export default function FooterSection() {
   const grad = 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))';
 
   const navLinks = [
+    { label: 'About', href: '/about' },
     { label: 'Reviews', href: '/reviews' },
     { label: 'Sample Report', href: '/sample-report' },
     { label: 'Roadmap', href: '/roadmap' },
