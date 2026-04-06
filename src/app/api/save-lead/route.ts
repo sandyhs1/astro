@@ -14,10 +14,12 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
+        console.log('📝 Received lead capture request:', JSON.stringify(body, null, 2));
         
         const { fullName, email, dob, tob, pob, questions, paymentStatus, transactionId } = body;
 
         if (!fullName || !email) {
+            console.error('❌ Missing required fields (fullName or email)');
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
@@ -37,13 +39,18 @@ export async function POST(req: Request) {
             ]);
 
         if (error) {
-            console.error('Supabase DB Insert Error:', error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error('❌ Supabase DB Insert Error:', JSON.stringify(error, null, 2));
+            return NextResponse.json({ 
+                error: error.message, 
+                details: error.details, 
+                hint: error.hint 
+            }, { status: 500 });
         }
 
+        console.log('✅ Lead successfully saved to Supabase');
         return NextResponse.json({ success: true, data }, { status: 200 });
     } catch (err: any) {
-        console.error('Save Lead API Error:', err);
+        console.error('❌ Save Lead API Exception:', err);
         return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
     }
 }

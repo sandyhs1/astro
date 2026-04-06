@@ -224,10 +224,10 @@ export default function OnboardingModal() {
         }
     };
 
-    const handleNextNonForm = () => {
-        if (step === 4) {
-            // Log supabase lead here as per original code
-            fetch('/api/save-lead', {
+    const saveLeadData = async () => {
+        try {
+            console.log("📝 Saving lead data to Supabase...");
+            const response = await fetch('/api/save-lead', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -239,17 +239,36 @@ export default function OnboardingModal() {
                     questions: dataRef.current.questions,
                     paymentStatus: 'pending',
                 })
-            }).catch(console.error);
+            });
 
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("❌ Failed to save lead:", errorData);
+            } else {
+                console.log("✅ Lead successfully saved to Supabase.");
+            }
+        } catch (error) {
+            console.error("❌ Error calling save-lead API:", error);
+        }
+    };
+
+    const handleNextNonForm = async () => {
+        if (step === 4) {
+            // Capture lead exactly before transitioning to final screen
+            await saveLeadData();
             setStep(5);
         } else if (step === 5) {
             setShowPayment(true);
         }
     };
 
-    const handleRazorpayPayment = () => {
+    const handleRazorpayPayment = async () => {
         setIsProcessing(true);
         localStorage.setItem('onboardingFormData', JSON.stringify(dataRef.current));
+        
+        // Ensure lead is saved before opening payment
+        await saveLeadData();
+        
         window.open(razorpayPaymentLink, '_blank', 'noopener,noreferrer');
         setShowRazorpayIframe(true);
         setIsProcessing(false);
@@ -347,9 +366,19 @@ export default function OnboardingModal() {
                             <button onClick={handleRazorpayPayment} disabled={isProcessing} className="w-full bg-[#111111] text-white py-3.5 rounded-xl font-bold text-sm hover:bg-gray-900 transition-all flex items-center justify-center gap-3">
                                 Pay in INR (₹4,799) <FaArrowRight className="text-xs" />
                             </button>
-                            <a href="https://buy.polar.sh/polar_cl_EFeCp21opdRhscmMBhyZd9kdQDSj2uVuuk48l2GTHNq" data-polar-checkout data-polar-checkout-theme="light" onClick={() => localStorage.setItem('onboardingFormData', JSON.stringify(dataRef.current))} className="w-full bg-white text-gray-900 border border-gray-300 py-3.5 rounded-xl font-bold text-sm hover:bg-gray-50 flex items-center justify-center gap-3">
+                            <button 
+                                onClick={async () => {
+                                    setIsProcessing(true);
+                                    localStorage.setItem('onboardingFormData', JSON.stringify(dataRef.current));
+                                    await saveLeadData();
+                                    setIsProcessing(false);
+                                    window.location.href = "https://buy.polar.sh/polar_cl_EFeCp21opdRhscmMBhyZd9kdQDSj2uVuuk48l2GTHNq";
+                                }}
+                                disabled={isProcessing}
+                                className="w-full bg-white text-gray-900 border border-gray-300 py-3.5 rounded-xl font-bold text-sm hover:bg-gray-50 flex items-center justify-center gap-3"
+                            >
                                 Pay in USD ($74) <FaArrowRight className="text-xs" />
-                            </a>
+                            </button>
                         </div>
                         <div className="border-t border-gray-100 pt-4 mt-2">
                             <p className="text-[10px] text-center text-gray-500 mb-2 uppercase tracking-wide">After payment</p>
@@ -395,15 +424,17 @@ export default function OnboardingModal() {
     const totalSteps = 5;
 
     return (
-        <AnimatePresence>
+        <>
             <Script src="https://cdn.jsdelivr.net/npm/@polar-sh/checkout@0.1/dist/embed.global.js" strategy="lazyOnload" data-auto-init />
-            {isOpen && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-[#FAFAF7]/95 backdrop-blur-sm md:p-4"
-                >
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        key="onboarding-modal"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-[#FAFAF7]/95 backdrop-blur-sm md:p-4"
+                    >
                     <motion.div
                         initial={{ y: "100%" }}
                         animate={{ y: 0 }}
@@ -590,5 +621,6 @@ export default function OnboardingModal() {
                 </motion.div>
             )}
         </AnimatePresence>
+        </>
     );
 }
