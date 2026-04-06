@@ -7,6 +7,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import emailjs from '@emailjs/browser';
+import posthog from 'posthog-js';
 
 const IDENTITY_INSIGHTS: string[] = [
     "You carry a quiet intensity that most people mistake for stillness.",
@@ -87,6 +88,13 @@ export default function OnboardingModal() {
         setError(null);
     }, [step]);
 
+    // Track when modal is opened
+    useEffect(() => {
+        if (isOpen && step === 1) {
+            posthog.capture('lead_capture_started');
+        }
+    }, [isOpen]);
+
     // WOW screen loading timer
     useEffect(() => {
         if (step === 5) {
@@ -128,6 +136,7 @@ export default function OnboardingModal() {
                     const parsedData = JSON.parse(savedData);
                     dataRef.current = parsedData;
                     setShowSuccess(true);
+                    posthog.capture('payment_successful', { method: 'dodo_automated_redirect', amount: 74 });
 
                     const emailParams = {
                         fullName: dataRef.current.fullName,
@@ -246,6 +255,9 @@ export default function OnboardingModal() {
                 console.error("❌ Failed to save lead:", errorData);
             } else {
                 console.log("✅ Lead successfully saved to Supabase.");
+                posthog.capture('lead_captured_successfully', {
+                    payment_status: 'pending'
+                });
             }
         } catch (error) {
             console.error("❌ Error calling save-lead API:", error);
@@ -264,6 +276,7 @@ export default function OnboardingModal() {
 
     const handleRazorpayPayment = async () => {
         setIsProcessing(true);
+        posthog.capture('payment_initiated', { method: 'razorpay', amount: 4799 });
         localStorage.setItem('onboardingFormData', JSON.stringify(dataRef.current));
         
         // Ensure lead is saved before opening payment
@@ -276,6 +289,7 @@ export default function OnboardingModal() {
 
     const handleVerification = async () => {
         setIsProcessing(true);
+        posthog.capture('payment_successful', { method: 'razorpay_manual_verify' });
         const emailParams = {
             fullName: dataRef.current.fullName,
             email: dataRef.current.email,
@@ -369,6 +383,7 @@ export default function OnboardingModal() {
                             <button 
                                 onClick={async () => {
                                     setIsProcessing(true);
+                                    posthog.capture('payment_initiated', { method: 'dodo', amount: 74 });
                                     localStorage.setItem('onboardingFormData', JSON.stringify(dataRef.current));
                                     await saveLeadData();
                                     setIsProcessing(false);

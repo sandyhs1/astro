@@ -1,5 +1,7 @@
 'use client';
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
+import { useRef, useEffect } from 'react';
+import posthog from 'posthog-js';
 import AnimatedSection from './AnimatedSection';
 
 const stats = [
@@ -10,8 +12,17 @@ const stats = [
 ];
 
 export default function FearFactorySection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.3 });
+
+  useEffect(() => {
+    if (isInView) {
+      posthog.capture('content_engagement', { section: 'fear_factory' });
+    }
+  }, [isInView]);
+
   return (
-    <section style={{ padding:'6rem 1.5rem', background:'hsl(240,20%,8%)', position:'relative', overflow:'hidden' }}>
+    <section ref={ref} style={{ padding:'6rem 1.5rem', background:'hsl(240,20%,8%)', position:'relative', overflow:'hidden' }}>
       <div style={{ position:'absolute', inset:0, opacity:0.1, pointerEvents:'none' }}>
         <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 30% 20%, hsl(270,60%,40%), transparent 50%)' }} />
         <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 70% 80%, hsl(30,80%,55%), transparent 50%)' }} />

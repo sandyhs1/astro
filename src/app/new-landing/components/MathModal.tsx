@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
 import { Sparkles, CheckCircle2 } from 'lucide-react';
+import posthog from 'posthog-js';
 
 interface MathModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ export default function MathModal({ isOpen, onClose }: MathModalProps) {
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            posthog.capture('content_engagement', { section: 'the_math_modal' });
         } else {
             document.body.style.overflow = 'unset';
         }
