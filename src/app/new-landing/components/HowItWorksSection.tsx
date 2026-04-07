@@ -6,7 +6,7 @@ import AnimatedSection from './AnimatedSection';
 const steps = [
   { icon:CalendarDays, step:'01', title:'Drop your data', desc:'Date, time, place of birth. That\'s it. No phone number for telemarketers. No begging you for a review. Just data.' },
   { icon:Cpu, step:'02', title:'We run the math', desc:'We process 10,000+ data points using actual Vedic algorithms. This isn\'t some dude on a computer making it up as he goes.' },
-  { icon:FileText, step:'03', title:'Get your reality check', desc:'A 50+ page PDF sent straight to your email. Hard truths, exact dates, and solid warnings about your career, money, and love life.' },
+  { icon:FileText, step:'03', title:'Get your reality check', desc:'A detailed actionable PDF sent straight to your email. Hard truths, exact dates, and solid warnings about your career, money, and love life.' },
 ];
 
 export default function HowItWorksSection() {

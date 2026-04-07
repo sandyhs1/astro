@@ -5,7 +5,7 @@ import AnimatedSection from './AnimatedSection';
 const stats = [
   { icon:Users, value:'50,000+', label:'People Stopped Guessing' },
   { icon:Star, value:'4.9/5', label:'Brutally Honest Rating' },
-  { icon:FileText, value:'50+ Pages', label:'Of Pure Reality Check' },
+  { icon:FileText, value:'Detailed', label:'Personalized Reality Check' },
   { icon:ShieldAlert, value:'0', label:'Scammy Gemstones Sold' },
 ];
 
