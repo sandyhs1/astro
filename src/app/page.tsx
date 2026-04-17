@@ -15,6 +15,7 @@ import SocialProofBar from './new-landing/components/SocialProofBar';
 import TestimonialsSection from './new-landing/components/TestimonialsSection';
 import PricingSection from './new-landing/components/PricingSection';
 import FAQSection from './new-landing/components/FAQSection';
+import AskAISection from './new-landing/components/AskAISection';
 import CTASection from './new-landing/components/CTASection';
 import FooterSection from './new-landing/components/FooterSection';
 
@@ -37,6 +38,7 @@ export default function Home() {
       <TestimonialsSection />
       <PricingSection />
       <FAQSection />
+      <AskAISection />
       <CTASection />
       <FooterSection />
     </div>
