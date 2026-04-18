@@ -36,18 +36,47 @@ export async function POST(req: Request) {
                     payment_status: paymentStatus || 'pending',
                     transaction_id: transactionId || null
                 }
-            ]);
+            ])
+            .select()
+            .single();
 
-        if (error) {
+        if (error || !data) {
             console.error('❌ Supabase DB Insert Error:', JSON.stringify(error, null, 2));
             return NextResponse.json({ 
-                error: error.message, 
-                details: error.details, 
-                hint: error.hint 
+                error: error?.message || 'Failed to save lead', 
+                details: error?.details, 
+                hint: error?.hint 
             }, { status: 500 });
         }
 
         console.log('✅ Lead successfully saved to Supabase');
+
+        // --- CLIENT PORTAL CREATION ---
+        
+        // Generate a URL-safe unqiue token (e.g. 16 chars)
+        const accessToken = crypto.randomUUID().replace(/-/g, '').substring(0, 16);
+        // Generate a 6-digit PIN
+        const accessPin = Math.floor(100000 + Math.random() * 900000).toString();
+
+        const { error: portalError } = await supabase
+            .from('client_portals')
+            .insert({
+                lead_id: data.id,
+                full_name: fullName,
+                email: email,
+                access_token: accessToken,
+                access_pin: accessPin,
+                status: 'pending'
+            });
+            
+        if (portalError) {
+            console.error('❌ Failed to create client portal:', portalError);
+            // Non-blocking error, lead was saved
+        } else {
+            console.log(`✅ Client Portal created for ${email}`);
+            // Dreamlit.ai will automatically detect this new row and send the email
+        }
+
         return NextResponse.json({ success: true, data }, { status: 200 });
     } catch (err: any) {
         console.error('❌ Save Lead API Exception:', err);
