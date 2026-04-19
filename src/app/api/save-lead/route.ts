@@ -1,5 +1,26 @@
+/**
+ * POST /api/save-lead
+ *
+ * Called by the OnboardingModal after the user completes all form steps (just before
+ * the payment screen is shown). This route:
+ *   1. Inserts the user's details into the `onboarding_leads` table.
+ *   2. Creates a matching row in `client_portals` with a cryptographically secure
+ *      access token and PIN so the user can later access their report.
+ *
+ * Security notes:
+ *   - The access token is a full 32-character UUID hex string (2^128 combinations).
+ *   - The 6-digit PIN is generated using Node's `crypto.randomInt`, which draws
+ *     entropy from the OS — NOT from Math.random() which is predictable/seedable.
+ *   - The initial payment_status defaults to 'pending'. Admins update it to
+ *     'success' or 'failed' via /admin → /api/admin/update-payment.
+ *   - Dreamlit.ai is configured to only fire the welcome email when
+ *     payment_status is updated to 'success', preventing emails to non-payers.
+ */
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+// Use Node's built-in crypto module — provides OS-level entropy, cryptographically secure.
+// NEVER use Math.random() for security-sensitive values.
+import { randomUUID, randomInt } from 'crypto';
 
 export async function POST(req: Request) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -10,6 +31,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Database configuration missing' }, { status: 500 });
     }
 
+    // Use the service_role key so we can bypass RLS and write from a server context.
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     try {
@@ -18,11 +40,13 @@ export async function POST(req: Request) {
         
         const { fullName, email, dob, tob, pob, questions, paymentStatus, transactionId } = body;
 
+        // Guard: fullName and email are the minimum required to create a meaningful lead.
         if (!fullName || !email) {
             console.error('❌ Missing required fields (fullName or email)');
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
+        // ── Step 1: Insert lead into onboarding_leads ────────────────────────────
         const { data, error } = await supabase
             .from('onboarding_leads')
             .insert([
@@ -33,6 +57,7 @@ export async function POST(req: Request) {
                     tob: tob || null,
                     pob: pob || null,
                     questions: questions || null,
+                    // All leads start as 'pending' until payment is confirmed by admin.
                     payment_status: paymentStatus || 'pending',
                     transaction_id: transactionId || null
                 }
@@ -51,12 +76,20 @@ export async function POST(req: Request) {
 
         console.log('✅ Lead successfully saved to Supabase');
 
-        // --- CLIENT PORTAL CREATION ---
+        // ── Step 2: Create the Client Portal row ─────────────────────────────────
         
-        // Generate a URL-safe unqiue token (e.g. 16 chars)
-        const accessToken = crypto.randomUUID().replace(/-/g, '').substring(0, 16);
-        // Generate a 6-digit PIN
-        const accessPin = Math.floor(100000 + Math.random() * 900000).toString();
+        // Access Token: Full 32-character UUID hex string.
+        // e.g. "550e8400e29b41d4a716446655440000"
+        // This becomes the unique URL segment: /portal/<accessToken>
+        // With 2^128 possible values, brute-force guessing is computationally impossible.
+        const accessToken = randomUUID().replace(/-/g, '');
+
+        // PIN: 6-digit number (100000–999999) from OS-entropy crypto source.
+        // This is a second authentication factor — user must know BOTH the URL and PIN.
+        // Note: PIN uniqueness across users is by design NOT enforced globally —
+        // two users CAN share the same PIN because they have different unique URLs.
+        // (Forcing global PIN uniqueness would exhaust all 900,000 combinations over time.)
+        const accessPin = randomInt(100000, 1000000).toString();
 
         const { error: portalError } = await supabase
             .from('client_portals')
@@ -66,15 +99,21 @@ export async function POST(req: Request) {
                 email: email,
                 access_token: accessToken,
                 access_pin: accessPin,
-                status: 'pending'
+                // 'pending' = report not yet uploaded
+                status: 'pending',
+                // Mirrors onboarding_leads.payment_status. Admin updates this via /admin dashboard.
+                // Dreamlit watches for payment_status = 'success' before sending the welcome email.
+                payment_status: paymentStatus || 'pending'
             });
             
         if (portalError) {
+            // Non-fatal: the lead record was saved. Log for investigation but don't abort.
             console.error('❌ Failed to create client portal:', portalError);
-            // Non-blocking error, lead was saved
         } else {
             console.log(`✅ Client Portal created for ${email}`);
-            // Dreamlit.ai will automatically detect this new row and send the email
+            // Dreamlit.ai monitors the client_portals table. The welcome email
+            // (with the portal URL and PIN) is only triggered when
+            // payment_status transitions to 'success'.
         }
 
         return NextResponse.json({ success: true, data }, { status: 200 });

@@ -122,6 +122,30 @@ export default function AdminDashboard() {
 
 
 
+    const handleUpdatePaymentStatus = async (leadId: string, paymentStatus: string) => {
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/admin/update-payment', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ leadId, paymentStatus })
+            });
+            if (res.ok) {
+                fetchClients(token);
+            } else {
+                const data = await res.json();
+                alert(`Update failed: ${data.error}`);
+            }
+        } catch (err) {
+            alert('Update failed due to network error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const copyPortalLink = (accessToken: string) => {
         const url = `${window.location.origin}/portal/${accessToken}`;
         navigator.clipboard.writeText(url);
@@ -172,7 +196,8 @@ export default function AdminDashboard() {
                     <thead>
                         <tr>
                             <th>Client Info</th>
-                            <th>Status</th>
+                            <th>Status (Portal)</th>
+                            <th>Payment Status</th>
                             <th>Portal Details</th>
                             <th>Actions</th>
                         </tr>
@@ -180,9 +205,11 @@ export default function AdminDashboard() {
                     <tbody>
                         {clients.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="text-center py-8 text-slate-400">No clients found yet.</td>
+                                <td colSpan={5} className="text-center py-8 text-slate-400">No clients found yet.</td>
                             </tr>
-                        ) : clients.map(client => (
+                        ) : clients.map(client => {
+                            const paymentStatus = client.onboarding_leads?.payment_status || 'pending';
+                            return (
                             <tr key={client.id}>
                                 <td>
                                     <div className="font-semibold text-white">{client.full_name}</div>
@@ -192,6 +219,18 @@ export default function AdminDashboard() {
                                     <span className={`badge ${client.status}`}>
                                         {client.status.toUpperCase()}
                                     </span>
+                                </td>
+                                <td>
+                                    <select 
+                                        value={paymentStatus.toLowerCase()} 
+                                        onChange={(e) => handleUpdatePaymentStatus(client.lead_id, e.target.value)}
+                                        disabled={isLoading}
+                                        className="bg-slate-800 text-white border border-slate-700 rounded px-2 py-1 text-xs outline-none"
+                                    >
+                                        <option value="pending">Pending</option>
+                                        <option value="success">Success</option>
+                                        <option value="failed">Failed</option>
+                                    </select>
                                 </td>
                                 <td>
                                     <div className="text-sm font-mono bg-slate-800 px-2 py-1 rounded inline-block">
@@ -221,7 +260,7 @@ export default function AdminDashboard() {
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                        )})}
                     </tbody>
                 </table>
             </div>
