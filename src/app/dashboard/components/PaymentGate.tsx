@@ -86,6 +86,12 @@ export default function PaymentGate({ children }: PaymentGateProps) {
       setUserEmail(user.email ?? "");
       setUserName(user.user_metadata?.full_name ?? user.email ?? "");
 
+      // ── Admin Override ───────────────────────────────────────────────────────
+      if (user.email === "sandeshprasad7@gmail.com") {
+        setGateState("open");
+        return;
+      }
+
       const { data: profile } = await supabase
         .from("user_profiles")
         .select("plan_type, payment_status, credits")
