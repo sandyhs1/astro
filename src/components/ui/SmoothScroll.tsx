@@ -11,6 +11,15 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
             orientation: "vertical",
             gestureOrientation: "vertical",
             smoothWheel: true,
+            // Prevent Lenis from hijacking scroll inside elements with data-lenis-prevent
+            prevent: (node: Element) => {
+                return (
+                    node.hasAttribute("data-lenis-prevent") ||
+                    node.closest("[data-lenis-prevent]") !== null ||
+                    node.hasAttribute("data-modal-scroll") ||
+                    node.closest("[data-modal-scroll]") !== null
+                );
+            },
         });
 
         function raf(time: number) {

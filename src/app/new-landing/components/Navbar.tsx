@@ -2,11 +2,15 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Calculator } from 'lucide-react';
-import { useOnboarding } from '@/context/OnboardingContext';
+import { useAuthModal } from '@/context/AuthModalContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import MathModal from './MathModal';
 
 export default function Navbar() {
-  const { openModal } = useOnboarding();
+  const { openAuthModal } = useAuthModal();
+  const { user } = useAuth();
+  const router = useRouter();
   const [isMathModalOpen, setIsMathModalOpen] = useState(false);
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
@@ -57,7 +61,13 @@ export default function Navbar() {
               </button>
             </div>
             <motion.button
-              onClick={openModal}
+              onClick={() => {
+                if (user) {
+                  router.push('/dashboard');
+                } else {
+                  openAuthModal("sign_up");
+                }
+              }}
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               style={{
                 background: 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))',
@@ -66,7 +76,7 @@ export default function Navbar() {
                 border: 'none', cursor: 'pointer', display: 'block',
               }}
               className="nl-nav-btn"
-            >Get Your Report</motion.button>
+            >{user ? "Dashboard" : "Get Your Report"}</motion.button>
           </div>
         </div>
         <style>{`

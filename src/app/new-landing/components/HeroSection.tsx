@@ -2,10 +2,10 @@
 import { motion } from 'framer-motion';
 import { ArrowDown, Zap } from 'lucide-react';
 import Image from 'next/image';
-import { useOnboarding } from '@/context/OnboardingContext';
+import { useAuthModal } from '@/context/AuthModalContext';
 
 export default function HeroSection() {
-  const { openModal } = useOnboarding();
+  const { openAuthModal } = useAuthModal();
   const grad = 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))';
   return (
     <section style={{ position:'relative', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', paddingTop:80 }}>
@@ -32,7 +32,7 @@ export default function HeroSection() {
           </motion.p>
           <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:0.6,delay:0.5}}
             style={{ display:'flex', flexWrap:'wrap', gap:16 }}>
-            <motion.button onClick={openModal} whileHover={{scale:1.05}} whileTap={{scale:0.95}}
+            <motion.button onClick={() => openAuthModal("sign_up")} whileHover={{scale:1.05}} whileTap={{scale:0.95}}
               style={{ background:grad, color:'hsl(40,33%,97%)', padding:'1rem 2rem', borderRadius:999, fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 0 60px -15px hsl(245 80% 65% / 0.4)' }} className="nl-hero-btn-primary">
               Get Your Report Now →
             </motion.button>

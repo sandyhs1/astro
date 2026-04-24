@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Zap, Crown, X, ChevronRight, MessageCircle } from 'lucide-react';
 import AnimatedSection from './AnimatedSection';
-import { useOnboarding } from '@/context/OnboardingContext';
+import { useAuthModal } from '@/context/AuthModalContext';
 
 // ─── DATA ───────────────────────────────────────────────────────────────────
 
@@ -227,7 +227,7 @@ function DisclaimerModal({ onClose }: { onClose: () => void }) {
 
 // ─── MANY MORE MODAL (Light Theme) ──────────────────────────────────────────
 
-function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openModal: () => void }) {
+function RawFeaturesModal({ onClose, openAuthModal }: { onClose: () => void; openAuthModal: () => void }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -381,7 +381,7 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
         {/* Fixed Footer */}
         <div style={{ padding: '20px 28px 24px', flexShrink: 0, backgroundColor: '#FAFAF8', borderBottomLeftRadius: '24px', borderBottomRightRadius: '24px' }}>
           <button
-            onClick={() => { onClose(); openModal(); }}
+            onClick={() => { onClose(); openAuthModal(); }}
             style={{
               width: '100%', padding: '18px', background: 'linear-gradient(135deg, hsl(245,60%,28%), hsl(30,80%,55%))', color: '#fff', border: 'none', borderRadius: '14px',
               fontSize: '1rem', fontWeight: 800, fontFamily: "'Space Grotesk', sans-serif", cursor: 'pointer',
@@ -400,7 +400,7 @@ function RawFeaturesModal({ onClose, openModal }: { onClose: () => void; openMod
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export default function PricingSection() {
-  const { openModal } = useOnboarding();
+  const { openAuthModal } = useAuthModal();
   const [showModal, setShowModal] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
 
@@ -412,7 +412,7 @@ export default function PricingSection() {
       {showModal && (
         <RawFeaturesModal
           onClose={() => setShowModal(false)}
-          openModal={openModal}
+          openAuthModal={() => openAuthModal("sign_up")}
         />
       )}
       {showDisclaimer && (
@@ -630,7 +630,7 @@ export default function PricingSection() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={openModal}
+                  onClick={() => openAuthModal("sign_up")}
                   style={{
                     width: '100%', 
                     maxWidth: 400,

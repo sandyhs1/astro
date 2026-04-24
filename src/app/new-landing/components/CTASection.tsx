@@ -2,10 +2,10 @@
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import AnimatedSection from './AnimatedSection';
-import { useOnboarding } from '@/context/OnboardingContext';
+import { useAuthModal } from '@/context/AuthModalContext';
 
 export default function CTASection() {
-  const { openModal } = useOnboarding();
+  const { openAuthModal } = useAuthModal();
   const grad = 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))';
   
   return (
@@ -32,7 +32,7 @@ export default function CTASection() {
               Stop paying for fear. Start investing in clarity. Your Quantum Karma report is waiting and it's got more truth than most astrologers deliver in a lifetime.
             </p>
             
-            <motion.button onClick={openModal} whileHover={{scale:1.05}} whileTap={{scale:0.95}}
+            <motion.button onClick={() => openAuthModal("sign_up")} whileHover={{scale:1.05}} whileTap={{scale:0.95}}
               style={{ display:'inline-block', background:grad, color:'hsl(40,33%,97%)', padding:'1.25rem 2.5rem', borderRadius:999, fontSize:'1.125rem', fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 0 60px -15px hsl(245 80% 65% / 0.4)' }}>
               Get Your Report Now →
             </motion.button>

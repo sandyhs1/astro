@@ -78,6 +78,10 @@ export const metadata: Metadata = {
 
 import { OnboardingProvider } from "@/context/OnboardingContext";
 import OnboardingModal from "@/components/features/OnboardingModal";
+import { AuthProvider } from "@/context/AuthContext";
+import { AuthModalProvider } from "@/context/AuthModalContext";
+import AuthModal from "@/components/features/AuthModal";
+import EMRAuthModal from "@/components/features/EMRAuthModal";
 import SmoothScroll from "@/components/ui/SmoothScroll";
 
 export default function RootLayout({
@@ -91,10 +95,15 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${playfair.variable} ${dmMono.variable} ${libreBaskerville.variable} ${jost.variable} ${unbounded.variable} ${manrope.variable} ${syne.variable} ${spaceGrotesk.variable} ${cormorantGaramond.variable} ${outfit.variable} ${bricolageGrotesque.variable} ${epilogue.variable} ${cinzel.variable} ${afacad.variable} ${bodoniModa.variable} ${italiana.variable} antialiased bg-[#12011A] text-white selection:bg-[#FFD700] selection:text-[#12011A]`}
       >
-        <OnboardingProvider>
-          <SmoothScroll>{children}</SmoothScroll>
-          <OnboardingModal />
-        </OnboardingProvider>
+        <AuthProvider>
+          <AuthModalProvider>
+            <OnboardingProvider>
+              <SmoothScroll>{children}</SmoothScroll>
+              <OnboardingModal />
+              <EMRAuthModal />
+            </OnboardingProvider>
+          </AuthModalProvider>
+        </AuthProvider>
       </body>
     </html>
   );
