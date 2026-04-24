@@ -424,8 +424,9 @@ export default function DashboardPage() {
     }
   };
 
-  // Show minimal loader only while auth is resolving (before PaymentGate takes over)
-  if (loading) {
+  // Wait for both auth AND profile data before rendering dashboard content.
+  // PaymentGate does its own independent Supabase check — this guard doesn't block it.
+  if (loading || !profile) {
     return (
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
         <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em" }}>
