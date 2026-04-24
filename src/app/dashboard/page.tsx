@@ -8,6 +8,7 @@ import { LogOut, Sparkles, Send, Users, AlertTriangle, MessageCircle } from "luc
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import PaymentGate from "./components/PaymentGate";
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -423,10 +424,13 @@ export default function DashboardPage() {
     }
   };
 
-  if (loading || !profile) {
+  // Show minimal loader only while auth is resolving (before PaymentGate takes over)
+  if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
+        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em" }}>
+          LOADING...
+        </div>
       </div>
     );
   }
@@ -442,6 +446,7 @@ export default function DashboardPage() {
   }
 
   return (
+    <PaymentGate>
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-indigo-200 selection:text-indigo-900">
       
       {/* Profile Modal - Light Theme */}
@@ -822,5 +827,6 @@ export default function DashboardPage() {
         .prose-chat-light h3 { font-size: 1.1em; }
       `}</style>
     </div>
+    </PaymentGate>
   );
 }
