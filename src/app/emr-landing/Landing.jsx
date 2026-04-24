@@ -721,22 +721,22 @@ const TechnicalVariables = () => {
 /* 6. SHODASAVARGA — 3D stack cards                                    */
 /* ------------------------------------------------------------------ */
 const DIVISIONS = [
-  { n: "D1",  name: "Rasi",            use: "Fundamental self",      impact: "How you walk into a room. Your default setting before you say a word." },
-  { n: "D2",  name: "Hora",            use: "Wealth node",           impact: "Whether money stays in your account — or quietly slips right through it." },
-  { n: "D3",  name: "Drekkana",        use: "Siblings · courage",    impact: "Who fights your battles — you, or the people around you." },
-  { n: "D4",  name: "Chaturthamsa",    use: "Fortune · property",    impact: "The place that actually feels like home. And the one that never will." },
-  { n: "D7",  name: "Saptamsa",        use: "Progeny",               impact: "Whether children will be a joy, a lesson, or both — and when." },
-  { n: "D9",  name: "Navamsa",         use: "Partnership · dharma",  impact: "The partner you'd actually be happy with — not the one you keep chasing." },
-  { n: "D10", name: "Dasamsa",         use: "Career · action",       impact: "The career where you stop resenting Monday mornings." },
-  { n: "D12", name: "Dvadasamsa",      use: "Parental lineage",      impact: "Which parent's patterns you're silently re-enacting — and how to stop." },
-  { n: "D16", name: "Shodasamsa",      use: "Vehicles · comforts",   impact: "Whether the car, the house, the upgrade will bring peace or debt." },
-  { n: "D20", name: "Vimsamsa",        use: "Spiritual practice",    impact: "The practice that will actually stick. Not the one trending on your feed." },
-  { n: "D24", name: "Chaturvimsamsa",  use: "Education",             impact: "The subject you master at 10× speed — and the one you keep quietly failing." },
-  { n: "D27", name: "Bhamsa",          use: "Strength",              impact: "Where your body breaks first — and what it takes to rebuild." },
-  { n: "D30", name: "Trimsamsa",       use: "Afflictions",           impact: "The exact self-sabotage loop you can't name. Until now." },
-  { n: "D40", name: "Khavedamsa",      use: "Auspicious results",    impact: "The months the universe quietly tilts in your favour." },
-  { n: "D45", name: "Akshavedamsa",    use: "General indications",   impact: "The year-long signature — whether this one is a climb or a coast." },
-  { n: "D60", name: "Shashtiamsa",     use: "Karmic fine-grain",     impact: "The finest karmic grain. What's old-soul-heavy vs. what's just noise." },
+  { n: "D1",  name: "Rasi",            use: "Physicality · Vitality · Foundation",                        impact: "Tanu: The physical body and the totality of existence" },
+  { n: "D2",  name: "Hora",            use: "Wealth · Sustenance · Liquidity",                            impact: "Sampatti: The flow of wealth and the polarity of sustenance (Solar/Lunar)" },
+  { n: "D3",  name: "Drekkana",        use: "Initiative · Prowess · Siblings",                            impact: "Bhratri: The native's drive, prowess, and co-born support" },
+  { n: "D4",  name: "Chaturthamsa",    use: "Property · Fixed Assets · Home",                             impact: "Bhagya: The net \"luck\" regarding fixed assets and residence" },
+  { n: "D7",  name: "Saptamsa",        use: "Progeny · Creativity · Legacy",                              impact: "Putra-Pautra: The fruit of the lineage and creative output" },
+  { n: "D9",  name: "Navamsa",         use: "Dharma · Fruit · Inner Strength",                            impact: "Kalatra/Dharmamsa: The internal strength and the fruit of the Rashi tree" },
+  { n: "D10", name: "Dasamsa",         use: "Career · Power · Status",                                    impact: "Mahat Phala: The results of one's interaction with the collective structure (Social Impact & Authority)" },
+  { n: "D12", name: "Dwadasamsa",      use: "Lineage · Parents · DNA (Epigenetics)",                      impact: "Pitri-Matri: The immediate inherited influence of the father and mother." },
+  { n: "D16", name: "Shodasamsa",      use: "Luxury · Comfort · Vehicles (Flow & Mobility)",              impact: "Kalamsa: Happiness derived from vehicles and the luxury of movement" },
+  { n: "D20", name: "Vimsamsa",        use: "Meditativeness · Upasana · Merit (Spiritual Calibration)",   impact: "Upasana: The soul's alignment with higher intelligence and worship." },
+  { n: "D24", name: "Chaturvimsamsa",  use: "Education · Vidya · Expertise (Intellectual Mastery)",       impact: "Vidya: The depth of specialized knowledge and academic achievement" },
+  { n: "D27", name: "Bhamamsa",        use: "Resilience · Weakness · Character (Intrinsic Resilience)",   impact: "Nakshatramsa: The subconscious physical and mental strengths/weaknesses" },
+  { n: "D30", name: "Trimsamsa",       use: "Evils · Misfortunes · Shadow (The Shadow Profile)",          impact: "Arishta: Subconscious impulses, risks, and inherent character flaws." },
+  { n: "D40", name: "Khavedamsa",      use: "Maternal Grace · Ancient Merit (Maternal Karma/Epigenetic Luck)", impact: "Subha-Asubha: Auspiciousness inherited from the mother's side." },
+  { n: "D45", name: "Akshavedamsa",    use: "Paternal Legacy · Conduct · Purity (Paternal Karma/Character Ethics)", impact: "Sarva-Phala: The integrity and conduct inherited from the father's side." },
+  { n: "D60", name: "Shastyamsa",      use: "Past Karma · Final Verdict · Soul's Path",                   impact: "Sarva-Karyeshu: The ultimate blueprint & the absolute final verdict of past-life karma on every life aspect" },
 ];
 
 const Shodasavarga = () => {
