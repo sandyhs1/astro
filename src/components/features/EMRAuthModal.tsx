@@ -15,6 +15,7 @@ export default function EMRAuthModal() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [fullName, setFullName] = useState<string>("");
+  const [promoCode, setPromoCode] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -25,6 +26,7 @@ export default function EMRAuthModal() {
     setEmail("");
     setPassword("");
     setFullName("");
+    setPromoCode("");
   }, [view, isOpen]);
 
   // Lock body scroll when open
@@ -64,7 +66,7 @@ export default function EMRAuthModal() {
     try {
       if (view === "sign_up") {
         if (!fullName.trim()) throw new Error("Full name is required");
-        const { error } = await supabase.auth.signUp({
+        const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -72,7 +74,29 @@ export default function EMRAuthModal() {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         });
-        if (error) throw error;
+        if (signUpError) throw signUpError;
+
+        // ── Apply promo code if entered ──────────────────────────────────
+        if (promoCode.trim()) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+          if (!signInError) {
+            const promoRes = await fetch("/api/apply-promo", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ promoCode: promoCode.trim() }),
+            });
+            const promoData = await promoRes.json();
+            if (promoRes.ok) {
+              closeAuthModal();
+              router.push("/dashboard");
+              return;
+            } else {
+              setMessage(`Account created! Note: ${promoData.error} Please sign in normally.`);
+              return;
+            }
+          }
+        }
+
         setMessage("Check your email for the confirmation link!");
       } else if (view === "sign_in") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -349,6 +373,36 @@ export default function EMRAuthModal() {
                   onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
                 />
               </div>
+
+              {/* Promo Code — sign_up only */}
+              {view === "sign_up" && (
+                <div>
+                  <label style={labelStyle}>
+                    Promo Code{" "}
+                    <span style={{ color: "rgba(255,255,255,0.2)", textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    placeholder="QK-XXXX-XXXX"
+                    maxLength={12}
+                    style={{
+                      ...inputStyle,
+                      background: promoCode ? "rgba(123,97,255,0.08)" : inputStyle.background,
+                      borderColor: promoCode ? "rgba(123,97,255,0.5)" : "rgba(255,255,255,0.08)",
+                      letterSpacing: "0.1em",
+                    }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(123,97,255,0.6)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(123,97,255,0.08)"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = promoCode ? "rgba(123,97,255,0.5)" : "rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
+                  />
+                  {promoCode && (
+                    <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "9px", color: "#7B61FF", marginTop: 5, letterSpacing: "0.05em" }}>
+                      ✦ Promo detected — instant dashboard access on signup
+                    </p>
+                  )}
+                </div>
+              )}
 
               {view !== "forgot_password" && (
                 <div>
