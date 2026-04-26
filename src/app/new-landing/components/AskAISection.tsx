@@ -64,8 +64,7 @@ export default function AskAISection() {
                                 Don't take our word for it.
                             </h2>
                             <p className="mt-3 text-sm md:text-base max-w-md mx-auto leading-relaxed" style={{ color: 'hsl(240,10%,46%)', fontFamily: "'Space Grotesk',sans-serif" }}>
-                                Let ChatGPT, Claude, Gemini, or Perplexity do the thinking for you.<br />
-                                Click a button and see what your favorite AI says about Quantum Karma.
+                                Let AI empower your decisions. Select an engine below to verify the truth for yourself.
                             </p>
                         </AnimatedSection>
 
