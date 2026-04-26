@@ -1,0 +1,221 @@
+import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
+import { getOrBuildChart } from "@/lib/astrology/manager";
+import { routeLLM } from "@/lib/astrology/llm-router";
+import { astroClient } from "@/lib/astrology/client";
+import { parseBirthParams, geocodePlace, tzStringToFloat } from "@/lib/astrology/client";
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const KARMA_DNA_SYSTEM_PROMPT = (pName: string) => `You are KARMA — the Grand Master Jyotishi of Quantum Karma.
+You are generating a deeply personal, sacred KARMA DNA REPORT for ${pName}.
+
+THIS IS YOUR MOST IMPORTANT WORK. Every sentence must be precise, destined, and transformative.
+
+## WHO THIS REPORT IS FOR
+${pName} is asking about their soul's past-life karma, unresolved contracts, and this life's mission.
+
+## REPORT STRUCTURE (follow exactly):
+
+---
+**Namaste ${pName} 🙏**
+
+*[2-sentence warm, sweet, encouraging intro — acknowledge the courage it takes to look at one's karma honestly. Reference their specific chart energy.]*
+
+---
+
+## 🔮 Soul Blueprint — Atmakaraka Reading
+[AK planet] is their soul. Analyze what unfinished karma this AK carries from past lives. Be specific to the chart data.
+
+## ⚡ Past-Life Karma Indicators (D60 — Shashtiamsha)
+Analyze the D60 chart provided. Identify 3 key past-life karmic patterns. Be precise — cite the D60 placements.
+
+## 🌑 Saturn, Rahu & Ketu — The Karma Trio
+- **Saturn in D1:** [precise analysis of Saturn's house, sign, aspects — karmic debt + lesson]
+- **Rahu in D1:** [karmic obsession, what the soul chases this life]
+- **Ketu in D1:** [what the soul has already mastered, must release]
+- **Rahu-Ketu axis:** [the core karmic life lesson]
+
+## 👪 D12 (Dwadashamsha) — Ancestral Karma & Parental Contracts
+Analyze D12 placements. What ancestral karma is being inherited? What parental soul contracts are active?
+
+## 💑 Soul Contracts — Jaimini Karakas
+- AK (Atmakaraka): [soul's core mission]
+- DK (Darakaraka): [the type of partner soul contracted to meet]
+- AL (Arudha Lagna): [how the world perceives this soul]
+- Upapada Lagna: [the nature of marriage/partnership karma]
+
+## 🔥 This Life's Mission (Dharmic Path)
+Based on all above — state clearly what ${pName}'s soul came here to DO. One paragraph. Decisive. Destined.
+
+## 🕉️ Prescribed Karma Clearing Protocol
+### Primary Mantra (48-Day Mandala):
+[Give exact Sanskrit mantra with phonetic transliteration]
+- Planet it activates: [specific planet]
+- Logic: [why this mantra for this exact karma]
+- When: [exact day, time]
+- How: 108x daily on rudraksha mala, facing [direction]
+- Impact: [what shifts after 48 days]
+
+### Secondary Ritual:
+[One DIY chart-specific ritual — charity, fasting, or offering — tied to exact house/planet]
+Duration: 48 days (1 Mandala)
+
+---
+*This report is sealed with cosmic precision. Your karma is not a prison — it is your path.*
+
+## ABSOLUTE RULES:
+- ZERO gemstone recommendations
+- Every claim must cite specific chart data (e.g., "Saturn in H6 Capricorn, conjunct Mars")
+- Use confident, declarative language — never "may" or "might"
+- Maximum 1200 words total`;
+
+export async function POST(req: Request) {
+  try {
+    const { profileId } = await req.json();
+
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { cookies: { get(name: string) { return cookieStore.get(name)?.value; } } }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // ── Credits check ──────────────────────────────────────────────────────────
+    const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).single();
+    const credits = profile?.credits ?? 0;
+    if (credits < 20) {
+      return NextResponse.json({ error: "Insufficient credits. Karma DNA Report costs 20 credits." }, { status: 402 });
+    }
+
+    // ── Resolve birth details ──────────────────────────────────────────────────
+    let dob = "", tob = "", pob = "", tz = "+05:30", pName = "Seeker";
+    if (!profileId || profileId === "self") {
+      const { data: fp } = await supabase.from("family_profiles").select("*").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+      if (fp) {
+        dob = fp.dob; tob = fp.tob; pob = fp.pob; tz = fp.timezone || "+05:30"; pName = fp.name;
+      } else {
+        const { data: lead } = await supabase.from("onboarding_leads").select("*").eq("email", user.email).maybeSingle();
+        dob = lead?.dob; tob = lead?.tob; pob = lead?.pob;
+        tz  = lead?.timezone || "+05:30"; pName = lead?.name || "Seeker";
+      }
+    } else {
+      const { data: fp } = await supabase.from("family_profiles").select("*").eq("id", profileId).maybeSingle();
+      dob = fp?.dob; tob = fp?.tob; pob = fp?.pob;
+      tz  = fp?.timezone || "+05:30"; pName = fp?.name || "Seeker";
+    }
+    if (!dob || !tob || !pob) return NextResponse.json({ error: "Birth details not found" }, { status: 422 });
+
+    // ── Get natal chart (cached) ────────────────────────────────────────────────
+    const { chart } = await getOrBuildChart(dob, tob, pob, tz, undefined, undefined, user.email);
+
+    // ── Fetch D12 and D60 from API ─────────────────────────────────────────────
+    const geo    = await geocodePlace(pob);
+    const tzFloat= tzStringToFloat(tz);
+    const params = parseBirthParams(dob, tob, geo.lat, geo.lon, tzFloat);
+
+    let d12Data: any = null, d60Data: any = null;
+    await Promise.allSettled([
+      astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D12", params })
+        .then((r: any) => { d12Data = r; })
+        .catch((e: any) => console.error("D12 fetch failed:", e.message)),
+      astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D60", params })
+        .then((r: any) => { d60Data = r; })
+        .catch((e: any) => console.error("D60 fetch failed:", e.message)),
+    ]);
+
+    // ── Parse D12 / D60 into readable format ───────────────────────────────────
+    function parseHoroChart(raw: any): string {
+      if (!Array.isArray(raw)) return "Data unavailable";
+      return raw.map((h: any, i: number) => {
+        const planets = (h.planet || []).join(", ") || "∅";
+        return `H${i+1}(${h.sign_name||"?"}): ${planets}`;
+      }).join(" | ");
+    }
+
+    // ── Build context for LLM ──────────────────────────────────────────────────
+    const SIGNS = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo",
+                   "Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+    const lagnaSignNum = SIGNS.findIndex(s => s === chart.d1.ascendant) + 1;
+
+    // Compute Arudha Lagna (AL) for context
+    const SIGN_LORD: Record<string, string> = {
+      Aries:"Mars",Taurus:"Venus",Gemini:"Mercury",Cancer:"Moon",
+      Leo:"Sun",Virgo:"Mercury",Libra:"Venus",Scorpio:"Mars",
+      Sagittarius:"Jupiter",Capricorn:"Saturn",Aquarius:"Saturn",Pisces:"Jupiter",
+    };
+
+    const chartContext = `
+PERSON: ${pName}
+LAGNA: ${chart.d1.ascendant} | MOON SIGN: ${chart.d1.moonSign} | SUN SIGN: ${chart.d1.sunSign}
+MOON NAKSHATRA: ${chart.d1.moonNakshatra}
+
+KARAKAS:
+  AK (Atmakaraka/Soul):     ${chart.karakas.ak}
+  AMK (Amatyakaraka):       ${chart.karakas.amk}
+  BK (Bhratrukaraka):       ${chart.karakas.bk}
+  DK (Darakaraka/Spouse):   ${chart.karakas.dk}
+  GK (Gnatikaraka):         ${chart.karakas.gk}
+
+DASHA:
+  Mahadasha:  ${chart.dasha.mahadasha} until ${chart.dasha.mahadashaEnd}
+  Antardasha: ${chart.dasha.antardasha} until ${chart.dasha.antardashaEnd}
+
+D1 PLANETS:
+${chart.d1.planets.map(p => `  ${p.name}: ${p.sign} H${p.house} ${p.normDegree.toFixed(1)}° ${p.nakshatra} ${p.isRetro?"(Retro)":""}`).join("\n")}
+
+D1 HOUSES:
+${chart.d1.houses.map(h => `  H${h.number}(${h.sign}): ${h.occupants.join(",")||"∅"}`).join("\n")}
+
+D9 NAVAMSHA LAGNA: ${chart.divisional.d9.ascendant}
+D9 PLANETS: ${chart.divisional.d9.planets.map((p: any) => `${p.name}:${p.sign}H${p.house}`).join(" ")}
+
+D12 DWADASHAMSHA (Ancestral/Past-Life Parents):
+${d12Data ? parseHoroChart(d12Data) : "Fetch failed — use D1 Saturn/Rahu/Ketu for past life reading"}
+
+D60 SHASHTIAMSHA (Soul Karma — Most Precise):
+${d60Data ? parseHoroChart(d60Data) : "Fetch failed — use D9 + Ketu placement for soul karma"}
+`;
+
+    // ── Call Claude 4.6 via Bedrock ────────────────────────────────────────────
+    const llmResult = await routeLLM(
+      KARMA_DNA_SYSTEM_PROMPT(pName),
+      [{ role: "user", content: `Generate the complete Karma DNA Report for ${pName}.\n\n${chartContext}` }],
+      2000  // Higher token limit for the full report
+    );
+
+    // ── Deduct 20 credits ──────────────────────────────────────────────────────
+    await supabaseAdmin.from("user_profiles")
+      .update({ credits: Math.max(0, credits - 20) })
+      .eq("id", user.id);
+
+    // ── Log usage ──────────────────────────────────────────────────────────────
+    supabaseAdmin.from("token_usage_logs").insert({
+      user_id: user.id, model_name: llmResult.model,
+      input_tokens: llmResult.tokensIn, output_tokens: llmResult.tokensOut,
+      total_tokens: llmResult.tokensIn + llmResult.tokensOut,
+      cost_inr: ((llmResult.tokensIn / 1000) * 0.252 + (llmResult.tokensOut / 1000) * 1.26).toFixed(6),
+      credits_used: 20, question_preview: "Karma DNA Report",
+    });
+
+    return NextResponse.json({
+      report:          llmResult.text,
+      personName:      pName,
+      model:           llmResult.model,
+      d12Available:    !!d12Data,
+      d60Available:    !!d60Data,
+      creditsRemaining: Math.max(0, credits - 20),
+    });
+
+  } catch (err: any) {
+    console.error("Karma DNA error:", err);
+    return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
+  }
+}

@@ -9,6 +9,8 @@ import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import PaymentGate from "./components/PaymentGate";
+import DestinyCalendar from "./components/DestinyCalendar";
+import KarmaDNA from "./components/KarmaDNA";
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -35,6 +37,7 @@ export default function DashboardPage() {
   const [geocodingReady, setGeocodingReady] = useState(false);
 
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
+  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna">("chat");
   
   const DEFAULT_WELCOME = "Namaste. I am your Quantum Karma Astrologer. How may I illuminate your path today?";
 
@@ -657,6 +660,21 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Navigation Menu */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-1">
+             <div className="p-2 space-y-1">
+               <button onClick={() => setActiveFeature("chat")} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeFeature === "chat" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>
+                 <MessageCircle size={16} /> Oracle Chat
+               </button>
+               <button onClick={() => setActiveFeature("destiny")} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeFeature === "destiny" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>
+                 <span className="text-base">🗓️</span> Destiny Window
+               </button>
+               <button onClick={() => setActiveFeature("karma-dna")} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeFeature === "karma-dna" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>
+                 <span className="text-base">🧬</span> Karma DNA
+               </button>
+             </div>
+          </div>
+
           <div className="bg-amber-50 rounded-xl border border-amber-100 p-4 shadow-sm">
              <div className="flex items-start gap-3">
                <div className="p-1.5 bg-amber-100 rounded-lg text-amber-600 mt-0.5">
@@ -673,6 +691,10 @@ export default function DashboardPage() {
         {/* Main Chat Interface - Light Theme Redesign */}
         <section className="flex-1 w-full flex flex-col bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden relative">
             
+          {activeFeature === "destiny" && <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />}
+          {activeFeature === "karma-dna" && <KarmaDNA profileId={activeProfileId} profileName={activeProfileName} />}
+          
+          <div className={activeFeature === "chat" ? "flex flex-col h-full" : "hidden"}>
           {/* Chat Header */}
           <div className="h-14 px-6 flex items-center justify-between border-b border-slate-100 bg-white/90 backdrop-blur-md z-10 flex-shrink-0">
             <div className="flex items-center gap-3">
@@ -790,11 +812,11 @@ export default function DashboardPage() {
                <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">AI-generated astrological insights. Not medical advice.</span>
             </div>
           </div>
-          
+          </div>
         </section>
       </main>
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
         }
@@ -826,7 +848,7 @@ export default function DashboardPage() {
         .prose-chat-light li { margin-bottom: 0.25em; }
         .prose-chat-light h1, .prose-chat-light h2, .prose-chat-light h3 { color: #0f172a; font-weight: 700; margin-top: 1.25em; margin-bottom: 0.5em; }
         .prose-chat-light h3 { font-size: 1.1em; }
-      `}</style>
+      `}} />
     </div>
     </PaymentGate>
   );

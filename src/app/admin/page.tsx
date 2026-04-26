@@ -1,450 +1,373 @@
 "use client";
+import { useState, useEffect, useCallback } from "react";
+import { Upload, LogOut, Copy, CheckCircle2, Loader2, Users, Activity, Database, RefreshCw, IndianRupee, Zap, TrendingUp } from "lucide-react";
+import "./admin.css";
 
-import { useState, useEffect } from 'react';
-import { Upload, LogOut, Copy, CheckCircle2, Loader2, Users, Activity, IndianRupee } from 'lucide-react';
-import './admin.css';
+type Tab = "clients" | "ai" | "astro";
+
+const fmt = (n: number) => n.toLocaleString("en-IN");
+const inr = (n: number) => `₹${n.toFixed(4)}`;
+const ago = (ts: string) => {
+  if (!ts) return "—";
+  const diff = Date.now() - new Date(ts).getTime();
+  if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`;
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  return new Date(ts).toLocaleDateString("en-IN");
+};
 
 export default function AdminDashboard() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [password, setPassword] = useState('');
-    const [token, setToken] = useState('');
-    
-    // Status states
-    const [isLoading, setIsLoading] = useState(false);
-    const [isFetching, setIsFetching] = useState(true);
-    const [error, setError] = useState('');
-    
-    const [clients, setClients] = useState<any[]>([]);
-    
-    // AI Metrics state
-    const [activeTab, setActiveTab] = useState<'clients' | 'ai'>('clients');
-    const [metrics, setMetrics] = useState<any>(null);
-    const [isFetchingMetrics, setIsFetchingMetrics] = useState(false);
+  const [authed, setAuthed] = useState(false);
+  const [password, setPassword] = useState("");
+  const [token, setToken] = useState("");
+  const [tab, setTab] = useState<Tab>("clients");
+  const [clients, setClients] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-    useEffect(() => {
-        // Simple local storage mock for session
-        const savedToken = localStorage.getItem('adminToken');
-        if (savedToken) {
-            setToken(savedToken);
-            setIsAuthenticated(true);
-            fetchClients(savedToken);
-        } else {
-            setIsFetching(false);
-        }
-    }, []);
+  const fetchClients = useCallback(async (t: string) => {
+    const res = await fetch("/api/admin/clients", { headers: { Authorization: `Bearer ${t}` } });
+    if (res.ok) { const d = await res.json(); setClients(d.clients || []); }
+    else if (res.status === 401) logout();
+  }, []);
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError('');
+  const fetchMetrics = useCallback(async (t: string, silent = false) => {
+    if (!silent) setRefreshing(true);
+    try {
+      const res = await fetch("/api/admin/ai-metrics", { headers: { Authorization: `Bearer ${t}` } });
+      if (res.ok) { const d = await res.json(); setMetrics(d); setLastUpdated(new Date()); }
+    } finally { setRefreshing(false); }
+  }, []);
 
-        try {
-            const res = await fetch('/api/admin/auth', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password })
-            });
-            const data = await res.json();
+  useEffect(() => {
+    const saved = localStorage.getItem("adminToken");
+    if (saved) { setToken(saved); setAuthed(true); fetchClients(saved).finally(() => setFetching(false)); }
+    else setFetching(false);
+  }, []);
 
-            if (res.ok) {
-                setToken(data.token);
-                setIsAuthenticated(true);
-                localStorage.setItem('adminToken', data.token);
-                fetchClients(data.token);
-            } else {
-                setError(data.error || 'Login failed');
-            }
-        } catch (err) {
-            setError('An error occurred');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  useEffect(() => {
+    if (authed && token && (tab === "ai" || tab === "astro")) fetchMetrics(token);
+  }, [tab, authed, token]);
 
-    const handleLogout = () => {
-        localStorage.removeItem('adminToken');
-        setIsAuthenticated(false);
-        setToken('');
-        setClients([]);
-    };
+  useEffect(() => {
+    if (!authed || !token || (tab !== "ai" && tab !== "astro")) return;
+    const iv = setInterval(() => fetchMetrics(token, true), 30000);
+    return () => clearInterval(iv);
+  }, [tab, authed, token]);
 
-    const fetchClients = async (authToken: string) => {
-        setIsFetching(true);
-        try {
-            const res = await fetch('/api/admin/clients', {
-                headers: { 'Authorization': `Bearer ${authToken}` }
-            });
-            const data = await res.json();
-            
-            if (res.ok) {
-                setClients(data.clients);
-            } else if (res.status === 401) {
-                handleLogout(); // Token expired/invalid
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsFetching(false);
-        }
-    };
+  const login = async (e: React.FormEvent) => {
+    e.preventDefault(); setLoading(true); setError("");
+    const res = await fetch("/api/admin/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password }) });
+    const d = await res.json();
+    if (res.ok) { setToken(d.token); setAuthed(true); localStorage.setItem("adminToken", d.token); fetchClients(d.token).finally(() => setFetching(false)); }
+    else setError(d.error || "Login failed");
+    setLoading(false);
+  };
 
-    const fetchMetrics = async (authToken: string) => {
-        setIsFetchingMetrics(true);
-        try {
-            const res = await fetch('/api/admin/ai-metrics', {
-                headers: { 'Authorization': `Bearer ${authToken}` }
-            });
-            const data = await res.json();
-            
-            if (res.ok) {
-                setMetrics(data);
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsFetchingMetrics(false);
-        }
-    };
+  const logout = () => { localStorage.removeItem("adminToken"); setAuthed(false); setToken(""); setClients([]); setMetrics(null); };
 
-    useEffect(() => {
-        if (isAuthenticated && token && activeTab === 'ai' && !metrics) {
-            fetchMetrics(token);
-        }
-    }, [activeTab, isAuthenticated, token]);
+  const updatePayment = async (leadId: string, status: string) => {
+    setLoading(true);
+    await fetch("/api/admin/update-payment", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ leadId, paymentStatus: status }) });
+    fetchClients(token); setLoading(false);
+  };
 
-    // Auto-refresh AI metrics every 30s when on AI tab
-    useEffect(() => {
-        if (!isAuthenticated || !token || activeTab !== 'ai') return;
-        const interval = setInterval(() => fetchMetrics(token), 30_000);
-        return () => clearInterval(interval);
-    }, [activeTab, isAuthenticated, token]);
+  const uploadPdf = async (portalId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const fd = new FormData(); fd.append("file", file); fd.append("portalId", portalId);
+    setLoading(true);
+    const res = await fetch("/api/admin/upload-report", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd });
+    if (res.ok) { alert("Report uploaded!"); fetchClients(token); } else alert("Upload failed");
+    setLoading(false); e.target.value = "";
+  };
 
-    const handleFileUpload = async (portalId: string, event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+  if (fetching) return <div className="login-container"><Loader2 className="animate-spin text-white w-8 h-8" /></div>;
 
-        if (file.type !== 'application/pdf') {
-            alert('Only PDF files are allowed');
-            return;
-        }
+  if (!authed) return (
+    <div className="login-container">
+      <div className="login-card">
+        <h2 className="admin-title">Quantum Karma Admin</h2>
+        <form onSubmit={login}>
+          <input type="password" className="login-input" placeholder="Admin Password" value={password} onChange={e => setPassword(e.target.value)} />
+          {error && <p className="error-text mb-4">{error}</p>}
+          <button type="submit" className="login-btn" disabled={loading}>{loading ? "..." : "Login"}</button>
+        </form>
+      </div>
+    </div>
+  );
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('portalId', portalId);
+  const g = metrics?.global;
 
-        setIsLoading(true);
-        try {
-            const res = await fetch('/api/admin/upload-report', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-            
-            if (res.ok) {
-                alert('Report uploaded successfully!');
-                fetchClients(token); // Refresh list
-            } else {
-                const data = await res.json();
-                alert(`Upload failed: ${data.error}`);
-            }
-        } catch (err) {
-            alert('Upload failed due to network error');
-        } finally {
-            setIsLoading(false);
-            // Reset input
-            event.target.value = '';
-        }
-    };
-
-
-
-    const handleUpdatePaymentStatus = async (leadId: string, paymentStatus: string) => {
-        setIsLoading(true);
-        try {
-            const res = await fetch('/api/admin/update-payment', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ leadId, paymentStatus })
-            });
-            if (res.ok) {
-                fetchClients(token);
-            } else {
-                const data = await res.json();
-                alert(`Update failed: ${data.error}`);
-            }
-        } catch (err) {
-            alert('Update failed due to network error');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const copyPortalLink = (accessToken: string) => {
-        const url = `${window.location.origin}/portal/${accessToken}`;
-        navigator.clipboard.writeText(url);
-        alert('Portal link copied to clipboard!');
-    };
-
-    if (isFetching && !isAuthenticated) {
-        return <div className="login-container"><Loader2 className="animate-spin text-white" /></div>;
-    }
-
-    if (!isAuthenticated) {
-        return (
-            <div className="login-container">
-                <div className="login-card">
-                    <h2 className="admin-title">YNTRA Admin</h2>
-                    <form onSubmit={handleLogin}>
-                        <input 
-                            type="password" 
-                            className="login-input" 
-                            placeholder="Admin Password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                        />
-                        {error && <p className="error-text mb-4">{error}</p>}
-                        <button type="submit" className="login-btn" disabled={isLoading}>
-                            {isLoading ? 'Wait...' : 'Login'}
-                        </button>
-                    </form>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="admin-root">
-            <div className="admin-header">
-                <div>
-                    <h1 className="admin-title">Client Portals</h1>
-                    <p className="text-slate-400 mt-1">Manage birth reports and portal access</p>
-                </div>
-                <button onClick={handleLogout} className="admin-logout flex items-center gap-2">
-                    <LogOut size={16} /> Logout
-                </button>
-            </div>
-
-            <div className="flex gap-4 mb-6 px-6">
-                <button 
-                    onClick={() => setActiveTab('clients')}
-                    className={`px-4 py-2 rounded-md font-semibold text-sm transition-all flex items-center gap-2 ${activeTab === 'clients' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                >
-                    <Users size={16} /> Portals & Leads
-                </button>
-                <button 
-                    onClick={() => setActiveTab('ai')}
-                    className={`px-4 py-2 rounded-md font-semibold text-sm transition-all flex items-center gap-2 ${activeTab === 'ai' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                >
-                    <Activity size={16} /> AI Usage & Cost
-                </button>
-            </div>
-
-            {activeTab === 'clients' ? (
-                <div className="clients-table-container">
-                <table className="clients-table">
-                    <thead>
-                        <tr>
-                            <th>Client Info</th>
-                            <th>Status (Portal)</th>
-                            <th>Payment Status</th>
-                            <th>Portal Details</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {clients.length === 0 ? (
-                            <tr>
-                                <td colSpan={5} className="text-center py-8 text-slate-400">No clients found yet.</td>
-                            </tr>
-                        ) : clients.map(client => {
-                            const paymentStatus = client.onboarding_leads?.payment_status || 'pending';
-                            return (
-                            <tr key={client.id}>
-                                <td>
-                                    <div className="font-semibold text-white">{client.full_name}</div>
-                                    <div className="text-sm text-slate-400">{client.email}</div>
-                                </td>
-                                <td>
-                                    <span className={`badge ${client.status}`}>
-                                        {client.status.toUpperCase()}
-                                    </span>
-                                </td>
-                                <td>
-                                    <select 
-                                        value={paymentStatus.toLowerCase()} 
-                                        onChange={(e) => handleUpdatePaymentStatus(client.lead_id, e.target.value)}
-                                        disabled={isLoading}
-                                        className="bg-slate-800 text-white border border-slate-700 rounded px-2 py-1 text-xs outline-none"
-                                    >
-                                        <option value="pending">Pending</option>
-                                        <option value="success">Success</option>
-                                        <option value="failed">Failed</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <div className="text-sm font-mono bg-slate-800 px-2 py-1 rounded inline-block">
-                                        PIN: {client.access_pin}
-                                    </div>
-                                    <button 
-                                        className="text-xs text-indigo-400 block mt-1 hover:underline flex items-center gap-1"
-                                        onClick={() => copyPortalLink(client.access_token)}
-                                    >
-                                        <Copy size={12} /> Copy URL
-                                    </button>
-                                </td>
-                                <td>
-                                    <div className="actions-flex">
-                                        <div className="file-input-wrapper">
-                                            <button className="action-btn">
-                                                {client.report_url ? <><CheckCircle2 size={14}/> Replace PDF</> : <><Upload size={14}/> Upload PDF</>}
-                                            </button>
-                                            <input 
-                                                type="file" 
-                                                accept=".pdf" 
-                                                onChange={(e) => handleFileUpload(client.id, e)}
-                                                disabled={isLoading}
-                                            />
-                                        </div>
-
-                                    </div>
-                                </td>
-                            </tr>
-                        )})}
-                    </tbody>
-                </table>
-            </div>
-            ) : (
-                <div className="px-6 pb-12 text-white">
-                    {isFetchingMetrics && !metrics ? (
-                        <div className="flex items-center justify-center py-12"><Loader2 className="animate-spin text-indigo-500" /></div>
-                    ) : metrics ? (
-                        <>
-                            {/* Global Stats */}
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                                <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-                                    <div className="text-sm font-semibold text-slate-400 mb-1 uppercase tracking-wider">Total Tokens</div>
-                                    <div className="text-3xl font-bold text-white">{(metrics.global.totalTokens || 0).toLocaleString()}</div>
-                                </div>
-                                <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-                                    <div className="text-sm font-semibold text-slate-400 mb-1 uppercase tracking-wider">Input Tokens</div>
-                                    <div className="text-3xl font-bold text-indigo-400">{(metrics.global.totalInputTokens || 0).toLocaleString()}</div>
-                                </div>
-                                <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-                                    <div className="text-sm font-semibold text-slate-400 mb-1 uppercase tracking-wider">Output Tokens</div>
-                                    <div className="text-3xl font-bold text-emerald-400">{(metrics.global.totalOutputTokens || 0).toLocaleString()}</div>
-                                </div>
-                                <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-                                    <div className="text-sm font-semibold text-slate-400 mb-1 flex items-center gap-1 uppercase tracking-wider">
-                                        <IndianRupee size={14}/> Total API Cost
-                                    </div>
-                                    <div className="text-3xl font-bold text-amber-400">₹{(metrics.global.totalCostInr || 0).toFixed(4)}</div>
-                                </div>
-                                <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-                                    <div className="text-sm font-semibold text-slate-400 mb-1 uppercase tracking-wider">Credits Consumed</div>
-                                    <div className="text-3xl font-bold text-rose-400">{(metrics.global.totalCreditsUsed || 0).toLocaleString()}</div>
-                                </div>
-                            </div>
-
-                            {/* Model Usage Breakdown */}
-                            <div className="mb-8 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                                <div className="px-6 py-4 border-b border-slate-700 bg-slate-800/50">
-                                    <h2 className="text-lg font-bold text-white">Model Overview</h2>
-                                </div>
-                                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {Object.keys(metrics.global.modelUsage || {}).length === 0 ? (
-                                        <div className="text-slate-400">No AI usage logged yet.</div>
-                                    ) : Object.entries(metrics.global.modelUsage).map(([model, data]: any) => (
-                                        <div key={model} className="bg-slate-900 p-4 rounded-lg border border-slate-700/50">
-                                            <div className="font-semibold text-indigo-300 mb-2">{model}</div>
-                                            <div className="flex justify-between text-sm mb-1">
-                                                <span className="text-slate-400">Generations:</span>
-                                                <span className="font-mono text-white">{data.count}</span>
-                                            </div>
-                                            <div className="flex justify-between text-sm mb-1">
-                                                <span className="text-slate-400">Tokens:</span>
-                                                <span className="font-mono text-white">{data.tokens.toLocaleString()}</span>
-                                            </div>
-                                            <div className="flex justify-between text-sm font-bold">
-                                                <span className="text-slate-400">Cost:</span>
-                                                <span className="font-mono text-amber-400">₹{data.cost.toFixed(4)}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Users Table */}
-                            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                                <div className="px-6 py-4 border-b border-slate-700 bg-slate-800/50 flex items-center justify-between">
-                                    <h2 className="text-lg font-bold text-white">User Consumption Intel</h2>
-                                    {metrics.fetchedAt && (
-                                        <span className="text-xs text-slate-500">Last updated: {new Date(metrics.fetchedAt).toLocaleTimeString()} · auto-refreshes every 30s</span>
-                                    )}
-                                </div>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-slate-900/50 border-b border-slate-700 text-xs uppercase tracking-wider text-slate-400 font-semibold">
-                                                <th className="px-6 py-4">User</th>
-                                                <th className="px-6 py-4">Tokens (In / Out / Total)</th>
-                                                <th className="px-6 py-4">Est. API Cost</th>
-                                                <th className="px-6 py-4">Credits Used</th>
-                                                <th className="px-6 py-4">Credits Remaining</th>
-                                                <th className="px-6 py-4">Models Used</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-700/50">
-                                            {metrics.users.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500">No users found.</td>
-                                                </tr>
-                                            ) : metrics.users.map((u: any) => (
-                                                <tr key={u.id} className="hover:bg-slate-800/50 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <div className="font-semibold text-white">{u.name || 'Unknown User'}</div>
-                                                        <div className="text-xs text-slate-500 mt-0.5">Joined: {new Date(u.joinedAt).toLocaleDateString()}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4 font-mono text-sm">
-                                                        <span className="text-indigo-400">{u.inputTokens.toLocaleString()}</span>
-                                                        <span className="text-slate-600 mx-2">/</span>
-                                                        <span className="text-emerald-400">{u.outputTokens.toLocaleString()}</span>
-                                                        <span className="text-slate-600 mx-2">/</span>
-                                                        <span className="text-white font-bold">{u.totalTokens.toLocaleString()}</span>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="font-mono font-bold text-amber-400">₹{u.costInr.toFixed(4)}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="font-mono font-bold text-rose-400">{u.creditsUsed ?? 0}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className={`font-mono font-bold ${ (u.creditsRemaining ?? 0) <= 5 ? 'text-red-400' : (u.creditsRemaining ?? 0) <= 20 ? 'text-amber-400' : 'text-emerald-400' }`}>
-                                                            {u.creditsRemaining ?? 0}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex gap-2 flex-wrap">
-                                                            {u.modelsUsed.map((m: string, i: number) => (
-                                                                <span key={i} className="px-2 py-1 bg-slate-700 text-slate-300 rounded text-[10px] uppercase font-bold tracking-wider">{m}</span>
-                                                            ))}
-                                                            {u.modelsUsed.length === 0 && <span className="text-slate-500 text-xs italic">None</span>}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="text-center py-12 text-slate-400">Error loading metrics. Did you run the SQL migration?</div>
-                    )}
-                </div>
-            )}
+  return (
+    <div className="admin-root">
+      {/* Header */}
+      <div className="admin-header">
+        <div>
+          <h1 className="admin-title">Quantum Karma Admin</h1>
+          <p className="text-slate-400 mt-1 text-sm">Real-time usage, billing &amp; user intelligence</p>
         </div>
-    );
+        <div className="flex items-center gap-3">
+          {lastUpdated && <span className="text-xs text-slate-500">Updated {ago(lastUpdated.toISOString())}</span>}
+          <button onClick={() => fetchMetrics(token)} className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-sm text-white transition-all">
+            <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /> Refresh
+          </button>
+          <button onClick={logout} className="admin-logout flex items-center gap-2"><LogOut size={16} /> Logout</button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-3 mb-6 px-6">
+        {([["clients","Clients & Portals",<Users size={15}/>],["ai","LLM Usage & Cost",<Activity size={15}/>],["astro","AstrologyAPI",<Database size={15}/>]] as const).map(([id, label, icon]) => (
+          <button key={id} onClick={() => setTab(id as Tab)}
+            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${tab === id ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>
+            {icon}{label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── CLIENTS TAB ─────────────────────────────────────── */}
+      {tab === "clients" && (
+        <div className="clients-table-container">
+          <table className="clients-table">
+            <thead><tr>
+              <th>Client</th><th>Portal Status</th><th>Payment</th><th>Credits Left</th><th>Portal Details</th><th>Actions</th>
+            </tr></thead>
+            <tbody>
+              {clients.length === 0
+                ? <tr><td colSpan={6} className="text-center py-10 text-slate-400">No clients yet.</td></tr>
+                : clients.map(c => (
+                  <tr key={c.id}>
+                    <td>
+                      <div className="font-semibold text-white">{c.full_name}</div>
+                      <div className="text-xs text-slate-400">{c.email}</div>
+                    </td>
+                    <td><span className={`badge ${c.status}`}>{c.status?.toUpperCase()}</span></td>
+                    <td>
+                      <select value={(c.onboarding_leads?.payment_status || "pending").toLowerCase()}
+                        onChange={e => updatePayment(c.lead_id, e.target.value)} disabled={loading}
+                        className="bg-slate-800 text-white border border-slate-700 rounded px-2 py-1 text-xs">
+                        <option value="pending">Pending</option>
+                        <option value="success">Success</option>
+                        <option value="failed">Failed</option>
+                      </select>
+                    </td>
+                    <td>
+                      <span className={`font-mono font-bold text-sm ${(c.credits ?? 0) <= 5 ? "text-red-400" : (c.credits ?? 0) <= 20 ? "text-amber-400" : "text-emerald-400"}`}>
+                        {c.credits ?? "—"}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="text-sm font-mono bg-slate-800 px-2 py-1 rounded inline-block">PIN: {c.access_pin}</div>
+                      <button className="text-xs text-indigo-400 flex items-center gap-1 mt-1 hover:underline"
+                        onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/portal/${c.access_token}`); }}>
+                        <Copy size={11} /> Copy URL
+                      </button>
+                    </td>
+                    <td>
+                      <div className="file-input-wrapper">
+                        <button className="action-btn">{c.report_url ? <><CheckCircle2 size={14}/> Replace</> : <><Upload size={14}/> Upload PDF</>}</button>
+                        <input type="file" accept=".pdf" onChange={e => uploadPdf(c.id, e)} disabled={loading} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── AI USAGE TAB ────────────────────────────────────── */}
+      {tab === "ai" && (
+        <div className="px-6 pb-12">
+          {!metrics ? <div className="flex justify-center py-16"><Loader2 className="animate-spin text-indigo-500 w-8 h-8" /></div> : <>
+
+            {/* Top KPI cards */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+              {[
+                { label: "Total Tokens", value: fmt(g.totalTokens || 0), color: "text-white", icon: <Zap size={16}/> },
+                { label: "Input Tokens", value: fmt(g.totalInputTokens || 0), color: "text-indigo-400", icon: <TrendingUp size={16}/> },
+                { label: "Output Tokens", value: fmt(g.totalOutputTokens || 0), color: "text-emerald-400", icon: <TrendingUp size={16}/> },
+                { label: "LLM Cost (INR)", value: inr(g.totalLLMCostInr || 0), color: "text-amber-400", icon: <IndianRupee size={16}/> },
+                { label: "Credits Used", value: fmt(g.totalCreditsUsed || 0), color: "text-rose-400", icon: <Activity size={16}/> },
+              ].map(k => (
+                <div key={k.label} className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">{k.icon}{k.label}</div>
+                  <div className={`text-2xl font-bold ${k.color}`}>{k.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pricing reference */}
+            <div className="mb-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700 text-xs text-slate-400 flex flex-wrap gap-6">
+              <span>💡 <strong className="text-slate-300">Pricing (INR @ ₹84/$)</strong></span>
+              <span>Claude Sonnet 4.6: ₹0.252/1K in · ₹1.26/1K out</span>
+              <span>Gemini 3.1 Pro: ₹0.105/1K in · ₹0.42/1K out</span>
+              <span>Gemini Flash Lite: ₹0.0063/1K</span>
+            </div>
+
+            {/* Model Breakdown */}
+            <div className="mb-8 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700"><h2 className="font-bold text-white">Model Breakdown</h2></div>
+              <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Object.keys(g.modelUsage || {}).length === 0
+                  ? <p className="text-slate-400 text-sm">No AI calls logged yet.</p>
+                  : Object.entries(g.modelUsage).map(([m, d]: any) => (
+                    <div key={m} className="bg-slate-900 p-4 rounded-lg border border-slate-700/50">
+                      <div className="font-semibold text-indigo-300 text-sm mb-3 truncate">{m}</div>
+                      {[["Calls", d.count, "text-white"],["Input", fmt(d.inputTokens), "text-indigo-400"],["Output", fmt(d.outputTokens), "text-emerald-400"],["Cost", inr(d.costInr), "text-amber-400"]].map(([l,v,c]) => (
+                        <div key={l as string} className="flex justify-between text-xs mb-1">
+                          <span className="text-slate-400">{l as string}</span>
+                          <span className={`font-mono font-bold ${c as string}`}>{v as string}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* Per-User Table */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 className="font-bold text-white">User Consumption</h2>
+                <span className="text-xs text-slate-500">Auto-refreshes every 30s</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-900/60 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700">
+                    <tr>
+                      <th className="px-5 py-3">User</th>
+                      <th className="px-5 py-3">Last Active</th>
+                      <th className="px-5 py-3">Input / Output / Total</th>
+                      <th className="px-5 py-3">LLM Cost ₹</th>
+                      <th className="px-5 py-3">Credits Used</th>
+                      <th className="px-5 py-3">Credits Left</th>
+                      <th className="px-5 py-3">Models</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {metrics.users.length === 0
+                      ? <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">No users found.</td></tr>
+                      : metrics.users.map((u: any) => (
+                        <tr key={u.id} className="hover:bg-slate-800/50 transition-colors">
+                          <td className="px-5 py-4">
+                            <div className="font-semibold text-white">{u.name}</div>
+                            <div className="text-xs text-slate-500">{u.email}</div>
+                          </td>
+                          <td className="px-5 py-4 text-xs text-slate-400">{ago(u.lastActivityAt)}</td>
+                          <td className="px-5 py-4 font-mono text-xs">
+                            <span className="text-indigo-400">{fmt(u.inputTokens)}</span>
+                            <span className="text-slate-600 mx-1">/</span>
+                            <span className="text-emerald-400">{fmt(u.outputTokens)}</span>
+                            <span className="text-slate-600 mx-1">/</span>
+                            <span className="text-white font-bold">{fmt(u.totalTokens)}</span>
+                          </td>
+                          <td className="px-5 py-4 font-mono font-bold text-amber-400">{inr(u.llmCostInr)}</td>
+                          <td className="px-5 py-4 font-mono font-bold text-rose-400">{u.creditsUsed}</td>
+                          <td className="px-5 py-4 font-mono font-bold">
+                            <span className={u.creditsRemaining <= 5 ? "text-red-400" : u.creditsRemaining <= 20 ? "text-amber-400" : "text-emerald-400"}>
+                              {u.creditsRemaining}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex gap-1 flex-wrap">
+                              {u.modelsUsed.map((m: string, i: number) => (
+                                <span key={i} className="px-2 py-0.5 bg-slate-700 text-slate-300 rounded text-[10px] font-bold uppercase tracking-wider">
+                                  {m.split("/")[0]}
+                                </span>
+                              ))}
+                              {u.modelsUsed.length === 0 && <span className="text-slate-500 text-xs">—</span>}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>}
+        </div>
+      )}
+
+      {/* ── ASTROLOGY API TAB ────────────────────────────────── */}
+      {tab === "astro" && (
+        <div className="px-6 pb-12">
+          {!metrics ? <div className="flex justify-center py-16"><Loader2 className="animate-spin text-indigo-500 w-8 h-8" /></div> : <>
+
+            {/* Top KPI */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {[
+                { label: "Total API Calls", value: fmt(g.totalAstroCalls || 0), color: "text-white" },
+                { label: "Cached (Free)", value: fmt((metrics.recentActivity || []).filter((r:any)=>r.type==="astro"&&r.cached).length), color: "text-emerald-400" },
+                { label: "Live API Calls", value: fmt((metrics.recentActivity || []).filter((r:any)=>r.type==="astro"&&!r.cached).length), color: "text-indigo-400" },
+                { label: "AstrologyAPI Cost", value: inr(g.totalAstroCostInr || 0), color: "text-amber-400" },
+              ].map(k => (
+                <div key={k.label} className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">{k.label}</div>
+                  <div className={`text-2xl font-bold ${k.color}`}>{k.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Info banner */}
+            <div className="mb-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700 text-xs text-slate-400">
+              💡 <strong className="text-slate-300">AstrologyAPI.com:</strong> Each new birth chart batch = ₹0.084 (~$0.001). Cached charts = ₹0.00 (free). Cache hit = no API call made.
+            </div>
+
+            {/* Endpoint breakdown */}
+            <div className="mb-8 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700"><h2 className="font-bold text-white">Endpoint Usage</h2></div>
+              <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Object.keys(g.astroEndpointUsage || {}).length === 0
+                  ? <p className="text-slate-400 text-sm col-span-3">No AstrologyAPI calls logged yet.</p>
+                  : Object.entries(g.astroEndpointUsage).map(([ep, d]: any) => (
+                    <div key={ep} className="bg-slate-900 p-4 rounded-lg border border-slate-700/50">
+                      <div className="font-mono text-indigo-300 text-sm mb-3">{ep}</div>
+                      <div className="flex justify-between text-xs mb-1"><span className="text-slate-400">Calls</span><span className="font-mono text-white font-bold">{d.count}</span></div>
+                      <div className="flex justify-between text-xs"><span className="text-slate-400">Cost</span><span className="font-mono text-amber-400 font-bold">{inr(d.costInr)}</span></div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* Per-user astro stats */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700"><h2 className="font-bold text-white">Per-User AstrologyAPI Consumption</h2></div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-900/60 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700">
+                    <tr>
+                      <th className="px-5 py-3">User</th>
+                      <th className="px-5 py-3">API Calls</th>
+                      <th className="px-5 py-3">AstroCost ₹</th>
+                      <th className="px-5 py-3">LLM Cost ₹</th>
+                      <th className="px-5 py-3">Total Cost ₹</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {metrics.users.filter((u: any) => u.astroCalls > 0 || u.totalTokens > 0).length === 0
+                      ? <tr><td colSpan={5} className="px-5 py-8 text-center text-slate-500">No usage yet.</td></tr>
+                      : metrics.users.map((u: any) => (
+                        <tr key={u.id} className="hover:bg-slate-800/50 transition-colors">
+                          <td className="px-5 py-4">
+                            <div className="font-semibold text-white">{u.name}</div>
+                            <div className="text-xs text-slate-500">{u.email}</div>
+                          </td>
+                          <td className="px-5 py-4 font-mono text-indigo-400 font-bold">{u.astroCalls}</td>
+                          <td className="px-5 py-4 font-mono text-amber-400 font-bold">{inr(u.astroCostInr)}</td>
+                          <td className="px-5 py-4 font-mono text-amber-300">{inr(u.llmCostInr)}</td>
+                          <td className="px-5 py-4 font-mono font-bold text-rose-400">{inr(u.totalCostInr)}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>}
+        </div>
+      )}
+    </div>
+  );
 }
