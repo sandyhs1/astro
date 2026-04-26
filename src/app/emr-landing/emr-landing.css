@@ -186,6 +186,7 @@
   background-clip: text;
   color: transparent;
   animation: shimmer 6s linear infinite;
+  padding-bottom: 0.15em;
 }
 
 /* ---------- Marquee ---------- */
