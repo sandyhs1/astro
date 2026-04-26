@@ -22,7 +22,7 @@ export const Starfield = ({ count = 100, shootingStars = 2, className = "" }) =>
         id: i,
         top: Math.random() * 50,
         left: Math.random() * 50,
-        delay: Math.random() * 10,
+        delay: i * 2,
       })),
     [shootingStars]
   );
