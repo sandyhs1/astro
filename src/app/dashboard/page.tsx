@@ -12,6 +12,7 @@ import PaymentGate from "./components/PaymentGate";
 import DestinyCalendar from "./components/DestinyCalendar";
 import KarmaDNA from "./components/KarmaDNA";
 import KarmicPatterns from "./components/KarmicPatterns";
+import Roadmap from "./components/Roadmap";
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -38,7 +39,7 @@ export default function DashboardPage() {
   const [geocodingReady, setGeocodingReady] = useState(false);
 
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
-  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns">("chat");
+  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "roadmap">("chat");
   
   const DEFAULT_WELCOME = "Namaste. I am your Quantum Karma Astrologer. How may I illuminate your path today?";
 
@@ -690,6 +691,24 @@ export default function DashboardPage() {
                </div>
              </div>
           </div>
+
+          {/* Roadmap Button */}
+          <button
+            onClick={() => setActiveFeature("roadmap")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-1 ${
+              activeFeature === "roadmap"
+                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-200"
+                : "bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200 hover:from-indigo-100 hover:to-purple-100"
+            }`}
+          >
+            <span className="text-base">🗺️</span>
+            <span className="flex-1 text-left">Intelligence Roadmap</span>
+            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+              activeFeature === "roadmap"
+                ? "bg-white/20 text-white"
+                : "bg-indigo-100 text-indigo-600"
+            }`}>NEW</span>
+          </button>
         </aside>
 
         {/* Main Chat Interface - Light Theme Redesign */}
@@ -698,6 +717,7 @@ export default function DashboardPage() {
           {activeFeature === "destiny" && <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "karma-dna" && <KarmaDNA profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "karmic-patterns" && <KarmicPatterns profileId={activeProfileId} profileName={activeProfileName} />}
+          {activeFeature === "roadmap" && <Roadmap onClose={() => setActiveFeature("chat")} />}
           
           <div className={activeFeature === "chat" ? "flex flex-col h-full" : "hidden"}>
           {/* Chat Header */}
