@@ -385,7 +385,6 @@ export default function EMRAuthModal() {
                     type="text"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                    placeholder="QK-XXXX-XXXX"
                     maxLength={12}
                     style={{
                       ...inputStyle,
