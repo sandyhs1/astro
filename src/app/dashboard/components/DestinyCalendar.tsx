@@ -59,6 +59,8 @@ export default function DestinyCalendar({ profileId, profileName }: Props) {
   const [error, setError] = useState("");
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
   const [generated, setGenerated] = useState(false);
+  const [generatedMonth, setGeneratedMonth] = useState<string | null>(null);
+  const currentMonth = new Date().toLocaleString("en-IN", { month: "long", year: "numeric" });
 
   useEffect(() => {
     async function checkSaved() {
@@ -75,6 +77,7 @@ export default function DestinyCalendar({ profileId, profileName }: Props) {
             mahadasha: data.reportData.mahadasha,
             antardasha: data.reportData.antardasha,
           });
+          setGeneratedMonth(data.reportData.generatedMonth || currentMonth);
           setGenerated(true);
         } else {
           setGenerated(false);
@@ -89,20 +92,21 @@ export default function DestinyCalendar({ profileId, profileName }: Props) {
     checkSaved();
   }, [profileId]);
 
-  const generate = async () => {
+    const generate = async (forceNew = false) => {
     setLoading(true);
     setError("");
     try {
       const res = await fetch("/api/destiny-calendar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileId }),
+        body: JSON.stringify({ profileId, forceNew }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
       setDays(data.days);
       setNarrative(data.narrative);
       setMeta({ moonSign: data.moonSign, mahadasha: data.mahadasha, antardasha: data.antardasha });
+      setGeneratedMonth(currentMonth);
       setGenerated(true);
     } catch (e: any) {
       setError(e.message);
@@ -148,7 +152,7 @@ export default function DestinyCalendar({ profileId, profileName }: Props) {
           </div>
           {!generated && (
             <button
-              onClick={generate}
+              onClick={() => generate()}
               disabled={loading}
               className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-indigo-200"
             >
@@ -156,13 +160,20 @@ export default function DestinyCalendar({ profileId, profileName }: Props) {
             </button>
           )}
           {generated && (
-            <button
-              onClick={generate}
-              disabled={loading}
-              className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-all"
-            >
-              {loading ? "Refreshing..." : "↻ Refresh"}
-            </button>
+            <div className="flex items-center gap-2">
+              {generatedMonth && (
+                <span className="text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full font-medium">
+                  {generatedMonth} Window
+                </span>
+              )}
+              <button
+                onClick={() => generate(true)}
+                disabled={loading}
+                className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-all"
+              >
+                {loading ? "Refreshing..." : "↻ New Month · 3 Credits"}
+              </button>
+            </div>
           )}
         </div>
 

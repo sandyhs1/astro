@@ -73,6 +73,106 @@ async function callBedrock(
   };
 }
 
+/**
+ * BEDROCK CACHED CALL
+ *
+ * Implements AWS Bedrock prompt caching via cachePoint blocks:
+ *   - System prompt cached with a cachePoint after the text block.
+ *   - User message split into: [staticContext + cachePoint + dynamicInstruction]
+ *
+ * On cache hit, input tokens are billed at ~10% of normal cost.
+ * Minimum cacheable block: 1024 tokens (Bedrock requirement).
+ *
+ * @param systemPrompt       — Grandmaster persona (cached)
+ * @param staticContext      — Large chart data block (cached)
+ * @param dynamicInstruction — Small per-request instruction (NOT cached)
+ */
+export async function callBedrockCached(
+  systemPrompt: string,
+  staticContext: string,
+  dynamicInstruction: string,
+  maxTokens = 5000
+): Promise<LLMResponse> {
+  if (!hasBedRockCreds()) {
+    throw new Error("Bedrock credentials not set");
+  }
+
+  const client = new BedrockRuntimeClient({
+    region: BEDROCK_REGION,
+    credentials: {
+      accessKeyId:     AWS_ACCESS_KEY,
+      secretAccessKey: AWS_SECRET_KEY,
+    },
+  });
+
+  // System: text block + cachePoint (caches the Grandmaster persona)
+  const systemBlocks: any[] = [
+    { text: systemPrompt },
+    { cachePoint: { type: "default" } },
+  ];
+
+  // User message: static chart data (cached) + small dynamic instruction (not cached)
+  const userContent: any[] = [
+    { text: staticContext },
+    { cachePoint: { type: "default" } },
+    { text: dynamicInstruction },
+  ];
+
+  const command = new ConverseCommand({
+    modelId: BEDROCK_MODEL,
+    system:  systemBlocks,
+    messages: [{ role: "user", content: userContent }],
+    inferenceConfig: { maxTokens, temperature: 0.7 },
+  } as any);
+
+  const response = await client.send(command);
+  const text = response.output?.message?.content?.[0]?.text || "";
+
+  // Log cache savings
+  const usage = response.usage as any;
+  if (usage?.cacheReadInputTokenCount || usage?.cacheWriteInputTokenCount) {
+    console.log(`💾 [CACHE] Read: ${usage.cacheReadInputTokenCount ?? 0} | Write: ${usage.cacheWriteInputTokenCount ?? 0} | Saved: ${usage.cacheReadInputTokenCount ?? 0} tokens`);
+  }
+
+  return {
+    text,
+    model: `bedrock/${BEDROCK_MODEL}`,
+    tokensIn:  response.usage?.inputTokens  || 0,
+    tokensOut: response.usage?.outputTokens || 0,
+  };
+}
+
+/**
+ * routeLLMCached — for large reports (Karmic Patterns, Karma DNA).
+ * Primary:  Bedrock with prompt caching (cachePoint on system + static context)
+ * Fallback: routeLLM standard (no caching, but Gemini available)
+ */
+export async function routeLLMCached(
+  systemPrompt: string,
+  staticContext: string,
+  dynamicInstruction: string,
+  maxTokens = 5000
+): Promise<LLMResponse & { usedFallback: boolean }> {
+  if (hasBedRockCreds()) {
+    try {
+      const result = await callBedrockCached(systemPrompt, staticContext, dynamicInstruction, maxTokens);
+      console.log(`✅ [LLM-CACHED] Bedrock ${BEDROCK_MODEL} [in:${result.tokensIn} out:${result.tokensOut}]`);
+      return { ...result, usedFallback: false };
+    } catch (err: any) {
+      console.warn(`⚠️ [LLM-CACHED] Bedrock cached call failed: ${err.message?.slice(0, 100)} → falling back to standard routeLLM`);
+    }
+  }
+
+  // Fallback: combine context into single message for Gemini
+  const combinedMessage = `${staticContext}\n\n${dynamicInstruction}`;
+  const result = await routeLLM(
+    systemPrompt,
+    [{ role: "user", content: combinedMessage }],
+    maxTokens
+  );
+  return { ...result };
+}
+
 // ─── Fallback: Gemini 3.1 Pro ─────────────────────────────────────────────────
 
 const GEMINI_API_KEY     = process.env.GEMINI_API_KEY || "";

@@ -174,27 +174,33 @@ ${chartContext}
     });
 
     // ── PERSIST CHAT MESSAGES TO SUPABASE ────────────────────────────────────
-    // This is CRITICAL — without this, chats are lost on tab switch/refresh.
-    // Uses service role to bypass RLS. Saves both user + AI turn atomically.
-    const resolvedProfileId = (!profileId || profileId === "self")
-      ? null
-      : profileId;
+    // Always resolve the actual profile UUID — never leave it null.
+    // When profileId === "self", look up the Self family_profile for this user.
+    let persistProfileId: string | null = null;
+    if (!profileId || profileId === "self") {
+      const { data: selfProfile } = await supabaseAdmin
+        .from("family_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("relationship", "Self")
+        .maybeSingle();
+      persistProfileId = selfProfile?.id ?? null;
+    } else {
+      persistProfileId = profileId;
+    }
 
-    if (resolvedProfileId) {
-      supabaseAdmin.from("chat_messages").insert([
-        {
-          user_id:    user.id,
-          profile_id: resolvedProfileId,
-          role:       "user",
-          content:    message,
-        },
-        {
-          user_id:    user.id,
-          profile_id: resolvedProfileId,
-          role:       "assistant",
-          content:    llmResult.text,
-        },
+    if (persistProfileId) {
+      const { error: chatSaveErr } = await supabaseAdmin.from("chat_messages").insert([
+        { user_id: user.id, profile_id: persistProfileId, role: "user",      content: message },
+        { user_id: user.id, profile_id: persistProfileId, role: "assistant", content: llmResult.text },
       ]);
+      if (chatSaveErr) {
+        console.error("[CHAT] ❌ Failed to save messages:", chatSaveErr.message, chatSaveErr.code, chatSaveErr.details);
+      } else {
+        console.log("[CHAT] ✅ Messages saved for profile:", persistProfileId);
+      }
+    } else {
+      console.warn("[CHAT] ⚠️ No valid profileId — messages NOT saved.");
     }
 
     // ── Generate Suggested Prompts ────────────────────────────────────────────

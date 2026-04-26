@@ -258,19 +258,33 @@ ${d60Data ? parseHoroChart(d60Data) : "Fetch failed — use D9 + Ketu placement 
     };
 
     // ── Save to DB ─────────────────────────────────────────────────────────────
-    let targetProfileId = profileId;
+    let targetProfileId: string | null = null;
     if (!profileId || profileId === "self") {
-      const { data: fp } = await supabaseAdmin.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
-      if (fp) targetProfileId = fp.id;
+      const { data: fp } = await supabaseAdmin
+        .from("family_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("relationship", "Self")
+        .maybeSingle();
+      targetProfileId = fp?.id ?? null;
+    } else {
+      targetProfileId = profileId;
     }
-    
+
     if (targetProfileId) {
-      await supabaseAdmin.from("saved_reports").insert({
-        user_id: user.id,
-        profile_id: targetProfileId,
-        report_type: 'karma_dna',
-        content: reportData
+      const { error: saveErr } = await supabaseAdmin.from("saved_reports").insert({
+        user_id:     user.id,
+        profile_id:  targetProfileId,
+        report_type: "karma_dna",
+        content:     reportData,
       });
+      if (saveErr) {
+        console.error("[KARMA DNA] ❌ Failed to save report:", saveErr.message, saveErr.code, saveErr.details);
+      } else {
+        console.log("[KARMA DNA] ✅ Report saved for profile:", targetProfileId);
+      }
+    } else {
+      console.warn("[KARMA DNA] ⚠️ No valid profileId found — report NOT saved.");
     }
 
     return NextResponse.json({

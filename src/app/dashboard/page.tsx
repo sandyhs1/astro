@@ -11,6 +11,7 @@ import remarkGfm from "remark-gfm";
 import PaymentGate from "./components/PaymentGate";
 import DestinyCalendar from "./components/DestinyCalendar";
 import KarmaDNA from "./components/KarmaDNA";
+import KarmicPatterns from "./components/KarmicPatterns";
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -37,7 +38,7 @@ export default function DashboardPage() {
   const [geocodingReady, setGeocodingReady] = useState(false);
 
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
-  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna">("chat");
+  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns">("chat");
   
   const DEFAULT_WELCOME = "Namaste. I am your Quantum Karma Astrologer. How may I illuminate your path today?";
 
@@ -123,8 +124,9 @@ export default function DashboardPage() {
   // ── Load Chat History from Supabase on profile switch ──
   useEffect(() => {
     async function loadChatHistory() {
-      if (!user || !familyProfiles.length) return;
+      if (!user) return;
 
+      // Always resolve to the actual UUID — same logic as the API
       let targetId: string | null = null;
       if (activeProfileId === "self") {
         const selfP = familyProfiles.find(p => p.relationship === "Self");
@@ -159,7 +161,6 @@ export default function DashboardPage() {
             return { role: m.role as "user" | "assistant" | "system", content: text, marker: mkr };
           });
           setMessages([{ role: "assistant", content: DEFAULT_WELCOME }, ...loaded]);
-          // Update chips based on last user message
           const lastUserMsg = [...loaded].reverse().find(m => m.role === "user");
           if (lastUserMsg) updateChipsFromContext(lastUserMsg.content);
         } else {
@@ -672,6 +673,9 @@ export default function DashboardPage() {
                <button onClick={() => setActiveFeature("karma-dna")} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeFeature === "karma-dna" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>
                  <span className="text-base">🧬</span> Karma DNA
                </button>
+               <button onClick={() => setActiveFeature("karmic-patterns")} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeFeature === "karmic-patterns" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>
+                 <span className="text-base">🔮</span> Karmic Patterns
+               </button>
              </div>
           </div>
 
@@ -693,6 +697,7 @@ export default function DashboardPage() {
             
           {activeFeature === "destiny" && <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "karma-dna" && <KarmaDNA profileId={activeProfileId} profileName={activeProfileName} />}
+          {activeFeature === "karmic-patterns" && <KarmicPatterns profileId={activeProfileId} profileName={activeProfileName} />}
           
           <div className={activeFeature === "chat" ? "flex flex-col h-full" : "hidden"}>
           {/* Chat Header */}

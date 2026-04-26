@@ -58,7 +58,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { profileId } = await req.json();
+    const { profileId, forceNew } = await req.json();
 
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -174,33 +174,48 @@ ABSOLUTE RULES:
 
     const reportData = {
       days: days.map(d => ({
-        dateStr:       d.dateStr,
-        score:         d.score,
-        grade:         d.grade,
-        color:         d.color,
-        factors:       d.factors,
+        dateStr:        d.dateStr,
+        score:          d.score,
+        grade:          d.grade,
+        color:          d.color,
+        factors:        d.factors,
         dominantPlanet: d.dominantPlanet,
       })),
-      narrative:       llmResult.text,
+      narrative:      llmResult.text,
       moonSign,
-      antardasha:      chart.dasha.antardasha,
-      mahadasha:       chart.dasha.mahadasha,
+      antardasha:     chart.dasha.antardasha,
+      mahadasha:      chart.dasha.mahadasha,
+      generatedMonth: new Date().toLocaleString("en-IN", { month: "long", year: "numeric" }),
     };
 
     // ── Save to DB ─────────────────────────────────────────────────────────────
-    let targetProfileId = profileId;
+    let targetProfileId: string | null = null;
     if (!profileId || profileId === "self") {
-      const { data: fp } = await supabaseAdmin.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
-      if (fp) targetProfileId = fp.id;
+      const { data: fp } = await supabaseAdmin
+        .from("family_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("relationship", "Self")
+        .maybeSingle();
+      targetProfileId = fp?.id ?? null;
+    } else {
+      targetProfileId = profileId;
     }
-    
+
     if (targetProfileId) {
-      await supabaseAdmin.from("saved_reports").insert({
-        user_id: user.id,
-        profile_id: targetProfileId,
-        report_type: 'destiny_window',
-        content: reportData
+      const { error: saveErr } = await supabaseAdmin.from("saved_reports").insert({
+        user_id:     user.id,
+        profile_id:  targetProfileId,
+        report_type: "destiny_window",
+        content:     reportData,
       });
+      if (saveErr) {
+        console.error("[DESTINY] ❌ Failed to save report:", saveErr.message, saveErr.code, saveErr.details);
+      } else {
+        console.log("[DESTINY] ✅ Report saved for profile:", targetProfileId);
+      }
+    } else {
+      console.warn("[DESTINY] ⚠️ No valid profileId found — report NOT saved.");
     }
 
     return NextResponse.json({
