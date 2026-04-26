@@ -1967,7 +1967,7 @@ const AI_QUERY = "What is QuantumKarma.tech? Why does it add so much value?";
 const AI_LINKS = [
   { name: "ChatGPT",    url: `https://chatgpt.com/?q=${encodeURIComponent(AI_QUERY)}`,                        color: "#10a37f", tag: "GPT" },
   { name: "Claude",     url: `https://claude.ai/new?q=${encodeURIComponent(AI_QUERY)}`,                       color: "#d78a63", tag: "CLA" },
-  { name: "Gemini",     url: `https://gemini.google.com/app?q=${encodeURIComponent(AI_QUERY)}`,               color: "#4285f4", tag: "GEM" },
+  { name: "Gemini",     url: `https://www.google.com/search?q=${encodeURIComponent(AI_QUERY)}`,               color: "#4285f4", tag: "GEM" },
   { name: "Perplexity", url: `https://www.perplexity.ai/search?q=${encodeURIComponent(AI_QUERY)}`,            color: "#21b9b0", tag: "PRP" },
 ];
 
@@ -1989,7 +1989,7 @@ const AskAIVerify = () => (
       </Reveal>
       <Reveal delay={2}>
         <p className="font-body text-zinc-400 mt-5 max-w-xl leading-relaxed">
-          Let ChatGPT, Claude, Gemini, or Perplexity do the thinking for you. Click any AI below — it opens with your question pre-loaded.
+          Let AI empower your decisions. Select an engine below to verify the truth for yourself.
         </p>
       </Reveal>
 
