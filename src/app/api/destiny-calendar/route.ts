@@ -13,6 +13,49 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const profileId = searchParams.get("profileId");
+    
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { cookies: { get(name: string) { return cookieStore.get(name)?.value; } } }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    let targetProfileId = profileId;
+    if (!profileId || profileId === "self") {
+      const { data: fp } = await supabase.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+      if (fp) targetProfileId = fp.id;
+    }
+
+    if (!targetProfileId) return NextResponse.json({ found: false });
+
+    const { data: saved } = await supabase
+      .from("saved_reports")
+      .select("content")
+      .eq("user_id", user.id)
+      .eq("profile_id", targetProfileId)
+      .eq("report_type", "destiny_window")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (saved) {
+      return NextResponse.json({ found: true, reportData: saved.content });
+    }
+    return NextResponse.json({ found: false });
+
+  } catch (err: any) {
+    console.error("Destiny Calendar GET error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { profileId } = await req.json();
@@ -129,7 +172,7 @@ ABSOLUTE RULES:
       credits_used: 3, question_preview: "Destiny Calendar",
     });
 
-    return NextResponse.json({
+    const reportData = {
       days: days.map(d => ({
         dateStr:       d.dateStr,
         score:         d.score,
@@ -142,6 +185,26 @@ ABSOLUTE RULES:
       moonSign,
       antardasha:      chart.dasha.antardasha,
       mahadasha:       chart.dasha.mahadasha,
+    };
+
+    // ── Save to DB ─────────────────────────────────────────────────────────────
+    let targetProfileId = profileId;
+    if (!profileId || profileId === "self") {
+      const { data: fp } = await supabaseAdmin.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+      if (fp) targetProfileId = fp.id;
+    }
+    
+    if (targetProfileId) {
+      await supabaseAdmin.from("saved_reports").insert({
+        user_id: user.id,
+        profile_id: targetProfileId,
+        report_type: 'destiny_window',
+        content: reportData
+      });
+    }
+
+    return NextResponse.json({
+      ...reportData,
       creditsRemaining: Math.max(0, credits - 3),
     });
 

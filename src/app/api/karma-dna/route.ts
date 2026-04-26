@@ -73,7 +73,51 @@ Duration: 48 days (1 Mandala)
 - ZERO gemstone recommendations
 - Every claim must cite specific chart data (e.g., "Saturn in H6 Capricorn, conjunct Mars")
 - Use confident, declarative language — never "may" or "might"
-- Maximum 1200 words total`;
+- Ensure your response is completely finished and does not cut off mid-sentence.
+- Maximum 1500 words total`;
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const profileId = searchParams.get("profileId");
+    
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { cookies: { get(name: string) { return cookieStore.get(name)?.value; } } }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    let targetProfileId = profileId;
+    if (!profileId || profileId === "self") {
+      const { data: fp } = await supabase.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+      if (fp) targetProfileId = fp.id;
+    }
+
+    if (!targetProfileId) return NextResponse.json({ found: false });
+
+    const { data: saved } = await supabase
+      .from("saved_reports")
+      .select("content")
+      .eq("user_id", user.id)
+      .eq("profile_id", targetProfileId)
+      .eq("report_type", "karma_dna")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (saved) {
+      return NextResponse.json({ found: true, reportData: saved.content });
+    }
+    return NextResponse.json({ found: false });
+
+  } catch (err: any) {
+    console.error("Karma DNA GET error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -188,7 +232,7 @@ ${d60Data ? parseHoroChart(d60Data) : "Fetch failed — use D9 + Ketu placement 
     const llmResult = await routeLLM(
       KARMA_DNA_SYSTEM_PROMPT(pName),
       [{ role: "user", content: `Generate the complete Karma DNA Report for ${pName}.\n\n${chartContext}` }],
-      2000  // Higher token limit for the full report
+      4000  // Increased token limit to ensure complete report without cutoff
     );
 
     // ── Deduct 20 credits ──────────────────────────────────────────────────────
@@ -205,12 +249,32 @@ ${d60Data ? parseHoroChart(d60Data) : "Fetch failed — use D9 + Ketu placement 
       credits_used: 20, question_preview: "Karma DNA Report",
     });
 
-    return NextResponse.json({
+    const reportData = {
       report:          llmResult.text,
       personName:      pName,
       model:           llmResult.model,
       d12Available:    !!d12Data,
       d60Available:    !!d60Data,
+    };
+
+    // ── Save to DB ─────────────────────────────────────────────────────────────
+    let targetProfileId = profileId;
+    if (!profileId || profileId === "self") {
+      const { data: fp } = await supabaseAdmin.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+      if (fp) targetProfileId = fp.id;
+    }
+    
+    if (targetProfileId) {
+      await supabaseAdmin.from("saved_reports").insert({
+        user_id: user.id,
+        profile_id: targetProfileId,
+        report_type: 'karma_dna',
+        content: reportData
+      });
+    }
+
+    return NextResponse.json({
+      ...reportData,
       creditsRemaining: Math.max(0, credits - 20),
     });
 

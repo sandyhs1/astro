@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Upload, LogOut, Copy, CheckCircle2, Loader2, Users, Activity, Database, RefreshCw, IndianRupee, Zap, TrendingUp } from "lucide-react";
 import "./admin.css";
 
-type Tab = "clients" | "ai" | "astro";
+type Tab = "clients" | "ai" | "astro" | "promos";
 
 const fmt = (n: number) => n.toLocaleString("en-IN");
 const inr = (n: number) => `₹${n.toFixed(4)}`;
@@ -22,6 +22,7 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("clients");
   const [clients, setClients] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any>(null);
+  const [promos, setPromos] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,6 +43,11 @@ export default function AdminDashboard() {
     } finally { setRefreshing(false); }
   }, []);
 
+  const fetchPromos = useCallback(async (t: string) => {
+    const res = await fetch("/api/admin/promo-codes", { headers: { Authorization: `Bearer ${t}` } });
+    if (res.ok) { const d = await res.json(); setPromos(d); }
+  }, []);
+
   useEffect(() => {
     const saved = localStorage.getItem("adminToken");
     if (saved) { setToken(saved); setAuthed(true); fetchClients(saved).finally(() => setFetching(false)); }
@@ -50,6 +56,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (authed && token && (tab === "ai" || tab === "astro")) fetchMetrics(token);
+    if (authed && token && tab === "promos") fetchPromos(token);
   }, [tab, authed, token]);
 
   useEffect(() => {
@@ -120,7 +127,7 @@ export default function AdminDashboard() {
 
       {/* Tabs */}
       <div className="flex gap-3 mb-6 px-6">
-        {([["clients","Clients & Portals",<Users size={15}/>],["ai","LLM Usage & Cost",<Activity size={15}/>],["astro","AstrologyAPI",<Database size={15}/>]] as const).map(([id, label, icon]) => (
+        {([["clients","Clients & Portals",<Users size={15}/>],["ai","LLM Usage & Cost",<Activity size={15}/>],["astro","AstrologyAPI",<Database size={15}/>],["promos","Promo Codes",<Zap size={15}/>]] as const).map(([id, label, icon]) => (
           <button key={id} onClick={() => setTab(id as Tab)}
             className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${tab === id ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>
             {icon}{label}
@@ -366,6 +373,89 @@ export default function AdminDashboard() {
               </div>
             </div>
           </>}
+        </div>
+      )}
+      {/* ── PROMO CODES TAB ──────────────────────────────────────── */}
+      {tab === "promos" && (
+        <div className="px-6 pb-12">
+          {!promos ? <div className="flex justify-center py-16"><Loader2 className="animate-spin text-indigo-500 w-8 h-8" /></div> : <>
+
+            {/* Summary KPIs */}
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              {[
+                { label: "Total Codes", value: promos.summary.total, color: "text-white" },
+                { label: "Used", value: promos.summary.used, color: "text-rose-400" },
+                { label: "Available", value: promos.summary.available, color: "text-emerald-400" },
+              ].map(k => (
+                <div key={k.label} className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">{k.label}</div>
+                  <div className={`text-3xl font-bold ${k.color}`}>{k.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Codes Table */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 className="font-bold text-white">All Promo Codes</h2>
+                <button onClick={() => fetchPromos(token)} className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-sm text-white transition-all">
+                  <RefreshCw size={14} /> Refresh
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-900/60 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700">
+                    <tr>
+                      <th className="px-5 py-3">#</th>
+                      <th className="px-5 py-3">Code</th>
+                      <th className="px-5 py-3">Credits</th>
+                      <th className="px-5 py-3">Status</th>
+                      <th className="px-5 py-3">Used By</th>
+                      <th className="px-5 py-3">Used At</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {(promos.codes || []).map((c: any, i: number) => (
+                      <tr key={c.id} className="hover:bg-slate-800/50 transition-colors">
+                        <td className="px-5 py-3 text-slate-500 font-mono text-xs">{i + 1}</td>
+                        <td className="px-5 py-3">
+                          <span className="font-mono font-bold text-indigo-300 bg-slate-900 px-2 py-1 rounded text-xs tracking-widest">
+                            {c.code}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 font-mono font-bold text-emerald-400">{c.credits_granted}</td>
+                        <td className="px-5 py-3">
+                          {c.used_by ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-900/40 text-rose-400 border border-rose-700/40 rounded text-xs font-bold">
+                              ✓ USED
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-900/40 text-emerald-400 border border-emerald-700/40 rounded text-xs font-bold">
+                              ◦ AVAILABLE
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3">
+                          {c.used_by ? (
+                            <div>
+                              <div className="font-semibold text-white text-sm">{c.used_by_name}</div>
+                              <div className="text-xs text-slate-400">{c.used_by_email}</div>
+                            </div>
+                          ) : (
+                            <span className="text-slate-600">—</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3 text-xs text-slate-400 font-mono">
+                          {c.used_at ? new Date(c.used_at).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+          }
         </div>
       )}
     </div>

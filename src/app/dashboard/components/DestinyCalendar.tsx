@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -59,6 +59,35 @@ export default function DestinyCalendar({ profileId, profileName }: Props) {
   const [error, setError] = useState("");
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
   const [generated, setGenerated] = useState(false);
+
+  useEffect(() => {
+    async function checkSaved() {
+      if (!profileId) return;
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/destiny-calendar?profileId=${profileId}`);
+        const data = await res.json();
+        if (data.found && data.reportData) {
+          setDays(data.reportData.days || []);
+          setNarrative(data.reportData.narrative || "");
+          setMeta({
+            moonSign: data.reportData.moonSign,
+            mahadasha: data.reportData.mahadasha,
+            antardasha: data.reportData.antardasha,
+          });
+          setGenerated(true);
+        } else {
+          setGenerated(false);
+          setDays([]);
+        }
+      } catch (err) {
+        console.error("Failed to check saved calendar", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    checkSaved();
+  }, [profileId]);
 
   const generate = async () => {
     setLoading(true);

@@ -17,6 +17,7 @@ export default function AuthModal() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
+    const [promoCode, setPromoCode] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -28,6 +29,7 @@ export default function AuthModal() {
         setEmail("");
         setPassword("");
         setFullName("");
+        setPromoCode("");
     }, [view, isOpen]);
 
     if (!isOpen) return null;
@@ -57,7 +59,7 @@ export default function AuthModal() {
         try {
             if (view === "sign_up") {
                 if (!fullName.trim()) throw new Error("Full name is required");
-                const { error } = await supabase.auth.signUp({
+                const { error: signUpError } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
@@ -65,7 +67,31 @@ export default function AuthModal() {
                         emailRedirectTo: `${window.location.origin}/auth/callback`,
                     },
                 });
-                if (error) throw error;
+                if (signUpError) throw signUpError;
+
+                // ── Apply promo code if entered ───────────────────────────
+                if (promoCode.trim()) {
+                    // We need to sign in to get a session before calling the API
+                    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+                    if (!signInError) {
+                        const promoRes = await fetch("/api/apply-promo", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ promoCode: promoCode.trim() }),
+                        });
+                        const promoData = await promoRes.json();
+                        if (promoRes.ok) {
+                            closeAuthModal();
+                            router.push("/dashboard");
+                            return;
+                        } else {
+                            // Promo failed — still let user in but show error
+                            setMessage(`Account created! Note: ${promoData.error} You can still sign in.`);
+                            return;
+                        }
+                    }
+                }
+
                 setMessage("Check your email for the confirmation link!");
             } else if (view === "sign_in") {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -320,7 +346,55 @@ export default function AuthModal() {
                                 />
                             </div>
 
-                            {view !== "forgot_password" && (
+                            {/* Promo Code — only on sign_up */}
+                            {view === "sign_up" && (
+                                <div>
+                                    <label
+                                        style={{
+                                            display: "block",
+                                            fontSize: "0.6875rem",
+                                            fontWeight: 700,
+                                            color: "#444444",
+                                            marginBottom: 6,
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.06em",
+                                        }}
+                                    >
+                                        Promo Code{" "}
+                                        <span style={{ fontWeight: 400, color: "#999", textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={promoCode}
+                                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                                        placeholder="QK-XXXX-XXXX"
+                                        maxLength={12}
+                                        style={{
+                                            width: "100%",
+                                            background: promoCode ? "#F5F0FF" : "#F9F9F9",
+                                            border: `1px solid ${promoCode ? "hsl(270,60%,70%)" : "#D4D4D4"}`,
+                                            padding: "12px 14px",
+                                            borderRadius: 12,
+                                            color: "#111111",
+                                            fontSize: "0.875rem",
+                                            outline: "none",
+                                            fontFamily: "'IBM Plex Mono', monospace",
+                                            letterSpacing: "0.08em",
+                                            transition: "border-color 0.2s, background 0.2s",
+                                            boxSizing: "border-box",
+                                        }}
+                                        onFocus={(e) => { e.currentTarget.style.borderColor = "hsl(270,60%,55%)"; }}
+                                        onBlur={(e) => { e.currentTarget.style.borderColor = promoCode ? "hsl(270,60%,70%)" : "#D4D4D4"; }}
+                                    />
+                                    {promoCode && (
+                                        <p style={{ fontSize: "0.7rem", color: "hsl(270,60%,45%)", marginTop: 4 }}>
+                                            ✨ Promo code detected — you'll get instant dashboard access!
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Password field */}
                                 <div>
                                     <div
                                         style={{

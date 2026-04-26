@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -18,6 +18,34 @@ export default function KarmaDNA({ profileId, profileName }: Props) {
   const [generated, setGenerated] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function checkSaved() {
+      if (!profileId) return;
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/karma-dna?profileId=${profileId}`);
+        const data = await res.json();
+        if (data.found && data.reportData) {
+          setReport(data.reportData.report);
+          setMeta({ 
+            model: data.reportData.model, 
+            d12: data.reportData.d12Available, 
+            d60: data.reportData.d60Available 
+          });
+          setGenerated(true);
+        } else {
+          setGenerated(false);
+          setReport("");
+        }
+      } catch (err) {
+        console.error("Failed to check saved report", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    checkSaved();
+  }, [profileId]);
 
   const generate = async () => {
     setLoading(true);
