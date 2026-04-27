@@ -14,6 +14,7 @@ import KarmaDNA from "./components/KarmaDNA";
 import KarmicPatterns from "./components/KarmicPatterns";
 import Roadmap from "./components/Roadmap";
 import TopupModal from "./components/TopupModal";
+import DetailsPanel from "./components/DetailsPanel";
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -41,7 +42,7 @@ export default function DashboardPage() {
   const [geocodingReady, setGeocodingReady] = useState(false);
 
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
-  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "roadmap">("chat");
+  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "roadmap" | "details">("chat");
   
   const DEFAULT_WELCOME = "Namaste. I am your Quantum Karma Astrologer. How may I illuminate your path today?";
 
@@ -754,6 +755,15 @@ export default function DashboardPage() {
                  <span className="flex items-center gap-3"><span className="text-base">🔮</span> Karmic Patterns</span>
                  {isOutOfCredits && <span className="text-xs text-amber-500 font-bold">🔒</span>}
                </button>
+               {/* Details — always free, no credit gate */}
+               <button
+                 onClick={() => setActiveFeature("details")}
+                 className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                   activeFeature === "details" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                 }`}
+               >
+                 <span className="text-base">📋</span> My Details
+               </button>
              </div>
           </div>
 
@@ -791,10 +801,18 @@ export default function DashboardPage() {
         {/* Main Chat Interface - Light Theme Redesign */}
         <section className="flex-1 w-full flex flex-col bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden relative min-h-0">
             
-          {activeFeature === "destiny" && <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />}
-          {activeFeature === "karma-dna" && <KarmaDNA profileId={activeProfileId} profileName={activeProfileName} />}
-          {activeFeature === "karmic-patterns" && <KarmicPatterns profileId={activeProfileId} profileName={activeProfileName} />}
-          {activeFeature === "roadmap" && <Roadmap onClose={() => setActiveFeature("chat")} />}
+          {activeFeature === "destiny"        && <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />}
+          {activeFeature === "karma-dna"      && <KarmaDNA        profileId={activeProfileId} profileName={activeProfileName} />}
+          {activeFeature === "karmic-patterns"&& <KarmicPatterns  profileId={activeProfileId} profileName={activeProfileName} />}
+          {activeFeature === "roadmap"        && <Roadmap onClose={() => setActiveFeature("chat")} />}
+          {/* Details Panel — free, always accessible, re-fetches on profile change */}
+          {activeFeature === "details" && (
+            <DetailsPanel
+              activeProfileId={activeProfileId}
+              familyProfiles={familyProfiles}
+              userEmail={user?.email ?? ""}
+            />
+          )}
           
           <div className={activeFeature === "chat" ? "flex flex-col h-full" : "hidden"}>
           {/* Chat Header */}
