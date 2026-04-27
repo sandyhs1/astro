@@ -335,14 +335,31 @@ export async function GET(req: NextRequest) {
     let dob="", tob="", pob="", tz="+05:30", fullName="", dob_display="", tob_display="";
 
     if (!profileId || profileId==="self") {
-      const { data: lead } = await supabase
-        .from("onboarding_leads").select("*").eq("email", user.email).maybeSingle();
-      if (!lead?.dob||!lead?.tob||!lead?.pob)
-        return NextResponse.json({ error:"Profile not found. Please complete your profile." },{status:404});
-      dob=lead.dob; tob=lead.tob; pob=lead.pob;
-      tz=lead.timezone||"+05:30";
-      fullName=lead.name||user.email?.split("@")[0]||"User";
-      dob_display=lead.dob; tob_display=lead.tob;
+      // ── Self profile: try family_profiles (relationship=Self) first ───────────
+      // Dashboard modal saves to family_profiles; onboarding_leads is legacy fallback.
+      const { data: selfFp } = await supabase
+        .from("family_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("relationship", "Self")
+        .maybeSingle();
+
+      if (selfFp?.dob && selfFp?.tob && selfFp?.pob) {
+        dob=selfFp.dob; tob=selfFp.tob; pob=selfFp.pob;
+        tz=selfFp.timezone||"+05:30";
+        fullName=selfFp.name||user.email?.split("@")[0]||"User";
+        dob_display=selfFp.dob; tob_display=selfFp.tob;
+      } else {
+        // Fallback: legacy onboarding_leads table
+        const { data: lead } = await supabase
+          .from("onboarding_leads").select("*").eq("email", user.email).maybeSingle();
+        if (!lead?.dob||!lead?.tob||!lead?.pob)
+          return NextResponse.json({ error:"Profile not found. Please complete your profile from the dashboard first." },{status:404});
+        dob=lead.dob; tob=lead.tob; pob=lead.pob;
+        tz=lead.timezone||"+05:30";
+        fullName=lead.name||user.email?.split("@")[0]||"User";
+        dob_display=lead.dob; tob_display=lead.tob;
+      }
     } else {
       const { data: fp } = await supabase
         .from("family_profiles").select("*").eq("id",profileId).maybeSingle();
