@@ -58,12 +58,36 @@ export async function POST(req: Request) {
     }
 
     // ── Gatekeeper (fast Gemini Flash — no cost) ──────────────────────────────
-    const gate = await gatekeeperCheck(message);
-    if (!gate.allowed) {
-      return NextResponse.json({
-        systemWarning: gate.reason,
-        creditsRemaining: credits, // no deduction for gated questions
-      });
+    // BYPASS: short conversational replies (≤20 chars) OR common affirmatives
+    // These are follow-ups to the AI's own questions — blocking them breaks UX.
+    const trimmed = message.trim().toLowerCase();
+    const isShortReply = message.trim().length <= 20;
+    const isAffirmative = ["yes","no","ok","okay","sure","go on","go ahead",
+      "tell me","please","continue","more","yes please","absolutely",
+      "of course","definitely","yeah","yep","yup","nope","tell me more",
+      "what does it mean","explain","and","so","then","next",
+    ].some(a => trimmed === a || trimmed.startsWith(a+" ") || trimmed.endsWith(" "+a));
+
+    // Also bypass if there is existing history (mid-conversation follow-up)
+    const hasPriorContext = history && history.length > 0;
+
+    if (!isShortReply && !isAffirmative && !hasPriorContext) {
+      const gate = await gatekeeperCheck(message);
+      if (!gate.allowed) {
+        return NextResponse.json({
+          systemWarning: gate.reason,
+          creditsRemaining: credits,
+        });
+      }
+    } else if (!isShortReply && !isAffirmative && hasPriorContext) {
+      // Mid-conversation: still gate but be lenient — allow if related to prior AI response
+      const gate = await gatekeeperCheck(message);
+      if (!gate.allowed) {
+        return NextResponse.json({
+          systemWarning: gate.reason,
+          creditsRemaining: credits,
+        });
+      }
     }
 
     // ── Resolve Birth Details ─────────────────────────────────────────────────
@@ -133,9 +157,37 @@ VERIFIED CHART DATA — ${pName}
 ${chartContext}
 ═══════════════════════════════════════════════════════════════`;
 
-    // Build message history (last 6 turns max — keeps cost low)
+    // ── Sentiment detection — inject emotional context when appropriate ─────────
+    // Detects life events and emotional tone from the message + recent history.
+    // Instructs the AI to respond with appropriate empathy or celebration.
+    const msgLower = message.toLowerCase();
+    const recentHistory = (history || []).slice(-4).map((h:any)=>h.content).join(" ").toLowerCase();
+    const combinedText = msgLower + " " + recentHistory;
+
+    let sentimentInstruction = "";
+    if (/baby|born|birth|delivered|son|daughter|newborn|child arrived|blessed/.test(combinedText)) {
+      if (/sick|ill|hospital|icu|nicu|complication|difficult|problem|worried|trouble/.test(combinedText)) {
+        sentimentInstruction = `\n\n[EMOTIONAL CONTEXT] The user is sharing news about a newborn with health complications. Lead with deep empathy and compassion before the astrological reading. Acknowledge the difficulty and offer comfort grounded in karmic wisdom. Be gentle and human first, Jyotishi second.`;
+      } else {
+        sentimentInstruction = `\n\n[EMOTIONAL CONTEXT] The user has shared news of a birth — a profoundly joyous life event. Open with a warm, heartfelt congratulation personalised to their chart (e.g., reference which dasha period this birth occurred in, what it means karmically). Then deliver the reading.`;
+      }
+    } else if (/divorce|separated|breakup|broke up|left me|cheated|affair|heartbreak/.test(combinedText)) {
+      sentimentInstruction = `\n\n[EMOTIONAL CONTEXT] The user is going through relationship pain or separation. Acknowledge the emotional weight with genuine compassion before analysing the chart. Do not be clinical — be human and grounded.`;
+    } else if (/died|death|passed away|lost my|grief|mourning|funeral|gone forever/.test(combinedText)) {
+      sentimentInstruction = `\n\n[EMOTIONAL CONTEXT] The user is dealing with grief or the loss of a loved one. Lead with deep compassion and sensitivity. The karmic reading should bring meaning and peace, not statistics. This is a sacred moment.`;
+    } else if (/got the job|promotion|married|engaged|new house|achieved|succeeded|won|cleared/.test(combinedText)) {
+      sentimentInstruction = `\n\n[EMOTIONAL CONTEXT] The user is sharing a personal victory or milestone. Celebrate with them genuinely before connecting it to their chart. Show how their chart was always pointing to this moment.`;
+    } else if (/depressed|anxious|scared|terrified|hopeless|giving up|can't go on|suicidal|no hope/.test(combinedText)) {
+      sentimentInstruction = `\n\n[EMOTIONAL CONTEXT — SENSITIVE] The user is expressing deep emotional distress. Before any astrological content, acknowledge their pain with genuine human warmth. Close with: "The chart shows the energy; your choices shape the outcome. Please speak to a qualified professional immediately." Apply the sensitive topic protocol.`;
+    }
+
+    const fullSystemPromptWithSentiment = sentimentInstruction
+      ? fullSystemPrompt + sentimentInstruction
+      : fullSystemPrompt;
+
+    // Build message history (last 12 turns — better contextual memory)
     const messages = [
-      ...(history || []).slice(-6).map((h: any) => ({
+      ...(history || []).slice(-12).map((h: any) => ({
         role: h.role as "user" | "assistant",
         content: h.content,
       })),
@@ -143,9 +195,7 @@ ${chartContext}
     ];
 
     // ── Route to LLM (Bedrock → Gemini) ──────────────────────────────────────
-    // maxTokens=2000: nuclear precision prompt with remedy can reach ~1500 tokens.
-    // 900 was cutting responses mid-sentence. 2000 gives full headroom.
-    const llmResult = await routeLLM(fullSystemPrompt, messages, 2000);
+    const llmResult = await routeLLM(fullSystemPromptWithSentiment, messages, 2000);
 
     // ── Deduct Credit ─────────────────────────────────────────────────────────
     const newCredits = Math.max(0, credits - 1);

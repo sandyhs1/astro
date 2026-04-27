@@ -94,7 +94,12 @@ export default function DetailsPanel({activeProfileId}:Props) {
   if(!data) return null;
 
   const {person,core,dasha,planets,houses,karakas,specialPoints,yogas,enrichments}=data;
-  const {vargottama,rahuKetuAxis,moonNakData,moonNakName,planetStrengths,retrogrades,horaLagna}=enrichments||{};
+  const {vargottama,rahuKetuAxis,moonNakData,moonNakName,planetStrengths,retrogrades}=enrichments||{};
+
+  // Moon Sign fallback: if moonSign is blank, derive from planet data
+  const moonPlanet = planets?.find((p:any)=>p.name==="Moon");
+  const displayMoonSign = core.moonSign || moonPlanet?.sign || "—";
+
   const activated=yogas?.filter((y:any)=>y.status==="ACTIVATED")||[];
   const dormant=yogas?.filter((y:any)=>y.status==="DORMANT")||[];
 
@@ -114,9 +119,8 @@ export default function DetailsPanel({activeProfileId}:Props) {
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 24px"}}>
           <Row label="Ascendant (Lagna)" value={`${core.ascendant}${core.ascendantNakshatra?` · ${core.ascendantNakshatra} Pada ${core.ascendantNakshatraPada}`:""}`}/>
           <Row label="Ascendant Lord" value={`${core.ascLord} in ${core.ascLordSign} (House ${core.ascLordHouse})`}/>
-          <Row label="Moon Sign (Rashi)" value={core.moonSign}/>
+          <Row label="Moon Sign (Rashi)" value={displayMoonSign}/>
           <Row label="Moon Nakshatra" value={`${core.moonNakshatra}${core.moonNakshatraPada?` Pada ${core.moonNakshatraPada}`:""}`}/>
-          <Row label="Sun Sign" value={core.sunSign}/>
         </div>
       </div>
 
@@ -177,26 +181,7 @@ export default function DetailsPanel({activeProfileId}:Props) {
         </div>
       )}
 
-      {/* Hora Lagna */}
-      {horaLagna?.sign&&(
-        <div style={card}>
-          <span style={sec}>💰 Hora Lagna — Wealth Indicator</span>
-          <div style={{background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:10,padding:"14px 16px",marginBottom:14}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-              <div>
-                <div style={{fontSize:"10px",color:"#15803D",fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>Hora Lagna Sign</div>
-                <div style={{fontSize:"20px",fontWeight:800,color:"#14532D"}}>{horaLagna.sign}</div>
-                <div style={{fontSize:"11px",color:"#166534",marginTop:2}}>House {horaLagna.house} · Lord: {horaLagna.lord}</div>
-              </div>
-              <div style={{fontSize:"28px"}}>💰</div>
-            </div>
-          </div>
-          <div style={{fontSize:"12px",color:"#334155",lineHeight:1.7}}>{horaLagna.meaning}</div>
-          <div style={{marginTop:12,padding:"10px 14px",background:"#F8FAFC",borderRadius:8,fontSize:"11px",color:"#64748B",lineHeight:1.6}}>
-            <strong style={{color:"#334155"}}>Classical principle:</strong> The lord of the sign occupied by Hora Lagna is a primary indicator of financial prosperity. Hora Lagna is used to analyse wealth, 2nd house matters, and longevity. It moves one sign per hora (hour) — making it highly sensitive to your exact birth time.
-          </div>
-        </div>
-      )}
+
 
       {/* Planet Strengths */}
       {planetStrengths?.length>0&&(
