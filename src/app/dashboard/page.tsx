@@ -555,9 +555,10 @@ export default function DashboardPage() {
           </div>
           
           <div className="flex items-center gap-6">
-            <div className="hidden sm:flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
-              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Credits</span>
+            {/* Credits — visible on all screen sizes */}
+            <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-full border border-slate-200">
+              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse flex-shrink-0" />
+              <span className="hidden sm:inline text-xs font-semibold text-slate-500 uppercase tracking-wider">Credits</span>
               <span className="text-sm font-bold text-slate-900">{profile.credits ?? 50}</span>
             </div>
 
