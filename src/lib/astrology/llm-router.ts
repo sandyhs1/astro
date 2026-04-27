@@ -35,7 +35,7 @@ function hasBedRockCreds(): boolean {
 async function callBedrock(
   systemPrompt: string,
   messages: Message[],
-  maxTokens = 900
+  maxTokens = 2000
 ): Promise<LLMResponse> {
   if (!hasBedRockCreds()) {
     throw new Error("AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY not set — Bedrock unavailable");
@@ -235,7 +235,7 @@ async function callGeminiFlash(prompt: string, maxTokens = 900): Promise<LLMResp
 export async function routeLLM(
   systemPrompt: string,
   messages: Message[],
-  maxTokens = 900
+  maxTokens = 2000
 ): Promise<LLMResponse & { usedFallback: boolean }> {
 
   // PRIMARY: Bedrock (only if IAM keys present)

@@ -143,7 +143,9 @@ ${chartContext}
     ];
 
     // ── Route to LLM (Bedrock → Gemini) ──────────────────────────────────────
-    const llmResult = await routeLLM(fullSystemPrompt, messages, 900);
+    // maxTokens=2000: nuclear precision prompt with remedy can reach ~1500 tokens.
+    // 900 was cutting responses mid-sentence. 2000 gives full headroom.
+    const llmResult = await routeLLM(fullSystemPrompt, messages, 2000);
 
     // ── Deduct Credit ─────────────────────────────────────────────────────────
     const newCredits = Math.max(0, credits - 1);
