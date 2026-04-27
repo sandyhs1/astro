@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -209,6 +209,15 @@ export default function DashboardPage() {
   }, [familyProfiles]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef      = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea: shrinks back when cleared, grows up to max-height set in CSS
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";          // reset to measure scrollHeight
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -333,6 +342,10 @@ export default function DashboardPage() {
 
     const userMessage = input.trim();
     setInput("");
+    // Reset textarea height after clearing
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsTyping(true);
     
@@ -837,20 +850,32 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Input Bar */}
-            <form onSubmit={handleSendMessage} className="relative flex items-center bg-slate-50 rounded-xl border border-slate-200 shadow-sm focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all overflow-hidden">
-              <input
-                type="text"
+            {/* Input Bar — auto-growing textarea (WhatsApp / ChatGPT style) */}
+            <form
+              onSubmit={handleSendMessage}
+              className="relative flex items-end bg-slate-50 rounded-xl border border-slate-200 shadow-sm focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all overflow-hidden"
+            >
+              <textarea
+                ref={textareaRef}
+                rows={1}
                 value={input}
-                onChange={e => setInput(e.target.value)}
-                placeholder={(!selfProfile && activeProfileId === "self") ? "Setup profile to begin..." : `Message Quantum Oracle...`}
-                className="w-full bg-transparent text-slate-900 placeholder-slate-400 pl-4 pr-14 py-3.5 focus:outline-none text-[15px] font-medium"
+                onChange={e => { setInput(e.target.value); autoResize(); }}
+                onKeyDown={e => {
+                  // Enter sends, Shift+Enter inserts newline
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder={(!selfProfile && activeProfileId === "self") ? "Setup profile to begin..." : "Message Quantum Oracle..."}
+                className="w-full bg-transparent text-slate-900 placeholder-slate-400 pl-4 pr-14 py-3.5 focus:outline-none text-[15px] font-medium resize-none leading-relaxed"
+                style={{ maxHeight: "140px", overflowY: "auto" }}
                 disabled={isTyping || (!selfProfile && activeProfileId === "self")}
               />
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={!input.trim() || isTyping || (!selfProfile && activeProfileId === "self")}
-                className="absolute right-2 p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="absolute right-2 bottom-2 p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:pointer-events-none flex-shrink-0"
               >
                 <Send size={18} className="ml-0.5" />
               </button>
