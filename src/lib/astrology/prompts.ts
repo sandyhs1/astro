@@ -42,6 +42,15 @@ function computeArudha(
   return SIGNS[arudhaIdx] ?? "";
 }
 
+/**
+ * Pranapada Lagna (Jaimini) — (Sun's full sidereal longitude × 3) mod 360
+ * This is the standard formula used by JHora and Parashara's Light.
+ */
+function computePranapada(sunFullDegree: number, lagnaSign: string): string {
+  const pranapadaFull = (sunFullDegree * 3) % 360;
+  return SIGNS[Math.floor(pranapadaFull / 30)] ?? "";
+}
+
 // ─── Build Claude Context ─────────────────────────────────────────────────────
 
 export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User"): string {
@@ -126,18 +135,24 @@ export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User")
     } catch { /* ignore */ }
   }
 
+  // Compute Pranapada Lagna — (Sun longitude × 3) mod 360 → sign
+  const sunPlanet = findPlanet("Sun");
+  const pranapadaLagna = sunPlanet ? computePranapada(sunPlanet.fullDegree, d1.ascendant) : "";
+
   const context = {
     PERSON: personName,
-    SOURCE: "astrologyapi.com | Lahiri Ayanamsa | Whole Sign | Sidereal | Swiss Ephemeris",
+    // SOURCE intentionally omitted — never expose API/software names to LLM
+    CALCULATION_STANDARD: "Lahiri Ayanamsa | Whole Sign | Sidereal",
     CURRENT_YEAR: 2026,
     LAGNA:           d1.ascendant,
     MOON_SIGN:       d1.moonSign,
     MOON_NAKSHATRA:  d1.moonNakshatra,
     SUN_SIGN:        d1.sunSign,
     SPECIAL_POINTS: {
-      AL_ARUDHA_LAGNA:    AL  || "compute pending",
-      UL_UPAPADA_LAGNA:   UL  || "compute pending",
-      A7_DARAPADA:        A7  || "compute pending",
+      AL_ARUDHA_LAGNA:    AL             || "Karmic Data Fragmented",
+      UL_UPAPADA_LAGNA:   UL             || "Karmic Data Fragmented",
+      A7_DARAPADA:        A7             || "Karmic Data Fragmented",
+      PRANAPADA_LAGNA:    pranapadaLagna || "Karmic Data Fragmented",
     },
     KARAKAS: {
       AK_ATMA:    karakas.ak,
@@ -161,7 +176,7 @@ export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User")
     D9_PLANETS_SUMMARY: d9Table,
     D10_LAGNA:  divisional.d10.ascendant,
     D10_PLANETS: d10Table,
-    ASV_SARVASHTAKAVARGA: asvSummary || "pending",
+    ASV_SARVASHTAKAVARGA: asvSummary || "Karmic Data Fragmented",
     CONFIDENCE: chart.confidence.score,
     WARNINGS: chart.confidence.warnings.filter(w => w.includes("CRITICAL")),
   };
@@ -243,6 +258,8 @@ ABSOLUTE RULES
 9. GEMSTONES ARE ABSOLUTELY FORBIDDEN. Never recommend any gemstone, crystal, or "tree marriage." This is a non-negotiable ban.
 10. ADMIT GAPS. If a field shows "pending" or appears in WARNINGS[], say "Karmic Data Fragmented for [field]" — never guess.
 11. ONE CLARIFYING QUESTION RULE. If a query is too broad (e.g., "tell me about my life"), ask exactly ONE focused question: "Are you asking about career, relationships, health, or finances?" and wait.
+12. ABSOLUTE TECH SECRECY. NEVER mention, reference, or hint at any API name, AI model name, software name, or backend technology. This includes — but is not limited to — "astrologyapi", "AstrologyAPI", "Swiss Ephemeris", "Claude", "Gemini", "ChatGPT", "Bedrock", "AWS", "Google", "Anthropic", or any other vendor. You are KARMA. You have a proprietary Cosmic Calculation Engine. If a user asks what software or AI you use, respond: "The Quantum Karma Engine — a proprietary system built on 5,000 years of Jyotish scripture." Never break character.
+13. KARMIC DATA FRAGMENTED. If any field in the chart data says "Karmic Data Fragmented", respond with: "The cosmic record for [field] is fragmented — insufficient data to deliver a precise reading on this point." NEVER say the data was not provided by an API, not calculated, or unavailable in any technical sense.
 
 ════════════════════════════════════════
 SENSITIVE TOPIC PROTOCOL

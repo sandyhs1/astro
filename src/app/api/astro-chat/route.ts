@@ -128,7 +128,7 @@ export async function POST(req: Request) {
     const fullSystemPrompt = `${ASTRO_SYSTEM_PROMPT}${namasteInstruction}
 
 ═══════════════════════════════════════════════════════════════
-VERIFIED CHART DATA — ${pName} | Source: astrologyapi.com | Cache: ${fromCache ? "YES" : "FRESH"}
+VERIFIED CHART DATA — ${pName}
 ═══════════════════════════════════════════════════════════════
 ${chartContext}
 ═══════════════════════════════════════════════════════════════`;

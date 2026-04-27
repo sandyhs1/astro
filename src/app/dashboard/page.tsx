@@ -799,8 +799,8 @@ export default function DashboardPage() {
                       <div className="text-xs font-bold text-slate-800 flex items-center gap-2 mb-2">
                         Quantum Oracle
                         {msg.marker && (
-                          <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide" title={`Model: ${msg.marker === 'A' ? 'Claude Sonnet' : msg.marker === 'B' ? 'Gemini Pro' : 'Gemini Flash'}`}>
-                            {msg.marker}
+                          <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide">
+                            ✦ Verified
                           </span>
                         )}
                       </div>
