@@ -106,15 +106,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ received: true });
       }
 
-      const currentCredits = profile.credits ?? 0;
-      const newCredits = currentCredits + 50;
-
+      // ── Hard reset to exactly 50 credits every billing cycle ────────────────
       await supabase.from("user_profiles").update({
-        credits: newCredits,
+        credits: 50,
         payment_status: "success",    // Keep active
       }).eq("id", profile.id);
 
-      console.log(`[webhook] Monthly renewal — user ${profile.id} topped up to ${newCredits} credits`);
+      console.log(`[webhook] Monthly renewal — user ${profile.id} credits hard-reset to 50`);
     }
 
     return NextResponse.json({ received: true });

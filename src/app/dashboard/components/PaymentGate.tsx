@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import emailjs from "@emailjs/browser";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type PlanType = "plan1" | "plan2";
@@ -10,7 +11,8 @@ type GateState =
   | "loading"        // checking payment status
   | "gate"           // unpaid → show plan selection
   | "processing"     // Razorpay checkout open
-  | "plan1_success"  // Plan 1 paid → blurred + thank you
+  | "plan1_form"     // Plan 1 paid → show intake form
+  | "plan1_success"  // Plan 1 form submitted → final thank you
   | "plan2_success"  // Plan 2 paid → unblurred (gate hidden)
   | "open";          // previously paid, gate bypassed
 
@@ -76,6 +78,18 @@ export default function PaymentGate({ children }: PaymentGateProps) {
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
 
+  // ── Intake form state ──────────────────────────────────────────────────────
+  const [intakeForm, setIntakeForm] = useState({
+    fullName: "",
+    dob: "",
+    tob: "",
+    pob: "",
+    questions: "",
+  });
+  const [intakeSubmitting, setIntakeSubmitting] = useState(false);
+  const [intakeError, setIntakeError] = useState<string | null>(null);
+  const [intakeSubmittedName, setIntakeSubmittedName] = useState("");
+
   // ── On mount: check if user has already paid ───────────────────────────────
   useEffect(() => {
     async function checkPaymentStatus() {
@@ -97,10 +111,21 @@ export default function PaymentGate({ children }: PaymentGateProps) {
         return;
       }
 
-      if (profile.plan_type === "plan2") {
-        setGateState("open");       // Full access
+      if (profile.plan_type === "plan2" || profile.plan_type === "promo") {
+        setGateState("open");       // Full access (paid or promo)
       } else if (profile.plan_type === "plan1") {
-        setGateState("plan1_success"); // Blurred, report pending
+        // Check if they already submitted the intake form
+        try {
+          const intakeRes = await fetch("/api/plan1-intake/status");
+          if (intakeRes.ok) {
+            const intakeData = await intakeRes.json();
+            setGateState(intakeData.submitted ? "plan1_success" : "plan1_form");
+          } else {
+            setGateState("plan1_form");
+          }
+        } catch {
+          setGateState("plan1_form");
+        }
       } else {
         setGateState("gate");
       }
@@ -161,7 +186,7 @@ export default function PaymentGate({ children }: PaymentGateProps) {
 
             // 4. Update gate state based on plan
             if (plan === "plan1") {
-              setGateState("plan1_success");
+              setGateState("plan1_form");
             } else {
               setGateState("plan2_success");
               // Reload after 2s to fully refresh dashboard data
@@ -197,6 +222,30 @@ export default function PaymentGate({ children }: PaymentGateProps) {
     }
   }
 
+  // ── Shared form styles ─────────────────────────────────────────────────────
+  const labelStyle: React.CSSProperties = {
+    display: "block",
+    fontFamily: "'IBM Plex Mono', monospace",
+    fontSize: "9px",
+    letterSpacing: "0.12em",
+    textTransform: "uppercase" as const,
+    color: "rgba(255,255,255,0.35)",
+    marginBottom: 6,
+  };
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: 2,
+    padding: "11px 14px",
+    color: "rgba(255,255,255,0.85)",
+    fontFamily: "'IBM Plex Mono', monospace",
+    fontSize: "11px",
+    outline: "none",
+    boxSizing: "border-box" as const,
+    transition: "border-color 0.2s",
+  };
+
   // ── Loading state ──────────────────────────────────────────────────────────
   if (gateState === "loading") {
     return (
@@ -229,9 +278,73 @@ export default function PaymentGate({ children }: PaymentGateProps) {
     );
   }
 
+  // ── Intake form submit handler ────────────────────────────────────────────
+  async function handleIntakeSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setIntakeError(null);
+    setIntakeSubmitting(true);
+    try {
+      // ─ Step 1: Save to Supabase (source of truth) ──────────────────────────
+      const res = await fetch("/api/plan1-intake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(intakeForm),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setIntakeError(data.error || "Submission failed. Please try again.");
+        return;
+      }
+
+      // ─ Step 2: Fire EmailJS to help@quantumkarma.tech ─────────────────────
+      // Non-blocking: data is already in Supabase, so email failure is safe.
+      const serviceId  = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID  || "";
+      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "";
+      const publicKey  = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY  || "";
+
+      if (serviceId && templateId && publicKey) {
+        try {
+          await emailjs.send(
+            serviceId,
+            templateId,
+            {
+              to_email:       "help@quantumkarma.tech",
+              user_name:      intakeForm.fullName,
+              user_email:     userEmail,
+              date_of_birth:  intakeForm.dob      || "Not provided",
+              time_of_birth:  intakeForm.tob      || "Not provided",
+              place_of_birth: intakeForm.pob      || "Not provided",
+              questions:      intakeForm.questions || "No specific questions provided.",
+              submission_time: new Date().toLocaleString("en-IN", {
+                timeZone: "Asia/Kolkata",
+                dateStyle: "long",
+                timeStyle: "short",
+              }),
+            },
+            publicKey
+          );
+          console.log("[EmailJS] Intake email sent to help@quantumkarma.tech");
+        } catch (emailErr) {
+          // Log but don't surface — data is safe in Supabase
+          console.error("[EmailJS] Email send failed (non-fatal):", emailErr);
+        }
+      } else {
+        console.warn("[EmailJS] Missing env vars — email not sent (data saved to Supabase).");
+      }
+
+      // ─ Step 3: Advance to final thank-you screen ───────────────────────────
+      setIntakeSubmittedName(intakeForm.fullName.split(" ")[0]);
+      setGateState("plan1_success");
+    } catch {
+      setIntakeError("Network error. Please try again.");
+    } finally {
+      setIntakeSubmitting(false);
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────────────────────
   // BLURRED DASHBOARD + OVERLAY
-  // Shown for: gate (unpaid), processing, plan1_success
+  // Shown for: gate (unpaid), processing, plan1_form, plan1_success
   // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ position: "relative", minHeight: "100vh" }}>
@@ -250,49 +363,191 @@ export default function PaymentGate({ children }: PaymentGateProps) {
       {/* ── Overlay ──────────────────────────────────────────────────────────── */}
       <div style={{
         position: "fixed", inset: 0, zIndex: 1000,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "1rem",
-        background: "rgba(5,5,7,0.75)",
+        display: "flex", alignItems: "flex-start", justifyContent: "center",
+        padding: "1.5rem 1rem",
+        background: "rgba(5,5,7,0.82)",
         backdropFilter: "blur(4px)",
         overflowY: "auto",
       }}>
         <AnimatePresence mode="wait">
 
-          {/* ── PLAN 1 SUCCESS: Thank You Message ─────────────────────────── */}
+          {/* ── PLAN 1 FORM: Intake Form ──────────────────────────────────── */}
+          {gateState === "plan1_form" && (
+            <motion.div key="plan1-form"
+              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
+              style={{ width: "100%", maxWidth: 580, marginTop: "2rem", marginBottom: "2rem" }}>
+
+              {/* Top accent bar */}
+              <div style={{ height: 2, background: "linear-gradient(90deg,#FF5E3A,#7B61FF,#00E5FF)", marginBottom: 0, borderRadius: "2px 2px 0 0" }} />
+
+              <div style={{
+                background: "#0B0B12",
+                border: "1px solid rgba(255,94,58,0.25)",
+                borderTop: "none",
+                padding: "36px 36px 32px",
+              }}>
+                {/* Header */}
+                <div style={{ textAlign: "center", marginBottom: 28 }}>
+                  <div style={{ fontSize: 36, marginBottom: 12 }}>🙏</div>
+                  <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: "clamp(1.5rem, 4vw, 2rem)", color: "#fff", marginBottom: 8 }}>
+                    Payment Confirmed. Thank You.
+                  </div>
+                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.8 }}>
+                    To prepare your Life Intelligence Report, our senior Vedic astrologer needs<br />
+                    your exact birth details and the questions most important to you.
+                  </div>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleIntakeSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+                  {/* Full Name */}
+                  <div>
+                    <label style={labelStyle}>Full Name *</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="e.g. Rahul Sharma"
+                      value={intakeForm.fullName}
+                      onChange={e => setIntakeForm(p => ({ ...p, fullName: e.target.value }))}
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  {/* DOB + TOB row */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <label style={labelStyle}>Date of Birth</label>
+                      <input
+                        type="date"
+                        value={intakeForm.dob}
+                        onChange={e => setIntakeForm(p => ({ ...p, dob: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Time of Birth</label>
+                      <input
+                        type="time"
+                        value={intakeForm.tob}
+                        onChange={e => setIntakeForm(p => ({ ...p, tob: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Place of Birth */}
+                  <div>
+                    <label style={labelStyle}>Place of Birth</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Mumbai, Maharashtra, India"
+                      value={intakeForm.pob}
+                      onChange={e => setIntakeForm(p => ({ ...p, pob: e.target.value }))}
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  {/* Questions */}
+                  <div>
+                    <label style={labelStyle}>Your Specific Questions</label>
+                    <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "9px", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>
+                      What specific areas of life do you want deeply analyzed?
+                    </div>
+                    <textarea
+                      rows={5}
+                      placeholder="e.g. Will I get a promotion this year? When will I find the right partner? What is blocking my financial growth?"
+                      value={intakeForm.questions}
+                      onChange={e => setIntakeForm(p => ({ ...p, questions: e.target.value }))}
+                      style={{ ...inputStyle, resize: "vertical", minHeight: 110, lineHeight: 1.6 }}
+                    />
+                  </div>
+
+                  {/* Error */}
+                  {intakeError && (
+                    <div style={{
+                      fontFamily: "'IBM Plex Mono', monospace", fontSize: "10px",
+                      color: "#FF5E3A", padding: "10px 14px",
+                      border: "1px solid rgba(255,94,58,0.3)",
+                      background: "rgba(255,94,58,0.06)",
+                    }}>
+                      {intakeError}
+                    </div>
+                  )}
+
+                  {/* Submit */}
+                  <motion.button
+                    type="submit"
+                    disabled={intakeSubmitting}
+                    whileHover={{ scale: intakeSubmitting ? 1 : 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      marginTop: 4,
+                      width: "100%",
+                      padding: "16px 24px",
+                      background: intakeSubmitting
+                        ? "rgba(255,94,58,0.1)"
+                        : "linear-gradient(135deg, rgba(255,94,58,0.2), rgba(255,94,58,0.35))",
+                      border: "1px solid rgba(255,94,58,0.5)",
+                      color: "#FF5E3A",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: "11px",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      cursor: intakeSubmitting ? "not-allowed" : "pointer",
+                      opacity: intakeSubmitting ? 0.6 : 1,
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {intakeSubmitting ? "SUBMITTING..." : "→ SUBMIT MY DETAILS"}
+                  </motion.button>
+
+                  <div style={{ textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.08em" }}>
+                    YOUR REPORT WILL BE SENT TO: <span style={{ color: "rgba(255,255,255,0.4)" }}>{userEmail}</span>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── PLAN 1 FINAL THANK YOU (after form submitted) ─────────────── */}
           {gateState === "plan1_success" && (
             <motion.div key="plan1-success"
               initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               style={{
-                width: "100%", maxWidth: 560, background: "#0B0B12",
+                width: "100%", maxWidth: 540, background: "#0B0B12",
                 border: "1px solid rgba(255,94,58,0.3)",
                 padding: "48px 40px", textAlign: "center",
+                marginTop: "4rem",
               }}>
-              <div style={{ height: 2, background: "linear-gradient(90deg,#FF5E3A,#7B61FF)", marginBottom: 32, marginLeft: -40, marginRight: -40 }} />
-              <div style={{ fontSize: 40, marginBottom: 20 }}>🙏</div>
-              <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: "2rem", color: "#fff", marginBottom: 12 }}>
-                Payment Received. Thank You.
+              <div style={{ height: 2, background: "linear-gradient(90deg,#FF5E3A,#7B61FF,#00E5FF)", marginBottom: 36, marginLeft: -40, marginRight: -40 }} />
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🙏</div>
+              <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: "clamp(1.6rem, 4vw, 2.2rem)", color: "#fff", marginBottom: 16 }}>
+                Thank You{intakeSubmittedName ? `, ${intakeSubmittedName}` : ""}!
               </div>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.78rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.9, marginBottom: 32 }}>
-                Your birth details are now with our senior Vedic astrologer.<br />
-                Your <strong style={{ color: "rgba(255,255,255,0.7)" }}>Life Intelligence Report</strong> is being carefully prepared.<br /><br />
-                It will be delivered to your email within<br />
+              <div style={{
+                fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.78rem",
+                color: "rgba(255,255,255,0.5)", lineHeight: 2, marginBottom: 32,
+              }}>
+                Your birth chart will be deeply analyzed by our senior Vedic astrologer.<br />
+                A personalized report will be delivered to your email within<br />
                 <strong style={{ color: "#FF5E3A", fontSize: "1rem" }}>4–6 business hours.</strong>
               </div>
               <div style={{
-                padding: "14px 20px",
+                padding: "16px 20px",
                 background: "rgba(255,94,58,0.06)",
                 border: "1px solid rgba(255,94,58,0.15)",
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: "9px",
                 color: "rgba(255,255,255,0.3)",
                 letterSpacing: "0.08em",
-                lineHeight: 1.8,
+                lineHeight: 1.9,
               }}>
                 DASHBOARD ACCESS IS NOT INCLUDED WITH THIS PLAN.<br />
-                YOUR REPORT WILL BE EMAILED TO: <strong style={{ color: "rgba(255,255,255,0.5)" }}>{userEmail}</strong>
+                REPORT WILL BE EMAILED TO: <strong style={{ color: "rgba(255,255,255,0.5)" }}>{userEmail}</strong>
               </div>
               <div style={{ marginTop: 24, fontFamily: "'IBM Plex Mono', monospace", fontSize: "9px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.1em" }}>
-                Questions? Email us at help@soulsync.tech
+                Questions? Email us at sandesh@quantumkarma.tech
               </div>
             </motion.div>
           )}

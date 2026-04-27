@@ -13,6 +13,7 @@ import DestinyCalendar from "./components/DestinyCalendar";
 import KarmaDNA from "./components/KarmaDNA";
 import KarmicPatterns from "./components/KarmicPatterns";
 import Roadmap from "./components/Roadmap";
+import TopupModal from "./components/TopupModal";
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null);
   const [familyProfiles, setFamilyProfiles] = useState<any[]>([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showTopup, setShowTopup] = useState(false);
   const [modalType, setModalType] = useState<"self" | "family">("self");
   const [formData, setFormData] = useState({
     name: "",
@@ -456,6 +458,8 @@ export default function DashboardPage() {
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Seeker";
   const selfProfile = familyProfiles.find(p => p.relationship === "Self");
+  // Zero-credit state: block all generation but keep history/reports readable
+  const isOutOfCredits = (profile?.credits ?? 0) <= 0;
   
   let activeProfileName = "Unknown";
   if (activeProfileId === "self") {
@@ -568,11 +572,27 @@ export default function DashboardPage() {
           </div>
           
           <div className="flex items-center gap-6">
-            {/* Credits — visible on all screen sizes */}
-            <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-full border border-slate-200">
-              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse flex-shrink-0" />
-              <span className="hidden sm:inline text-xs font-semibold text-slate-500 uppercase tracking-wider">Credits</span>
-              <span className="text-sm font-bold text-slate-900">{profile.credits ?? 50}</span>
+            {/* Credits badge + Topup button */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-full border border-slate-200">
+                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse flex-shrink-0" />
+                <span className="hidden sm:inline text-xs font-semibold text-slate-500 uppercase tracking-wider">Credits</span>
+                <span className="text-sm font-bold text-slate-900">{profile.credits ?? 50}</span>
+              </div>
+              {/* Topup button — only for plan2 and promo users */}
+              {(profile.plan_type === "plan2" || profile.plan_type === "promo") && (
+                <button
+                  onClick={() => setShowTopup(true)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold border transition-all"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.12))",
+                    borderColor: "rgba(99,102,241,0.35)",
+                    color: "#6366F1",
+                  }}
+                >
+                  <span style={{ fontSize: 11 }}>⚡</span> Top Up
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-4 border-l border-slate-200 pl-6">
@@ -703,14 +723,36 @@ export default function DashboardPage() {
                <button onClick={() => setActiveFeature("chat")} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeFeature === "chat" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>
                  <MessageCircle size={16} /> Oracle Chat
                </button>
-               <button onClick={() => setActiveFeature("destiny")} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeFeature === "destiny" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>
-                 <span className="text-base">🗓️</span> Destiny Window
+               {/* Feature buttons — navigable always; generation blocked at 0 credits */}
+               <button
+                 onClick={() => setActiveFeature("destiny")}
+                 title={isOutOfCredits ? "Top up credits to generate new readings" : undefined}
+                 className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                   activeFeature === "destiny" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                 }`}
+               >
+                 <span className="flex items-center gap-3"><span className="text-base">🗓️</span> Destiny Window</span>
+                 {isOutOfCredits && <span className="text-xs text-amber-500 font-bold">🔒</span>}
                </button>
-               <button onClick={() => setActiveFeature("karma-dna")} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeFeature === "karma-dna" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>
-                 <span className="text-base">🧬</span> Karma DNA
+               <button
+                 onClick={() => setActiveFeature("karma-dna")}
+                 title={isOutOfCredits ? "Top up credits to generate new readings" : undefined}
+                 className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                   activeFeature === "karma-dna" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                 }`}
+               >
+                 <span className="flex items-center gap-3"><span className="text-base">🧬</span> Karma DNA</span>
+                 {isOutOfCredits && <span className="text-xs text-amber-500 font-bold">🔒</span>}
                </button>
-               <button onClick={() => setActiveFeature("karmic-patterns")} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeFeature === "karmic-patterns" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>
-                 <span className="text-base">🔮</span> Karmic Patterns
+               <button
+                 onClick={() => setActiveFeature("karmic-patterns")}
+                 title={isOutOfCredits ? "Top up credits to generate new readings" : undefined}
+                 className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                   activeFeature === "karmic-patterns" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                 }`}
+               >
+                 <span className="flex items-center gap-3"><span className="text-base">🔮</span> Karmic Patterns</span>
+                 {isOutOfCredits && <span className="text-xs text-amber-500 font-bold">🔒</span>}
                </button>
              </div>
           </div>
@@ -834,7 +876,28 @@ export default function DashboardPage() {
 
           {/* Floating Input Area */}
           <div className="p-3 md:p-4 lg:p-6 bg-white border-t border-slate-100 relative">
-            
+
+            {/* Zero-credits banner — replaces input when out of credits */}
+            {isOutOfCredits ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex-1 text-center sm:text-left">
+                  <div className="text-sm font-bold text-amber-800">⚡ You've used all your credits</div>
+                  <div className="text-xs text-amber-700 mt-1 leading-relaxed">
+                    Your chat history and saved reports are still accessible below. Top up now or wait for your next billing cycle to generate new readings.
+                  </div>
+                </div>
+                {(profile?.plan_type === "plan2" || profile?.plan_type === "promo") && (
+                  <button
+                    onClick={() => setShowTopup(true)}
+                    className="flex-shrink-0 px-4 py-2 rounded-lg font-bold text-sm text-white transition-all"
+                    style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
+                  >
+                    ⚡ Top Up Now
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
             {/* Dynamic Suggestion Chips */}
             {!isTyping && suggestionChips.length > 0 && (
               <div className="mb-4 flex flex-wrap gap-2 overflow-x-auto no-scrollbar pb-1 mask-linear-right">
@@ -880,6 +943,8 @@ export default function DashboardPage() {
                 <Send size={18} className="ml-0.5" />
               </button>
             </form>
+            </>
+            )}
             <div className="text-center mt-2.5">
                <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">AI-generated astrological insights. Not medical advice.</span>
             </div>
@@ -932,6 +997,20 @@ export default function DashboardPage() {
           }
         }
       `}} />
+
+      {/* Top-Up Credits Modal */}
+      {profile && showTopup && (
+        <TopupModal
+          isOpen={showTopup}
+          onClose={() => setShowTopup(false)}
+          currentCredits={profile.credits ?? 0}
+          userEmail={user?.email ?? ""}
+          onSuccess={(newTotal) => {
+            setProfile((prev: any) => ({ ...prev, credits: newTotal }));
+            setShowTopup(false);
+          }}
+        />
+      )}
     </div>
     </PaymentGate>
   );

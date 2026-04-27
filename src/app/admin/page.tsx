@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Upload, LogOut, Copy, CheckCircle2, Loader2, Users, Activity, Database, RefreshCw, IndianRupee, Zap, TrendingUp } from "lucide-react";
 import "./admin.css";
 
-type Tab = "clients" | "ai" | "astro" | "promos";
+type Tab = "users" | "ai" | "astro" | "promos";
 
 const fmt = (n: number) => n.toLocaleString("en-IN");
 const inr = (n: number) => `₹${n.toFixed(4)}`;
@@ -19,8 +19,9 @@ export default function AdminDashboard() {
   const [authed, setAuthed] = useState(false);
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
-  const [tab, setTab] = useState<Tab>("clients");
+  const [tab, setTab] = useState<Tab>("users");
   const [clients, setClients] = useState<any[]>([]);
+  const [usersData, setUsersData] = useState<any>(null);
   const [metrics, setMetrics] = useState<any>(null);
   const [promos, setPromos] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -28,6 +29,12 @@ export default function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const fetchUsers = useCallback(async (t: string) => {
+    const res = await fetch("/api/admin/users", { headers: { Authorization: `Bearer ${t}` } });
+    if (res.ok) { const d = await res.json(); setUsersData(d); }
+    else if (res.status === 401) logout();
+  }, []);
 
   const fetchClients = useCallback(async (t: string) => {
     const res = await fetch("/api/admin/clients", { headers: { Authorization: `Bearer ${t}` } });
@@ -50,11 +57,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const saved = localStorage.getItem("adminToken");
-    if (saved) { setToken(saved); setAuthed(true); fetchClients(saved).finally(() => setFetching(false)); }
+    if (saved) { setToken(saved); setAuthed(true); fetchUsers(saved).finally(() => setFetching(false)); }
     else setFetching(false);
   }, []);
 
   useEffect(() => {
+    if (authed && token && tab === "users") fetchUsers(token);
     if (authed && token && (tab === "ai" || tab === "astro")) fetchMetrics(token);
     if (authed && token && tab === "promos") fetchPromos(token);
   }, [tab, authed, token]);
@@ -127,7 +135,7 @@ export default function AdminDashboard() {
 
       {/* Tabs */}
       <div className="flex gap-3 mb-6 px-6">
-        {([["clients","Clients & Portals",<Users size={15}/>],["ai","LLM Usage & Cost",<Activity size={15}/>],["astro","AstrologyAPI",<Database size={15}/>],["promos","Promo Codes",<Zap size={15}/>]] as const).map(([id, label, icon]) => (
+        {([[ "users", "Users & Plans", <Users size={15} key="u"/>],["ai","LLM Usage & Cost",<Activity size={15} key="ai"/>],["astro","AstrologyAPI",<Database size={15} key="db"/>],["promos","Promo Codes",<Zap size={15} key="z"/>]] as const).map(([id, label, icon]) => (
           <button key={id} onClick={() => setTab(id as Tab)}
             className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${tab === id ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>
             {icon}{label}
@@ -135,54 +143,101 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* ── CLIENTS TAB ─────────────────────────────────────── */}
-      {tab === "clients" && (
-        <div className="clients-table-container">
-          <table className="clients-table">
-            <thead><tr>
-              <th>Client</th><th>Portal Status</th><th>Payment</th><th>Credits Left</th><th>Portal Details</th><th>Actions</th>
-            </tr></thead>
-            <tbody>
-              {clients.length === 0
-                ? <tr><td colSpan={6} className="text-center py-10 text-slate-400">No clients yet.</td></tr>
-                : clients.map(c => (
-                  <tr key={c.id}>
-                    <td>
-                      <div className="font-semibold text-white">{c.full_name}</div>
-                      <div className="text-xs text-slate-400">{c.email}</div>
-                    </td>
-                    <td><span className={`badge ${c.status}`}>{c.status?.toUpperCase()}</span></td>
-                    <td>
-                      <select value={(c.onboarding_leads?.payment_status || "pending").toLowerCase()}
-                        onChange={e => updatePayment(c.lead_id, e.target.value)} disabled={loading}
-                        className="bg-slate-800 text-white border border-slate-700 rounded px-2 py-1 text-xs">
-                        <option value="pending">Pending</option>
-                        <option value="success">Success</option>
-                        <option value="failed">Failed</option>
-                      </select>
-                    </td>
-                    <td>
-                      <span className={`font-mono font-bold text-sm ${(c.credits ?? 0) <= 5 ? "text-red-400" : (c.credits ?? 0) <= 20 ? "text-amber-400" : "text-emerald-400"}`}>
-                        {c.credits ?? "—"}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="text-sm font-mono bg-slate-800 px-2 py-1 rounded inline-block">PIN: {c.access_pin}</div>
-                      <button className="text-xs text-indigo-400 flex items-center gap-1 mt-1 hover:underline"
-                        onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/portal/${c.access_token}`); }}>
-                        <Copy size={11} /> Copy URL
-                      </button>
-                    </td>
-                    <td>
-                      <div className="file-input-wrapper">
-                        <button className="action-btn">{c.report_url ? <><CheckCircle2 size={14}/> Replace</> : <><Upload size={14}/> Upload PDF</>}</button>
-                        <input type="file" accept=".pdf" onChange={e => uploadPdf(c.id, e)} disabled={loading} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+      {/* ── USERS TAB ──────────────────────────────────────────────────────── */}
+      {tab === "users" && (
+        <div className="px-6 pb-12">
+          {!usersData ? <div className="flex justify-center py-16"><Loader2 className="animate-spin text-indigo-500 w-8 h-8" /></div> : <>
+
+            {/* ─ Summary KPI Cards ─ */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+              {[
+                { label: "Total Users",  value: usersData.summary.totalUsers,  color: "text-white",       icon: <Users size={16}/> },
+                { label: "Plan 1 Users", value: usersData.summary.plan1Users,  color: "text-orange-400",  icon: <TrendingUp size={16}/> },
+                { label: "Plan 2 Users", value: usersData.summary.plan2Users,  color: "text-cyan-400",    icon: <TrendingUp size={16}/> },
+                { label: "Paid Users",   value: usersData.summary.paidUsers,   color: "text-emerald-400", icon: <IndianRupee size={16}/> },
+                { label: "Promo Users",  value: usersData.summary.promoUsers,  color: "text-amber-400",   icon: <Zap size={16}/> },
+                { label: "Active Users", value: usersData.summary.activeUsers, color: "text-indigo-400",  icon: <Activity size={16}/> },
+              ].map(k => (
+                <div key={k.label} className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">{k.icon}{k.label}</div>
+                  <div className={`text-2xl font-bold ${k.color}`}>{k.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* ─ Recent 20 Signups Table ─ */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 className="font-bold text-white">Most Recent 20 Signups</h2>
+                <button onClick={() => fetchUsers(token)} className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-sm text-white transition-all">
+                  <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /> Refresh
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-900/60 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700">
+                    <tr>
+                      <th className="px-5 py-3">User</th>
+                      <th className="px-5 py-3">Signed Up</th>
+                      <th className="px-5 py-3">Plan</th>
+                      <th className="px-5 py-3">Payment / Access</th>
+                      <th className="px-5 py-3">Credits</th>
+                      <th className="px-5 py-3">Intake Form</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {(usersData.recentUsers || []).length === 0
+                      ? <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">No users yet.</td></tr>
+                      : (usersData.recentUsers || []).map((u: any) => (
+                        <tr key={u.id} className="hover:bg-slate-800/50 transition-colors">
+                          <td className="px-5 py-4">
+                            <div className="font-semibold text-white">{u.name}</div>
+                            <div className="text-xs text-slate-500">{u.email}</div>
+                          </td>
+                          <td className="px-5 py-4 text-xs text-slate-400 font-mono">
+                            {u.signedUpAt ? new Date(u.signedUpAt).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold ${
+                              u.plan === "Plan 2" ? "bg-cyan-900/40 text-cyan-400 border border-cyan-700/40"
+                              : u.plan === "Plan 1" ? "bg-orange-900/40 text-orange-400 border border-orange-700/40"
+                              : u.plan === "Promo" ? "bg-amber-900/40 text-amber-400 border border-amber-700/40"
+                              : "bg-slate-900/40 text-slate-500 border border-slate-700/40"
+                            }`}>
+                              {u.plan}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold ${
+                              u.isPaid ? "bg-emerald-900/40 text-emerald-400 border border-emerald-700/40"
+                              : u.isPromo ? "bg-amber-900/40 text-amber-300 border border-amber-700/40"
+                              : "bg-slate-900/40 text-slate-500 border border-slate-700/40"
+                            }`}>
+                              {u.paymentStatus}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 font-mono font-bold">
+                            <span className={u.credits <= 5 ? "text-red-400" : u.credits <= 20 ? "text-amber-400" : "text-emerald-400"}>
+                              {u.credits}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            {u.plan === "Plan 1" ? (
+                              u.intakeSubmitted
+                                ? <span className="inline-flex items-center gap-1 text-emerald-400 text-xs font-bold"><CheckCircle2 size={13}/> Submitted</span>
+                                : <span className="text-amber-400 text-xs font-semibold">Pending</span>
+                            ) : (
+                              <span className="text-slate-600 text-xs">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+          }
         </div>
       )}
 
