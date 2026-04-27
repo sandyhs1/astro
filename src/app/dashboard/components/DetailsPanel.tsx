@@ -1,209 +1,297 @@
 "use client";
-
 import { useState, useEffect } from "react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface YogaResult {
-  name: string; fullName: string; category: string;
-  status: "ACTIVATED" | "DORMANT";
-  planets: string[]; houses: number[];
-  logic: string; benefit: string;
+interface Props { activeProfileId: string; familyProfiles: any[]; userEmail: string; }
+
+const card: React.CSSProperties = { background:"#fff", border:"1px solid #E2E8F0", borderRadius:12, padding:"20px 24px", marginBottom:16 };
+const sec: React.CSSProperties = { fontFamily:"'Space Grotesk',sans-serif", fontSize:"11px", fontWeight:800, letterSpacing:"0.12em", textTransform:"uppercase" as const, color:"#6366F1", marginBottom:14, display:"block" };
+const pill = (c:string,b:string):React.CSSProperties=>({display:"inline-block",padding:"2px 10px",borderRadius:99,fontSize:"10px",fontWeight:700,letterSpacing:"0.06em",color:c,background:b});
+
+const KARAKA_LABELS: Record<string,string> = {
+  ak:"AK — Atmakaraka (Soul's Desire)", amk:"AMK — Amatyakaraka (Career & Mind)",
+  bk:"BK — Bhratrukaraka (Siblings)", mk:"MK — Matrukaraka (Mother)",
+  pk:"PK — Pitrukaraka (Father)", gk:"GK — Gnatikaraka (Rivals)",
+  dk:"DK — Darakaraka (Spouse / Partner)",
+};
+const SIGN_LORD: Record<string,string> = {
+  Aries:"Mars",Taurus:"Venus",Gemini:"Mercury",Cancer:"Moon",Leo:"Sun",
+  Virgo:"Mercury",Libra:"Venus",Scorpio:"Mars",Sagittarius:"Jupiter",
+  Capricorn:"Saturn",Aquarius:"Saturn",Pisces:"Jupiter",
+};
+
+function Row({label,value}:{label:string;value:string}) {
+  return (
+    <div style={{padding:"6px 0",borderBottom:"1px solid #F1F5F9"}}>
+      <div style={{fontSize:"10px",color:"#94A3B8",fontWeight:600,marginBottom:2}}>{label}</div>
+      <div style={{fontSize:"13px",color:"#1E293B",fontWeight:700}}>{value}</div>
+    </div>
+  );
 }
 
-interface DetailsData {
-  person: { fullName: string; dob: string; tob: string; pob: string; timezone: string };
-  core: {
-    ascendant: string; ascendantNakshatra: string; ascendantNakshatraPada: number;
-    moonSign: string; moonNakshatra: string; moonNakshatraPada: number;
-    sunSign: string; ascLord: string; ascLordSign: string; ascLordHouse: number;
-  };
-  dasha: {
-    mahadasha: string; mahadashaEnd: string; mahadashaRemaining: string;
-    antardasha: string; antardashaEnd: string; antardashaRemaining: string;
-    pratyantar: string;
-    nextMahadasha: string; nextMahadashaStart: string; nextMahadashaEnd: string;
-  };
-  planets: any[];
-  houses: any[];
-  karakas: Record<string, string>;
-  specialPoints: { AL: string; UL: string; A7: string; PP: string };
-  yogas: YogaResult[];
-  ashtakavarga: any;
+function DashaBar({label,planet,end,remaining,start,color}:{label:string;planet:string;end?:string;remaining?:string;start?:string;color:string}) {
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
+      <div style={{width:3,height:36,borderRadius:99,background:color,flexShrink:0}}/>
+      <div style={{flex:1}}>
+        <div style={{fontSize:"10px",color:"#94A3B8",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em"}}>{label}</div>
+        <div style={{fontSize:"15px",fontWeight:800,color:"#1E293B"}}>{planet||"—"}</div>
+      </div>
+      <div style={{textAlign:"right"}}>
+        {start&&<div style={{fontSize:"10px",color:"#94A3B8"}}>From {start}</div>}
+        {end&&<div style={{fontSize:"11px",color:"#334155",fontWeight:600}}>Until {end}</div>}
+        {remaining&&<div style={{fontSize:"10px",color,fontWeight:700}}>{remaining}</div>}
+      </div>
+    </div>
+  );
 }
 
-const KARAKA_LABELS: Record<string, string> = {
-  ak: "AK — Atmakaraka (Soul's Desire)",
-  amk: "AMK — Amatyakaraka (Career & Mind)",
-  bk: "BK — Bhratrukaraka (Siblings)",
-  mk: "MK — Matrukaraka (Mother)",
-  pk: "PK — Pitrukaraka (Father)",
-  gk: "GK — Gnatikaraka (Rivals & Competition)",
-  dk: "DK — Darakaraka (Spouse / Partner)",
-};
-
-const SIGN_LORD: Record<string, string> = {
-  Aries:"Mars",Taurus:"Venus",Gemini:"Mercury",Cancer:"Moon",
-  Leo:"Sun",Virgo:"Mercury",Libra:"Venus",Scorpio:"Mars",
-  Sagittarius:"Jupiter",Capricorn:"Saturn",Aquarius:"Saturn",Pisces:"Jupiter",
-};
-
-// ─── Styling helpers ──────────────────────────────────────────────────────────
-const card: React.CSSProperties = {
-  background:"#fff", border:"1px solid #E2E8F0",
-  borderRadius:12, padding:"20px 24px", marginBottom:16,
-};
-const sectionTitle: React.CSSProperties = {
-  fontFamily:"'Space Grotesk', sans-serif", fontSize:"11px",
-  fontWeight:800, letterSpacing:"0.12em", textTransform:"uppercase" as const,
-  color:"#6366F1", marginBottom:14, display:"block",
-};
-const pill = (color: string, bg: string): React.CSSProperties => ({
-  display:"inline-block", padding:"2px 10px", borderRadius:99,
-  fontSize:"10px", fontWeight:700, letterSpacing:"0.06em",
-  color, background:bg,
-});
-
-interface Props {
-  activeProfileId: string;
-  familyProfiles: any[];
-  userEmail: string;
+function YogaCard({yoga}:{yoga:any}) {
+  const [open,setOpen]=useState(false);
+  const act=yoga.status==="ACTIVATED";
+  return (
+    <div style={{border:`1px solid ${act?"#BBF7D0":"#FDE68A"}`,borderRadius:10,marginBottom:8,overflow:"hidden"}}>
+      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%",background:act?"#F0FDF4":"#FFFBEB",border:"none",padding:"12px 14px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",textAlign:"left" as const}}>
+        <div>
+          <div style={{fontSize:"13px",fontWeight:800,color:"#1E293B"}}>{yoga.fullName}</div>
+          <div style={{fontSize:"10px",color:"#64748B",marginTop:2}}>{yoga.category} · Planets: {yoga.planets.join(", ")} · H{yoga.houses.join(", H")}</div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+          <span style={pill(act?"#166534":"#92400E",act?"#DCFCE7":"#FEF3C7")}>{yoga.status}</span>
+          <span style={{color:"#94A3B8",fontSize:12}}>{open?"▲":"▼"}</span>
+        </div>
+      </button>
+      {open&&(
+        <div style={{padding:"12px 14px",borderTop:`1px solid ${act?"#BBF7D0":"#FDE68A"}`,background:"#fff"}}>
+          <div style={{fontSize:"11px",color:"#475569",lineHeight:1.7,marginBottom:10}}><strong style={{color:"#334155"}}>Logic:</strong><br/>{yoga.logic}</div>
+          <div style={{fontSize:"11px",color:"#166534",background:"#F0FDF4",borderRadius:8,padding:"8px 12px",lineHeight:1.7}}><strong>Benefit:</strong> {yoga.benefit}</div>
+        </div>
+      )}
+    </div>
+  );
 }
 
-export default function DetailsPanel({ activeProfileId, familyProfiles, userEmail }: Props) {
-  const [data, setData] = useState<DetailsData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function DetailsPanel({activeProfileId}:Props) {
+  const [data,setData]=useState<any>(null);
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState<string|null>(null);
 
-  useEffect(() => {
+  useEffect(()=>{
     async function load() {
-      setLoading(true); setError(null); setData(null);
+      setLoading(true);setError(null);setData(null);
       try {
-        const res = await fetch(`/api/chart-details?profileId=${activeProfileId}`);
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || "Failed to load chart details.");
+        const res=await fetch(`/api/chart-details?profileId=${activeProfileId}`);
+        const json=await res.json();
+        if(!res.ok) throw new Error(json.error||"Failed to load.");
         setData(json);
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
-      }
+      } catch(e:any){setError(e.message);}
+      finally{setLoading(false);}
     }
     load();
-  }, [activeProfileId]);
+  },[activeProfileId]);
 
-  if (loading) return (
-    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:300 }}>
-      <div style={{ fontFamily:"'IBM Plex Mono', monospace", fontSize:11, color:"#94A3B8", letterSpacing:"0.12em" }}>
-        LOADING COSMIC BLUEPRINT...
-      </div>
-    </div>
-  );
+  if(loading) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:300}}><div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"#94A3B8",letterSpacing:"0.12em"}}>LOADING COSMIC BLUEPRINT...</div></div>;
+  if(error) return <div style={{padding:24,background:"#FEF2F2",borderRadius:12,color:"#991B1B",fontSize:13,margin:16}}>{error}</div>;
+  if(!data) return null;
 
-  if (error) return (
-    <div style={{ padding:24, background:"#FEF2F2", borderRadius:12, color:"#991B1B", fontSize:13, margin:16 }}>
-      {error}
-    </div>
-  );
-
-  if (!data) return null;
-
-  const { person, core, dasha, planets, houses, karakas, specialPoints, yogas, ashtakavarga } = data;
-
-  const activatedYogas = yogas.filter(y=>y.status==="ACTIVATED");
-  const dormantYogas   = yogas.filter(y=>y.status==="DORMANT");
+  const {person,core,dasha,planets,houses,karakas,specialPoints,yogas,enrichments}=data;
+  const {vargottama,rahuKetuAxis,moonNakData,moonNakName,planetStrengths,retrogrades,horaLagna}=enrichments||{};
+  const activated=yogas?.filter((y:any)=>y.status==="ACTIVATED")||[];
+  const dormant=yogas?.filter((y:any)=>y.status==="DORMANT")||[];
 
   return (
-    <div style={{ padding:"16px 20px", overflowY:"auto", height:"100%", background:"#F8FAFC" }}>
+    <div style={{padding:"16px 20px",overflowY:"auto",height:"100%",background:"#F8FAFC"}}>
 
-      {/* ── Person Header ────────────────────────────────────── */}
-      <div style={{ ...card, background:"linear-gradient(135deg,#6366F1,#8B5CF6)", color:"#fff", marginBottom:16 }}>
-        <div style={{ fontFamily:"'Space Grotesk', sans-serif", fontSize:"1.2rem", fontWeight:800, marginBottom:6 }}>
-          {person.fullName}
-        </div>
-        <div style={{ fontSize:"12px", opacity:0.85, lineHeight:1.7 }}>
-          🗓 {person.dob} &nbsp;|&nbsp; ⏰ {person.tob} &nbsp;|&nbsp; 📍 {person.pob}
-        </div>
-        <div style={{ fontSize:"11px", opacity:0.65, marginTop:4 }}>
-          Timezone: {person.timezone} &nbsp;·&nbsp; Lahiri Ayanamsa · Whole Sign · Sidereal
+      {/* Header */}
+      <div style={{...card,background:"linear-gradient(135deg,#6366F1,#8B5CF6)",color:"#fff",marginBottom:16}}>
+        <div style={{fontSize:"1.2rem",fontWeight:800,marginBottom:6}}>{person.fullName}</div>
+        <div style={{fontSize:"12px",opacity:0.85,lineHeight:1.7}}>🗓 {person.dob} &nbsp;|&nbsp; ⏰ {person.tob} &nbsp;|&nbsp; 📍 {person.pob}</div>
+        <div style={{fontSize:"11px",opacity:0.65,marginTop:4}}>Timezone: {person.timezone} · Lahiri Ayanamsa · Whole Sign · Sidereal</div>
+      </div>
+
+      {/* Core Identity */}
+      <div style={card}>
+        <span style={sec}>⭐ Core Identity</span>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 24px"}}>
+          <Row label="Ascendant (Lagna)" value={`${core.ascendant}${core.ascendantNakshatra?` · ${core.ascendantNakshatra} Pada ${core.ascendantNakshatraPada}`:""}`}/>
+          <Row label="Ascendant Lord" value={`${core.ascLord} in ${core.ascLordSign} (House ${core.ascLordHouse})`}/>
+          <Row label="Moon Sign (Rashi)" value={core.moonSign}/>
+          <Row label="Moon Nakshatra" value={`${core.moonNakshatra}${core.moonNakshatraPada?` Pada ${core.moonNakshatraPada}`:""}`}/>
+          <Row label="Sun Sign" value={core.sunSign}/>
         </div>
       </div>
 
-      {/* ── Core Identity ─────────────────────────────────────── */}
-      <div style={card}>
-        <span style={sectionTitle}>⭐ Core Identity</span>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px 24px" }}>
-          <Row label="Ascendant (Lagna)"    value={`${core.ascendant}${core.ascendantNakshatra ? ` · ${core.ascendantNakshatra} Pada ${core.ascendantNakshatraPada}` : ""}`} />
-          <Row label="Ascendant Lord"       value={`${core.ascLord} in ${core.ascLordSign} (House ${core.ascLordHouse})`} />
-          <Row label="Moon Sign (Rashi)"    value={core.moonSign} />
-          <Row label="Moon Nakshatra"       value={`${core.moonNakshatra}${core.moonNakshatraPada ? ` Pada ${core.moonNakshatraPada}` : ""}`} />
-          <Row label="Sun Sign"             value={core.sunSign} />
+      {/* Moon Nakshatra Deep-Dive */}
+      {moonNakData&&(
+        <div style={card}>
+          <span style={sec}>🌙 {moonNakName} — Nakshatra Deep-Dive</span>
+          <div style={{background:"linear-gradient(135deg,#EDE9FE,#F0F9FF)",borderRadius:10,padding:"14px 16px",marginBottom:14}}>
+            <div style={{fontSize:"14px",fontWeight:800,color:"#4C1D95",marginBottom:4}}>{moonNakName}</div>
+            <div style={{fontSize:"11px",color:"#5B21B6",lineHeight:1.7}}>{moonNakData.nature}</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 24px"}}>
+            <Row label="Ruling Planet (Nakshatra Lord)" value={moonNakData.ruler}/>
+            <Row label="Presiding Deity" value={moonNakData.deity}/>
+            <Row label="Symbol" value={moonNakData.symbol}/>
+            <Row label="Gana (Nature)" value={`${moonNakData.gana} — ${moonNakData.gana==="Deva"?"Divine, sattvic, spiritually oriented":"Manushya"===moonNakData.gana?"Human, rajasic, worldly-oriented":"Fierce, tamasic, intensely driven"}`}/>
+            <Row label="Quality (Gunam)" value={moonNakData.quality}/>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* ── Dasha Timeline ────────────────────────────────────── */}
-      <div style={card}>
-        <span style={sectionTitle}>⏱ Vimshottari Dasha Timeline</span>
-        <DashaBar
-          label="Mahadasha" planet={dasha.mahadasha}
-          end={dasha.mahadashaEnd} remaining={dasha.mahadashaRemaining}
-          color="#6366F1" isCurrent
-        />
-        <DashaBar
-          label="Antardasha" planet={dasha.antardasha}
-          end={dasha.antardashaEnd} remaining={dasha.antardashaRemaining}
-          color="#8B5CF6" isCurrent
-        />
-        {dasha.pratyantar && dasha.pratyantar !== "—" && (
-          <DashaBar label="Pratyantar" planet={dasha.pratyantar} color="#A78BFA" />
-        )}
-        {dasha.nextMahadasha && (
-          <div style={{ marginTop:12, paddingTop:12, borderTop:"1px dashed #E2E8F0" }}>
-            <div style={{ fontSize:"10px", fontWeight:700, color:"#94A3B8", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:8 }}>
-              Next Mahadasha
+      {/* Vargottama Planets */}
+      {vargottama?.length>0&&(
+        <div style={card}>
+          <span style={sec}>💎 Vargottama Planets — Double Strength</span>
+          <div style={{fontSize:"11px",color:"#64748B",marginBottom:14,lineHeight:1.6}}>
+            A Vargottama planet occupies the <strong>same sign in both D1 (Rashi) and D9 (Navamsha)</strong>. This doubles its power — the soul-level chart confirms the physical-world promise. These are the most dependable, strongly expressed planets in your chart.
+          </div>
+          {vargottama.map((v:any,i:number)=>(
+            <div key={i} style={{background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:10,padding:"12px 16px",marginBottom:8}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                <div style={{fontSize:"15px",fontWeight:800,color:"#92400E"}}>{v.name}</div>
+                <span style={pill("#92400E","#FEF3C7")}>VARGOTTAMA</span>
+              </div>
+              <div style={{fontSize:"11px",color:"#78350F",marginBottom:4}}>Sign: <strong>{v.sign}</strong> · House: <strong>{v.house}</strong></div>
+              <div style={{fontSize:"11px",color:"#92400E",lineHeight:1.6}}>{v.meaning}</div>
             </div>
-            <DashaBar
-              label="Next Mahadasha" planet={dasha.nextMahadasha}
-              start={dasha.nextMahadashaStart} end={dasha.nextMahadashaEnd}
-              color="#10B981" isCurrent={false}
-            />
+          ))}
+        </div>
+      )}
+
+      {/* Rahu-Ketu Karmic Axis */}
+      {rahuKetuAxis&&(
+        <div style={card}>
+          <span style={sec}>☊ Rahu–Ketu Karmic Axis</span>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div style={{background:"#EFF6FF",border:"1px solid #BFDBFE",borderRadius:10,padding:"14px 16px"}}>
+              <div style={{fontSize:"10px",fontWeight:800,color:"#1D4ED8",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>☊ RAHU — House {rahuKetuAxis.rahuHouse} ({rahuKetuAxis.rahuSign})</div>
+              <div style={{fontSize:"11px",fontWeight:700,color:"#1E3A8A",marginBottom:6}}>Your Destined Direction This Lifetime</div>
+              <div style={{fontSize:"11px",color:"#1E40AF",lineHeight:1.7}}>{rahuKetuAxis.rahuDestiny}</div>
+            </div>
+            <div style={{background:"#FDF4FF",border:"1px solid #E9D5FF",borderRadius:10,padding:"14px 16px"}}>
+              <div style={{fontSize:"10px",fontWeight:800,color:"#7E22CE",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>☋ KETU — House {rahuKetuAxis.ketuHouse} ({rahuKetuAxis.ketuSign})</div>
+              <div style={{fontSize:"11px",fontWeight:700,color:"#581C87",marginBottom:6}}>What You've Mastered — Now Release</div>
+              <div style={{fontSize:"11px",color:"#6B21A8",lineHeight:1.7}}>{rahuKetuAxis.ketuMastered}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hora Lagna */}
+      {horaLagna?.sign&&(
+        <div style={card}>
+          <span style={sec}>💰 Hora Lagna — Wealth Indicator</span>
+          <div style={{background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:10,padding:"14px 16px",marginBottom:14}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div>
+                <div style={{fontSize:"10px",color:"#15803D",fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>Hora Lagna Sign</div>
+                <div style={{fontSize:"20px",fontWeight:800,color:"#14532D"}}>{horaLagna.sign}</div>
+                <div style={{fontSize:"11px",color:"#166534",marginTop:2}}>House {horaLagna.house} · Lord: {horaLagna.lord}</div>
+              </div>
+              <div style={{fontSize:"28px"}}>💰</div>
+            </div>
+          </div>
+          <div style={{fontSize:"12px",color:"#334155",lineHeight:1.7}}>{horaLagna.meaning}</div>
+          <div style={{marginTop:12,padding:"10px 14px",background:"#F8FAFC",borderRadius:8,fontSize:"11px",color:"#64748B",lineHeight:1.6}}>
+            <strong style={{color:"#334155"}}>Classical principle:</strong> The lord of the sign occupied by Hora Lagna is a primary indicator of financial prosperity. Hora Lagna is used to analyse wealth, 2nd house matters, and longevity. It moves one sign per hora (hour) — making it highly sensitive to your exact birth time.
+          </div>
+        </div>
+      )}
+
+      {/* Planet Strengths */}
+      {planetStrengths?.length>0&&(
+        <div style={card}>
+          <span style={sec}>⚡ Planetary Strength Ranking</span>
+          <div style={{fontSize:"11px",color:"#64748B",marginBottom:14,lineHeight:1.6}}>
+            Ranked by classical dignity: Exalted (6) → Moolatrikona (5) → Own Sign (4) → Friendly (3) → Neutral (2) → Enemy (1) → Debilitated (0). Combust planets lose 1 point.
+          </div>
+          {planetStrengths.map((p:any,i:number)=>{
+            const isTop=i<3, isWeak=p.score<=1;
+            const barColor=p.score>=5?"#16A34A":p.score>=3?"#2563EB":p.score>=2?"#D97706":"#DC2626";
+            return (
+              <div key={p.name} style={{display:"flex",alignItems:"center",gap:12,marginBottom:8,padding:"8px 10px",borderRadius:8,background:isTop?"#F0FDF4":isWeak?"#FEF2F2":"#F8FAFC",border:`1px solid ${isTop?"#BBF7D0":isWeak?"#FECACA":"#E2E8F0"}`}}>
+                <div style={{width:24,textAlign:"center",fontSize:"11px",fontWeight:800,color:isTop?"#166534":isWeak?"#991B1B":"#64748B"}}>#{i+1}</div>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:"13px",fontWeight:800,color:"#1E293B"}}>{p.name}</span>
+                    <span style={{fontSize:"10px",color:"#64748B"}}>in {p.sign} · H{p.house}</span>
+                    {p.isCombust&&<span style={pill("#92400E","#FEF3C7")}>Combust</span>}
+                    {p.isRetro&&<span style={pill("#1D4ED8","#DBEAFE")}>Retro</span>}
+                  </div>
+                  <div style={{marginTop:4,height:4,borderRadius:99,background:"#E2E8F0"}}>
+                    <div style={{width:`${(p.score/6)*100}%`,height:"100%",borderRadius:99,background:barColor}}/>
+                  </div>
+                </div>
+                <div style={{textAlign:"right",minWidth:80}}>
+                  <div style={{fontSize:"10px",fontWeight:700,color:barColor}}>{p.label}</div>
+                  <div style={{fontSize:"12px",fontWeight:800,color:"#1E293B"}}>{p.score}/6</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Retrograde Analysis */}
+      {retrogrades?.length>0&&(
+        <div style={card}>
+          <span style={sec}>↩ Retrograde Planet Analysis</span>
+          <div style={{fontSize:"11px",color:"#64748B",marginBottom:14,lineHeight:1.6}}>
+            Retrograde planets carry intensified karmic energy from past lives. Their power is directed inward rather than outward — making their effects more profound, internalized, and ultimately more transformative.
+          </div>
+          {retrogrades.map((r:any,i:number)=>(
+            <div key={i} style={{background:"#EFF6FF",border:"1px solid #BFDBFE",borderRadius:10,padding:"14px 16px",marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                <span style={{fontSize:"14px",fontWeight:800,color:"#1E40AF"}}>{r.name} ℞</span>
+                <span style={{fontSize:"11px",color:"#3B82F6"}}>in {r.sign} · House {r.house}</span>
+                <span style={pill("#1D4ED8","#DBEAFE")}>RETROGRADE</span>
+              </div>
+              <div style={{fontSize:"11px",color:"#1E3A8A",lineHeight:1.7}}>{r.meaning}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Dasha Timeline */}
+      <div style={card}>
+        <span style={sec}>⏱ Vimshottari Dasha Timeline</span>
+        <DashaBar label="Mahadasha" planet={dasha.mahadasha} end={dasha.mahadashaEnd} remaining={dasha.mahadashaRemaining} color="#6366F1"/>
+        <DashaBar label="Antardasha" planet={dasha.antardasha} end={dasha.antardashaEnd} remaining={dasha.antardashaRemaining} color="#8B5CF6"/>
+        {dasha.pratyantar&&dasha.pratyantar!=="—"&&<DashaBar label="Pratyantar" planet={dasha.pratyantar} color="#A78BFA"/>}
+        {dasha.nextMahadasha&&(
+          <div style={{marginTop:12,paddingTop:12,borderTop:"1px dashed #E2E8F0"}}>
+            <div style={{fontSize:"10px",fontWeight:700,color:"#94A3B8",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:8}}>Next Mahadasha</div>
+            <DashaBar label="Next Mahadasha" planet={dasha.nextMahadasha} start={dasha.nextMahadashaStart} end={dasha.nextMahadashaEnd} color="#10B981"/>
           </div>
         )}
       </div>
 
-      {/* ── Planet Table ──────────────────────────────────────── */}
+      {/* Planets Table */}
       <div style={card}>
-        <span style={sectionTitle}>🪐 Planetary Positions (D1 — Rashi Chart)</span>
-        <div style={{ overflowX:"auto" }}>
-          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"12px" }}>
+        <span style={sec}>🪐 Planetary Positions (D1 — Rashi Chart)</span>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
             <thead>
-              <tr style={{ borderBottom:"2px solid #E2E8F0" }}>
+              <tr style={{borderBottom:"2px solid #E2E8F0"}}>
                 {["Planet","Sign","House","Degree","Nakshatra","Pada","Status"].map(h=>(
-                  <th key={h} style={{ padding:"6px 8px", textAlign:"left", color:"#64748B", fontWeight:700, fontSize:"10px", letterSpacing:"0.06em", textTransform:"uppercase", whiteSpace:"nowrap" }}>{h}</th>
+                  <th key={h} style={{padding:"6px 8px",textAlign:"left",color:"#64748B",fontWeight:700,fontSize:"10px",letterSpacing:"0.06em",textTransform:"uppercase",whiteSpace:"nowrap"}}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {planets.map((p: any)=>{
-                const flags = [
-                  p.isRetro       ? "Retro"       : "",
-                  p.isExalted     ? "Exalted"     : "",
-                  p.isDebilitated ? "Debilitated" : "",
-                  p.isCombust     ? "Combust"     : "",
-                ].filter(Boolean);
+              {planets.map((p:any)=>{
+                const flags=[p.isRetro?"Retro":"",p.isExalted?"Exalted":"",p.isDebilitated?"Debilitated":"",p.isCombust?"Combust":""].filter(Boolean);
                 return (
-                  <tr key={p.name} style={{ borderBottom:"1px solid #F1F5F9" }}>
-                    <td style={{ padding:"7px 8px", fontWeight:700, color:"#1E293B" }}>{p.name}</td>
-                    <td style={{ padding:"7px 8px", color:"#334155" }}>{p.sign}</td>
-                    <td style={{ padding:"7px 8px", color:"#334155", textAlign:"center" }}>{p.house}</td>
-                    <td style={{ padding:"7px 8px", color:"#334155", fontFamily:"monospace" }}>{(p.normDegree||0).toFixed(2)}°</td>
-                    <td style={{ padding:"7px 8px", color:"#334155" }}>{p.nakshatra||"—"}</td>
-                    <td style={{ padding:"7px 8px", color:"#334155", textAlign:"center" }}>{p.nakshatraPada||"—"}</td>
-                    <td style={{ padding:"7px 8px" }}>
-                      {flags.length===0 ? <span style={{ color:"#94A3B8" }}>—</span> : flags.map(f=>(
-                        <span key={f} style={{ ...pill(
-                          f==="Exalted"?"#166534":f==="Debilitated"?"#991B1B":f==="Retro"?"#1D4ED8":"#92400E",
-                          f==="Exalted"?"#DCFCE7":f==="Debilitated"?"#FEE2E2":f==="Retro"?"#DBEAFE":"#FEF3C7"
-                        ), marginRight:3 }}>{f}</span>
+                  <tr key={p.name} style={{borderBottom:"1px solid #F1F5F9"}}>
+                    <td style={{padding:"7px 8px",fontWeight:700,color:"#1E293B"}}>{p.name}</td>
+                    <td style={{padding:"7px 8px",color:"#334155"}}>{p.sign}</td>
+                    <td style={{padding:"7px 8px",color:"#334155",textAlign:"center"}}>{p.house}</td>
+                    <td style={{padding:"7px 8px",color:"#334155",fontFamily:"monospace"}}>{(p.normDegree||0).toFixed(2)}°</td>
+                    <td style={{padding:"7px 8px",color:"#334155"}}>{p.nakshatra||"—"}</td>
+                    <td style={{padding:"7px 8px",color:"#334155",textAlign:"center"}}>{p.nakshatraPada||"—"}</td>
+                    <td style={{padding:"7px 8px"}}>
+                      {flags.length===0?<span style={{color:"#94A3B8"}}>—</span>:flags.map(f=>(
+                        <span key={f} style={{...pill(f==="Exalted"?"#166534":f==="Debilitated"?"#991B1B":f==="Retro"?"#1D4ED8":"#92400E",f==="Exalted"?"#DCFCE7":f==="Debilitated"?"#FEE2E2":f==="Retro"?"#DBEAFE":"#FEF3C7"),marginRight:3}}>{f}</span>
                       ))}
                     </td>
                   </tr>
@@ -214,194 +302,63 @@ export default function DetailsPanel({ activeProfileId, familyProfiles, userEmai
         </div>
       </div>
 
-      {/* ── Houses ────────────────────────────────────────────── */}
+      {/* Houses */}
       <div style={card}>
-        <span style={sectionTitle}>🏠 All 12 Houses (Bhava)</span>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
-          {houses.map((h: any)=>(
-            <div key={h.number} style={{ background:"#F8FAFC", border:"1px solid #E2E8F0", borderRadius:8, padding:"10px 12px" }}>
-              <div style={{ fontSize:"10px", fontWeight:800, color:"#6366F1", letterSpacing:"0.08em", marginBottom:3 }}>
-                H{h.number} — {h.sign}
-              </div>
-              <div style={{ fontSize:"10px", color:"#64748B", marginBottom:3 }}>Lord: {SIGN_LORD[h.sign]||"?"}</div>
-              <div style={{ fontSize:"11px", color:"#1E293B", fontWeight:600 }}>
-                {h.occupants?.length>0 ? h.occupants.join(", ") : <span style={{color:"#CBD5E1"}}>Empty</span>}
-              </div>
+        <span style={sec}>🏠 All 12 Houses (Bhava)</span>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+          {houses.map((h:any)=>(
+            <div key={h.number} style={{background:"#F8FAFC",border:"1px solid #E2E8F0",borderRadius:8,padding:"10px 12px"}}>
+              <div style={{fontSize:"10px",fontWeight:800,color:"#6366F1",letterSpacing:"0.08em",marginBottom:3}}>H{h.number} — {h.sign}</div>
+              <div style={{fontSize:"10px",color:"#64748B",marginBottom:3}}>Lord: {SIGN_LORD[h.sign]||"?"}</div>
+              <div style={{fontSize:"11px",color:"#1E293B",fontWeight:600}}>{h.occupants?.length>0?h.occupants.join(", "):<span style={{color:"#CBD5E1"}}>Empty</span>}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Karakas ───────────────────────────────────────────── */}
+      {/* Karakas */}
       <div style={card}>
-        <span style={sectionTitle}>👑 Jaimini Karakas</span>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px 24px" }}>
+        <span style={sec}>👑 Jaimini Karakas</span>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 24px"}}>
           {Object.entries(KARAKA_LABELS).map(([key,label])=>(
-            <div key={key} style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", padding:"8px 0", borderBottom:"1px solid #F1F5F9" }}>
-              <div style={{ fontSize:"11px", color:"#64748B", lineHeight:1.4, maxWidth:"70%" }}>{label}</div>
-              <div style={{ fontSize:"13px", fontWeight:800, color:"#6366F1", marginLeft:8 }}>{karakas[key]||"—"}</div>
+            <div key={key} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"8px 0",borderBottom:"1px solid #F1F5F9"}}>
+              <div style={{fontSize:"11px",color:"#64748B",lineHeight:1.4,maxWidth:"70%"}}>{label}</div>
+              <div style={{fontSize:"13px",fontWeight:800,color:"#6366F1",marginLeft:8}}>{karakas[key]||"—"}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Special Points ────────────────────────────────────── */}
+      {/* Special Points */}
       <div style={card}>
-        <span style={sectionTitle}>🔮 Special Sensitive Points</span>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px 24px" }}>
-          <Row label="Arudha Lagna (AL) — Public Image"       value={specialPoints.AL||"—"} />
-          <Row label="Upapada Lagna (UL) — Marriage/Bond"     value={specialPoints.UL||"—"} />
-          <Row label="A7 Darapada — Physical Attraction"      value={specialPoints.A7||"—"} />
-          <Row label="Pranapada Lagna — Life Force Center"    value={specialPoints.PP||"—"} />
+        <span style={sec}>🔮 Special Sensitive Points</span>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 24px"}}>
+          <Row label="Arudha Lagna (AL) — Public Image & Status" value={specialPoints.AL||"—"}/>
+          <Row label="Upapada Lagna (UL) — Marriage & Bond" value={specialPoints.UL||"—"}/>
+          <Row label="A7 Darapada — Physical Attraction" value={specialPoints.A7||"—"}/>
+          <Row label="Pranapada Lagna — Life Force Center" value={specialPoints.PP||"—"}/>
         </div>
       </div>
 
-      {/* ── Yogas ─────────────────────────────────────────────── */}
+      {/* Yogas */}
       <div style={card}>
-        <span style={sectionTitle}>✨ Classical Yogas ({yogas.length} detected)</span>
-
-        {activatedYogas.length > 0 && (
+        <span style={sec}>✨ Classical Yogas ({yogas?.length||0} detected)</span>
+        {activated.length>0&&(
           <>
-            <div style={{ fontSize:"10px", fontWeight:800, color:"#166534", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>
-              🟢 ACTIVATED ({activatedYogas.length})
-            </div>
-            {activatedYogas.map((y,i)=>(
-              <YogaCard key={i} yoga={y} />
-            ))}
+            <div style={{fontSize:"10px",fontWeight:800,color:"#166534",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>🟢 ACTIVATED ({activated.length})</div>
+            {activated.map((y:any,i:number)=><YogaCard key={i} yoga={y}/>)}
           </>
         )}
-
-        {dormantYogas.length > 0 && (
+        {dormant.length>0&&(
           <>
-            <div style={{ fontSize:"10px", fontWeight:800, color:"#92400E", letterSpacing:"0.1em", textTransform:"uppercase", margin:"16px 0 10px" }}>
-              🟡 DORMANT / LATENT ({dormantYogas.length})
-            </div>
-            {dormantYogas.map((y,i)=>(
-              <YogaCard key={i} yoga={y} />
-            ))}
+            <div style={{fontSize:"10px",fontWeight:800,color:"#92400E",letterSpacing:"0.1em",textTransform:"uppercase",margin:"16px 0 10px"}}>🟡 DORMANT / LATENT ({dormant.length})</div>
+            {dormant.map((y:any,i:number)=><YogaCard key={i} yoga={y}/>)}
           </>
         )}
-
-        {yogas.length===0 && (
-          <div style={{ color:"#94A3B8", fontSize:"13px" }}>No classical yogas detected in this chart.</div>
-        )}
+        {(!yogas||yogas.length===0)&&<div style={{color:"#94A3B8",fontSize:"13px"}}>No classical yogas detected.</div>}
       </div>
 
-      {/* ── Ashtakavarga ──────────────────────────────────────── */}
-      {ashtakavarga && typeof ashtakavarga==="object" && Object.keys(ashtakavarga).length>0 && (
-        <div style={card}>
-          <span style={sectionTitle}>📊 Ashtakavarga — House Strength Scores</span>
-          <ASVGrid ashtakavarga={ashtakavarga} />
-        </div>
-      )}
-
-      <div style={{ height:40 }} />
-    </div>
-  );
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ padding:"6px 0", borderBottom:"1px solid #F1F5F9" }}>
-      <div style={{ fontSize:"10px", color:"#94A3B8", fontWeight:600, letterSpacing:"0.04em", marginBottom:2 }}>{label}</div>
-      <div style={{ fontSize:"13px", color:"#1E293B", fontWeight:700 }}>{value}</div>
-    </div>
-  );
-}
-
-function DashaBar({ label, planet, end, remaining, start, color, isCurrent }:
-  { label:string; planet:string; end?:string; remaining?:string; start?:string; color:string; isCurrent?:boolean }) {
-  return (
-    <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
-      <div style={{ width:3, height:36, borderRadius:99, background:color, flexShrink:0 }} />
-      <div style={{ flex:1 }}>
-        <div style={{ fontSize:"10px", color:"#94A3B8", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>{label}</div>
-        <div style={{ fontSize:"15px", fontWeight:800, color:"#1E293B" }}>{planet || "—"}</div>
-      </div>
-      <div style={{ textAlign:"right" }}>
-        {start && <div style={{ fontSize:"10px", color:"#94A3B8" }}>From {start}</div>}
-        {end     && <div style={{ fontSize:"11px", color:"#334155", fontWeight:600 }}>Until {end}</div>}
-        {remaining && <div style={{ fontSize:"10px", color:color, fontWeight:700 }}>{remaining}</div>}
-      </div>
-    </div>
-  );
-}
-
-function YogaCard({ yoga }: { yoga: YogaResult }) {
-  const [open, setOpen] = useState(false);
-  const isActive = yoga.status==="ACTIVATED";
-  return (
-    <div style={{ border:`1px solid ${isActive?"#BBF7D0":"#FDE68A"}`, borderRadius:10, marginBottom:8, overflow:"hidden" }}>
-      <button
-        onClick={()=>setOpen(o=>!o)}
-        style={{ width:"100%", background:isActive?"#F0FDF4":"#FFFBEB", border:"none", padding:"12px 14px", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", textAlign:"left" as const }}
-      >
-        <div>
-          <div style={{ fontSize:"13px", fontWeight:800, color:"#1E293B" }}>{yoga.fullName}</div>
-          <div style={{ fontSize:"10px", color:"#64748B", marginTop:2 }}>
-            {yoga.category} &nbsp;·&nbsp; Planets: {yoga.planets.join(", ")}
-            &nbsp;·&nbsp; H{yoga.houses.join(", H")}
-          </div>
-        </div>
-        <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-          <span style={pill(isActive?"#166534":"#92400E", isActive?"#DCFCE7":"#FEF3C7")}>
-            {yoga.status}
-          </span>
-          <span style={{ color:"#94A3B8", fontSize:12 }}>{open?"▲":"▼"}</span>
-        </div>
-      </button>
-      {open && (
-        <div style={{ padding:"12px 14px", borderTop:`1px solid ${isActive?"#BBF7D0":"#FDE68A"}`, background:"#fff" }}>
-          <div style={{ fontSize:"11px", color:"#475569", lineHeight:1.7, marginBottom:10 }}>
-            <strong style={{ color:"#334155" }}>Why {yoga.status}:</strong><br />{yoga.logic}
-          </div>
-          <div style={{ fontSize:"11px", color:"#166534", background:"#F0FDF4", borderRadius:8, padding:"8px 12px", lineHeight:1.7 }}>
-            <strong>Benefit:</strong> {yoga.benefit}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ASVGrid({ ashtakavarga }: { ashtakavarga: any }) {
-  // Try to extract sarvashtakavarga (total per house) from various API formats
-  let houseScores: Record<number,number> = {};
-  try {
-    const sav = ashtakavarga?.ashtak_varga || ashtakavarga;
-    if (sav && typeof sav==="object") {
-      // Try "sarvashtakavarga" key first
-      if (Array.isArray(sav.sarvashtakavarga)) {
-        sav.sarvashtakavarga.forEach((entry: any, i: number)=>{
-          houseScores[i+1] = entry?.total ?? entry?.score ?? 0;
-        });
-      }
-    }
-  } catch { /* ignore */ }
-
-  if (Object.keys(houseScores).length===0) return (
-    <div style={{ color:"#94A3B8", fontSize:"12px" }}>Ashtakavarga data not available for this chart.</div>
-  );
-
-  return (
-    <div style={{ display:"grid", gridTemplateColumns:"repeat(6,1fr)", gap:6 }}>
-      {Array.from({length:12},(_,i)=>i+1).map(h=>{
-        const score = houseScores[h] ?? 0;
-        const pct = Math.min(100, (score/56)*100);
-        const color = score>=30?"#166534":score>=20?"#1D4ED8":"#991B1B";
-        const bg    = score>=30?"#DCFCE7":score>=20?"#DBEAFE":"#FEE2E2";
-        return (
-          <div key={h} style={{ background:"#F8FAFC", border:"1px solid #E2E8F0", borderRadius:8, padding:"8px 10px", textAlign:"center" }}>
-            <div style={{ fontSize:"9px", color:"#94A3B8", fontWeight:700, letterSpacing:"0.08em" }}>H{h}</div>
-            <div style={{ fontSize:"18px", fontWeight:800, color }}>{score}</div>
-            <div style={{ marginTop:4, height:3, borderRadius:99, background:"#E2E8F0" }}>
-              <div style={{ width:`${pct}%`, height:"100%", borderRadius:99, background:color }} />
-            </div>
-          </div>
-        );
-      })}
+      <div style={{height:40}}/>
     </div>
   );
 }

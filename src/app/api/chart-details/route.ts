@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getOrBuildChart, type GoldenMasterJSON } from "@/lib/astrology/manager";
+import { computeEnrichments } from "./enrichments";
 
 // ─── Lookup tables ─────────────────────────────────────────────────────────────
 const SIGN_LORD: Record<string, string> = {
@@ -377,6 +378,7 @@ export async function GET(req: NextRequest) {
     const yogas = computeYogas(chart);
     const specialPoints = getSpecialPoints(chart);
     const ascLord = getAscLordData(chart);
+    const enrichments = computeEnrichments(chart, tob_display || tob);
 
     // Ascendant nakshatra (from ascendant full degree via Moon planet position proxy)
     const moonP = chart.d1.planets.find(p=>p.name==="Moon");
@@ -431,7 +433,7 @@ export async function GET(req: NextRequest) {
       karakas: chart.karakas,
       specialPoints,
       yogas,
-      ashtakavarga: chart.ashtakavarga,
+      enrichments,
     });
 
   } catch (err: any) {
