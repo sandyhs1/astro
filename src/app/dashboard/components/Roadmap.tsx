@@ -190,7 +190,7 @@ export default function Roadmap({ onClose }: Props) {
     <div className="h-full flex flex-col bg-white overflow-hidden">
 
       {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6">
+      <div className="flex-shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 px-4 md:px-8 py-4 md:py-6">
         <div className="flex items-start justify-between">
           <div className="flex-1 pr-6">
             <p className="text-xs font-bold text-indigo-200 uppercase tracking-[0.2em] mb-2">
@@ -231,7 +231,7 @@ export default function Roadmap({ onClose }: Props) {
               transition={{ delay: i * 0.05, duration: 0.35, ease: "easeOut" }}
             >
               {/* Feature Card */}
-              <div className="bg-white border-b border-slate-200 px-8 py-6">
+              <div className="bg-white border-b border-slate-200 px-4 md:px-8 py-4 md:py-6">
 
                 {/* ── Title Row ── */}
                 <div className="flex items-center gap-4 mb-4">

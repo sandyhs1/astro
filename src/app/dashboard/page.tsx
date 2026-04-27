@@ -580,10 +580,31 @@ export default function DashboardPage() {
       </header>
 
       {/* Main Layout - Light Theme */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col md:flex-row gap-6 lg:gap-8 h-[calc(100vh-64px)]">
+      {/* ── Mobile Bottom Tab Bar (hidden on md+) ── */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 flex items-stretch h-16 safe-area-bottom">
+        <button onClick={() => { setActiveFeature("chat"); }} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "chat" ? "text-indigo-600" : "text-slate-400"}`}>
+          <MessageCircle size={20} /><span>Oracle</span>
+        </button>
+        <button onClick={() => setActiveFeature("destiny")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "destiny" ? "text-indigo-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">🗓️</span><span>Destiny</span>
+        </button>
+        <button onClick={() => setActiveFeature("karma-dna")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "karma-dna" ? "text-indigo-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">🧬</span><span>Karma DNA</span>
+        </button>
+        <button onClick={() => setActiveFeature("karmic-patterns")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "karmic-patterns" ? "text-indigo-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">🔮</span><span>Patterns</span>
+        </button>
+        <button onClick={() => setActiveFeature("roadmap")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "roadmap" ? "text-indigo-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">🗺️</span><span>Roadmap</span>
+        </button>
+      </nav>
+
+      {/* Main Layout */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 md:p-6 flex flex-col md:flex-row gap-4 md:gap-6 lg:gap-8 md:h-[calc(100vh-64px)] pb-16 md:pb-6">
         
         {/* Sidebar - Clean & Structured */}
-        <aside className="w-full md:w-72 flex-shrink-0 flex flex-col gap-6">
+        {/* Sidebar — hidden on mobile, visible on md+ */}
+        <aside className="hidden md:flex md:w-72 flex-shrink-0 flex-col gap-6 overflow-y-auto">
           
           {/* Active Context Container */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -712,7 +733,7 @@ export default function DashboardPage() {
         </aside>
 
         {/* Main Chat Interface - Light Theme Redesign */}
-        <section className="flex-1 w-full flex flex-col bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden relative">
+        <section className="flex-1 w-full flex flex-col bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden relative min-h-0">
             
           {activeFeature === "destiny" && <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "karma-dna" && <KarmaDNA profileId={activeProfileId} profileName={activeProfileName} />}
@@ -740,7 +761,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Messages Area */}
-          <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-6 lg:px-8 py-6 space-y-8 custom-scrollbar">
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-3 md:px-6 lg:px-8 py-4 md:py-6 space-y-6 md:space-y-8 custom-scrollbar">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex flex-col animate-fade-in ${msg.role === "system" ? "items-center" : msg.role === "user" ? "items-end" : "items-start"}`}>
                 
@@ -749,7 +770,7 @@ export default function DashboardPage() {
                     {msg.content}
                   </div>
                 ) : msg.role === "user" ? (
-                  <div className="max-w-[85%] lg:max-w-[75%] bg-indigo-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm shadow-md">
+                  <div className="max-w-[90%] md:max-w-[85%] lg:max-w-[75%] bg-indigo-600 text-white px-4 md:px-5 py-3 rounded-2xl rounded-tr-sm shadow-md">
                     <p className="text-[15px] leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
                   </div>
                 ) : (
@@ -798,7 +819,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Floating Input Area */}
-          <div className="p-4 lg:p-6 bg-white border-t border-slate-100 relative">
+          <div className="p-3 md:p-4 lg:p-6 bg-white border-t border-slate-100 relative">
             
             {/* Dynamic Suggestion Chips */}
             {!isTyping && suggestionChips.length > 0 && (
@@ -873,6 +894,17 @@ export default function DashboardPage() {
         .prose-chat-light li { margin-bottom: 0.25em; }
         .prose-chat-light h1, .prose-chat-light h2, .prose-chat-light h3 { color: #0f172a; font-weight: 700; margin-top: 1.25em; margin-bottom: 0.5em; }
         .prose-chat-light h3 { font-size: 1.1em; }
+        /* Mobile: safe area for bottom nav bar on iPhone */
+        .safe-area-bottom {
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        /* Mobile: prevent rubber-band scroll fighting with chat container */
+        @media (max-width: 767px) {
+          .custom-scrollbar {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+          }
+        }
       `}} />
     </div>
     </PaymentGate>
