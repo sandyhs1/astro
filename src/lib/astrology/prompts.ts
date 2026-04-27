@@ -58,16 +58,36 @@ export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User")
     return `${p.name}|${p.sign}|${p.normDegree.toFixed(2)}°|H${p.house}|${p.nakshatra}P${p.nakshatraPada}|${flags||"—"}`;
   }).join("\n");
 
-  // House table
+  // D1 House table — one line per house, unambiguous
   const houseTable = d1.houses.map((h: HouseData) => {
     const lord = SIGN_LORD[h.sign] || "?";
-    return `H${h.number}(${h.sign},Lord:${lord}):${h.occupants.join(",")||"∅"}`;
-  }).join(" | ");
+    return `H${String(h.number).padStart(2)} | ${h.sign.padEnd(13)} | Lord:${lord.padEnd(8)} | ${h.occupants.length > 0 ? h.occupants.join(", ") : "∅"}`;
+  }).join("\n");
 
-  // D9 planets
+  // D9 planets table
   const d9Table = divisional.d9.planets.map((p: any) =>
     `${p.name}:${p.sign}(H${p.house})`
   ).join(" ");
+
+  // D9 full house table — built from divisional.d9 planets
+  const d9HouseMap: Record<number, string[]> = {};
+  for (let i = 1; i <= 12; i++) d9HouseMap[i] = [];
+  for (const p of divisional.d9.planets) {
+    if (p.house >= 1 && p.house <= 12) d9HouseMap[p.house].push(p.name);
+  }
+  // Build D9 sign sequence from ascendant
+  const D9_SIGNS = [
+    "Aries","Taurus","Gemini","Cancer","Leo","Virgo",
+    "Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces",
+  ];
+  const d9LagnaIdx = D9_SIGNS.findIndex(s => s.toLowerCase() === divisional.d9.ascendant?.toLowerCase());
+  const d9HouseTable = Array.from({ length: 12 }, (_, i) => {
+    const hNum = i + 1;
+    const hSign = d9LagnaIdx >= 0 ? D9_SIGNS[(d9LagnaIdx + i) % 12] : (d9HouseMap[hNum].length > 0 ? "—" : "");
+    const lord = SIGN_LORD[hSign] || "?";
+    const occ = d9HouseMap[hNum];
+    return `H${String(hNum).padStart(2)} | ${hSign.padEnd(13)} | Lord:${lord.padEnd(8)} | ${occ.length > 0 ? occ.join(", ") : "∅"}`;
+  }).join("\n");
 
   // D10 planets
   const d10Table = divisional.d10.planets.map((p: any) =>
@@ -137,7 +157,8 @@ export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User")
     D1_PLANETS: planetTable,
     D1_HOUSES:  houseTable,
     D9_LAGNA:   divisional.d9.ascendant,
-    D9_PLANETS: d9Table,
+    D9_HOUSES:  d9HouseTable,
+    D9_PLANETS_SUMMARY: d9Table,
     D10_LAGNA:  divisional.d10.ascendant,
     D10_PLANETS: d10Table,
     ASV_SARVASHTAKAVARGA: asvSummary || "pending",

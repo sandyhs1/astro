@@ -5,6 +5,11 @@
  *
  * House system: Whole Sign (matches AstroSage, AstroTalk).
  * Karakas: Computed by Jaimini rules (degree within sign, descending).
+ * D9 (Navamsha): Self-computed using Mean Nodes for Rahu/Ketu.
+ *   - API uses True Rahu/Ketu (Swiss Ephemeris oscillating nodes).
+ *   - Classical Parashari Jyotish mandates Mean Rahu/Ketu (uniform motion).
+ *   - For boundary-sitting charts, True vs Mean can shift Rahu/Ketu by 1 D9 house.
+ *   - All traditional software (JHora, AstroSage, Parashara's Light, Kala) use Mean nodes.
  */
 
 import type { RawAstroBundle } from "./batch-fetch";
@@ -100,6 +105,55 @@ export function buildBirthHash(p: BirthParams): string {
   return crypto.createHash("sha256").update(key).digest("hex").slice(0, 16);
 }
 
+// ─── Mean Node Calculation ────────────────────────────────────────────────────
+//
+// Computes Mean Rahu (ascending node) sidereal longitude using:
+//   - IAU 1980 formula: Ω = 125.04452 − 1934.136261·T (tropical)
+//   - Lahiri ayanamsa for sidereal conversion
+//
+// This matches the node position used by JHora, Parashara's Light, and all
+// traditional Parashari Jyotish software for Navamsha computation.
+
+function meanRahuSidereal(
+  year: number, month: number, day: number, hour: number, min: number
+): number {
+  // Julian Day Number for birth moment
+  const a   = Math.floor((14 - month) / 12);
+  const y   = year + 4800 - a;
+  const m   = month + 12 * a - 3;
+  const jdn = day
+    + Math.floor((153 * m + 2) / 5)
+    + 365 * y
+    + Math.floor(y / 4)
+    - Math.floor(y / 100)
+    + Math.floor(y / 400)
+    - 32045;
+  const jd = jdn + (hour - 12 + min / 60) / 24;
+
+  // Julian centuries from J2000.0 (JD 2451545.0)
+  const T = (jd - 2451545.0) / 36525.0;
+
+  // Mean ascending node tropical longitude (IAU 1980)
+  const rahuTropical = ((125.04452 - 1934.136261 * T + 0.0020708 * T * T) % 360 + 360) % 360;
+
+  // Lahiri ayanamsa (accurate to ~0.05° for 1900–2100)
+  // Base: 23.85° at J2000.0, rate: 50.29"/year
+  const lahiriAyanamsa = 23.85 + (T * 100 * 50.29) / 3600;
+
+  // Sidereal = Tropical − Ayanamsa
+  const rahuSidereal = ((rahuTropical - lahiriAyanamsa) % 360 + 360) % 360;
+  return rahuSidereal;
+}
+
+// ─── D9 (Navamsha) Self-Computation ──────────────────────────────────────────
+//
+// Formula: D9 sign index (0-11) = floor(fullDegree × 9 / 30) % 12
+// This is the universal Navamsha formula — independent of sign category.
+
+function d9SignIdx(fullDegree: number): number {
+  return Math.floor((fullDegree * 9) / 30) % 12;
+}
+
 // ─── Main Normalizer ──────────────────────────────────────────────────────────
 
 export function normalizeBundle(
@@ -113,11 +167,10 @@ export function normalizeBundle(
 
   // ── Ascendant ────────────────────────────────────────────────────────────────
   const astro         = bundle.astroDetails || {};
-  // NOTE: astrologyapi.com uses lowercase 'ascendant', 'sign' for moon, 'Naksahtra' (their typo)
   const ascendant: string  = astro.ascendant ?? astro.Ascendant ?? "";
-  const ascendantDeg: number = 0; // Not provided in astro_details; sourced from planets array below
+  const ascendantDeg: number = 0;
   const moonSign: string   = astro.sign ?? astro.moon_sign ?? astro.Moon_sign ?? "";
-  const moonNak: string    = astro.Naksahtra ?? astro.nakshatra ?? astro.moon_nakshatra ?? ""; // 'Naksahtra' is their API typo
+  const moonNak: string    = astro.Naksahtra ?? astro.nakshatra ?? astro.moon_nakshatra ?? "";
   const sunSign: string    = astro.sun_sign ?? astro.Sun_sign ?? "";
 
   if (!ascendant) warnings.push("CRITICAL: Ascendant missing");
@@ -128,7 +181,6 @@ export function normalizeBundle(
   const rawPlanets: any[] = Array.isArray(bundle.planets) ? bundle.planets : [];
   const rawExt: any[]     = Array.isArray(bundle.planetsExtended) ? bundle.planetsExtended : [];
 
-  // Build extended lookup by name
   const extMap: Record<string, any> = {};
   for (const e of rawExt) {
     const n = e.name ?? e.planet_name ?? "";
@@ -145,25 +197,24 @@ export function normalizeBundle(
     const speed: number    = parseFloat(rp.speed ?? "0");
     const isRetro: boolean = rp.isRetro === "true" || rp.isRetro === true || speed < 0;
     const pSign: string    = rp.sign ?? "";
-    // sign_id from API is 1-based (1=Aries).
     const pSignId1: number = parseInt(rp.sign_id ?? rp.signId ?? String(signNum(pSign)), 10);
-    // The API already provides the house number in the 'house' field (Whole Sign).
     const house: number    = parseInt(rp.house ?? "0", 10) || (lagnaSignNum ? wholeSignHouse(pSignId1, lagnaSignNum) : 0);
     const nak: string      = rp.nakshatra ?? rp.nakshatraName ?? "";
     const pada: number     = parseInt(rp.nakshatra_pad ?? rp.nakshatra_pada ?? rp.nakshatraPada ?? rp.Charan ?? "1", 10);
 
-    const ext              = extMap[name.toLowerCase()] || {};
-    const isExalted: boolean    = !!(ext.isExalted ?? ext.is_exalted);
-    const isDebilitated: boolean= !!(ext.isDebilitated ?? ext.is_debilitated);
-    const isCombust: boolean    = !!(ext.isCombust ?? ext.is_combust);
+    const ext                    = extMap[name.toLowerCase()] || {};
+    const isExalted: boolean     = !!(ext.isExalted ?? ext.is_exalted);
+    const isDebilitated: boolean = !!(ext.isDebilitated ?? ext.is_debilitated);
+    const isCombust: boolean     = !!(ext.isCombust ?? ext.is_combust);
 
     if (!name) { warnings.push("Planet with missing name skipped"); continue; }
+    // Skip the 'Ascendant' pseudo-planet — it is NOT a graha
+    if (name.toLowerCase() === "ascendant") continue;
     if (!pSign) warnings.push(`${name}: missing sign`);
 
     planets.push({ name, fullDegree: fullDeg, normDegree: normDeg, speed, isRetro, sign: pSign, signNum: pSignId1, house, nakshatra: nak, nakshatraPada: pada, isExalted, isDebilitated, isCombust });
   }
 
-  // Check all 9 planets present
   for (const expected of PLANET_ORDER) {
     if (!planets.find(p => p.name.toLowerCase() === expected.toLowerCase())) {
       warnings.push(`CRITICAL: Planet missing: ${expected}`);
@@ -171,19 +222,61 @@ export function normalizeBundle(
   }
 
   // ── Houses (Whole Sign) ───────────────────────────────────────────────────────
+  // Use horo_chart/D1 (API's own Whole Sign house chart) as authoritative source.
   const houses: HouseData[] = [];
-  for (let i = 1; i <= 12; i++) {
-    const hSign = SIGNS[(lagnaSignNum - 1 + i - 1) % 12] ?? "";
-    const occupants = planets.filter(p => p.house === i).map(p => p.name);
-    houses.push({ number: i, sign: hSign, signNum: ((lagnaSignNum - 1 + i - 1) % 12) + 1, occupants });
+
+  if (Array.isArray(bundle.horoChartD1) && bundle.horoChartD1.length === 12) {
+    for (let i = 0; i < 12; i++) {
+      const hEntry = bundle.horoChartD1[i];
+      const hSign  = hEntry.sign_name ?? SIGNS[(lagnaSignNum - 1 + i) % 12] ?? "";
+      const rawOcc: string[] = hEntry.planet ?? [];
+      const occupants = rawOcc
+        .filter((pn: string) => pn.toLowerCase() !== "ascendant")
+        .map((pn: string) => pn.charAt(0).toUpperCase() + pn.slice(1).toLowerCase());
+      houses.push({ number: i + 1, sign: hSign, signNum: ((lagnaSignNum - 1 + i) % 12) + 1, occupants });
+    }
+  } else {
+    // Fallback: compute from planet sign positions
+    for (let i = 1; i <= 12; i++) {
+      const hSign = SIGNS[(lagnaSignNum - 1 + i - 1) % 12] ?? "";
+      const occupants = planets.filter(p => p.house === i).map(p => p.name);
+      houses.push({ number: i, sign: hSign, signNum: ((lagnaSignNum - 1 + i - 1) % 12) + 1, occupants });
+    }
   }
 
-  // D9/D10 from horo_chart/:chartId returns an array of house objects:
-  // [{sign:3, sign_name:"Gemini", planet:["RAHU"], ...}]
-  // First entry IS H1 (lagna house), not necessarily sign 1.
+  // ── D9 (Navamsha) — Self-computed with Mean Nodes ─────────────────────────────
+  //
+  // The API's horo_chart/D9 uses True Rahu/Ketu (oscillating nodes).
+  // Classical Parashari Jyotish mandates Mean nodes.
+  // For charts where True Rahu sits at a Navamsha pada boundary (as in Chart 1 / 1985),
+  // True and Mean nodes produce different D9 house placements.
+  // We compute D9 from first principles, substituting Mean Rahu/Ketu for the nodes.
+
+  // 1. Compute Mean Rahu/Ketu sidereal longitude
+  const mRahu = meanRahuSidereal(params.year, params.month, params.day, params.hour, params.min);
+  const mKetu = (mRahu + 180) % 360;
+
+  // 2. D9 Lagna — from ascendant full degree (use "Ascendant" raw entry)
+  const ascRaw    = rawPlanets.find((rp: any) => (rp.name ?? "").toLowerCase() === "ascendant");
+  const ascFull   = ascRaw ? parseFloat(ascRaw.fullDegree ?? ascRaw.full_degree ?? "0") : (lagnaSignNum - 1) * 30;
+  const d9LagnaIdx  = d9SignIdx(ascFull);
+  const d9LagnaSign = SIGNS[d9LagnaIdx] ?? "";
+
+  // 3. Compute D9 sign and house for each planet
+  const d9Planets: Array<{ name: string; sign: string; house: number }> = planets.map((p: PlanetData) => {
+    // Use Mean node for Rahu/Ketu; True (API) position for all other planets
+    const fullDeg = (p.name === "Rahu") ? mRahu : (p.name === "Ketu") ? mKetu : p.fullDegree;
+    const sIdx    = d9SignIdx(fullDeg);
+    const d9Sign  = SIGNS[sIdx] ?? "";
+    const d9House = ((sIdx - d9LagnaIdx + 12) % 12) + 1;
+    return { name: p.name, sign: d9Sign, house: d9House };
+  });
+
+  const d9 = { ascendant: d9LagnaSign, planets: d9Planets };
+
+  // ── D10 — use API array (no node-type issue in D10) ───────────────────────────
   function parseHoroChartArray(raw: any): { ascendant: string; planets: Array<{ name: string; sign: string; house: number }> } {
     if (!Array.isArray(raw) || raw.length === 0) return { ascendant: "", planets: [] };
-    // First element = House 1 = Lagna
     const lagnaEntry = raw[0];
     const asc = lagnaEntry.sign_name ?? "";
     const result: Array<{ name: string; sign: string; house: number }> = [];
@@ -192,7 +285,6 @@ export function normalizeBundle(
       const hEntry   = raw[i];
       const planetNames: string[] = hEntry.planet ?? [];
       for (const pName of planetNames) {
-        // API returns uppercase: "RAHU", "SUN" etc.
         const formatted = pName.charAt(0).toUpperCase() + pName.slice(1).toLowerCase();
         result.push({ name: formatted, sign: hEntry.sign_name ?? "", house: houseNum });
       }
@@ -200,26 +292,20 @@ export function normalizeBundle(
     return { ascendant: asc, planets: result };
   }
 
-  const d9  = parseHoroChartArray(bundle.horoChartD9);
   const d10 = parseHoroChartArray(bundle.horoChartD10);
 
   // ── Dasha Parsing ────────────────────────────────────────────────────────
   // AstrologyAPI returns dates in "D-M-YYYY  H:MM" format — NOT ISO.
-  // e.g. "8-12-2010  3:44"  →  must be parsed manually.
   const cd = bundle.currentDasha || {};
   const md = bundle.majorDasha   || {};
 
-  /**
-   * Parse AstrologyAPI date string: "D-M-YYYY  H:MM" → Date
-   */
   function parseAstroDate(s: string): Date {
     if (!s) return new Date(NaN);
-    // "8-12-2010  3:44"  →  split on spaces+dash
     const clean = s.trim().replace(/\s+/g, " ");
-    const parts = clean.split(" "); // ["8-12-2010", "3:44"]
+    const parts = clean.split(" ");
     if (parts.length < 1) return new Date(NaN);
-    const datePart  = parts[0]; // "8-12-2010"
-    const timePart  = parts[1] || "0:00"; // "3:44"
+    const datePart  = parts[0];
+    const timePart  = parts[1] || "0:00";
     const [d, m, y] = datePart.split("-").map(Number);
     const [hr, min] = timePart.split(":").map(Number);
     if (!d || !m || !y) return new Date(NaN);
@@ -234,8 +320,6 @@ export function normalizeBundle(
   let antardashaEnd = "";
   let pratyantar    = "";
 
-  // majorDasha is an array of { planet, start, end }
-  // currentDasha has { major: { dasha_period: [...] }, minor: {...}, sub_minor: {...} }
   const majorPeriods: any[] =
     (Array.isArray(md) ? md : null) ??
     cd.major?.dasha_period ??
@@ -255,18 +339,15 @@ export function normalizeBundle(
       mahadasha    = activePeriod.planet || activePeriod.name || "";
       mahadashaEnd = activePeriod.end    || "";
     } else {
-      // No active found — find first future period
       const future = majorPeriods.find((p: any) => parseAstroDate(p.end || "") > now);
       if (future) { mahadasha = future.planet || ""; mahadashaEnd = future.end || ""; }
     }
 
-    // Store next dasha in full for prompts
-    (cd as any)._nextMahadasha   = nextPeriod?.planet || "";
-    (cd as any)._nextMahadashaStart = nextPeriod?.start || "";
-    (cd as any)._nextMahadashaEnd   = nextPeriod?.end   || "";
+    (cd as any)._nextMahadasha      = nextPeriod?.planet || "";
+    (cd as any)._nextMahadashaStart = nextPeriod?.start  || "";
+    (cd as any)._nextMahadashaEnd   = nextPeriod?.end    || "";
   }
 
-  // Antardasha from currentDasha.minor
   if (cd.minor?.dasha_period) {
     const minorPeriods: any[] = cd.minor.dasha_period;
     const activeMinor = minorPeriods.find((p: any) => {
@@ -280,7 +361,6 @@ export function normalizeBundle(
     }
   }
 
-  // Pratyantar from currentDasha.sub_minor
   if (cd.sub_minor?.dasha_period) {
     const subMinorPeriods: any[] = cd.sub_minor.dasha_period;
     const activeSub = subMinorPeriods.find((p: any) => {
@@ -305,7 +385,6 @@ export function normalizeBundle(
   };
 
   // ── Jaimini Karakas ───────────────────────────────────────────────────────────
-  // 7 planets (not Rahu/Ketu), ranked by normDegree descending
   const KARAKA_PLANETS = ["Sun","Moon","Mars","Mercury","Jupiter","Venus","Saturn"];
   const KARAKA_LABELS  = ["ak","amk","bk","mk","pk","gk","dk"] as const;
 
