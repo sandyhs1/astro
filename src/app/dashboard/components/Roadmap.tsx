@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface RoadmapFeature {
   id: string;
@@ -100,7 +101,7 @@ const FEATURES: RoadmapFeature[] = [
     title: "Family Karma Matrix",
     tagline: "Your family is not random. It is your most complex karmic assignment.",
     intelligence:
-      "A multi-chart cross-analysis engine that overlays all family profiles in your account. The intelligence layer identifies Dasha confluence zones — periods when multiple family members are simultaneously under malefic or benefic planetary periods. It surfaces the 3 dominant karmic themes across the family lineage and identifies which soul contracts are active between specific members. No other intelligence platform in the world has built this.",
+      "A multi-chart cross-analysis engine that overlays all family profiles in your account. The intelligence layer identifies Dasha confluence zones — periods when multiple family members are simultaneously under malefic or benefic planetary periods. It surfaces the 3 dominant karmic themes across the family lineage and identifies which soul contracts are active between specific members.",
     impact:
       "Family conflict is almost never what it appears to be. When you can see the karmic architecture beneath the surface, you gain the power to consciously evolve it instead of unconsciously repeating it.",
     vedicCore: ["Inter-chart Dasha Overlay", "Jaimini Karakas", "12th Lord Contracts", "Graha Drishti Cross-Chart", "Lagna Lord Synergy"],
@@ -160,24 +161,39 @@ const FEATURES: RoadmapFeature[] = [
   },
 ];
 
-const TIER_STYLES = {
+const TIER_CONFIG = {
   flagship: {
-    badge: "bg-amber-50 text-amber-700 border border-amber-200",
     label: "Flagship",
-    titleColor: "text-indigo-900",
-    accent: "bg-amber-500",
+    badgeBg: "#FEF3C7",
+    badgeColor: "#92400E",
+    badgeBorder: "#FDE68A",
+    accentGradient: "linear-gradient(135deg, #6366F1 0%, #A855F7 100%)",
+    accentLight: "#EDE9FE",
+    accentText: "#6D28D9",
+    borderColor: "#C4B5FD",
+    numberColor: "#DDD6FE",
   },
   premium: {
-    badge: "bg-purple-50 text-purple-700 border border-purple-200",
     label: "Premium",
-    titleColor: "text-indigo-900",
-    accent: "bg-purple-500",
+    badgeBg: "#F3E8FF",
+    badgeColor: "#7E22CE",
+    badgeBorder: "#E9D5FF",
+    accentGradient: "linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)",
+    accentLight: "#FDF4FF",
+    accentText: "#7C3AED",
+    borderColor: "#DDD6FE",
+    numberColor: "#EDE9FE",
   },
   core: {
-    badge: "bg-slate-100 text-slate-600 border border-slate-200",
     label: "Core",
-    titleColor: "text-indigo-900",
-    accent: "bg-indigo-400",
+    badgeBg: "#F0F9FF",
+    badgeColor: "#0369A1",
+    badgeBorder: "#BAE6FD",
+    accentGradient: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+    accentLight: "#EFF6FF",
+    accentText: "#1D4ED8",
+    borderColor: "#BFDBFE",
+    numberColor: "#DBEAFE",
   },
 };
 
@@ -185,122 +201,156 @@ interface Props {
   onClose?: () => void;
 }
 
-export default function Roadmap({ onClose }: Props) {
-  return (
-    <div className="h-full flex flex-col bg-white overflow-hidden">
+function FeatureCard({ f, index }: { f: RoadmapFeature; index: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const cfg = TIER_CONFIG[f.tier];
 
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 px-4 md:px-8 py-4 md:py-6">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 pr-6">
-            <p className="text-xs font-bold text-indigo-200 uppercase tracking-[0.2em] mb-2">
-              Intelligence Roadmap
-            </p>
-            <h1 className="text-lg font-black text-white leading-snug mb-3 max-w-2xl">
-              Quantum Karma is not an astrology app. It is the world&apos;s most precise
-              Vedic intelligence system for people who want to understand — and change —
-              the trajectory of their lives.
-            </h1>
-            <p className="text-sm text-indigo-200 leading-relaxed max-w-xl">
-              Every feature below is engineered on classical Vedic Jyotisha — computed
-              by fine-tuned frontier models across D1 through D60 divisional charts.
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.4, ease: "easeOut" }}
+      style={{ marginBottom: 16 }}
+    >
+      <div
+        style={{
+          background: "#fff",
+          border: `1.5px solid ${cfg.borderColor}`,
+          borderRadius: 16,
+          overflow: "hidden",
+          boxShadow: "0 2px 12px rgba(99,102,241,0.06)",
+        }}
+      >
+        {/* ── Accent Bar ── */}
+        <div style={{ height: 4, background: cfg.accentGradient }} />
+
+        {/* ── Card Header ── */}
+        <div style={{ padding: "20px 20px 0 20px" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+            {/* Number + Icon */}
+            <div style={{ flexShrink: 0, textAlign: "center" }}>
+              <div style={{ fontSize: 11, fontWeight: 900, color: cfg.numberColor, fontFamily: "monospace", letterSpacing: "0.05em" }}>
+                {f.number}
+              </div>
+              <div style={{ fontSize: 28, lineHeight: 1, marginTop: 2 }}>{f.icon}</div>
+            </div>
+
+            {/* Title block */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 800, color: "#0F172A", margin: 0, lineHeight: 1.3 }}>
+                  {f.title}
+                </h2>
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
+                    padding: "2px 8px", borderRadius: 99,
+                    background: cfg.badgeBg, color: cfg.badgeColor, border: `1px solid ${cfg.badgeBorder}`,
+                  }}
+                >
+                  {cfg.label}
+                </span>
+                <span
+                  style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
+                    padding: "2px 8px", borderRadius: 99,
+                    background: "#ECFDF5", color: "#065F46", border: "1px solid #A7F3D0",
+                  }}
+                >
+                  Coming Soon
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Tagline ── */}
+          <div
+            style={{
+              margin: "14px 0 0 0",
+              background: cfg.accentLight,
+              borderRadius: 10,
+              padding: "10px 14px",
+              borderLeft: `3px solid ${cfg.accentText}`,
+            }}
+          >
+            <p style={{ fontSize: 13, fontWeight: 600, color: cfg.accentText, margin: 0, lineHeight: 1.6, fontStyle: "italic" }}>
+              &ldquo;{f.tagline}&rdquo;
             </p>
           </div>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg text-indigo-300 hover:text-white hover:bg-white/10 transition-all flex-shrink-0"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          )}
         </div>
-      </div>
 
-      {/* ── Feature List ──────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50">
-        {FEATURES.map((f, i) => {
-          const cfg = TIER_STYLES[f.tier];
-          return (
-            <motion.div
-              key={f.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05, duration: 0.35, ease: "easeOut" }}
+        {/* ── Expandable Body ── */}
+        <div style={{ padding: "0 20px" }}>
+          <button
+            onClick={() => setExpanded(o => !o)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              width: "100%", background: "none", border: "none",
+              padding: "12px 0", cursor: "pointer",
+              fontSize: 11, fontWeight: 700, color: "#94A3B8",
+              letterSpacing: "0.1em", textTransform: "uppercase",
+            }}
+          >
+            <span style={{ flex: 1, textAlign: "left" }}>
+              {expanded ? "Hide Details" : "Explore Intelligence Layer"}
+            </span>
+            <svg
+              width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease", flexShrink: 0 }}
             >
-              {/* Feature Card */}
-              <div className="bg-white border-b border-slate-200 px-4 md:px-8 py-4 md:py-6">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
 
-                {/* ── Title Row ── */}
-                <div className="flex items-center gap-4 mb-4">
-                  {/* Number */}
-                  <span className="text-2xl font-black text-slate-200 tabular-nums select-none w-8 flex-shrink-0">
-                    {f.number}
-                  </span>
+          <AnimatePresence initial={false}>
+            {expanded && (
+              <motion.div
+                key="body"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.28, ease: "easeInOut" }}
+                style={{ overflow: "hidden" }}
+              >
+                <div style={{ paddingBottom: 20, display: "flex", flexDirection: "column", gap: 14 }}>
 
-                  {/* Icon */}
-                  <span className="text-2xl flex-shrink-0">{f.icon}</span>
-
-                  {/* Title + Badge */}
-                  <div className="flex-1 flex items-center gap-3 flex-wrap">
-                    <h2 className="text-base font-black text-slate-900 tracking-tight">
-                      {f.title}
-                    </h2>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${cfg.badge}`}>
-                      {cfg.label}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Coming Soon
-                    </span>
-                  </div>
-                </div>
-
-                {/* ── Tagline ── */}
-                <p className="text-sm font-semibold text-indigo-700 mb-4 pl-16 leading-snug">
-                  &ldquo;{f.tagline}&rdquo;
-                </p>
-
-                {/* ── Body ── */}
-                <div className="pl-16 space-y-4">
-
-                  {/* Intelligence layer */}
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                  {/* Intelligence Layer */}
+                  <div style={{ background: "#F8FAFC", borderRadius: 10, padding: "14px 16px", border: "1px solid #E2E8F0" }}>
+                    <div style={{ fontSize: 9, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: "#94A3B8", marginBottom: 8 }}>
                       The Intelligence Layer
-                    </p>
-                    <p className="text-sm text-slate-700 leading-relaxed">
+                    </div>
+                    <p style={{ fontSize: 13, color: "#334155", lineHeight: 1.7, margin: 0 }}>
                       {f.intelligence}
                     </p>
                   </div>
 
-                  {/* Divider */}
-                  <div className="border-t border-slate-100" />
-
-                  {/* Impact */}
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                  {/* Why It Changes Everything */}
+                  <div style={{ background: "#FFFBEB", borderRadius: 10, padding: "14px 16px", border: "1px solid #FDE68A" }}>
+                    <div style={{ fontSize: 9, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: "#92400E", marginBottom: 8 }}>
                       Why It Changes Everything
-                    </p>
-                    <p className="text-sm text-slate-600 leading-relaxed italic">
+                    </div>
+                    <p style={{ fontSize: 13, color: "#78350F", lineHeight: 1.7, margin: 0, fontStyle: "italic" }}>
                       {f.impact}
                     </p>
                   </div>
 
-                  {/* Divider */}
-                  <div className="border-t border-slate-100" />
-
-                  {/* Vedic core chips */}
+                  {/* Vedic Core Chips */}
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                    <div style={{ fontSize: 9, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: "#94A3B8", marginBottom: 8 }}>
                       Vedic Computation Core
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {f.vedicCore.map((v) => (
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {f.vedicCore.map(v => (
                         <span
                           key={v}
-                          className="text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200"
+                          style={{
+                            fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 99,
+                            background: cfg.accentLight, color: cfg.accentText,
+                            border: `1px solid ${cfg.borderColor}`,
+                          }}
                         >
                           {v}
                         </span>
@@ -309,22 +359,117 @@ export default function Roadmap({ onClose }: Props) {
                   </div>
 
                 </div>
-              </div>
-            </motion.div>
-          );
-        })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
-        {/* ── Footer Promise ── */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6 text-center">
-          <p className="text-xs font-bold text-indigo-200 uppercase tracking-widest mb-2">
+export default function Roadmap({ onClose }: Props) {
+  const flagship = FEATURES.filter(f => f.tier === "flagship");
+  const premium  = FEATURES.filter(f => f.tier === "premium");
+  const core     = FEATURES.filter(f => f.tier === "core");
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#fff", overflow: "hidden" }}>
+
+      {/* ── Header ── */}
+      <div style={{ flexShrink: 0, background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)", padding: "20px 20px 18px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+          <div style={{ flex: 1, paddingRight: onClose ? 16 : 0 }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "rgba(199,210,254,0.9)", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 8px" }}>
+              Intelligence Roadmap
+            </p>
+            <h1 style={{ fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.45, margin: "0 0 8px" }}>
+              Quantum Karma is the world&apos;s most precise Vedic intelligence system — built for people who want to understand and change the trajectory of their lives.
+            </h1>
+            <p style={{ fontSize: 12, color: "rgba(199,210,254,0.85)", lineHeight: 1.6, margin: 0 }}>
+              Every feature is engineered on classical Vedic Jyotisha, computed by fine-tuned frontier models across D1 through D60 divisional charts.
+            </p>
+          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              style={{ padding: 8, borderRadius: 8, background: "rgba(255,255,255,0.1)", border: "none", cursor: "pointer", color: "#C7D2FE", flexShrink: 0 }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Tier legend */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+          {[
+            { label: "Flagship", bg: "#FEF3C7", color: "#92400E" },
+            { label: "Premium",  bg: "#F3E8FF", color: "#7E22CE" },
+            { label: "Core",     bg: "#E0F2FE", color: "#0369A1" },
+          ].map(t => (
+            <span key={t.label} style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 99, background: t.bg, color: t.color }}>
+              {t.label}
+            </span>
+          ))}
+          <span style={{ fontSize: 10, color: "rgba(199,210,254,0.7)", alignSelf: "center" }}>— Tap any card to explore</span>
+        </div>
+      </div>
+
+      {/* ── Scrollable Feature List ── */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 16px 8px", background: "#F8FAFC" }} className="custom-scrollbar">
+
+        {/* Flagship */}
+        <SectionDivider label="Flagship Features" emoji="🏆" color="#92400E" bg="#FFFBEB" border="#FDE68A" />
+        {flagship.map((f, i) => <FeatureCard key={f.id} f={f} index={i} />)}
+
+        {/* Premium */}
+        <SectionDivider label="Premium Features" emoji="💎" color="#7E22CE" bg="#FAF5FF" border="#E9D5FF" />
+        {premium.map((f, i) => <FeatureCard key={f.id} f={f} index={flagship.length + i} />)}
+
+        {/* Core */}
+        <SectionDivider label="Core Features" emoji="⚙️" color="#0369A1" bg="#F0F9FF" border="#BAE6FD" />
+        {core.map((f, i) => <FeatureCard key={f.id} f={f} index={flagship.length + premium.length + i} />)}
+
+        {/* Footer */}
+        <div
+          style={{
+            margin: "8px 0 24px",
+            background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+            borderRadius: 16,
+            padding: "20px 24px",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ fontSize: 10, fontWeight: 800, color: "rgba(199,210,254,0.9)", letterSpacing: "0.18em", textTransform: "uppercase", margin: "0 0 8px" }}>
             The Quantum Karma Promise
           </p>
-          <p className="text-base font-bold text-white leading-snug max-w-lg mx-auto">
-            We don&apos;t just tell you what the stars say. We tell you what your specific
-            karma means — and exactly what to do about it.
+          <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1.6, margin: 0 }}>
+            We don&apos;t just tell you what the stars say. We tell you what your specific karma means — and exactly what to do about it.
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SectionDivider({
+  label, emoji, color, bg, border,
+}: { label: string; emoji: string; color: string; bg: string; border: string }) {
+  return (
+    <div
+      style={{
+        display: "flex", alignItems: "center", gap: 10,
+        marginBottom: 14, marginTop: 4,
+        padding: "8px 14px", borderRadius: 10,
+        background: bg, border: `1px solid ${border}`,
+      }}
+    >
+      <span style={{ fontSize: 16 }}>{emoji}</span>
+      <span style={{ fontSize: 11, fontWeight: 800, color, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        {label}
+      </span>
     </div>
   );
 }

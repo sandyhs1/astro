@@ -36,6 +36,41 @@ const ENEMIES: Record<string,string[]> = {
   Rahu:["Sun","Moon","Mars"],Ketu:["Sun","Moon","Saturn"],
 };
 
+// ─── Nakshatra aliases (API variant → canonical key) ─────────────────────────
+const NAK_ALIAS: Record<string,string> = {
+  "Mrigasira":"Mrigashira","Mrigasirsha":"Mrigashira","Mrugasira":"Mrigashira",
+  "Aridra":"Ardra","Thiruvadhirai":"Ardra",
+  "Punartham":"Punarvasu","Punarpusam":"Punarvasu",
+  "Poosam":"Pushya","Pushyami":"Pushya",
+  "Ayilyam":"Ashlesha","Aslesha":"Ashlesha",
+  "Makam":"Magha","Makha":"Magha",
+  "Pooram":"Purva Phalguni","Purva Phalguni":"Purva Phalguni","Pubba":"Purva Phalguni",
+  "Uttaram":"Uttara Phalguni","Uttara Phalguni":"Uttara Phalguni","Uttara":"Uttara Phalguni",
+  "Attam":"Hasta",
+  "Chittirai":"Chitra",
+  "Swathi":"Swati",
+  "Vishaka":"Vishakha","Visakha":"Vishakha",
+  "Anusham":"Anuradha","Anizham":"Anuradha",
+  "Kettai":"Jyeshtha","Jyeshta":"Jyeshtha",
+  "Moolam":"Mula","Moola":"Mula",
+  "Pooradam":"Purva Ashadha","Purvashada":"Purva Ashadha","Purvashadha":"Purva Ashadha",
+  "Uttaradam":"Uttara Ashadha","Uttarashada":"Uttara Ashadha","Uttarashadha":"Uttara Ashadha",
+  "Thiruvonam":"Shravana","Sravana":"Shravana",
+  "Avittam":"Dhanishtha","Dhanistha":"Dhanishtha","Shravishtha":"Dhanishtha",
+  "Sadayam":"Shatabhisha","Shatabhisaj":"Shatabhisha","Shatabhishak":"Shatabhisha",
+  "Poorattathi":"Purva Bhadrapada","Purvabhadra":"Purva Bhadrapada","Purvabhadrapada":"Purva Bhadrapada",
+  "Uttarattathi":"Uttara Bhadrapada","Uttarabhadra":"Uttara Bhadrapada","Uttarabhadrapada":"Uttara Bhadrapada",
+  "Revathi":"Revati",
+  "Ashvini":"Ashwini","Aswini":"Ashwini","Aswathi":"Ashwini",
+  "Bharani":"Bharani",
+  "Krittika":"Krittika","Karthikai":"Krittika","Krithika":"Krittika",
+  "Rohini":"Rohini",
+};
+function normalizeNak(raw: string): string {
+  if (!raw) return "";
+  return NAK_ALIAS[raw] ?? raw;
+}
+
 // ─── Nakshatra Data ───────────────────────────────────────────────────────────
 export const NAKSHATRA_DATA: Record<string,{
   ruler:string; deity:string; symbol:string;
@@ -192,8 +227,8 @@ export function computeEnrichments(chart: GoldenMasterJSON, tob: string) {
   // 1. Vargottama planets (same sign in D1 and D9)
   const vargottama = planets
     .map(p => {
-      const d9p = divisional.d9.planets.find(d=>d.name===p.name);
-      return d9p && d9p.sign===p.sign ? {
+      const d9p = divisional.d9.planets.find(d=>d.name.toLowerCase()===p.name.toLowerCase());
+      return d9p && d9p.sign.toLowerCase()===p.sign.toLowerCase() ? {
         name: p.name,
         sign: p.sign,
         house: p.house,
@@ -214,7 +249,7 @@ export function computeEnrichments(chart: GoldenMasterJSON, tob: string) {
   } : null;
 
   // 3. Moon nakshatra deep-dive
-  const moonNak = d1.moonNakshatra;
+  const moonNak = normalizeNak(d1.moonNakshatra);
   const moonNakData = moonNak ? NAKSHATRA_DATA[moonNak] ?? null : null;
 
   // 4. Planet strengths ranking
@@ -246,5 +281,5 @@ export function computeEnrichments(chart: GoldenMasterJSON, tob: string) {
   // 6. Hora Lagna
   const horaLagna = computeHoraLagna(chart, tob);
 
-  return { vargottama, rahuKetuAxis, moonNakData, moonNakName: moonNak, planetStrengths, retrogrades, horaLagna };
+  return { vargottama, rahuKetuAxis, moonNakData, moonNakName: moonNak || d1.moonNakshatra, planetStrengths, retrogrades, horaLagna };
 }
