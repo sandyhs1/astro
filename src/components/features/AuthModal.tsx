@@ -5,13 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaTimes, FaArrowRight, FaGoogle } from "react-icons/fa";
 import { useAuthModal } from "@/context/AuthModalContext";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 const grad = "linear-gradient(135deg, hsl(245,60%,28%), hsl(270,60%,40%), hsl(30,80%,55%))";
 
 export default function AuthModal() {
     const { isOpen, view, closeAuthModal, openAuthModal } = useAuthModal();
-    const router = useRouter();
     const supabase = createClient();
 
     const [email, setEmail] = useState("");
@@ -70,38 +68,39 @@ export default function AuthModal() {
                 });
                 if (signUpError) throw signUpError;
 
-                // ── Apply promo code if entered ───────────────────────────────
+                // Sign in immediately so the session is available
+                const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+                if (signInError) throw signInError;
+
+                // Apply promo code if entered
                 if (promoCode.trim()) {
-                    // Sign in immediately to get a session, then call the promo API
-                    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-                    if (!signInError) {
-                        const promoRes = await fetch("/api/apply-promo", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ promoCode: promoCode.trim() }),
-                        });
-                        const promoData = await promoRes.json();
-                        if (promoRes.ok) {
-                            // Promo valid — go straight to dashboard
-                            closeAuthModal();
-                            router.push("/dashboard");
-                            return;
-                        } else {
-                            // Promo failed — account still created, let user know
-                            setMessage(`Account created! Note: ${promoData.error} Please sign in.`);
-                            return;
-                        }
+                    const promoRes = await fetch("/api/apply-promo", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ promoCode: promoCode.trim() }),
+                    });
+                    const promoData = await promoRes.json();
+                    if (!promoRes.ok) {
+                        // Promo failed — still go to dashboard, just notify
+                        setMessage(`Note: ${promoData.error}`);
                     }
                 }
 
-                // ── Direct Login if no promo ──────────────────────────────────────
-                const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-                if (signInError) throw signInError;
-                
+                // Hard redirect — bypasses Next.js router delay entirely
                 closeAuthModal();
-                router.push("/dashboard");
+                window.location.href = "/dashboard";
 
             } else if (view === "sign_in") {
+                // ── Email / password sign-in ──────────────────────────────────
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+
+                // Hard redirect for instant navigation
+                closeAuthModal();
+                window.location.href = "/dashboard";
+
+            } else {
+                // ── Forgot password ───────────────────────────────────────────
                 const { error } = await supabase.auth.resetPasswordForEmail(email, {
                     redirectTo: `${window.location.origin}/auth/callback?redirect=/dashboard/reset-password`,
                 });

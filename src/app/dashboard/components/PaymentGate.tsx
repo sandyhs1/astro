@@ -123,6 +123,7 @@ export default function PaymentGate({ children }: PaymentGateProps) {
   const [error, setError] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
+  const [paying, setPaying] = useState(false); // immediate button feedback
 
   // ── Intake form state ──────────────────────────────────────────────────────
   const [intakeForm, setIntakeForm] = useState({
@@ -179,6 +180,20 @@ export default function PaymentGate({ children }: PaymentGateProps) {
     checkPaymentStatus();
   }, []);
 
+  // ── Eagerly preload payment SDKs when gate first shows ──────────────────────
+  // Scripts are loaded silently in the background so by the time the user
+  // clicks 'Pay Now', the SDKs are already parsed and ready — no delay.
+  useEffect(() => {
+    if (gateState !== "gate" && gateState !== "confirm") return;
+    loadRazorpay();
+    loadjQuery().then(() => loadFreemius());
+  }, [gateState]);
+
+  // Reset paying spinner when we leave 'processing' (cancel, error, success)
+  useEffect(() => {
+    if (gateState !== "processing") setPaying(false);
+  }, [gateState]);
+
   // ── Affordability Widget — ref callback ───────────────────────────────────
   // A ref callback fires the EXACT moment React mounts the element so there
   // is zero timing race — no getElementById needed.
@@ -209,16 +224,15 @@ export default function PaymentGate({ children }: PaymentGateProps) {
   async function handleProceed(plan: PlanType) {
     setError(null);
     if (currency === "INR") {
-      // Show the confirm/EMI screen instead of directly opening Razorpay
       setGateState("confirm");
       return;
     }
-    // USD goes straight through
     handlePay(plan);
   }
 
   async function handlePay(plan: PlanType) {
     setError(null);
+    setPaying(true);      // immediate visual feedback before async work starts
     setGateState("processing");
 
     // ─── Freemius (USD) Flow ──────────────────────────────────────────────────
@@ -836,8 +850,8 @@ export default function PaymentGate({ children }: PaymentGateProps) {
               {/* CTA Button — for INR shows confirm screen first; USD goes straight to checkout */}
               <div style={{ marginTop: 20 }}>
                 <motion.button
-                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                  disabled={gateState === "processing"}
+                  whileHover={{ scale: paying ? 1 : 1.02 }} whileTap={{ scale: 0.98 }}
+                  disabled={paying || gateState === "processing"}
                   onClick={() => handleProceed(selectedPlan)}
                   style={{
                     width: "100%",
@@ -849,12 +863,12 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                     fontSize: "12px",
                     letterSpacing: "0.15em",
                     textTransform: "uppercase",
-                    cursor: gateState === "processing" ? "not-allowed" : "pointer",
-                    opacity: gateState === "processing" ? 0.6 : 1,
+                    cursor: (paying || gateState === "processing") ? "not-allowed" : "pointer",
+                    opacity: (paying || gateState === "processing") ? 0.6 : 1,
                     transition: "all 0.2s",
                   }}>
-                  {gateState === "processing"
-                    ? "OPENING PAYMENT WINDOW..."
+                  {paying || gateState === "processing"
+                    ? "⏳ OPENING PAYMENT..."
                     : `→ ${PLANS[selectedPlan].cta} · ${currency === "INR" ? PLANS[selectedPlan].price : PLANS[selectedPlan].priceUSD}`}
                 </motion.button>
               </div>
@@ -941,7 +955,8 @@ export default function PaymentGate({ children }: PaymentGateProps) {
 
                 {/* Pay Now button */}
                 <motion.button
-                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: paying ? 1 : 1.02 }} whileTap={{ scale: 0.98 }}
+                  disabled={paying}
                   onClick={() => handlePay(selectedPlan)}
                   style={{
                     width: "100%",
@@ -953,11 +968,13 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                     fontSize: "13px",
                     letterSpacing: "0.15em",
                     textTransform: "uppercase",
-                    cursor: "pointer",
+                    cursor: paying ? "not-allowed" : "pointer",
+                    opacity: paying ? 0.6 : 1,
                     fontWeight: 700,
+                    transition: "all 0.2s",
                   }}
                 >
-                  → Pay Now · {PLANS[selectedPlan].price}
+                  {paying ? "⏳ OPENING PAYMENT..." : `→ Pay Now · ${PLANS[selectedPlan].price}`}
                 </motion.button>
 
                 {selectedPlan === "plan2" && (
