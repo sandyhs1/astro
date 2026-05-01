@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import emailjs from "@emailjs/browser";
@@ -179,60 +179,36 @@ export default function PaymentGate({ children }: PaymentGateProps) {
     checkPaymentStatus();
   }, []);
 
-  // ── Initialize Affordability Widget on the confirm screen ─────────────────
-  // IMPORTANT: Widget is only shown on the "confirm" pre-checkout screen, never
-  // on the plan selection screen. This avoids cluttering the pricing cards.
-  //
-  // Timing note: We use a setTimeout(300ms) because Framer Motion's enter
-  // animation delays DOM paint. Without the delay, getElementById returns null
-  // and the SDK's render() call silently fails.
-  useEffect(() => {
-    if (currency !== "INR" || gateState !== "confirm") return;
+  // ── Affordability Widget — ref callback approach ────────────────────────────
+  // Using a ref callback instead of useEffect + setTimeout.
+  // A ref callback fires the EXACT moment React mounts the element into the
+  // DOM, so there is zero timing race — getElementById is guaranteed to work.
+  const affordabilityContainerRef = useCallback((container: HTMLDivElement | null) => {
+    if (!container || currency !== "INR") return;
 
-    let timer: ReturnType<typeof setTimeout>;
-    let isSubscribed = true;
+    const amountStr = PLANS[selectedPlan].price;
+    const amountPaise = parseInt(amountStr.replace(/\D/g, "")) * 100;
 
-    const init = async () => {
-      const loaded = await loadRazorpayAffordability();
-      if (!loaded || !isSubscribed) return;
-
-      const RAS = (window as any).RazorpayAffordabilitySuite;
-      if (!RAS) {
-        console.warn("[Affordability] RazorpayAffordabilitySuite not available after script load");
+    loadRazorpayAffordability().then((loaded) => {
+      if (!loaded) {
+        console.warn("[Affordability] SDK script failed to load");
         return;
       }
-
-      const amountStr = PLANS[selectedPlan].price;
-      const amountPaise = parseInt(amountStr.replace(/\D/g, "")) * 100;
-
-      // Wait for Framer Motion animation to mount the DOM node
-      timer = setTimeout(() => {
-        if (!isSubscribed) return;
-        const container = document.getElementById("razorpay-affordability-widget");
-        if (!container) {
-          console.warn("[Affordability] Container div not found in DOM — confirm screen may not be mounted yet");
-          return;
-        }
-        container.innerHTML = ""; // Clear any previous render
-        console.log("[Affordability] Rendering widget, amount (paise):", amountPaise);
-        try {
-          const suite = new RAS({
-            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-            amount: amountPaise,
-          });
-          suite.render();
-        } catch (e) {
-          console.error("[Affordability] render() failed:", e);
-        }
-      }, 300);
-    };
-
-    init();
-    return () => {
-      isSubscribed = false;
-      clearTimeout(timer);
-    };
-  }, [currency, selectedPlan, gateState]);
+      const RAS = (window as any).RazorpayAffordabilitySuite;
+      if (!RAS) {
+        console.warn("[Affordability] RazorpayAffordabilitySuite class not found");
+        return;
+      }
+      container.innerHTML = ""; // clear any stale render
+      try {
+        console.log("[Affordability] Rendering widget, paise:", amountPaise);
+        new RAS({ key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, amount: amountPaise }).render();
+      } catch (e) {
+        console.error("[Affordability] render() threw:", e);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currency, selectedPlan, gateState]); // gateState in deps so callback re-fires when confirm screen mounts
 
   // ── Initiate payment ───────────────────────────────────────────────────────
   // For INR: first go to the 'confirm' pre-checkout screen (shows EMI widget).
@@ -954,12 +930,14 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                   </div>
                 </div>
 
-                {/* Affordability / EMI Widget — white bg so Razorpay's own
-                    styling is fully visible against the dark modal.
-                    minHeight prevents the container collapsing to 0px before
-                    the SDK renders (which would make it look invisible). */}
+                {/* Affordability / EMI Widget — initialized via ref callback.
+                    The callback fires the instant React mounts this div, so
+                    the SDK's render() call is guaranteed to find the element. */}
                 <div style={{ background: "#FFFFFF", borderRadius: 8, padding: "16px", marginBottom: 28, minHeight: 80 }}>
-                  <div id="razorpay-affordability-widget"></div>
+                  <div
+                    ref={affordabilityContainerRef}
+                    id="razorpay-affordability-widget"
+                  ></div>
                 </div>
 
                 {/* Pay Now button */}
