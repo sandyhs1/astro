@@ -865,7 +865,7 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                 </div>
               )}
 
-              <div style={{ marginTop: 14, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.08em" }}>
+              <div style={{ marginTop: 14, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.08em" }}>
                 SECURED BY {currency === "INR" ? "RAZORPAY" : "FREEMIUS"} · 256-BIT SSL ENCRYPTION · PAYMENTS NEVER STORED ON OUR SERVERS
               </div>
             </motion.div>
@@ -966,7 +966,7 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                   </div>
                 )}
 
-                <div style={{ marginTop: 14, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.08em" }}>
+                <div style={{ marginTop: 14, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.08em" }}>
                   SECURED BY RAZORPAY · 256-BIT SSL ENCRYPTION
                 </div>
               </div>
