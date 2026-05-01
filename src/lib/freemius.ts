@@ -1,14 +1,38 @@
 import { Freemius, PurchaseEntitlementData, Checkout } from '@freemius/sdk';
-import { createAdminClient, createClient } from './supabase/server';
+import { createAdminClient } from './supabase/server';
 
-export const freemius = new Freemius({
-  productId: process.env.FREEMIUS_PRODUCT_ID!,
-  apiKey: process.env.FREEMIUS_API_KEY!,
-  secretKey: process.env.FREEMIUS_SECRET_KEY!,
-  publicKey: process.env.FREEMIUS_PUBLIC_KEY!,
-});
+// ── Lazy singleton ──────────────────────────────────────────────────────────
+// We intentionally do NOT instantiate Freemius at module-load time.
+// The Freemius SDK validates its config immediately in the constructor and
+// throws "Unsupported FSId type: undefined" when env vars are missing (e.g.
+// during Vercel's build-time static analysis). Using a lazy getter ensures
+// the SDK is only created at actual request time when env vars are present.
+let _freemius: Freemius | null = null;
 
-const SANDBOX = false; // Change to true if you want to test in sandbox mode
+export function getFreemius(): Freemius {
+  if (!_freemius) {
+    const productId = process.env.FREEMIUS_PRODUCT_ID;
+    const apiKey = process.env.FREEMIUS_API_KEY;
+    const secretKey = process.env.FREEMIUS_SECRET_KEY;
+    const publicKey = process.env.FREEMIUS_PUBLIC_KEY;
+
+    if (!productId || !apiKey || !secretKey || !publicKey) {
+      throw new Error(
+        'Missing Freemius environment variables. Ensure FREEMIUS_PRODUCT_ID, ' +
+        'FREEMIUS_API_KEY, FREEMIUS_SECRET_KEY, and FREEMIUS_PUBLIC_KEY are set.'
+      );
+    }
+
+    _freemius = new Freemius({ productId, apiKey, secretKey, publicKey });
+  }
+  return _freemius;
+}
+
+// Keep a named export for backward-compat with files that import { freemius }
+// This is a getter so it stays lazy.
+export const freemius = { get instance() { return getFreemius(); } } as unknown as Freemius;
+
+const SANDBOX = false; // Set to true to use Freemius sandbox/test mode
 
 /**
  * Get the active entitlement for a user based on the records in the database.
@@ -36,7 +60,7 @@ export async function getUserEntitlement(userId: string) {
     createdAt: entitlement.created_at,
   }));
 
-  const actives = freemius.entitlement.getActives(mappedEntitlements) ?? [];
+  const actives = getFreemius().entitlement.getActives(mappedEntitlements) ?? [];
   return actives?.[actives.length - 1] ?? null;
 }
 
@@ -57,7 +81,7 @@ export async function hasPlan(userId: string, planId: string): Promise<boolean> 
  * Process purchase webhook/redirect to synchronize entitlement info to the database.
  */
 export async function processPurchase(licenseId: string) {
-  const purchaseInfo = await freemius.purchase.retrievePurchase(licenseId);
+  const purchaseInfo = await getFreemius().purchase.retrievePurchase(licenseId);
   if (!purchaseInfo) {
     console.error('Purchase info not found for license:', licenseId);
     return;
@@ -123,7 +147,7 @@ async function createFreemiusCheckout(
   user: { email: string; firstName?: string; lastName?: string },
   planId?: string
 ): Promise<Checkout> {
-  const checkout = await freemius.checkout.create({
+  const checkout = await getFreemius().checkout.create({
     user,
     planId: planId,
     isSandbox: SANDBOX,
@@ -135,13 +159,13 @@ export async function getPricingData(
   user: { email: string; firstName?: string; lastName?: string },
   entitlement: Pick<PurchaseEntitlementData, 'fsLicenseId' | 'fsPlanId'> | null = null
 ): Promise<PricingData[]> {
-  const productPricing = await freemius.api.product.retrievePricingData();
+  const productPricing = await getFreemius().api.product.retrievePricingData();
   const upgradeAuth = entitlement
-    ? await freemius.api.license.retrieveCheckoutUpgradeAuthorization(entitlement.fsLicenseId)
+    ? await getFreemius().api.license.retrieveCheckoutUpgradeAuthorization(entitlement.fsLicenseId)
     : null;
 
   const subscription = entitlement
-    ? await freemius.api.license.retrieveSubscription(entitlement.fsLicenseId)
+    ? await getFreemius().api.license.retrieveSubscription(entitlement.fsLicenseId)
     : null;
   const hasActiveSubscription = subscription?.canceled_at == null;
   const currentPlanIndex = entitlement
@@ -208,11 +232,11 @@ export async function getPricingData(
 export async function cancelSubscription(
   entitlement: Pick<PurchaseEntitlementData, 'fsLicenseId'>
 ): Promise<boolean> {
-  const subscription = await freemius.api.license.retrieveSubscription(entitlement.fsLicenseId);
+  const subscription = await getFreemius().api.license.retrieveSubscription(entitlement.fsLicenseId);
   if (!subscription || subscription.canceled_at != null) {
     return false;
   }
-  await freemius.api.subscription.cancel(subscription.id!);
+  await getFreemius().api.subscription.cancel(subscription.id!);
   return true;
 }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getUserEntitlement, freemius } from '@/lib/freemius';
+import { getUserEntitlement, getFreemius } from '@/lib/freemius';
 import type { PurchaseEntitlementData } from '@freemius/sdk';
 
 export type SubscriptionPaymentData = {
@@ -30,9 +30,9 @@ export type SubscriptionPaymentData = {
 async function getSubscriptionAndPayments(
   entitlement: Pick<PurchaseEntitlementData, 'fsLicenseId' | 'fsUserId'>
 ): Promise<SubscriptionPaymentData> {
-  const subscription = await freemius.api.license.retrieveSubscription(entitlement.fsLicenseId);
-  const payments = await freemius.api.user.retrievePayments(entitlement.fsUserId);
-  const pricingData = await freemius.api.product.retrievePricingData();
+  const subscription = await getFreemius().api.license.retrieveSubscription(entitlement.fsLicenseId);
+  const payments = await getFreemius().api.user.retrievePayments(entitlement.fsUserId);
+  const pricingData = await getFreemius().api.product.retrievePricingData();
 
   const planTitleById = new Map<string, string>();
   const pricingById = new Map<string, { quota: number }>();

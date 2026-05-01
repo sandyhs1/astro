@@ -852,7 +852,7 @@ export default function PaymentGate({ children }: PaymentGateProps) {
 
               {currency === "INR" && selectedPlan === "plan2" && (
                 <div style={{ marginTop: 12, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "9px", color: "rgba(0, 229, 255, 0.7)", letterSpacing: "0.05em" }}>
-                  * NOTE: YOU CAN CANCEL ANYTIME. THE &quot;2036&quot; EXPIRY SHOWN ON RAZORPAY IS JUST A DEFAULT E-MANDATE REQUIREMENT BY RBI.
+                  * NOTE: YOU CAN CANCEL ANYTIME. THE "2036" EXPIRY SHOWN ON RAZORPAY IS JUST A DEFAULT E-MANDATE REQUIREMENT BY RBI.
                 </div>
               )}
 

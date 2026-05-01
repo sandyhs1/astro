@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { freemius, getUserEntitlement } from '@/lib/freemius';
+import { getFreemius, getUserEntitlement } from '@/lib/freemius';
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     }
 
     // Pass the fsUserId associated with the entitlement and the payment ID
-    const invoiceUrl = await freemius.api.user.retrieveInvoice(entitlement.fsUserId, paymentId);
+    const invoiceUrl = await getFreemius().api.user.retrieveInvoice(entitlement.fsUserId, paymentId);
     
     // In SDK, retrieveInvoice returns string (url) or the actual file stream.
     // If it's a URL, we can fetch it or redirect.

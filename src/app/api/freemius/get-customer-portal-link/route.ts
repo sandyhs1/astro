@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { freemius } from '@/lib/freemius';
+import { getFreemius } from '@/lib/freemius';
 
 export async function GET() {
   const supabase = await createClient();
@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   try {
-    const portal = await freemius.api.user.retrieveHostedCustomerPortalByEmail(user.email);
+    const portal = await getFreemius().api.user.retrieveHostedCustomerPortalByEmail(user.email);
     return NextResponse.json({ link: portal?.link || null });
   } catch (error) {
     console.error('Error fetching portal link:', error);

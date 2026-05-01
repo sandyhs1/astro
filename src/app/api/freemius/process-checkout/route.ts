@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { freemius, processPurchase, LIVE_SUPABASE_URL, LIVE_FRONTEND_URL } from '@/lib/freemius';
+import { getFreemius, processPurchase, LIVE_SUPABASE_URL, LIVE_FRONTEND_URL } from '@/lib/freemius';
 
 export async function GET(request: Request) {
   const currentUrl = request.url;
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const modifiedCurrentUrlString = modifiedCurrentUrl.toString();
 
     // Validate the redirect
-    const redirectInfo = await freemius.checkout.processRedirect(
+    const redirectInfo = await getFreemius().checkout.processRedirect(
       modifiedCurrentUrlString,
       LIVE_SUPABASE_URL
     );

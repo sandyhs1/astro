@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { freemius } from '@/lib/freemius';
+import { getFreemius } from '@/lib/freemius';
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify the purchase securely on the backend
-    const purchaseInfo = await freemius.purchase.retrievePurchase(purchaseId);
+    const purchaseInfo = await getFreemius().purchase.retrievePurchase(purchaseId);
     if (!purchaseInfo) {
       console.error('[freemius-verify] Invalid purchase ID or purchase not found:', purchaseId);
       return NextResponse.json({ error: 'Invalid purchase' }, { status: 400 });

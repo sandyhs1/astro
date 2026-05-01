@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { freemius, processPurchase, deleteEntitlement } from '@/lib/freemius';
+import { getFreemius, processPurchase, deleteEntitlement } from '@/lib/freemius';
 import { WebhookAuthenticationMethod, WebhookEventType } from '@freemius/sdk';
 
-const listener = freemius.webhook.createListener({
-  authenticationMethod: WebhookAuthenticationMethod.Api,
-});
+// NOTE: The listener is created lazily inside the POST handler to avoid
+// instantiating the Freemius SDK at module-load time (which crashes when
+// env vars are undefined during Vercel's build-time static analysis).
 
 const licenseEvents: WebhookEventType[] = [
   'license.created',
@@ -16,18 +16,6 @@ const licenseEvents: WebhookEventType[] = [
   'license.plan.changed',
 ];
 
-listener.on(licenseEvents, async ({ objects: { license } }) => {
-  if (license && license.id) {
-    console.log(`Processing license event for license ID: ${license.id}`);
-    await processPurchase(license.id);
-  }
-});
-
-listener.on('license.deleted', async ({ data }) => {
-  console.log(`Processing license.deleted for license ID: ${data.license_id}`);
-  await deleteEntitlement(data.license_id);
-});
-
 export async function POST(request: Request) {
   try {
     const rawBody = await request.text();
@@ -36,6 +24,24 @@ export async function POST(request: Request) {
     const headers: Record<string, string> = {};
     request.headers.forEach((value, key) => {
       headers[key] = value;
+    });
+
+    // Create listener lazily at request time — env vars are guaranteed to
+    // be present in the runtime environment.
+    const listener = getFreemius().webhook.createListener({
+      authenticationMethod: WebhookAuthenticationMethod.Api,
+    });
+
+    listener.on(licenseEvents, async ({ objects: { license } }) => {
+      if (license && license.id) {
+        console.log(`Processing license event for license ID: ${license.id}`);
+        await processPurchase(license.id);
+      }
+    });
+
+    listener.on('license.deleted', async ({ data }) => {
+      console.log(`Processing license.deleted for license ID: ${data.license_id}`);
+      await deleteEntitlement(data.license_id);
     });
 
     // Process asynchronously to avoid holding up the webhook response
