@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import emailjs from "@emailjs/browser";
+import confetti from "canvas-confetti";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type PlanType = "plan1" | "plan2";
@@ -285,7 +286,8 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                         setGateState("plan1_form");
                     } else {
                         setGateState("plan2_success");
-                        setTimeout(() => window.location.reload(), 2000);
+                        fireConfetti("plan2"); // 🎉
+                        setTimeout(() => window.location.reload(), 2500);
                     }
                 } catch (err) {
                     setError("Verification error. Your payment may have gone through — please contact support.");
@@ -355,8 +357,8 @@ export default function PaymentGate({ children }: PaymentGateProps) {
               setGateState("plan1_form");
             } else {
               setGateState("plan2_success");
-              // Reload after 2s to fully refresh dashboard data
-              setTimeout(() => window.location.reload(), 2000);
+              fireConfetti("plan2"); // 🎉
+              setTimeout(() => window.location.reload(), 2500);
             }
           } catch {
             setError("Verification error. Your payment may have gone through — please contact support.");
@@ -501,11 +503,47 @@ export default function PaymentGate({ children }: PaymentGateProps) {
       // ─ Step 3: Advance to final thank-you screen ───────────────────────────
       setIntakeSubmittedName(intakeForm.fullName.split(" ")[0]);
       setGateState("plan1_success");
+      // 🎉 Confetti burst on plan 1 form submission success
+      fireConfetti("plan1");
     } catch {
       setIntakeError("Network error. Please try again.");
     } finally {
       setIntakeSubmitting(false);
     }
+  }
+
+  // ── Confetti burst helper ─────────────────────────────────────────────────
+  // plan1 = warm orange/gold burst (matches plan accent)
+  // plan2 = cool cyan/purple burst (matches plan accent)
+  function fireConfetti(plan: PlanType) {
+    const colors =
+      plan === "plan1"
+        ? ["#FF5E3A", "#FFB347", "#FFF176", "#FFFFFF"]
+        : ["#00E5FF", "#7B61FF", "#B3F0FF", "#FFFFFF"];
+
+    const burst = (origin: { x: number; y: number }) =>
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        startVelocity: 45,
+        decay: 0.92,
+        scalar: 1.1,
+        colors,
+        origin,
+        zIndex: 9999,
+      });
+
+    // Two-cannon burst from left and right
+    burst({ x: 0.2, y: 0.55 });
+    setTimeout(() => burst({ x: 0.8, y: 0.55 }), 150);
+    setTimeout(() => burst({ x: 0.5, y: 0.4 }), 350);
+  }
+
+  // ── Sign out (Plan 1 thank-you screen) ───────────────────────────────────
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = "/";
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -693,12 +731,15 @@ export default function PaymentGate({ children }: PaymentGateProps) {
               </div>
               <div style={{
                 fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.78rem",
-                color: "rgba(255,255,255,0.5)", lineHeight: 2, marginBottom: 32,
+                color: "rgba(255,255,255,0.5)", lineHeight: 2, marginBottom: 28,
               }}>
-                Your birth chart will be deeply analyzed by our senior Vedic astrologer.<br />
-                A personalized report will be delivered to your email within<br />
+                Your birth chart is now with our senior Vedic astrologer.<br />
+                A deeply personalized Life Intelligence Report will land<br />
+                in your inbox within{" "}
                 <strong style={{ color: "#FF5E3A", fontSize: "1rem" }}>4–6 business hours.</strong>
               </div>
+
+              {/* Email confirmation box */}
               <div style={{
                 padding: "16px 20px",
                 background: "rgba(255,94,58,0.06)",
@@ -708,11 +749,63 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                 color: "rgba(255,255,255,0.3)",
                 letterSpacing: "0.08em",
                 lineHeight: 1.9,
+                marginBottom: 28,
               }}>
                 DASHBOARD ACCESS IS NOT INCLUDED WITH THIS PLAN.<br />
                 REPORT WILL BE EMAILED TO: <strong style={{ color: "rgba(255,255,255,0.5)" }}>{userEmail}</strong>
               </div>
-              <div style={{ marginTop: 24, fontFamily: "'IBM Plex Mono', monospace", fontSize: "9px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.1em" }}>
+
+              {/* Sign-out CTA */}
+              <div style={{
+                padding: "20px 24px",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 4,
+                marginBottom: 20,
+              }}>
+                <div style={{
+                  fontFamily: "'Instrument Serif', serif",
+                  fontSize: "1.05rem",
+                  color: "#fff",
+                  marginBottom: 8,
+                  lineHeight: 1.5,
+                }}>
+                  You&apos;re all set — you can safely sign out now.
+                </div>
+                <div style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.7rem",
+                  color: "rgba(255,255,255,0.4)",
+                  lineHeight: 1.8,
+                  marginBottom: 18,
+                }}>
+                  Your report is being prepared with full attention and care.<br />
+                  There&apos;s nothing more you need to do — just check your inbox.<br />
+                  We&apos;ll be in touch very soon.
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleSignOut}
+                  style={{
+                    width: "100%",
+                    padding: "14px",
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    color: "rgba(255,255,255,0.8)",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "11px",
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  → Sign Out
+                </motion.button>
+              </div>
+
+              <div style={{ marginTop: 8, fontFamily: "'IBM Plex Mono', monospace", fontSize: "9px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.1em" }}>
                 Questions? Email us at help@quantumkarma.tech
               </div>
             </motion.div>
