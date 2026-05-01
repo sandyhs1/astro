@@ -180,29 +180,58 @@ export default function PaymentGate({ children }: PaymentGateProps) {
   }, []);
 
   // ── Initialize Affordability Widget on the confirm screen ─────────────────
-  // We deliberately do NOT show this on the plan selection (gate) screen.
-  // Instead, it renders inside the dedicated pre-checkout confirm step so it
-  // never clutters or obstructs the pricing cards.
+  // IMPORTANT: Widget is only shown on the "confirm" pre-checkout screen, never
+  // on the plan selection screen. This avoids cluttering the pricing cards.
+  //
+  // Timing note: We use a setTimeout(300ms) because Framer Motion's enter
+  // animation delays DOM paint. Without the delay, getElementById returns null
+  // and the SDK's render() call silently fails.
   useEffect(() => {
-    if (currency === "INR" && gateState === "confirm") {
-      let isSubscribed = true;
-      loadRazorpayAffordability().then((loaded) => {
-        if (loaded && (window as any).RazorpayAffordabilitySuite && isSubscribed) {
-          const amountStr = PLANS[selectedPlan].price;
-          const amountPaise = parseInt(amountStr.replace(/\D/g, '')) * 100;
+    if (currency !== "INR" || gateState !== "confirm") return;
 
-          const container = document.getElementById("razorpay-affordability-widget");
-          if (container) container.innerHTML = '';
+    let timer: ReturnType<typeof setTimeout>;
+    let isSubscribed = true;
 
-          const rzpAffordabilitySuite = new (window as any).RazorpayAffordabilitySuite({
+    const init = async () => {
+      const loaded = await loadRazorpayAffordability();
+      if (!loaded || !isSubscribed) return;
+
+      const RAS = (window as any).RazorpayAffordabilitySuite;
+      if (!RAS) {
+        console.warn("[Affordability] RazorpayAffordabilitySuite not available after script load");
+        return;
+      }
+
+      const amountStr = PLANS[selectedPlan].price;
+      const amountPaise = parseInt(amountStr.replace(/\D/g, "")) * 100;
+
+      // Wait for Framer Motion animation to mount the DOM node
+      timer = setTimeout(() => {
+        if (!isSubscribed) return;
+        const container = document.getElementById("razorpay-affordability-widget");
+        if (!container) {
+          console.warn("[Affordability] Container div not found in DOM — confirm screen may not be mounted yet");
+          return;
+        }
+        container.innerHTML = ""; // Clear any previous render
+        console.log("[Affordability] Rendering widget, amount (paise):", amountPaise);
+        try {
+          const suite = new RAS({
             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
             amount: amountPaise,
           });
-          rzpAffordabilitySuite.render();
+          suite.render();
+        } catch (e) {
+          console.error("[Affordability] render() failed:", e);
         }
-      });
-      return () => { isSubscribed = false; };
-    }
+      }, 300);
+    };
+
+    init();
+    return () => {
+      isSubscribed = false;
+      clearTimeout(timer);
+    };
   }, [currency, selectedPlan, gateState]);
 
   // ── Initiate payment ───────────────────────────────────────────────────────
@@ -926,9 +955,11 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                 </div>
 
                 {/* Affordability / EMI Widget — white bg so Razorpay's own
-                    styling is fully visible against the dark modal */}
-                <div style={{ background: "#FFFFFF", borderRadius: 8, padding: "12px", marginBottom: 28 }}>
-                  <div id="razorpay-affordability-widget" />
+                    styling is fully visible against the dark modal.
+                    minHeight prevents the container collapsing to 0px before
+                    the SDK renders (which would make it look invisible). */}
+                <div style={{ background: "#FFFFFF", borderRadius: 8, padding: "16px", marginBottom: 28, minHeight: 80 }}>
+                  <div id="razorpay-affordability-widget"></div>
                 </div>
 
                 {/* Pay Now button */}
