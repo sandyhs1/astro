@@ -321,24 +321,13 @@ export async function POST(req: Request) {
     // ── Build chart (cached) ──────────────────────────────────────────────────
     const { chart } = await getOrBuildChart(dob, tob, pob, tz, undefined, undefined, user.email);
 
-    // ── Fetch D3, D12, D60 in parallel ───────────────────────────────────────
-    const geo    = await geocodePlace(pob);
-    const tzFloat = tzStringToFloat(tz);
-    const params = parseBirthParams(dob, tob, geo.lat, geo.lon, tzFloat);
-
-    let d3Raw: any = null, d12Raw: any = null, d60Raw: any = null;
-
-    await Promise.allSettled([
-      astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D3",  params })
-        .then((r: any) => { d3Raw  = r; })
-        .catch((e: any) => console.error("D3 fetch failed:", e.message)),
-      astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D12", params })
-        .then((r: any) => { d12Raw = r; })
-        .catch((e: any) => console.error("D12 fetch failed:", e.message)),
-      astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D60", params })
-        .then((r: any) => { d60Raw = r; })
-        .catch((e: any) => console.error("D60 fetch failed:", e.message)),
-    ]);
+    // ── Read D3, D12, D60 from CACHED chart (no API calls needed) ────────────
+    // These are now always present in schema v2 GoldenMasterJSON.
+    // Pass raw planet arrays directly (as computeKarmicEchoes expects any[]).
+    const d3Raw  = chart.divisional.d3?.planets  ?? null;
+    const d12Raw = chart.divisional.d12?.planets ?? null;
+    const d60Raw = chart.divisional.d60?.planets ?? null;
+    console.log("[karmic-patterns] D3/D12/D60 read from cache — 0 extra API calls");
 
     // ── Compute 5 Karmic Echoes ───────────────────────────────────────────────
     const echoes    = computeKarmicEchoes(chart, d3Raw, d12Raw, d60Raw);

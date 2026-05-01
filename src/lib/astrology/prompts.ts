@@ -1,4 +1,4 @@
-import type { GoldenMasterJSON, PlanetData, HouseData } from "./normalize";
+import type { GoldenMasterJSON, PlanetData, HouseData, DivisionalChart } from "./normalize";
 
 // ─── Sign → Lord mapping (Parashari) ─────────────────────────────────────────
 
@@ -51,10 +51,50 @@ function computePranapada(sunFullDegree: number, lagnaSign: string): string {
   return SIGNS[Math.floor(pranapadaFull / 30)] ?? "";
 }
 
+// ─── Topic → Divisional Chart mapping ───────────────────────────────────────
+
+export type JyotishTopic = "marriage"|"career"|"children"|"property"|"siblings"|"wealth"|"vehicle"|"spiritual"|"education"|"strength"|"suffering"|"maternal"|"paternal"|"soul"|"health"|"general";
+
+export function detectTopic(message: string): JyotishTopic {
+  const m = message.toLowerCase();
+  if (/marriag|spouse|partner|husband|wife|love|relation|d9|navamsh/.test(m)) return "marriage";
+  if (/career|job|work|business|profession|d10|dashamsh|office|salary/.test(m)) return "career";
+  if (/child|baby|pregnan|son|daughter|progeny|d7|saptamsh/.test(m)) return "children";
+  if (/property|home|house|land|real.estate|d4|chaturtham/.test(m)) return "property";
+  if (/sibling|brother|sister|courage|d3|drekkana/.test(m)) return "siblings";
+  if (/wealth|financ|money|income|d2|hora/.test(m)) return "wealth";
+  if (/vehicle|car|comfort|luxury|d16|shodash/.test(m)) return "vehicle";
+  if (/spirit|moksha|liberation|god|puja|meditation|d20|vimsh/.test(m)) return "spiritual";
+  if (/educat|study|degree|learning|d24/.test(m)) return "education";
+  if (/strength|weakness|fatal|d27|bhamsh/.test(m)) return "strength";
+  if (/suffer|misfortun|evil|d30|trimsham/.test(m)) return "suffering";
+  if (/mother|maternal|d40|khaved/.test(m)) return "maternal";
+  if (/father|paternal|d45|akshaved/.test(m)) return "paternal";
+  if (/soul|past.life|karma|d60|shashti/.test(m)) return "soul";
+  if (/health|illness|disease|sick|body/.test(m)) return "health";
+  return "general";
+}
+
+function formatDivisionalChart(dc: DivisionalChart, label: string): string {
+  if (!dc || !dc.ascendant) return `${label}: Data unavailable`;
+  const lines = [`${label} Lagna: ${dc.ascendant}`];
+  const byHouse: Record<number,string[]> = {};
+  for (const p of dc.planets) {
+    if (!byHouse[p.house]) byHouse[p.house] = [];
+    byHouse[p.house].push(p.name);
+  }
+  for (let h=1;h<=12;h++) {
+    lines.push(`  H${String(h).padStart(2)}(${dc.planets.find(p=>p.house===h)?.sign||"-"}): ${byHouse[h]?.join(", ")||"∅"}`);
+  }
+  return lines.join("\n");
+}
+
 // ─── Build Claude Context ─────────────────────────────────────────────────────
 
-export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User"): string {
+export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User", topic: JyotishTopic = "general"): string {
   const { d1, divisional, dasha, karakas, ashtakavarga } = chart;
+  const sp    = chart.specialPoints || {} as any;
+  const ex    = chart.extras || {} as any;
 
   // Planet table
   const planetTable = d1.planets.map((p: PlanetData) => {
@@ -103,79 +143,126 @@ export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User")
     `${p.name}:${p.sign}(H${p.house})`
   ).join(" ");
 
-  // Compute special points
-  const lagnaHouse = d1.houses.find(h => h.number === 1);
-  const h7         = d1.houses.find(h => h.number === 7);
-  const h12        = d1.houses.find(h => h.number === 12);
-
-  const findPlanet = (name: string) => d1.planets.find(p => p.name.toLowerCase() === name.toLowerCase());
-
-  let AL = "", UL = "", A7 = "";
-  if (lagnaHouse) {
-    const lagnaLordPlanet = findPlanet(SIGN_LORD[lagnaHouse.sign] || "");
-    if (lagnaLordPlanet) AL = computeArudha(lagnaHouse.sign, lagnaLordPlanet.sign, d1.ascendant);
-  }
-  if (h12) {
-    const h12LordPlanet = findPlanet(SIGN_LORD[h12.sign] || "");
-    if (h12LordPlanet) UL = computeArudha(h12.sign, h12LordPlanet.sign, d1.ascendant);
-  }
-  if (h7) {
-    const h7LordPlanet = findPlanet(SIGN_LORD[h7.sign] || "");
-    if (h7LordPlanet) A7 = computeArudha(h7.sign, h7LordPlanet.sign, d1.ascendant);
-  }
-
   // ASV Sarvashtakavarga summary
   let asvSummary = "";
   if (ashtakavarga && typeof ashtakavarga === "object") {
     try {
       const svData = ashtakavarga.ashtak_varga || ashtakavarga;
-      if (svData && Object.keys(svData).length > 0) {
-        asvSummary = JSON.stringify(svData).slice(0, 400);
-      }
+      if (svData && Object.keys(svData).length > 0) asvSummary = JSON.stringify(svData).slice(0, 400);
     } catch { /* ignore */ }
   }
 
-  // Compute Pranapada Lagna — (Sun longitude × 3) mod 360 → sign
-  const sunPlanet = findPlanet("Sun");
-  const pranapadaLagna = sunPlanet ? computePranapada(sunPlanet.fullDegree, d1.ascendant) : "";
+  // ── Context-aware divisional chart: select based on topic ─────────────────
+  const TOPIC_CHART: Record<string, keyof typeof divisional> = {
+    marriage:"d9", career:"d10", children:"d7", property:"d4", siblings:"d3",
+    wealth:"d2", vehicle:"d16", spiritual:"d20", education:"d24", strength:"d27",
+    suffering:"d30", maternal:"d40", paternal:"d45", soul:"d60", health:"d9", general:"d9",
+  };
+  const primaryDnKey = TOPIC_CHART[topic] ?? "d9";
+  const primaryDn    = (divisional as any)[primaryDnKey] as DivisionalChart;
+  const primaryLabel = `D${primaryDnKey.slice(1).toUpperCase()} (${{
+    d2:"Hora/Wealth",d3:"Siblings/Vitality",d4:"Property/Home",d7:"Children",d9:"Navamsha/Marriage",
+    d10:"Dashamsha/Career",d12:"Parents",d16:"Comforts/Vehicles",d20:"Spirituality",d24:"Education",
+    d27:"Strength/Weakness",d30:"Misfortune",d40:"Maternal Karma",d45:"Paternal Karma",d60:"Soul/Past-Life",
+  }[primaryDnKey]??"Chart"})`;
+
+  // ── Vimshopaka Bala summary ───────────────────────────────────────────────
+  const vbala = ex.vimshopakaBala || {};
+  const vbalaStr = Object.entries(vbala).map((entry) => {
+    const name = entry[0]; const v = entry[1] as any;
+    return `${name}: ${v.score}/${v.max} (${v.percent}%)`;
+  }).join("  ") || "Karmic Data Fragmented";
+
+  // ── D60 Devas summary ─────────────────────────────────────────────────────
+  const devas = ex.d60Devas || {};
+  const devasStr = Object.entries(devas).map((entry) => {
+    const name = entry[0]; const v = entry[1] as any;
+    return `${name}:${v.deva}(${v.quality})`;
+  }).join("  ") || "Karmic Data Fragmented";
+
+  // ── Yogini Dasha ──────────────────────────────────────────────────────────
+  const yd = ex.yoginiDasha || {};
+  const yoginiStr = yd.current
+    ? `Current: ${yd.current.yogini} (${yd.current.lord}) until ${yd.current.end} | Next: ${(yd.upcoming||[]).map((u:any)=>u.yogini).join(" → ")}`
+    : "Karmic Data Fragmented";
+
+  // ── Char Dasha ────────────────────────────────────────────────────────────
+  const cd2 = ex.charDasha || {};
+  const charStr = cd2.current
+    ? `Current Rashi: ${cd2.current.rashi} until ${cd2.current.end}`
+    : "Karmic Data Fragmented";
+
+  // ── Panchang ─────────────────────────────────────────────────────────────
+  const pg = ex.panchang || {};
+  const panchangStr = pg.tithiName
+    ? `Tithi: ${pg.tithiPaksha} ${pg.tithiName} | Vara: ${pg.vara}(${pg.varaLord}) | Yoga: ${pg.yogaName} | Karana: ${pg.karana} | Nakshatra: ${pg.nakshatra}(${pg.nakshatraLord})`
+    : "Karmic Data Fragmented";
 
   const context = {
     PERSON: personName,
-    // SOURCE intentionally omitted — never expose API/software names to LLM
+    TOPIC: topic,
     CALCULATION_STANDARD: "Lahiri Ayanamsa | Whole Sign | Sidereal",
     CURRENT_YEAR: 2026,
-    LAGNA:           d1.ascendant,
-    MOON_SIGN:       d1.moonSign,
-    MOON_NAKSHATRA:  d1.moonNakshatra,
-    SUN_SIGN:        d1.sunSign,
-    SPECIAL_POINTS: {
-      AL_ARUDHA_LAGNA:    AL             || "Karmic Data Fragmented",
-      UL_UPAPADA_LAGNA:   UL             || "Karmic Data Fragmented",
-      A7_DARAPADA:        A7             || "Karmic Data Fragmented",
-      PRANAPADA_LAGNA:    pranapadaLagna || "Karmic Data Fragmented",
+    LAGNA:          d1.ascendant,
+    MOON_SIGN:      d1.moonSign,
+    MOON_NAKSHATRA: d1.moonNakshatra,
+    SUN_SIGN:       d1.sunSign,
+    PANCHANG: panchangStr,
+    ALL_ARUDHA_PADAS: {
+      AL_H1:  sp.AL  || "Karmic Data Fragmented",
+      A2_H2:  sp.A2  || "Karmic Data Fragmented",
+      A3_H3:  sp.A3  || "Karmic Data Fragmented",
+      A4_H4:  sp.A4  || "Karmic Data Fragmented",
+      A5_H5:  sp.A5  || "Karmic Data Fragmented",
+      A6_H6:  sp.A6  || "Karmic Data Fragmented",
+      A7_H7:  sp.A7  || "Karmic Data Fragmented",
+      A8_H8:  sp.A8  || "Karmic Data Fragmented",
+      A9_H9:  sp.A9  || "Karmic Data Fragmented",
+      A10_H10: sp.A10 || "Karmic Data Fragmented",
+      A11_H11: sp.A11 || "Karmic Data Fragmented",
+      UL_H12: sp.UL  || "Karmic Data Fragmented",
+      PRANAPADA: sp.PP || "Karmic Data Fragmented",
+      HORA_LAGNA: sp.HL || "Karmic Data Fragmented",
     },
     KARAKAS: {
-      AK_ATMA:    karakas.ak,
-      AMK_AMATYA: karakas.amk,
-      BK_BHRATRU: karakas.bk,
-      MK_MATRU:   karakas.mk,
-      PK_PITRU:   karakas.pk,
-      GK_GNATI:   karakas.gk,
-      DK_DARA:    karakas.dk,
+      AK_ATMAKARAKA:    `${karakas.ak} (Soul's core mission)`,
+      AMK_AMATYAKARAKA: `${karakas.amk} (Career/wealth)`,
+      BK_BHRATRUKARAKA: `${karakas.bk} (Siblings)`,
+      MK_MATRUKARAKA:   `${karakas.mk} (Mother)`,
+      PK_PUTRAKARAKA:   `${karakas.pk} (Children)`,
+      GK_GNATIKARAKA:   `${karakas.gk} (Rivals/relatives)`,
+      DK_DARAKARAKA:    `${karakas.dk} (Spouse significator)`,
     },
-    DASHA: {
-      Mahadasha:         `${dasha.mahadasha} (ends: ${dasha.mahadashaEnd})`,
-      Antardasha:        `${dasha.antardasha} (ends: ${dasha.antardashaEnd})`,
-      Pratyantar:        dasha.pratyantar || "—",
-      Next_Mahadasha:    `${(dasha.full as any)?.currentDasha?._nextMahadasha || "—"} (starts: ${(dasha.full as any)?.currentDasha?._nextMahadashaStart || "—"}, ends: ${(dasha.full as any)?.currentDasha?._nextMahadashaEnd || "—"})`,
+    VIMSHOTTARI_DASHA: {
+      Mahadasha:      `${dasha.mahadasha} (ends: ${dasha.mahadashaEnd})`,
+      Antardasha:     `${dasha.antardasha} (ends: ${dasha.antardashaEnd})`,
+      Pratyantar:     dasha.pratyantar || "—",
+      Next_Mahadasha: `${(dasha.full as any)?.currentDasha?._nextMahadasha||"—"} (starts: ${(dasha.full as any)?.currentDasha?._nextMahadashaStart||"—"})`,
     },
+    YOGINI_DASHA: yoginiStr,
+    CHAR_DASHA_JAIMINI: charStr,
+    D60_SHASHTIAMSHA_DEVAS: devasStr,
+    VIMSHOPAKA_BALA_16CHARTS: vbalaStr,
     D1_PLANETS: planetTable,
     D1_HOUSES:  houseTable,
-    D9_LAGNA:   divisional.d9.ascendant,
-    D9_HOUSES:  d9HouseTable,
-    D9_PLANETS_SUMMARY: d9Table,
-    D10_LAGNA:  divisional.d10.ascendant,
-    D10_PLANETS: d10Table,
+    // Always inject D9 and D10
+    D9_NAVAMSHA:  formatDivisionalChart(divisional.d9,  "D9 (Navamsha/Marriage/Dharma)"),
+    D10_DASHAMSHA: formatDivisionalChart(divisional.d10, "D10 (Dashamsha/Career)"),
+    // Context-aware: inject the topic-relevant chart
+    [`${primaryLabel}_CONTEXT_CHART`]: formatDivisionalChart(primaryDn, primaryLabel),
+    // Always also inject D60 for soul-level override
+    D60_CHART: formatDivisionalChart(divisional.d60, "D60 (Shashtiamsha/Soul Karma)"),
+    // Graha Drishti — all planetary aspects (Parashari + special aspects)
+    GRAHA_DRISHTI_ASPECTS: (() => {
+      const aspects = (ex.grahaDrishti || []) as Array<{from:string;toHouse:number;strength:string}>;
+      if (!aspects.length) return "Karmic Data Fragmented";
+      const grouped: Record<string,string[]> = {};
+      for (const a of aspects) {
+        if (!grouped[a.from]) grouped[a.from] = [];
+        grouped[a.from].push(`H${a.toHouse}`);
+      }
+      return Object.entries(grouped).map(([p,hs]) => `${p} aspects: ${hs.join(",")}`).join(" | ");
+    })(),
     ASV_SARVASHTAKAVARGA: asvSummary || "Karmic Data Fragmented",
     CONFIDENCE: chart.confidence.score,
     WARNINGS: chart.confidence.warnings.filter(w => w.includes("CRITICAL")),
@@ -316,7 +403,206 @@ TANTRIC MANTRA:
 DIY RITUAL / PRACTICE:
 - One chart-specific physical ritual (fasting, charity, water offering, Yantra).
 - Directly tied to the afflicted planet/house/dasha in their JSON.
-- Never generic — always personalized to this exact chart.`;
+- Never generic — always personalized to this exact chart.
+
+════════════════════════════════════════
+THE GRANDMASTER TRIAGE PROTOCOL (MANDATORY INTERNAL LOGIC)
+════════════════════════════════════════
+
+For EVERY user question, mentally verify all 4 layers before generating output:
+
+LAYER 1 — THE ROOT (D1 + Bhava Karaka):
+  Confirm the planet's house, sign, and dignity in D1. Is the promise physically manifest?
+
+LAYER 2 — THE FRUIT (D9 + Jaimini Karakas AK/DK/AmK):
+  Does D9 grant Dharmic License to D1's promise?
+  AK = soul's mission. DK = spouse destiny. AmK = career peak.
+  D1 promise without D9 confirmation = blocked or delayed manifestation.
+
+LAYER 3 — THE PROMISE (Topic Divisional Chart + D60 Deva):
+  Always use the correct divisional chart for the topic (see Intelligence Matrix below).
+  D60 Deva ALWAYS overrules D1 dignity.
+  Planet in 'Amrita', 'Brahma', 'Vishnu', or 'Maheshvara' Deva = peak positive delivery.
+  Planet in 'Ghora', 'Rakshasa', or 'Mrityu' Deva = severe karmic obstruction.
+  If planet is near a Sandhi (D60 border): invoke Dual-Layer prediction.
+
+LAYER 4 — THE DELIVERY (Dasha Timing to Sookshma):
+  Timeline: [Mahadasha] → [Antardasha] → [Pratyantar] → [Sookshma].
+  Overlay Gochar (transits) relative to natal Moon AND Lagna.
+  ASV Volume Knob: if House ASV < 20 points, results are muted even in active Dasha.
+
+════════════════════════════════════════
+INTELLIGENCE MATRIX — TOPIC-SPECIFIC DATA RULES
+════════════════════════════════════════
+
+MARRIAGE / SPOUSE:
+  Check: D9, D1-H7, UL (Upapada Lagna), A7 (Darapada), DK (Darakaraka), Venus/Jupiter, GRAHA_DRISHTI on H7.
+  Rule: UL afflicted in D1 + DK strong in D9 = initial struggle, eventual stability.
+  Rule: Vargottama DK = destined, unbreakable bond.
+
+CAREER / STATUS / REPUTATION:
+  Check: D10, D1-H10, AL (Arudha Lagna), A10 (Rajya Pada), AmK (Amatyakaraka), Sun/Saturn, H10 ASV score.
+  Rule: H10 ASV > 28 + Vargottama AmK = massive public rise in Dasha of 10th Lord.
+  Rule: AL afflicted but D10 strong = famous despite personal struggle.
+
+CHILDREN / LEGACY:
+  Check: D7, D1-H5, Jupiter, PK (Putrakaraka), A5 (Putra Pada).
+  Rule: D7 Lagna Lord in D60 Deva 'Amrita' or 'Poorna Chandra' = destined child arrival.
+  Rule: Jupiter Vargottama (D1+D9) = multiple children, powerful legacy.
+
+WEALTH / ASSETS / PROPERTY:
+  Check: D2 (Hora), D4 (Chaturthamsha), D1-H2/H11, A2 (Dhana Pada), A11 (Labha Pada), H2/H11 ASV.
+  Rule: D4 strong + Saturn own sign = immovable property accumulation.
+  Rule: A11 in strong sign + Jupiter Dasha = sudden liquid gains / windfall.
+
+SPIRITUALITY / SOUL PURPOSE:
+  Check: D20, D60, D1-H9/H12, AK (Atmakaraka), Pranapada Lagna, Ketu.
+  Rule: AK in D60 Deva 'Brahma', 'Vishnu', or 'Amrita' = high-evolution soul, spiritual destiny.
+  Rule: AK in D1-H12 + D20 strong = renunciant path, possible foreign spiritual work.
+
+HEALTH / VITALITY:
+  Check: D1-H1/H6/H8, Lagna Lord dignity, Pranapada Lagna, Moon, GRAHA_DRISHTI on H1/H6.
+  Rule: Lagna Lord debilitated + D60 Deva 'Ghora' = serious recurring health challenge.
+  Rule: Pranapada Lagna in trine to Lagna = sustained energy and resilience.
+
+SIBLINGS / COURAGE: Check D3, D1-H3, A3, BK (Bhratrukaraka), Mars dignity.
+EDUCATION / LEARNING: Check D24, D1-H4/H5, A4, A5, Mercury. Vargottama Mercury = exceptional intellect.
+MISFORTUNE / SUFFERING: Check D30, D1-H6/H8/H12, Saturn, Rahu, Ketu.
+MATERNAL KARMA: Check D40, D1-H4, Moon, MK (Matrukaraka), A4.
+PATERNAL KARMA: Check D45, D1-H9, Sun, AK, A9 (Pitri Pada).
+
+════════════════════════════════════════
+PREDICTION TIME-WINDOW RULES
+════════════════════════════════════════
+
+1. DASHA SYNC (MANDATORY): Every prediction must carry a time window.
+   Format: "[Mahadasha Lord] MD → [Antardasha Lord] AD ([Month Year]–[Month Year])"
+   Include Pratyantar/Sookshma if event is within 12 months.
+
+2. TRANSIT OVERLAY: Combine Dasha with current Gochar relative to natal Moon AND Lagna.
+   Example: "As Jupiter transits H9 from your natal Moon during the Saturn-Venus period — this is your peak expansion window."
+
+3. ASV VOLUME KNOB (MANDATORY CITATION): Always cite the ASV score of the relevant house.
+   - ASV ≥ 28 pts: Full, unobstructed delivery of results.
+   - ASV 20–27 pts: Moderate delivery, some delay.
+   - ASV < 20 pts: Results muted or significantly delayed — even in peak Dasha.
+
+4. DEGREE PRECISION: Use exact degrees when data is available.
+   Example: "Saturn transiting within 3° of your natal AK (Sun at 14°32' Aquarius) — soul-level mission activates."
+
+════════════════════════════════════════
+THE 5-PART GRANDMASTER OUTPUT STRUCTURE
+════════════════════════════════════════
+
+Every substantive answer follows this exact structure (keep each section brief):
+
+🔥 [THE SOUL'S ECHO]
+One powerful sentence about the current karmic phase. What is the universe asking of this soul right now?
+
+📐 [THE TECHNICAL PROOF]
+2–3 bullet points with exact varga, dasha, and karaka citations. No padding.
+Example: • D10: Sun H10 (exalted) | AmK: Jupiter Vargottama | H10 ASV: 31pts
+
+⚡ [THE DESTINED EVENT]
+Clear, declarative prediction. Use "WILL" — not "may" or "could."
+Cite the divisional chart and D60 Deva that confirm the outcome.
+
+📅 [THE TIME WINDOW]
+Exact Dasha-Antardasha window in Month-Year format.
+Add Sookshma and transit trigger if event is imminent.
+
+🌿 [THE GRANDMASTER'S UPAYA — only if requested by user]
+One behavioral or spiritual action tied to the exact afflicted planet/house/Deva.
+Chart-specific. Never generic. No gemstones — ever.
+
+════════════════════════════════════════
+LOGIC GATE 1 — THE D60 DEVA AUTHORITY
+════════════════════════════════════════
+
+The D60 Shashtiamsha is the most precise chart in Jyotish. Two people can share the same D1, D9, and D10 — yet their D60 Deva will be completely different. The D60 Deva reveals the SOUL-LEVEL QUALITY of karma, and ALWAYS overrules D1 dignity.
+
+DEVA CLASSIFICATION (use these exact classifications when interpreting D60):
+
+HIGHLY AUSPICIOUS DEVAS (soul is repaying merit):
+  Amrita, Brahma, Vishnu, Maheshvara, Poorna Chandra, Indu, Mridu, Komala,
+  Saumya, Sheetala, Nirmala, Kshitesha, Kamalakara, Sudha, Chandramukhi,
+  Praveena, Atisheetala, Payodhi, Chandrarekha, Apampathi, Marut, Deva, Kubera
+
+MIXED / NEUTRAL DEVAS:
+  Yaksha, Kinnara, Heramba, Ardra, Vahni, Deva(25th)
+
+INAUSPICIOUS DEVAS (soul is repaying Rina — karmic debt):
+  Ghora, Rakshasa, Mrityu, Yama, Kala, Garala, Sarpa, Davagni, Kantaka,
+  Bhrashta, Kulagna, Maya, Purishaka, Kalinasha, Gulika, Ghora(34th),
+  Vishabadha, Kulanasha, Vamshakshaya, Utpata, Karaladamshtra, Kalapavaka,
+  Dandayudha, Krura
+
+HOW TO USE THIS:
+- When a planet is in a HIGHLY AUSPICIOUS Deva: its D1 results WILL fully manifest, even if debilitated in D1.
+- When a planet is in an INAUSPICIOUS Deva: its D1 results are severely filtered, even if exalted.
+- When a user asks "Why am I suffering despite a good chart?" — check the D60 Deva of the relevant planet. If it is 'Ghora', 'Rakshasa', or 'Mrityu', tell them: "Your soul is completing a Rina (karmic debt) from a past life related to [planet's significations]. This Dasha [cite current period] is the repayment window — after which the obstruction lifts permanently."
+- Sandhi Protocol: If a planet is within 0.5° of a Deva boundary, invoke the Dual-Layer prediction.
+
+════════════════════════════════════════
+LOGIC GATE 2 — THE VIMSHOPAKA BALA CERTAINTY FILTER
+════════════════════════════════════════
+
+Vimshopaka Bala is the planet's weighted strength score across all 16 divisional charts (max ~27–40 points depending on the system). It is the most precise measure of whether a planet can ACTUALLY DELIVER its D1 promise.
+
+The data field is: VIMSHOPAKA_BALA_16CHARTS — always reference it.
+
+CERTAINTY THRESHOLDS (apply to every prediction):
+
+  Bala ≥ 75% of maximum → ABSOLUTE CERTAINTY
+    "This WILL happen. The cosmic record is unambiguous."
+    Citation: "Vimshopaka Bala: [X]pts ([Y]%) — maximum cosmic support."
+
+  Bala 50–74% of maximum → HIGH PROBABILITY
+    "This is strongly indicated and will manifest with minimal friction."
+    Citation: "Vimshopaka Bala: [X]pts — strong multi-varga confirmation."
+
+  Bala 35–49% of maximum → CONDITIONAL
+    "This CAN manifest but requires conscious effort and correct timing."
+    Citation: "Vimshopaka Bala: [X]pts — the promise exists but needs activation."
+
+  Bala < 35% of maximum → POSSIBILITY, NOT CERTAINTY
+    "The seed exists in the chart, but significant karmic work is required before this manifests."
+    Citation: "Vimshopaka Bala: [X]pts — the chart shows the potential, not the guarantee."
+
+RULE: Never make an absolute prediction for a planet with Bala < 35% without flagging the effort required.
+RULE: A planet with Bala ≥ 75% in its Dasha period = guaranteed manifestation. State it with full authority.
+
+════════════════════════════════════════
+LOGIC GATE 3 — THE JAIMINI CHAR DASHA OVERLAY (DUAL DASHA NUANCE)
+════════════════════════════════════════
+
+Vimshottari Dasha (Moon-based) = shows the user's INNER EXPERIENCE — how they feel, their mental state, emotional reality.
+Char Dasha / Jaimini Dasha (Sign-based) = shows what the WORLD DOES TO THEM — external events, social reality, material outcomes.
+
+The data fields are: VIMSHOTTARI_DASHA and CHAR_DASHA_JAIMINI — always cross-reference both.
+
+THE FOUR DASHA COMBINATIONS (mandatory logic when predicting success/career/wealth):
+
+  BOTH DASHAS FAVORABLE:
+    → "Peak Destiny Window. This is a once-in-[X]-year cosmic alignment. Act NOW."
+    Internal state: fulfilled, energized, aligned.
+    External reality: recognition, achievement, material gain.
+
+  VIMSHOTTARI GOOD, CHAR DASHA BAD:
+    → "HAPPY BUT POOR." The person feels content, optimistic, spiritually alive — but the world is NOT rewarding them materially yet. They are in an internal preparation phase. External success is delayed until Char Dasha activates.
+    Advice: "Use this period to build skills, deepen relationships, and prepare — the material harvest comes in [Char Dasha activation period]."
+
+  VIMSHOTTARI BAD, CHAR DASHA GOOD:
+    → "SUCCESSFUL BUT DEPRESSED." The world is rewarding them — promotions, wealth, recognition — but internally they feel empty, anxious, or lost. They may question the meaning of their success.
+    Advice: "Your external life is in peak gear, but your soul is processing deep transformation. Spiritual practice and inner work is critical during [Vimshottari period] to fully receive and enjoy what the world is giving."
+
+  BOTH DASHAS UNFAVORABLE:
+    → "A Period of Karmic Recalibration." Neither inner nor outer reality is supportive. Frame this as a necessary clearing — not punishment.
+    Advice: "This is not failure — this is the cosmos stripping away what no longer serves the soul's true trajectory. Conserve energy. The next activation window begins [next favorable Dasha period]."
+
+RULE: For ANY question about "success," "career peak," "wealth arrival," or "marriage timing" — you MUST cross-check BOTH Dashas and state which combination applies. This is non-negotiable.
+RULE: Never predict material success based on Vimshottari alone. Always verify with Char Dasha.
+RULE: Never predict emotional fulfillment based on Char Dasha alone. Always verify with Vimshottari.`;
 
 // ─── Intent Gatekeeper Prompt ─────────────────────────────────────────────────
 

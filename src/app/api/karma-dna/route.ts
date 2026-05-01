@@ -160,28 +160,17 @@ export async function POST(req: Request) {
     // ── Get natal chart (cached) ────────────────────────────────────────────────
     const { chart } = await getOrBuildChart(dob, tob, pob, tz, undefined, undefined, user.email);
 
-    // ── Fetch D12 and D60 from API ─────────────────────────────────────────────
-    const geo    = await geocodePlace(pob);
-    const tzFloat= tzStringToFloat(tz);
-    const params = parseBirthParams(dob, tob, geo.lat, geo.lon, tzFloat);
+    // ── Read D12 and D60 from CACHED chart (no API calls needed) ──────────────
+    // Present in schema v2 GoldenMasterJSON — always available after first build.
+    const d12Data = chart.divisional.d12;
+    const d60Data = chart.divisional.d60;
+    console.log("[karma-dna] D12/D60 read from cache — 0 extra API calls");
 
-    let d12Data: any = null, d60Data: any = null;
-    await Promise.allSettled([
-      astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D12", params })
-        .then((r: any) => { d12Data = r; })
-        .catch((e: any) => console.error("D12 fetch failed:", e.message)),
-      astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D60", params })
-        .then((r: any) => { d60Data = r; })
-        .catch((e: any) => console.error("D60 fetch failed:", e.message)),
-    ]);
-
-    // ── Parse D12 / D60 into readable format ───────────────────────────────────
-    function parseHoroChart(raw: any): string {
-      if (!Array.isArray(raw)) return "Data unavailable";
-      return raw.map((h: any, i: number) => {
-        const planets = (h.planet || []).join(", ") || "∅";
-        return `H${i+1}(${h.sign_name||"?"}): ${planets}`;
-      }).join(" | ");
+    // ── Render divisional chart to string ──────────────────────────────────────
+    function parseHoroChart(dc: typeof d12Data): string {
+      if (!dc || !dc.ascendant) return "Data unavailable";
+      return `Lagna: ${dc.ascendant} | ` +
+        dc.planets.map((p: any) => `${p.name}:H${p.house}(${p.sign})`).join(" ");
     }
 
     // ── Build context for LLM ──────────────────────────────────────────────────

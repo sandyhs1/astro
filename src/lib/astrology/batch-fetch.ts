@@ -1,98 +1,183 @@
 /**
  * ASTROLOGY ENGINE — LAYER 2: BATCH FETCHER
  *
- * Fires all required Indian Vedic endpoints in parallel.
- * Returns a raw bundle of API responses — no transformation here.
+ * Fires all 22 required Indian Vedic endpoints in RATE-LIMITED batches.
+ * Free-trial constraint: ~100 calls/day, per-minute limit.
  *
- * Endpoints fetched:
- *   - astro_details       → Lagna, Moon, Nakshatra, basic Karakas
- *   - planets             → All 9 planets with sign/house/degree
- *   - planets/extended    → Retrograde, exaltation, combustion
- *   - horo_chart/D1       → House-planet placements (Rasi)
- *   - horo_chart/D9       → Navamsha chart
- *   - horo_chart/D10      → Dashamsha chart
- *   - current_vdasha_all  → Active Maha/Antar/Pratyantar Dasha
- *   - major_vdasha        → Full life Dasha timeline
- *   - sarvashtak          → Ashtakavarga house scores
+ * Strategy: 4 sequential groups, 6-second gap between groups.
+ * Total: 22 API calls per new chart. Cache hits = 0 calls.
+ *
+ * GROUP 1 — Core (9 calls, parallel):
+ *   astro_details, planets, planets/extended,
+ *   horo_chart/D1, horo_chart/D9, horo_chart/D10,
+ *   current_vdasha_all, major_vdasha, sarvashtak
+ *
+ * GROUP 2 — Divisional Batch 1 (5 calls, parallel, +6s delay):
+ *   horo_chart/D2  → Hora (wealth)
+ *   horo_chart/D3  → Drekkana (siblings, vitality)
+ *   horo_chart/D4  → Chaturthamsha (property, home)
+ *   horo_chart/D7  → Saptamsha (children)
+ *   horo_chart/D12 → Dwadashamsha (parents)
+ *
+ * GROUP 3 — Divisional Batch 2 (5 calls, parallel, +6s delay):
+ *   horo_chart/D16 → Shodashamsha (vehicles, comforts)
+ *   horo_chart/D20 → Vimshamsha (spirituality, moksha)
+ *   horo_chart/D24 → Chaturvimshamsha (education)
+ *   horo_chart/D27 → Bhamsha (strengths/weaknesses)
+ *   horo_chart/D30 → Trimshamsha (misfortune)
+ *
+ * GROUP 4 — Divisional Batch 3 (3 calls, parallel, +6s delay):
+ *   horo_chart/D40 → Khavedamsha (maternal karma)
+ *   horo_chart/D45 → Akshavedamsha (paternal karma)
+ *   horo_chart/D60 → Shashtiamsha (soul karma — highest precision)
  */
 
 import { astroClient, type BirthParams } from "./client";
 
 export interface RawAstroBundle {
-  astroDetails: any;
-  planets: any;
+  // Core
+  astroDetails:    any;
+  planets:         any;
   planetsExtended: any;
-  horoChartD1: any;
-  horoChartD9: any;
-  horoChartD10: any;
-  currentDasha: any;
-  majorDasha: any;
-  sarvashtak: any;
+  horoChartD1:     any;
+  horoChartD9:     any;
+  horoChartD10:    any;
+  currentDasha:    any;
+  majorDasha:      any;
+  sarvashtak:      any;
+  // Divisional Batch 1
+  horoChartD2:     any;
+  horoChartD3:     any;
+  horoChartD4:     any;
+  horoChartD7:     any;
+  horoChartD12:    any;
+  // Divisional Batch 2
+  horoChartD16:    any;
+  horoChartD20:    any;
+  horoChartD24:    any;
+  horoChartD27:    any;
+  horoChartD30:    any;
+  // Divisional Batch 3
+  horoChartD40:    any;
+  horoChartD45:    any;
+  horoChartD60:    any;
   errors: Record<string, string>;
 }
 
+/** Wraps a single API call — captures errors without throwing */
+const safeCall = async (
+  name: string,
+  fn: () => Promise<any>
+): Promise<[string, any, string | null]> => {
+  try {
+    const result = await fn();
+    return [name, result, null];
+  } catch (err: any) {
+    const msg = err?.message || String(err);
+    if (msg.toLowerCase().includes("insufficient") || msg.toLowerCase().includes("balance")) {
+      console.error(`🚨 ADMIN ALERT: AstrologyAPI balance insufficient! Method: ${name}`);
+      notifyAdminBalance().catch(() => {});
+    }
+    console.error(`AstrologyAPI [${name}] failed:`, msg);
+    return [name, null, msg];
+  }
+};
+
+/** Sleep helper for rate limiting */
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/** Apply a batch of results into the bundle object */
+function applyResults(
+  bundle: RawAstroBundle,
+  results: [string, any, string | null][]
+): void {
+  for (const [name, data, error] of results) {
+    (bundle as any)[name] = data;
+    if (error) bundle.errors[name] = error;
+  }
+}
+
 /**
- * Fires all Vedic endpoints in parallel.
+ * Fires all Vedic endpoints in 4 rate-limited batches.
  * Non-critical failures are captured in `errors` — never throws.
  */
 export async function batchFetchVedicChart(params: BirthParams): Promise<RawAstroBundle> {
-  const p = params; // shorthand
+  const p = params;
 
-  const safeCall = async (name: string, fn: () => Promise<any>): Promise<[string, any, string | null]> => {
-    try {
-      const result = await fn();
-      return [name, result, null];
-    } catch (err: any) {
-      const msg = err?.message || String(err);
-
-      // Critical error: insufficient balance — alert admin
-      if (msg.toLowerCase().includes("insufficient") || msg.toLowerCase().includes("balance")) {
-        console.error(`🚨 ADMIN ALERT: AstrologyAPI balance insufficient! Method: ${name}`);
-        // Fire-and-forget alert (non-blocking)
-        notifyAdminBalance().catch(() => {});
-      }
-
-      console.error(`AstrologyAPI [${name}] failed:`, msg);
-      return [name, null, msg];
-    }
+  const bundle: RawAstroBundle = {
+    astroDetails: null, planets: null, planetsExtended: null,
+    horoChartD1: null, horoChartD9: null, horoChartD10: null,
+    currentDasha: null, majorDasha: null, sarvashtak: null,
+    horoChartD2: null, horoChartD3: null, horoChartD4: null,
+    horoChartD7: null, horoChartD12: null,
+    horoChartD16: null, horoChartD20: null, horoChartD24: null,
+    horoChartD27: null, horoChartD30: null,
+    horoChartD40: null, horoChartD45: null, horoChartD60: null,
+    errors: {},
   };
 
-  const results = await Promise.all([
+  // ── GROUP 1: Core (9 calls) ────────────────────────────────────────────────
+  console.log("[batch-fetch] GROUP 1: Core 9 calls...");
+  const g1 = await Promise.all([
     safeCall("astroDetails",    () => astroClient.vedic.getAstroDetails(p)),
     safeCall("planets",         () => astroClient.vedic.getPlanets(p)),
     safeCall("planetsExtended", () => astroClient.customRequest({ method: "POST", endpoint: "planets/extended", params: p })),
     safeCall("horoChartD1",     () => astroClient.vedic.getHoroChartD1(p)),
-    safeCall("horoChartD9",     () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D9", params: p })),
+    safeCall("horoChartD9",     () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D9",  params: p })),
     safeCall("horoChartD10",    () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D10", params: p })),
     safeCall("currentDasha",    () => astroClient.customRequest({ method: "POST", endpoint: "current_vdasha_all", params: p })),
     safeCall("majorDasha",      () => astroClient.customRequest({ method: "POST", endpoint: "major_vdasha", params: p })),
     safeCall("sarvashtak",      () => astroClient.customRequest({ method: "POST", endpoint: "sarvashtak", params: p })),
   ]);
+  applyResults(bundle, g1);
 
-  const bundle: RawAstroBundle = {
-    astroDetails:    null,
-    planets:         null,
-    planetsExtended: null,
-    horoChartD1:     null,
-    horoChartD9:     null,
-    horoChartD10:    null,
-    currentDasha:    null,
-    majorDasha:      null,
-    sarvashtak:      null,
-    errors: {},
-  };
+  // ── Rate-limit pause ───────────────────────────────────────────────────────
+  console.log("[batch-fetch] GROUP 1 done. Waiting 8s before GROUP 2...");
+  await sleep(8000);
 
-  for (const [name, data, error] of results) {
-    (bundle as any)[name] = data;
-    if (error) bundle.errors[name] = error;
-  }
+  // ── GROUP 2: Divisional Batch 1 (5 calls) ─────────────────────────────────
+  console.log("[batch-fetch] GROUP 2: D2/D3/D4/D7/D12...");
+  const g2 = await Promise.all([
+    safeCall("horoChartD2",  () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D2",  params: p })),
+    safeCall("horoChartD3",  () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D3",  params: p })),
+    safeCall("horoChartD4",  () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D4",  params: p })),
+    safeCall("horoChartD7",  () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D7",  params: p })),
+    safeCall("horoChartD12", () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D12", params: p })),
+  ]);
+  applyResults(bundle, g2);
 
+  console.log("[batch-fetch] GROUP 2 done. Waiting 8s before GROUP 3...");
+  await sleep(8000);
+
+  // ── GROUP 3: Divisional Batch 2 (5 calls) ─────────────────────────────────
+  console.log("[batch-fetch] GROUP 3: D16/D20/D24/D27/D30...");
+  const g3 = await Promise.all([
+    safeCall("horoChartD16", () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D16", params: p })),
+    safeCall("horoChartD20", () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D20", params: p })),
+    safeCall("horoChartD24", () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D24", params: p })),
+    safeCall("horoChartD27", () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D27", params: p })),
+    safeCall("horoChartD30", () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D30", params: p })),
+  ]);
+  applyResults(bundle, g3);
+
+  console.log("[batch-fetch] GROUP 3 done. Waiting 8s before GROUP 4...");
+  await sleep(8000);
+
+  // ── GROUP 4: Divisional Batch 3 (3 calls) ─────────────────────────────────
+  console.log("[batch-fetch] GROUP 4: D40/D45/D60...");
+  const g4 = await Promise.all([
+    safeCall("horoChartD40", () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D40", params: p })),
+    safeCall("horoChartD45", () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D45", params: p })),
+    safeCall("horoChartD60", () => astroClient.customRequest({ method: "POST", endpoint: "horo_chart/D60", params: p })),
+  ]);
+  applyResults(bundle, g4);
+
+  console.log(`[batch-fetch] All 22 calls complete. Errors: ${Object.keys(bundle.errors).join(", ") || "none"}`);
   return bundle;
 }
 
 async function notifyAdminBalance(): Promise<void> {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) return;
-  // Log prominently — actual email via existing Supabase/SMTP if set up
-  console.error(`🚨🚨🚨 CRITICAL: AstrologyAPI.com balance is INSUFFICIENT. Top up immediately at https://astrologyapi.com/pricing. Alert to: ${adminEmail}`);
+  console.error(`🚨🚨🚨 CRITICAL: AstrologyAPI.com balance INSUFFICIENT. Top up at https://astrologyapi.com/pricing. Alert to: ${adminEmail}`);
 }

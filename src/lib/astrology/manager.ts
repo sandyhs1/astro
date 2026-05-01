@@ -3,19 +3,20 @@
  *
  * THE SINGLE ENTRY POINT FOR ALL CHART DATA.
  *
- * Before calling the API, checks Supabase for an existing chart
- * keyed by birth hash. If found, returns cached GoldenMasterJSON.
- * If not found: batch-fetch → normalize → save → return.
+ * Cache logic:
+ *   - Checks Supabase for an existing chart keyed by birth hash.
+ *   - ALSO validates schemaVersion === SCHEMA_VERSION (currently 2).
+ *   - If version mismatch → forces full rebuild (picks up all 16 Dn charts).
+ *   - If not found OR stale schema → batch-fetch → normalize → save → return.
  *
- * NEVER calls AstrologyAPI twice for the same birth data.
+ * NEVER calls AstrologyAPI twice for the same birth data + schema version.
  */
 
 import { createClient } from "@supabase/supabase-js";
 import { geocodePlace, parseBirthParams, tzStringToFloat, type BirthParams } from "./client";
 import { batchFetchVedicChart } from "./batch-fetch";
-import { normalizeBundle, buildBirthHash, type GoldenMasterJSON } from "./normalize";
+import { normalizeBundle, buildBirthHash, SCHEMA_VERSION, type GoldenMasterJSON } from "./normalize";
 
-// Server-side Supabase (service role — bypasses RLS for caching)
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,15 +32,8 @@ export interface ChartResult {
 }
 
 /**
- * Main entry point.
- *
- * @param dob         - "DD/MM/YYYY"
- * @param tob         - "HH:MM" or "H:MM AM/PM"
- * @param pob         - Place name e.g. "Bangalore, India"
- * @param tz          - Timezone offset string e.g. "+05:30" (default IST)
- * @param latOverride - Optional pre-geocoded lat
- * @param lonOverride - Optional pre-geocoded lon
- * @param userId      - Supabase user ID (for caching to correct user row)
+ * Main entry point. Builds or returns cached GoldenMasterJSON v2
+ * (all 16 divisional charts + extras).
  */
 export async function getOrBuildChart(
   dob: string,
@@ -57,12 +51,12 @@ export async function getOrBuildChart(
     ? { lat: latOverride, lon: lonOverride, displayName: pob }
     : await geocodePlace(pob);
 
-  // 2. Build params
+  // 2. Build params + hash
   const tzFloat = tzStringToFloat(tz);
   const params  = parseBirthParams(dob, tob, geo.lat, geo.lon, tzFloat);
   const hash    = buildBirthHash(params);
 
-  // 3. Check Supabase cache
+  // 3. Check Supabase cache — ALSO validate schemaVersion
   const { data: cached } = await supabase
     .from("onboarding_leads")
     .select("golden_master_json, chart_hash")
@@ -70,39 +64,65 @@ export async function getOrBuildChart(
     .maybeSingle();
 
   if (cached?.golden_master_json) {
-    return { chart: cached.golden_master_json as GoldenMasterJSON, fromCache: true };
+    const cachedChart = cached.golden_master_json as GoldenMasterJSON;
+    // Schema version check — if stale, force rebuild
+    if (cachedChart.schemaVersion === SCHEMA_VERSION) {
+      console.log(`[manager] Cache HIT (v${SCHEMA_VERSION}) for hash ${hash}`);
+      return { chart: cachedChart, fromCache: true };
+    }
+    console.log(`[manager] Cache STALE (v${cachedChart.schemaVersion ?? 1}) — rebuilding for v${SCHEMA_VERSION}`);
+  } else {
+    console.log(`[manager] Cache MISS — building chart for hash ${hash}`);
   }
 
-  // 4. Batch-fetch from API
+  // 4. Also check chart_cache table (anonymous / non-lead users)
+  const { data: anonCached } = await supabase
+    .from("chart_cache")
+    .select("chart")
+    .eq("hash", hash)
+    .maybeSingle();
+
+  if (anonCached?.chart) {
+    const cachedChart = anonCached.chart as GoldenMasterJSON;
+    if (cachedChart.schemaVersion === SCHEMA_VERSION) {
+      console.log(`[manager] AnonCache HIT (v${SCHEMA_VERSION}) for hash ${hash}`);
+      return { chart: cachedChart, fromCache: true };
+    }
+  }
+
+  // 5. Batch-fetch from API (22 calls, rate-limited)
   const bundle = await batchFetchVedicChart(params);
 
-  // 5. Normalize
+  // 6. Normalize into GoldenMasterJSON v2
   const chart = normalizeBundle(bundle, params, pob, dob, tob);
 
-  // 6. Save to Supabase
+  // 7. Save to Supabase
   if (userId) {
-    await supabase
+    const { error } = await supabase
       .from("onboarding_leads")
       .update({
-        chart_hash: hash,
+        chart_hash:         hash,
         golden_master_json: chart,
         chart_generated_at: new Date().toISOString(),
       })
-      .eq("email", userId); // userId here is the user's email for onboarding_leads
+      .eq("email", userId);
+    if (error) console.error("[manager] Save to onboarding_leads failed:", error.message);
   } else {
-    // Upsert by hash for anonymous caching
-    await supabase
+    // Upsert by hash for anonymous
+    const { error } = await supabase
       .from("chart_cache")
       .upsert({ hash, chart, created_at: new Date().toISOString() }, { onConflict: "hash" })
       .select();
+    if (error) console.error("[manager] Save to chart_cache failed:", error.message);
   }
 
+  console.log(`[manager] Chart built + saved (v${SCHEMA_VERSION}), confidence: ${chart.confidence.score}%`);
   return { chart, fromCache: false };
 }
 
 /**
  * Quick fetch by birth hash from cache only (no API call).
- * Returns null if not cached.
+ * Returns null if not cached OR if schema is stale.
  */
 export async function getCachedChart(hash: string): Promise<GoldenMasterJSON | null> {
   const supabase = getSupabase();
@@ -111,5 +131,7 @@ export async function getCachedChart(hash: string): Promise<GoldenMasterJSON | n
     .select("golden_master_json")
     .eq("chart_hash", hash)
     .maybeSingle();
-  return data?.golden_master_json ?? null;
+  const chart = data?.golden_master_json as GoldenMasterJSON | null;
+  if (!chart || chart.schemaVersion !== SCHEMA_VERSION) return null;
+  return chart;
 }

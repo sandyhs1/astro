@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { getOrBuildChart } from "@/lib/astrology/manager";
-import { buildClaudeContext, ASTRO_SYSTEM_PROMPT, generateSuggestedPrompts } from "@/lib/astrology/prompts";
+import { buildClaudeContext, ASTRO_SYSTEM_PROMPT, generateSuggestedPrompts, detectTopic } from "@/lib/astrology/prompts";
 import { routeLLM, gatekeeperCheck } from "@/lib/astrology/llm-router";
 import { getUserEntitlement } from "@/lib/freemius";
 
@@ -149,8 +149,9 @@ export async function POST(req: Request) {
       }, { status: 422 });
     }
 
-    // ── Build Grandmaster Context ─────────────────────────────────────────────
-    const chartContext = buildClaudeContext(chart, pName);
+    // ── Build Grandmaster Context (topic-aware divisional chart injection) ────
+    const jyotishTopic = detectTopic(message);
+    const chartContext = buildClaudeContext(chart, pName, jyotishTopic);
 
     // Detect first message — inject Namaste instruction
     const isFirstMessage = !history || history.length === 0;
