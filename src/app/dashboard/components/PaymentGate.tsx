@@ -10,7 +10,8 @@ type PlanType = "plan1" | "plan2";
 type GateState =
   | "loading"        // checking payment status
   | "gate"           // unpaid → show plan selection
-  | "processing"     // Razorpay checkout open
+  | "confirm"        // INR only: pre-checkout step with affordability widget
+  | "processing"     // Razorpay/Freemius checkout open
   | "plan1_form"     // Plan 1 paid → show intake form
   | "plan1_success"  // Plan 1 form submitted → final thank you
   | "plan2_success"  // Plan 2 paid → unblurred (gate hidden)
@@ -178,24 +179,26 @@ export default function PaymentGate({ children }: PaymentGateProps) {
     checkPaymentStatus();
   }, []);
 
-  // ── Initialize Affordability Widget ─────────────────────────────────────────
+  // ── Initialize Affordability Widget on the confirm screen ─────────────────
+  // We deliberately do NOT show this on the plan selection (gate) screen.
+  // Instead, it renders inside the dedicated pre-checkout confirm step so it
+  // never clutters or obstructs the pricing cards.
   useEffect(() => {
-    if (currency === "INR" && (gateState === "gate" || gateState === "processing")) {
+    if (currency === "INR" && gateState === "confirm") {
       let isSubscribed = true;
       loadRazorpayAffordability().then((loaded) => {
         if (loaded && (window as any).RazorpayAffordabilitySuite && isSubscribed) {
-           const amountStr = PLANS[selectedPlan].price;
-           const amountPaise = parseInt(amountStr.replace(/\D/g, '')) * 100;
-           
-           const container = document.getElementById("razorpay-affordability-widget");
-           if (container) container.innerHTML = '';
-           
-           const widgetConfig = {
-             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-             amount: amountPaise
-           };
-           const rzpAffordabilitySuite = new (window as any).RazorpayAffordabilitySuite(widgetConfig);
-           rzpAffordabilitySuite.render();
+          const amountStr = PLANS[selectedPlan].price;
+          const amountPaise = parseInt(amountStr.replace(/\D/g, '')) * 100;
+
+          const container = document.getElementById("razorpay-affordability-widget");
+          if (container) container.innerHTML = '';
+
+          const rzpAffordabilitySuite = new (window as any).RazorpayAffordabilitySuite({
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+            amount: amountPaise,
+          });
+          rzpAffordabilitySuite.render();
         }
       });
       return () => { isSubscribed = false; };
@@ -203,6 +206,20 @@ export default function PaymentGate({ children }: PaymentGateProps) {
   }, [currency, selectedPlan, gateState]);
 
   // ── Initiate payment ───────────────────────────────────────────────────────
+  // For INR: first go to the 'confirm' pre-checkout screen (shows EMI widget).
+  // The actual Razorpay checkout only launches when user clicks "Pay Now" there.
+  // For USD: goes straight to Freemius checkout overlay.
+  async function handleProceed(plan: PlanType) {
+    setError(null);
+    if (currency === "INR") {
+      // Show the confirm/EMI screen instead of directly opening Razorpay
+      setGateState("confirm");
+      return;
+    }
+    // USD goes straight through
+    handlePay(plan);
+  }
+
   async function handlePay(plan: PlanType) {
     setError(null);
     setGateState("processing");
@@ -812,24 +829,19 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                       }}>
                         {isSelected && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#000" }} />}
                       </div>
-
-                      {/* Razorpay Affordability Widget for Selected Plan */}
-                      {isSelected && currency === "INR" && (
-                        <div style={{ marginTop: 24, padding: "12px", background: "#FFFFFF", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.8)" }}>
-                           <div id="razorpay-affordability-widget"></div>
-                        </div>
-                      )}
+                      {/* Note: Affordability widget is intentionally NOT placed here.
+                          It renders on the dedicated confirm screen shown after this step. */}
                     </motion.div>
                   );
                 })}
               </div>
 
-              {/* CTA Button */}
+              {/* CTA Button — for INR shows confirm screen first; USD goes straight to checkout */}
               <div style={{ marginTop: 20 }}>
                 <motion.button
                   whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   disabled={gateState === "processing"}
-                  onClick={() => handlePay(selectedPlan)}
+                  onClick={() => handleProceed(selectedPlan)}
                   style={{
                     width: "100%",
                     padding: "18px 32px",
@@ -858,6 +870,97 @@ export default function PaymentGate({ children }: PaymentGateProps) {
 
               <div style={{ marginTop: 14, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.08em" }}>
                 SECURED BY {currency === "INR" ? "RAZORPAY" : "FREEMIUS"} · 256-BIT SSL ENCRYPTION · PAYMENTS NEVER STORED ON OUR SERVERS
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Confirm / Pre-Checkout Screen (INR only) ───────────────────────
+              Shows AFTER plan selection, BEFORE the Razorpay popup.
+              This is the correct place for the Affordability (EMI) widget. */}
+          {gateState === "confirm" && (
+            <motion.div
+              key="confirm"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              style={{
+                position: "absolute", inset: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: "24px",
+              }}
+            >
+              <div style={{
+                width: "100%", maxWidth: 480,
+                background: "#0B0B12",
+                border: `1px solid ${PLANS[selectedPlan].accent}40`,
+                padding: "36px 32px",
+                boxShadow: `0 0 40px ${PLANS[selectedPlan].accent}15`,
+              }}>
+                {/* Back button */}
+                <button
+                  onClick={() => setGateState("gate")}
+                  style={{
+                    background: "none", border: "none", cursor: "pointer",
+                    color: "rgba(255,255,255,0.35)", fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "10px", letterSpacing: "0.1em", marginBottom: 24,
+                    padding: 0, textTransform: "uppercase",
+                  }}
+                >
+                  ← Back to Plans
+                </button>
+
+                {/* Plan summary */}
+                <div style={{ marginBottom: 28 }}>
+                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "9px", letterSpacing: "0.15em", color: PLANS[selectedPlan].accent, textTransform: "uppercase", marginBottom: 6 }}>
+                    {PLANS[selectedPlan].tag}
+                  </div>
+                  <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: "1.5rem", color: "#fff", marginBottom: 4 }}>
+                    {PLANS[selectedPlan].label}
+                  </div>
+                  <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: "2.2rem", color: PLANS[selectedPlan].accent, fontWeight: 700 }}>
+                    {PLANS[selectedPlan].price}
+                    <span style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.3)", fontFamily: "'IBM Plex Mono', monospace", marginLeft: 8 }}>
+                      {PLANS[selectedPlan].period}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Affordability / EMI Widget — white bg so Razorpay's own
+                    styling is fully visible against the dark modal */}
+                <div style={{ background: "#FFFFFF", borderRadius: 8, padding: "12px", marginBottom: 28 }}>
+                  <div id="razorpay-affordability-widget" />
+                </div>
+
+                {/* Pay Now button */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={() => handlePay(selectedPlan)}
+                  style={{
+                    width: "100%",
+                    padding: "18px",
+                    background: `linear-gradient(135deg, ${PLANS[selectedPlan].accent}33, ${PLANS[selectedPlan].accent}66)`,
+                    border: `1px solid ${PLANS[selectedPlan].accent}`,
+                    color: PLANS[selectedPlan].accent,
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "13px",
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                  }}
+                >
+                  → Pay Now · {PLANS[selectedPlan].price}
+                </motion.button>
+
+                {selectedPlan === "plan2" && (
+                  <div style={{ marginTop: 10, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "9px", color: "rgba(0,229,255,0.6)", letterSpacing: "0.05em" }}>
+                    * Cancel anytime. "2036" expiry is an RBI e-mandate default — not a lock-in.
+                  </div>
+                )}
+
+                <div style={{ marginTop: 14, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.08em" }}>
+                  SECURED BY RAZORPAY · 256-BIT SSL ENCRYPTION
+                </div>
               </div>
             </motion.div>
           )}
