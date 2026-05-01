@@ -97,7 +97,12 @@ export default function EMRAuthModal() {
           }
         }
 
-        setMessage("Check your email for the confirmation link!");
+        // ── Direct Login if no promo ──────────────────────────────────────
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+        
+        closeAuthModal();
+        router.push("/dashboard");
       } else if (view === "sign_in") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

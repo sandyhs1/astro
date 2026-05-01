@@ -23,6 +23,7 @@ export default function DashboardPage() {
 
   const [profile, setProfile] = useState<any>(null);
   const [familyProfiles, setFamilyProfiles] = useState<any[]>([]);
+  const [entitlement, setEntitlement] = useState<any>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showTopup, setShowTopup] = useState(false);
   const [modalType, setModalType] = useState<"self" | "family">("self");
@@ -118,9 +119,21 @@ export default function DashboardPage() {
             setShowProfileModal(true);
           }
         }
+
+        // Fetch Freemius entitlement
+        try {
+          const res = await fetch("/api/freemius/get-entitlements", { method: 'POST' });
+          const json = await res.json();
+          if (json.entitlement) {
+            setEntitlement(json.entitlement);
+          }
+        } catch (e) {
+          console.error("Error fetching entitlement", e);
+        }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
       }
+
     }
     if (user) fetchData();
   }, [user, supabase]);
@@ -371,7 +384,12 @@ export default function DashboardPage() {
       const data = await res.json();
       
       if (!res.ok) {
-        setMessages(prev => [...prev, { role: "system", content: data.error || "An error occurred." }]);
+        if (res.status === 403 && data.code === 'subscription_required') {
+          setMessages(prev => [...prev, { role: "system", content: "Premium Subscription Required to use this feature. Redirecting to Pricing..." }]);
+          setTimeout(() => router.push('/pricing'), 2000);
+        } else {
+          setMessages(prev => [...prev, { role: "system", content: data.error || "An error occurred." }]);
+        }
       } else {
         if (data.systemWarning) {
            setMessages(prev => [...prev, { role: "system", content: data.systemWarning }]);
@@ -573,6 +591,17 @@ export default function DashboardPage() {
           </div>
           
           <div className="flex items-center gap-6">
+            {/* Freemius Subscription Badge */}
+            {entitlement ? (
+              <button onClick={() => router.push('/accounts')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 text-white text-xs font-bold shadow-sm shadow-amber-200">
+                <Sparkles size={14} /> Premium
+              </button>
+            ) : (
+              <button onClick={() => router.push('/pricing')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition-colors">
+                Subscribe
+              </button>
+            )}
+
             {/* Credits badge + Topup button */}
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-full border border-slate-200">

@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// App Router config to allow larger uploads
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
 
 const isAuthenticated = (req: Request) => {
     const authHeader = req.headers.get('Authorization');

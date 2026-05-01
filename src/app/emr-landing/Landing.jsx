@@ -1692,6 +1692,7 @@ const PLAN_PDF = {
   label: "01 · ONE-TIME",
   name: "The Report",
   price: "₹4,799",
+  priceUSD: "$79",
   period: "one-time",
   accent: "#FF5E3A",
   badge: null,
@@ -1715,6 +1716,7 @@ const PLAN_CREDITS = {
   label: "02 · MONTHLY",
   name: "AI Credits",
   price: "₹1,799",
+  priceUSD: "$39",
   period: "50 credits",
   accent: "#00E5FF",
   badge: "MOST POPULAR",
@@ -1818,7 +1820,7 @@ const CreditsModal = ({ onClose }) => {
   );
 };
 
-const PlanCard = ({ plan, isCredits }) => {
+const PlanCard = ({ plan, isCredits, currency = "INR" }) => {
   const [showModal, setShowModal] = useState(false);
   const { openAuthModal } = useAuthModal();
 
@@ -1851,7 +1853,7 @@ const PlanCard = ({ plan, isCredits }) => {
 
           {/* price */}
           <div className="flex items-baseline gap-3 pb-8 border-b border-white/10">
-            <div className="font-serif-display text-6xl" style={{ color: plan.accent }}>{plan.price}</div>
+            <div className="font-serif-display text-6xl" style={{ color: plan.accent }}>{currency === "INR" ? plan.price : plan.priceUSD}</div>
             <div className="font-mono-tech text-[10px] text-zinc-500">{plan.period}</div>
           </div>
 
@@ -1892,7 +1894,10 @@ const PlanCard = ({ plan, isCredits }) => {
   );
 };
 
-const Subscription = () => (
+const Subscription = () => {
+  const [currency, setCurrency] = useState("INR");
+
+  return (
   <section id="subscription" data-testid="section-subscription" className="relative py-32 md:py-44 border-t border-white/5">
     <div className="aurora-blob" style={{ width: 500, height: 500, background: "#FF5E3A", top: "-10%", left: "-5%", opacity: 0.1 }} />
     <div className="aurora-blob" style={{ width: 500, height: 500, background: "#00E5FF", bottom: "-10%", right: "-5%", opacity: 0.08, animationDelay: "-8s" }} />
@@ -1911,17 +1916,38 @@ const Subscription = () => (
           </p>
         </Reveal>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-20 max-w-4xl mx-auto">
+
+      <Reveal delay={0.5}>
+        <div className="flex justify-center mt-14 mb-2">
+          <div className="inline-flex bg-white/5 rounded-full p-1 border border-white/10">
+            <button 
+              onClick={() => setCurrency("INR")}
+              className={`px-8 py-3 rounded-full font-mono-tech text-[10px] tracking-widest transition-all duration-300 ${currency === "INR" ? "bg-white/15 text-white shadow-sm" : "text-white/40 hover:text-white/70"}`}
+            >
+              INR (₹)
+            </button>
+            <button 
+              onClick={() => setCurrency("USD")}
+              className={`px-8 py-3 rounded-full font-mono-tech text-[10px] tracking-widest transition-all duration-300 ${currency === "USD" ? "bg-white/15 text-white shadow-sm" : "text-white/40 hover:text-white/70"}`}
+            >
+              USD ($)
+            </button>
+          </div>
+        </div>
+      </Reveal>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 max-w-4xl mx-auto">
         <Reveal delay={1}>
-          <PlanCard plan={PLAN_PDF} isCredits={false} />
+          <PlanCard plan={PLAN_PDF} isCredits={false} currency={currency} />
         </Reveal>
         <Reveal delay={2}>
-          <PlanCard plan={PLAN_CREDITS} isCredits={true} />
+          <PlanCard plan={PLAN_CREDITS} isCredits={true} currency={currency} />
         </Reveal>
       </div>
     </div>
   </section>
-);
+  );
+};
 
 
 /* ------------------------------------------------------------------ */

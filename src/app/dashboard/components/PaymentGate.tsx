@@ -32,12 +32,53 @@ function loadRazorpay(): Promise<boolean> {
   });
 }
 
+// ─── jQuery loader for Freemius ───────────────────────────────────────────────
+function loadjQuery(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if ((window as any).jQuery) { resolve(true); return; }
+    const script = document.createElement("script");
+    script.src = "https://code.jquery.com/jquery-3.6.0.min.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+  });
+}
+
+// ─── Freemius SDK loader ──────────────────────────────────────────────────────
+async function loadFreemius(): Promise<boolean> {
+  await loadjQuery();
+  return new Promise((resolve) => {
+    if ((window as any).FS && (window as any).FS.Checkout) { resolve(true); return; }
+    const script = document.createElement("script");
+    script.src = "https://checkout.freemius.com/checkout.min.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
+// ─── Razorpay Affordability SDK loader ────────────────────────────────────────
+function loadRazorpayAffordability(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (document.getElementById("razorpay-affordability-script")) { resolve(true); return; }
+    const script = document.createElement("script");
+    script.id = "razorpay-affordability-script";
+    script.src = "https://cdn.razorpay.com/widgets/affordability/affordability.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 // ─── Plan data ────────────────────────────────────────────────────────────────
 const PLANS = {
   plan1: {
     label: "Complete Reality Check",
     tag: "One-Time Report",
     price: "₹4,799",
+    priceUSD: "$79",
+    freemiusPlanId: "47400",
+    freemiusPricingId: "61717",
     period: "one-time payment",
     accent: "#FF5E3A",
     features: [
@@ -52,10 +93,13 @@ const PLANS = {
     cta: "Get My Report",
   },
   plan2: {
-    label: "AI Intelligence Credits",
-    tag: "Monthly Plan",
+    label: "Intelligence Dashboard",
+    tag: "Premium Sub",
     price: "₹1,799",
-    period: "per month · 50 credits",
+    priceUSD: "$39",
+    freemiusPlanId: "47401",
+    freemiusPricingId: "61718",
+    period: "per month",
     accent: "#00E5FF",
     features: [
       "50 credits every month",
@@ -74,6 +118,7 @@ const PLANS = {
 export default function PaymentGate({ children }: PaymentGateProps) {
   const [gateState, setGateState] = useState<GateState>("loading");
   const [selectedPlan, setSelectedPlan] = useState<PlanType>("plan2");
+  const [currency, setCurrency] = useState<"INR" | "USD">("INR");
   const [error, setError] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
@@ -133,11 +178,104 @@ export default function PaymentGate({ children }: PaymentGateProps) {
     checkPaymentStatus();
   }, []);
 
+  // ── Initialize Affordability Widget ─────────────────────────────────────────
+  useEffect(() => {
+    if (currency === "INR" && (gateState === "gate" || gateState === "processing")) {
+      let isSubscribed = true;
+      loadRazorpayAffordability().then((loaded) => {
+        if (loaded && (window as any).RazorpayAffordabilitySuite && isSubscribed) {
+           const amountStr = PLANS[selectedPlan].price;
+           const amountPaise = parseInt(amountStr.replace(/\D/g, '')) * 100;
+           
+           const container = document.getElementById("razorpay-affordability-widget");
+           if (container) container.innerHTML = '';
+           
+           const widgetConfig = {
+             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+             amount: amountPaise
+           };
+           const rzpAffordabilitySuite = new (window as any).RazorpayAffordabilitySuite(widgetConfig);
+           rzpAffordabilitySuite.render();
+        }
+      });
+      return () => { isSubscribed = false; };
+    }
+  }, [currency, selectedPlan, gateState]);
+
   // ── Initiate payment ───────────────────────────────────────────────────────
   async function handlePay(plan: PlanType) {
     setError(null);
     setGateState("processing");
 
+    // ─── Freemius (USD) Flow ──────────────────────────────────────────────────
+    if (currency === "USD") {
+      const fsLoaded = await loadFreemius();
+      if (!fsLoaded) {
+        setError("Failed to load secure payment window. Please check your connection.");
+        setGateState("gate");
+        return;
+      }
+
+      try {
+        const configRes = await fetch("/api/freemius/config");
+        const configData = await configRes.json();
+
+        if (!configData.productId || !configData.publicKey) {
+           throw new Error("Missing payment configuration.");
+        }
+
+        const handler = (window as any).FS.Checkout.configure({
+            plugin_id: configData.productId,
+            plan_id: PLANS[plan].freemiusPlanId,
+            public_key: configData.publicKey,
+            image: "https://quantumkarma.tech/favicon.ico",
+        });
+
+        handler.open({
+            name: "Quantum Karma",
+            pricing_id: PLANS[plan].freemiusPricingId,
+            user_email: userEmail,
+            readonly_user: true,
+            user_firstname: userName,
+            success: async function (response: any) {
+                try {
+                    const purchaseId = response.purchase?.id || response.license_id || response.purchase?.license_id;
+                    const verifyRes = await fetch("/api/payments/freemius-verify", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ purchaseId, plan }),
+                    });
+                    const verifyData = await verifyRes.json();
+                    
+                    if (!verifyRes.ok || !verifyData.success) {
+                        setError("Payment verification failed. Please contact support.");
+                        setGateState("gate");
+                        return;
+                    }
+
+                    if (plan === "plan1") {
+                        setGateState("plan1_form");
+                    } else {
+                        setGateState("plan2_success");
+                        setTimeout(() => window.location.reload(), 2000);
+                    }
+                } catch (err) {
+                    setError("Verification error. Your payment may have gone through — please contact support.");
+                    setGateState("gate");
+                }
+            },
+            cancel: function () {
+                setGateState("gate");
+            }
+        });
+      } catch (err: any) {
+        setError(err.message ?? "Something went wrong initializing USD payments.");
+        setGateState("gate");
+      }
+      return;
+    }
+
+    // ─── Razorpay (INR) Flow ──────────────────────────────────────────────────
     const sdkLoaded = await loadRazorpay();
     if (!sdkLoaded) {
       setError("Failed to load payment window. Please check your internet connection.");
@@ -576,6 +714,46 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                 </div>
               )}
 
+              {/* Currency Selector */}
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+                <div style={{ display: "inline-flex", background: "rgba(255,255,255,0.05)", borderRadius: "30px", padding: "4px" }}>
+                  <button 
+                    onClick={() => setCurrency("INR")}
+                    style={{
+                      padding: "8px 24px",
+                      borderRadius: "24px",
+                      background: currency === "INR" ? "rgba(255,255,255,0.15)" : "transparent",
+                      color: currency === "INR" ? "#fff" : "rgba(255,255,255,0.4)",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: "10px",
+                      letterSpacing: "0.15em",
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    INR (₹)
+                  </button>
+                  <button 
+                    onClick={() => setCurrency("USD")}
+                    style={{
+                      padding: "8px 24px",
+                      borderRadius: "24px",
+                      background: currency === "USD" ? "rgba(255,255,255,0.15)" : "transparent",
+                      color: currency === "USD" ? "#fff" : "rgba(255,255,255,0.4)",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: "10px",
+                      letterSpacing: "0.15em",
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    USD ($)
+                  </button>
+                </div>
+              </div>
+
               {/* Plan Cards */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 {(["plan1", "plan2"] as PlanType[]).map((planKey) => {
@@ -606,7 +784,9 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                         {p.label}
                       </div>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 4 }}>
-                        <span style={{ fontFamily: "'Instrument Serif', serif", fontSize: "2rem", color: p.accent }}>{p.price}</span>
+                        <span style={{ fontFamily: "'Instrument Serif', serif", fontSize: "2rem", color: p.accent }}>
+                          {currency === "INR" ? p.price : p.priceUSD}
+                        </span>
                       </div>
                       <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "9px", color: "rgba(255,255,255,0.3)", marginBottom: 20 }}>
                         {p.period}
@@ -632,6 +812,13 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                       }}>
                         {isSelected && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#000" }} />}
                       </div>
+
+                      {/* Razorpay Affordability Widget for Selected Plan */}
+                      {isSelected && currency === "INR" && (
+                        <div style={{ marginTop: 24, padding: "12px", background: "#FFFFFF", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.8)" }}>
+                           <div id="razorpay-affordability-widget"></div>
+                        </div>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -659,18 +846,18 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                   }}>
                   {gateState === "processing"
                     ? "OPENING PAYMENT WINDOW..."
-                    : `→ ${PLANS[selectedPlan].cta} · ${PLANS[selectedPlan].price}`}
+                    : `→ ${PLANS[selectedPlan].cta} · ${currency === "INR" ? PLANS[selectedPlan].price : PLANS[selectedPlan].priceUSD}`}
                 </motion.button>
               </div>
 
-              {selectedPlan === "plan2" && (
+              {currency === "INR" && selectedPlan === "plan2" && (
                 <div style={{ marginTop: 12, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "9px", color: "rgba(0, 229, 255, 0.7)", letterSpacing: "0.05em" }}>
                   * NOTE: YOU CAN CANCEL ANYTIME. THE "2036" EXPIRY SHOWN ON RAZORPAY IS JUST A DEFAULT E-MANDATE REQUIREMENT BY RBI.
                 </div>
               )}
 
               <div style={{ marginTop: 14, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.08em" }}>
-                SECURED BY RAZORPAY · 256-BIT SSL ENCRYPTION · PAYMENTS NEVER STORED ON OUR SERVERS
+                SECURED BY {currency === "INR" ? "RAZORPAY" : "FREEMIUS"} · 256-BIT SSL ENCRYPTION · PAYMENTS NEVER STORED ON OUR SERVERS
               </div>
             </motion.div>
           )}

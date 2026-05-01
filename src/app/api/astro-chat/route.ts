@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getOrBuildChart } from "@/lib/astrology/manager";
 import { buildClaudeContext, ASTRO_SYSTEM_PROMPT, generateSuggestedPrompts } from "@/lib/astrology/prompts";
 import { routeLLM, gatekeeperCheck } from "@/lib/astrology/llm-router";
+import { getUserEntitlement } from "@/lib/freemius";
 
 // Service-role client — bypasses RLS for persistent chat saving
 const supabaseAdmin = createClient(
@@ -43,6 +44,15 @@ export async function POST(req: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // ── Freemius Premium Check ────────────────────────────────────────────────
+    const entitlement = await getUserEntitlement(user.id);
+    if (!entitlement) {
+      return NextResponse.json(
+        { error: "Premium Subscription Required", code: "subscription_required" },
+        { status: 403 }
+      );
     }
 
     // ── Credits Check ─────────────────────────────────────────────────────────

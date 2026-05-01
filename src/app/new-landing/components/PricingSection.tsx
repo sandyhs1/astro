@@ -403,6 +403,7 @@ export default function PricingSection() {
   const { openAuthModal } = useAuthModal();
   const [showModal, setShowModal] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [currency, setCurrency] = useState<"INR" | "USD">("INR");
 
   const grad = 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))';
 
@@ -445,6 +446,48 @@ export default function PricingSection() {
               <p style={{ color: 'hsl(40 33% 97% / 0.6)', fontSize: '1.0625rem', marginTop: 16 }}>
                 One report. No subscriptions. No upsells. No "wear this ring and come back next week."
               </p>
+            </div>
+          </AnimatedSection>
+
+          {/* Currency Selector */}
+          <AnimatedSection delay={0.1}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+              <div style={{ display: "inline-flex", background: "rgba(255,255,255,0.05)", borderRadius: "30px", padding: "4px" }}>
+                <button 
+                  onClick={() => setCurrency("INR")}
+                  style={{
+                    padding: "8px 24px",
+                    borderRadius: "24px",
+                    background: currency === "INR" ? "rgba(255,255,255,0.15)" : "transparent",
+                    color: currency === "INR" ? "#fff" : "rgba(255,255,255,0.4)",
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  INR (₹)
+                </button>
+                <button 
+                  onClick={() => setCurrency("USD")}
+                  style={{
+                    padding: "8px 24px",
+                    borderRadius: "24px",
+                    background: currency === "USD" ? "rgba(255,255,255,0.15)" : "transparent",
+                    color: currency === "USD" ? "#fff" : "rgba(255,255,255,0.4)",
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  USD ($)
+                </button>
+              </div>
             </div>
           </AnimatedSection>
 
@@ -604,7 +647,7 @@ export default function PricingSection() {
                       color: 'hsl(40,33%,97%)',
                       letterSpacing: '-0.02em',
                     }}>
-                      ₹4,799
+                      {currency === "INR" ? "₹4,799" : "$79"}
                     </span>
                     <span style={{ 
                       color: 'hsl(40 33% 97% / 0.4)', 
@@ -613,7 +656,7 @@ export default function PricingSection() {
                       fontSize: '1.2rem',
                       fontWeight: 600,
                     }}>
-                      ₹9,999
+                      {currency === "INR" ? "₹9,999" : "$99"}
                     </span>
                   </div>
                   <p style={{ 

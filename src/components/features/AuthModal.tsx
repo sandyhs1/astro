@@ -94,14 +94,14 @@ export default function AuthModal() {
                     }
                 }
 
-                setMessage("Check your email for the confirmation link!");
-
-            } else if (view === "sign_in") {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
+                // ── Direct Login if no promo ──────────────────────────────────────
+                const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+                if (signInError) throw signInError;
+                
                 closeAuthModal();
                 router.push("/dashboard");
-            } else if (view === "forgot_password") {
+
+            } else if (view === "sign_in") {
                 const { error } = await supabase.auth.resetPasswordForEmail(email, {
                     redirectTo: `${window.location.origin}/auth/callback?redirect=/dashboard/reset-password`,
                 });
