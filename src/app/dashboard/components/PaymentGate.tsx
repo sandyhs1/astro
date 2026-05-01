@@ -179,36 +179,120 @@ export default function PaymentGate({ children }: PaymentGateProps) {
     checkPaymentStatus();
   }, []);
 
-  // ── Affordability Widget — ref callback approach ────────────────────────────
-  // Using a ref callback instead of useEffect + setTimeout.
-  // A ref callback fires the EXACT moment React mounts the element into the
-  // DOM, so there is zero timing race — getElementById is guaranteed to work.
+  // ── Affordability Widget — ref callback + dark mode CSS injection ────────────
+  // A ref callback fires the EXACT moment React mounts the element so there
+  // is zero timing race. After render() we inject a <style> tag to force
+  // dark-mode colours on the widget's internal elements (which are injected
+  // by the SDK and cannot be controlled via props).
   const affordabilityContainerRef = useCallback((container: HTMLDivElement | null) => {
     if (!container || currency !== "INR") return;
 
     const amountStr = PLANS[selectedPlan].price;
     const amountPaise = parseInt(amountStr.replace(/\D/g, "")) * 100;
+    const accent = PLANS[selectedPlan].accent;
 
     loadRazorpayAffordability().then((loaded) => {
-      if (!loaded) {
-        console.warn("[Affordability] SDK script failed to load");
-        return;
-      }
+      if (!loaded) { console.warn("[Affordability] SDK script failed to load"); return; }
       const RAS = (window as any).RazorpayAffordabilitySuite;
-      if (!RAS) {
-        console.warn("[Affordability] RazorpayAffordabilitySuite class not found");
-        return;
-      }
-      container.innerHTML = ""; // clear any stale render
+      if (!RAS) { console.warn("[Affordability] RazorpayAffordabilitySuite class not found"); return; }
+
+      container.innerHTML = "";
       try {
         console.log("[Affordability] Rendering widget, paise:", amountPaise);
-        new RAS({ key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, amount: amountPaise }).render();
+        new RAS({
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          amount: amountPaise,
+          theme: { color: accent },
+        }).render();
+
+        // Inject dark-mode CSS overrides for the widget's injected HTML.
+        // The SDK injects its own inline styles and classes — we override them
+        // globally with !important to match our dark-modal aesthetic.
+        const STYLE_ID = "rzp-affordability-dark-theme";
+        if (!document.getElementById(STYLE_ID)) {
+          const style = document.createElement("style");
+          style.id = STYLE_ID;
+          style.textContent = `
+            /* ─── Razorpay Affordability Widget — Dark Mode Overrides ─── */
+            #razorpay-affordability-widget {
+              background: transparent !important;
+            }
+            /* The widget's root card / banner wrapper */
+            #razorpay-affordability-widget > div,
+            #razorpay-affordability-widget [class*="affordability"],
+            #razorpay-affordability-widget [class*="banner"] {
+              background: rgba(255,255,255,0.06) !important;
+              border: 1px solid rgba(255,255,255,0.12) !important;
+              border-radius: 10px !important;
+              box-shadow: none !important;
+            }
+            /* All text inside widget */
+            #razorpay-affordability-widget * {
+              color: rgba(255,255,255,0.88) !important;
+            }
+            /* Muted / secondary text */
+            #razorpay-affordability-widget [class*="label"],
+            #razorpay-affordability-widget [class*="sub"],
+            #razorpay-affordability-widget small,
+            #razorpay-affordability-widget span:not([class*="price"]):not([class*="amount"]) {
+              color: rgba(255,255,255,0.55) !important;
+            }
+            /* Price / amount chips — highlight with accent */
+            #razorpay-affordability-widget [class*="price"],
+            #razorpay-affordability-widget [class*="amount"],
+            #razorpay-affordability-widget [class*="emi"] {
+              color: rgba(255,255,255,0.95) !important;
+              font-weight: 600 !important;
+            }
+            /* Inner section backgrounds */
+            #razorpay-affordability-widget [class*="section"],
+            #razorpay-affordability-widget [class*="option"],
+            #razorpay-affordability-widget [class*="card"],
+            #razorpay-affordability-widget [class*="item"] {
+              background: rgba(255,255,255,0.04) !important;
+              border: 1px solid rgba(255,255,255,0.08) !important;
+              border-radius: 8px !important;
+            }
+            /* Remove any white / light backgrounds set via inline style */
+            #razorpay-affordability-widget [style*="background: #fff"],
+            #razorpay-affordability-widget [style*="background: #FFF"],
+            #razorpay-affordability-widget [style*="background: white"],
+            #razorpay-affordability-widget [style*="background-color: #fff"],
+            #razorpay-affordability-widget [style*="background-color: white"] {
+              background: rgba(255,255,255,0.06) !important;
+            }
+            /* Override inline dark text colors */
+            #razorpay-affordability-widget [style*="color: #000"],
+            #razorpay-affordability-widget [style*="color: #333"],
+            #razorpay-affordability-widget [style*="color: #444"],
+            #razorpay-affordability-widget [style*="color: #555"],
+            #razorpay-affordability-widget [style*="color: #666"],
+            #razorpay-affordability-widget [style*="color: rgb(0"],
+            #razorpay-affordability-widget [style*="color: rgb(5"] {
+              color: rgba(255,255,255,0.88) !important;
+            }
+            /* Dividers */
+            #razorpay-affordability-widget hr,
+            #razorpay-affordability-widget [class*="divider"],
+            #razorpay-affordability-widget [class*="separator"] {
+              border-color: rgba(255,255,255,0.1) !important;
+              background: rgba(255,255,255,0.1) !important;
+            }
+            /* Powered by / logos — slightly dim them to not jar */
+            #razorpay-affordability-widget img,
+            #razorpay-affordability-widget svg {
+              opacity: 0.85;
+              filter: brightness(10);
+            }
+          `;
+          document.head.appendChild(style);
+        }
       } catch (e) {
         console.error("[Affordability] render() threw:", e);
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currency, selectedPlan, gateState]); // gateState in deps so callback re-fires when confirm screen mounts
+  }, [currency, selectedPlan, gateState]);
 
   // ── Initiate payment ───────────────────────────────────────────────────────
   // For INR: first go to the 'confirm' pre-checkout screen (shows EMI widget).
@@ -931,9 +1015,18 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                 </div>
 
                 {/* Affordability / EMI Widget — initialized via ref callback.
-                    The callback fires the instant React mounts this div, so
-                    the SDK's render() call is guaranteed to find the element. */}
-                <div style={{ background: "#FFFFFF", borderRadius: 8, padding: "16px", marginBottom: 28, minHeight: 80 }}>
+                    Container uses a dark semi-transparent background matching the
+                    modal; CSS injected inside the ref callback overrides the SDK's
+                    own white/light styles so the widget blends beautifully. */}
+                <div style={{
+                  background: "rgba(255,255,255,0.05)",
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  padding: "4px",
+                  marginBottom: 28,
+                  minHeight: 80,
+                  overflow: "hidden",
+                }}>
                   <div
                     ref={affordabilityContainerRef}
                     id="razorpay-affordability-widget"
