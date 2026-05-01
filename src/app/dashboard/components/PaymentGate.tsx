@@ -713,7 +713,7 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                 REPORT WILL BE EMAILED TO: <strong style={{ color: "rgba(255,255,255,0.5)" }}>{userEmail}</strong>
               </div>
               <div style={{ marginTop: 24, fontFamily: "'IBM Plex Mono', monospace", fontSize: "9px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.1em" }}>
-                Questions? Email us at sandesh@quantumkarma.tech
+                Questions? Email us at help@quantumkarma.tech
               </div>
             </motion.div>
           )}
