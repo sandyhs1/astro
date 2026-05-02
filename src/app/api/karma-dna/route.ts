@@ -12,11 +12,12 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Model-aware INR cost calculation — matches astro-chat/route.ts pricing
+// ✅ PRIMARY: Claude Sonnet 4.6 | ✅ FALLBACK: Gemini 3.1 Pro | ⛔ BANNED: Claude 3.7
 const LLM_PRICE: Record<string, { in: number; out: number }> = {
-  "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26   },
-  "gemini/gemini-3.1-pro-preview":          { in: 0.105,  out: 0.42   },
-  "gemini/gemini-3.1-flash-lite-preview":   { in: 0.0063, out: 0.0063 },
+  "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26   }, // ✅ Active
+  "bedrock/claude-3-7-sonnet":               { in: 0.252,  out: 1.26   }, // ⛔ Legacy only
+  "gemini/gemini-3.1-pro-preview":           { in: 0.105,  out: 0.42   }, // ✅ Fallback
+  "gemini/gemini-3.1-flash-lite-preview":    { in: 0.0063, out: 0.0063 }, // ✅ Gatekeeper
 };
 function calcCostInr(model: string, tokIn: number, tokOut: number): number {
   const p = LLM_PRICE[model] ?? { in: 0.252, out: 1.26 }; // default to Claude if unknown

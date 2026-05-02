@@ -14,10 +14,12 @@ const supabaseAdmin = createClient(
 );
 
 // INR pricing (per 1K tokens)
+// ✅ PRIMARY: Claude Sonnet 4.6 | ✅ FALLBACK: Gemini 3.1 Pro | ⛔ BANNED: Claude 3.7
 const PRICE = {
-  "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26  },
-  "gemini/gemini-3.1-pro-preview":          { in: 0.105,  out: 0.42  },
-  "gemini/gemini-3.1-flash-lite-preview":   { in: 0.0063, out: 0.0063 },
+  "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26  },  // ✅ Active
+  "bedrock/claude-3-7-sonnet":               { in: 0.252,  out: 1.26  },  // ⛔ Legacy only (April 2026 logs)
+  "gemini/gemini-3.1-pro-preview":           { in: 0.105,  out: 0.42  },  // ✅ Fallback
+  "gemini/gemini-3.1-flash-lite-preview":    { in: 0.0063, out: 0.0063 }, // ✅ Gatekeeper only
 } as Record<string, { in: number; out: number }>;
 const ASTRO_CALL_COST_INR = 0.084;
 
