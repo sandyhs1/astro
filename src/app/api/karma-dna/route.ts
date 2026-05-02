@@ -12,6 +12,17 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Model-aware INR cost calculation — matches astro-chat/route.ts pricing
+const LLM_PRICE: Record<string, { in: number; out: number }> = {
+  "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26   },
+  "gemini/gemini-3.1-pro-preview":          { in: 0.105,  out: 0.42   },
+  "gemini/gemini-3.1-flash-lite-preview":   { in: 0.0063, out: 0.0063 },
+};
+function calcCostInr(model: string, tokIn: number, tokOut: number): number {
+  const p = LLM_PRICE[model] ?? { in: 0.252, out: 1.26 }; // default to Claude if unknown
+  return (tokIn / 1000) * p.in + (tokOut / 1000) * p.out;
+}
+
 const KARMA_DNA_SYSTEM_PROMPT = (pName: string) => `You are KARMA — the Grand Master Jyotishi of Quantum Karma.
 You are generating a deeply personal, sacred KARMA DNA REPORT for ${pName}.
 
@@ -234,7 +245,7 @@ ${d60Data ? parseHoroChart(d60Data) : "Fetch failed — use D9 + Ketu placement 
       user_id: user.id, model_name: llmResult.model,
       input_tokens: llmResult.tokensIn, output_tokens: llmResult.tokensOut,
       total_tokens: llmResult.tokensIn + llmResult.tokensOut,
-      cost_inr: ((llmResult.tokensIn / 1000) * 0.252 + (llmResult.tokensOut / 1000) * 1.26).toFixed(6),
+      cost_inr: calcCostInr(llmResult.model, llmResult.tokensIn, llmResult.tokensOut).toFixed(6),
       credits_used: 20, question_preview: "Karma DNA Report",
     });
 
