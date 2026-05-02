@@ -170,37 +170,53 @@ VERIFIED CHART DATA — ${pName}
 ${chartContext}
 ═══════════════════════════════════════════════════════════════`;
 
-    // ── Sentiment detection — inject emotional context when appropriate ─────────
-    // Detects life events and emotional tone from the message + recent history.
-    // Instructs the AI to respond with appropriate empathy or celebration.
+    // ── Sentiment Detection — 4-State Emotional Calibration ──────────────────
+    // Detects the user's primary emotional state and injects the appropriate
+    // framing instruction so the LLM opens with the right tone (Enhancement 3).
     const msgLower = message.toLowerCase();
-    const recentHistory = (history || []).slice(-4).map((h:any)=>h.content).join(" ").toLowerCase();
+    const recentHistory = (history || []).slice(-6).map((h:any)=>h.content).join(" ").toLowerCase();
     const combinedText = msgLower + " " + recentHistory;
 
     let sentimentInstruction = "";
-    if (/baby|born|birth|delivered|son|daughter|newborn|child arrived|blessed/.test(combinedText)) {
-      if (/sick|ill|hospital|icu|nicu|complication|difficult|problem|worried|trouble/.test(combinedText)) {
-        sentimentInstruction = `\n\n[EMOTIONAL CONTEXT] The user is sharing news about a newborn with health complications. Lead with deep empathy and compassion before the astrological reading. Acknowledge the difficulty and offer comfort grounded in karmic wisdom. Be gentle and human first, Jyotishi second.`;
-      } else {
-        sentimentInstruction = `\n\n[EMOTIONAL CONTEXT] The user has shared news of a birth — a profoundly joyous life event. Open with a warm, heartfelt congratulation personalised to their chart (e.g., reference which dasha period this birth occurred in, what it means karmically). Then deliver the reading.`;
-      }
-    } else if (/divorce|separated|breakup|broke up|left me|cheated|affair|heartbreak/.test(combinedText)) {
-      sentimentInstruction = `\n\n[EMOTIONAL CONTEXT] The user is going through relationship pain or separation. Acknowledge the emotional weight with genuine compassion before analysing the chart. Do not be clinical — be human and grounded.`;
-    } else if (/died|death|passed away|lost my|grief|mourning|funeral|gone forever/.test(combinedText)) {
-      sentimentInstruction = `\n\n[EMOTIONAL CONTEXT] The user is dealing with grief or the loss of a loved one. Lead with deep compassion and sensitivity. The karmic reading should bring meaning and peace, not statistics. This is a sacred moment.`;
-    } else if (/got the job|promotion|married|engaged|new house|achieved|succeeded|won|cleared/.test(combinedText)) {
-      sentimentInstruction = `\n\n[EMOTIONAL CONTEXT] The user is sharing a personal victory or milestone. Celebrate with them genuinely before connecting it to their chart. Show how their chart was always pointing to this moment.`;
-    } else if (/depressed|anxious|scared|terrified|hopeless|giving up|can't go on|suicidal|no hope/.test(combinedText)) {
-      sentimentInstruction = `\n\n[EMOTIONAL CONTEXT — SENSITIVE] The user is expressing deep emotional distress. Before any astrological content, acknowledge their pain with genuine human warmth. Close with: "The chart shows the energy; your choices shape the outcome. Please speak to a qualified professional immediately." Apply the sensitive topic protocol.`;
+
+    // ── STATE 1: GRIEF / LOSS ─────────────────────────────────────────────────
+    if (/died|death|passed away|lost my|grief|mourning|funeral|gone forever|he is gone|she is gone/.test(combinedText)) {
+      sentimentInstruction = `\n\n[EMOTIONAL STATE: GRIEF] The user is carrying the weight of loss or grief. Open with genuine human compassion — one sentence that acknowledges their pain before any chart data. The karmic reading must bring meaning and peace, not statistics. Use the Quantum Shift Protocol to show the soul-level significance of this moment. This is sacred ground.`;
+
+    // ── STATE 1b: Newborn with complications ─────────────────────────────────
+    } else if (/baby|born|birth|delivered|son|daughter|newborn|child arrived|blessed/.test(combinedText) &&
+               /sick|ill|hospital|icu|nicu|complication|difficult|worried/.test(combinedText)) {
+      sentimentInstruction = `\n\n[EMOTIONAL STATE: GRIEF/ANXIETY] The user is sharing news about a newborn with health complications. Lead with deep empathy before any astrological reading. Be gentle and human first, Grand Master Jyotishi second.`;
+
+    // ── STATE 1c: Relationship loss / separation ─────────────────────────────
+    } else if (/divorce|separated|breakup|broke up|left me|cheated|affair|heartbreak|he left|she left/.test(combinedText)) {
+      sentimentInstruction = `\n\n[EMOTIONAL STATE: GRIEF] The user is moving through the pain of separation or heartbreak. Acknowledge the emotional weight with genuine compassion before analysing the chart. Do not be clinical. Be the compassionate elder who sees the karmic meaning behind the pain. Apply Quantum Shift Protocol.`;
+
+    // ── STATE 2: ANXIETY / FEAR ───────────────────────────────────────────────
+    } else if (/depressed|anxious|scared|terrified|hopeless|giving up|can't go on|suicidal|no hope|i'm afraid|what if|worried|panicking|i don't know what/.test(combinedText)) {
+      sentimentInstruction = `\n\n[EMOTIONAL STATE: ANXIETY/DISTRESS] The user is in a state of fear or anxiety. Open with a STABILIZING HAND — one sentence of certainty and grounding before the chart reading. Lead with what the chart CONFIRMS, not what it questions. If distress level is severe (suicidal/hopeless language), acknowledge their pain with warmth and close with: "The chart shows the energy; your choices shape the outcome. Please speak to a qualified professional immediately." Apply the Sensitive Topic Protocol.`;
+
+    // ── STATE 3: SKEPTICISM / DOUBT ───────────────────────────────────────────
+    } else if (/does this even work|i don't believe|prove it|are you sure|is astrology real|test this|show me|i'm skeptical|i'm not sure about this|can you actually/.test(combinedText)) {
+      sentimentInstruction = `\n\n[EMOTIONAL STATE: SKEPTICISM] The user is doubting or testing. Do NOT respond with mysticism or persuasion. Open immediately with the most specific, verifiable data point in their chart (exact degree, nakshatra, a past event their Dasha confirms). Let the precision do the convincing. Earn trust with accuracy, not charisma.`;
+
+    // ── STATE 4: HOPE / EXCITEMENT ────────────────────────────────────────────
+    } else if (/hopeful|excited|can't wait|will it happen|is it coming|i feel like|i think this is my time|feels like something is changing|finally|so close/.test(combinedText)) {
+      sentimentInstruction = `\n\n[EMOTIONAL STATE: HOPE/EXCITEMENT] The user is riding a wave of hope or excitement. Match and elevate their energy. Validate the instinct first — if the chart confirms it, celebrate it with them. If the timing needs correcting, do it gently but honestly. Show them exactly which chart factor their feeling is coming from.`;
+
+    // ── STATE 5: CELEBRATION ──────────────────────────────────────────────────
+    } else if (/got the job|promotion|married|engaged|new house|achieved|succeeded|won|cleared|passed|just got|great news|amazing news|baby is born|child arrived/.test(combinedText)) {
+      sentimentInstruction = `\n\n[EMOTIONAL STATE: CELEBRATION] The user is sharing a victory or milestone. Celebrate genuinely with them before connecting it to the chart. Show how their chart always pointed to this exact moment — make them feel seen and confirmed.`;
     }
 
     const fullSystemPromptWithSentiment = sentimentInstruction
       ? fullSystemPrompt + sentimentInstruction
       : fullSystemPrompt;
 
-    // Build message history (last 12 turns — better contextual memory)
+    // Build message history (last 20 turns — full context memory per Enhancement 5)
+    // 20 turns = ~10 full back-and-forth exchanges, sufficient for complete session memory
     const messages = [
-      ...(history || []).slice(-12).map((h: any) => ({
+      ...(history || []).slice(-20).map((h: any) => ({
         role: h.role as "user" | "assistant",
         content: h.content,
       })),
@@ -208,7 +224,8 @@ ${chartContext}
     ];
 
     // ── Route to LLM (Bedrock → Gemini) ──────────────────────────────────────
-    const llmResult = await routeLLM(fullSystemPromptWithSentiment, messages, 2000);
+    // maxTokens: 2500 — increased to allow richer storytelling responses without truncation
+    const llmResult = await routeLLM(fullSystemPromptWithSentiment, messages, 2500);
 
     // ── Deduct Credit ─────────────────────────────────────────────────────────
     const newCredits = Math.max(0, credits - 1);
