@@ -14,7 +14,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { geocodePlace, parseBirthParams, tzStringToFloat, type BirthParams } from "./client";
-import { batchFetchVedicChart } from "./batch-fetch";
+import { batchFetchVedicChart, logCacheHit } from "./batch-fetch";
 import { normalizeBundle, buildBirthHash, SCHEMA_VERSION, type GoldenMasterJSON } from "./normalize";
 
 function getSupabase() {
@@ -68,6 +68,8 @@ export async function getOrBuildChart(
     // Schema version check — if stale, force rebuild
     if (cachedChart.schemaVersion === SCHEMA_VERSION) {
       console.log(`[manager] Cache HIT (v${SCHEMA_VERSION}) for hash ${hash}`);
+      // Log cache hit to astroapi_logs (cost = ₹0, from_cache = true)
+      logCacheHit(userId).catch(() => {});
       return { chart: cachedChart, fromCache: true };
     }
     console.log(`[manager] Cache STALE (v${cachedChart.schemaVersion ?? 1}) — rebuilding for v${SCHEMA_VERSION}`);
@@ -86,12 +88,15 @@ export async function getOrBuildChart(
     const cachedChart = anonCached.chart as GoldenMasterJSON;
     if (cachedChart.schemaVersion === SCHEMA_VERSION) {
       console.log(`[manager] AnonCache HIT (v${SCHEMA_VERSION}) for hash ${hash}`);
+      // Log cache hit to astroapi_logs (cost = ₹0, from_cache = true)
+      logCacheHit(userId).catch(() => {});
       return { chart: cachedChart, fromCache: true };
     }
   }
 
   // 5. Batch-fetch from API (22 calls, rate-limited)
-  const bundle = await batchFetchVedicChart(params);
+  // Pass userId so every API call log has user attribution for cost tracking
+  const bundle = await batchFetchVedicChart(params, userId);
 
   // 6. Normalize into GoldenMasterJSON v2
   const chart = normalizeBundle(bundle, params, pob, dob, tob);
