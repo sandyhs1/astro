@@ -34,7 +34,14 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const token = authHeader.split(' ')[1];
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!token || !process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  // Verify token matches base64(ADMIN_PASSWORD) — same as auth route generates
+  const expectedToken = Buffer.from(process.env.ADMIN_PASSWORD).toString('base64');
+  if (token !== expectedToken) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
     const cookieStore = await cookies();

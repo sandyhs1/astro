@@ -15,7 +15,10 @@ const supabaseAdmin = createClient(
 function verifyAdmin(req: Request): boolean {
   const authHeader = req.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "").trim();
-  return token === process.env.ADMIN_SECRET_TOKEN || token === process.env.ADMIN_PASSWORD;
+  if (!token || !process.env.ADMIN_PASSWORD) return false;
+  // Auth route issues token = base64(password) — match that here
+  const expectedToken = Buffer.from(process.env.ADMIN_PASSWORD).toString("base64");
+  return token === expectedToken;
 }
 
 export async function GET(req: Request) {
