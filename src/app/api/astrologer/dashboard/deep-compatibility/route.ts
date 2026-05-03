@@ -51,17 +51,16 @@ Based on this deep analysis, you MUST categorize the relationship into one of th
 
 Ensure your response is highly professional, formatted in structured markdown. DO NOT assume any data not provided in the verified chart context. Provide a final recommendation and advice on what to do next.`;
 
-    const response = await routeLLM([
-      { role: "system", content: systemPrompt },
+    const response = await routeLLM(systemPrompt, [
       { role: "user", content: "Please run the Deep Compatibility analysis." }
-    ], "claude-3-5-sonnet-20241022"); // Defaulting to the standard model or router will handle it.
+    ], 3000); 
 
-    if (!response || !response.content) {
+    if (!response || !response.text) {
       throw new Error("LLM failed to generate a response");
     }
 
     return NextResponse.json({
-      report: response.content
+      report: response.text
     });
 
   } catch (error: any) {

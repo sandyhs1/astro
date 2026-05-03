@@ -20,6 +20,7 @@ interface AstrologerClient {
   notes?: string;
   gender?: string;
   tags?: string[];
+  consultation_fee?: number;
 }
 
 function FormattedMessage({ content }: { content: string }) {
@@ -56,7 +57,7 @@ export default function AstrologerDashboard() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Form State
-  const [formData, setFormData] = useState({ name: '', dob: '', tob: '', pob: '', gender: 'Male' });
+  const [formData, setFormData] = useState({ name: '', dob: '', tob: '', pob: '', gender: 'Male', consultation_fee: 0 });
   const [searchQuery, setSearchQuery] = useState('');
   
   // Chat State
@@ -248,6 +249,7 @@ export default function AstrologerDashboard() {
           tob: formData.tob,
           pob: formData.pob,
           gender: formData.gender,
+          consultation_fee: formData.consultation_fee,
           timezone: '+05:30'
         }])
         .select()
@@ -258,7 +260,7 @@ export default function AstrologerDashboard() {
       setClients([data, ...clients]);
       setActiveClientId(data.id);
       setShowAddClient(false);
-      setFormData({ name: '', dob: '', tob: '', pob: '', gender: 'Male' });
+      setFormData({ name: '', dob: '', tob: '', pob: '', gender: 'Male', consultation_fee: 0 });
       toast.success('Client added successfully');
       setIsMobileMenuOpen(false);
     } catch (error: any) {
@@ -278,6 +280,7 @@ export default function AstrologerDashboard() {
           tob: formData.tob,
           pob: formData.pob,
           gender: formData.gender,
+          consultation_fee: formData.consultation_fee,
         })
         .eq('id', activeClient.id);
 
@@ -655,7 +658,8 @@ export default function AstrologerDashboard() {
                            dob: activeClient.dob, 
                            tob: activeClient.tob, 
                            pob: activeClient.pob,
-                           gender: activeClient.gender || 'Male'
+                           gender: activeClient.gender || 'Male',
+                           consultation_fee: activeClient.consultation_fee || 0
                          });
                          setShowEditClient(true);
                          setShowClientMenu(false);
@@ -892,14 +896,20 @@ export default function AstrologerDashboard() {
                          <p className="text-[10px] text-red-400 mt-2">Billed at current session</p>
                        </div>
                        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                         <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Token Consumption</span>
-                         <div className="text-3xl font-bold text-white mt-2">{revenueData.totalTokens.toLocaleString()}</div>
-                         <p className="text-[10px] text-gray-500 mt-2">Across all managed clients</p>
+                         <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Total Earnings</span>
+                         <div className="text-3xl font-bold text-white mt-2">₹{(activeClient?.consultation_fee || 0).toLocaleString()}</div>
+                         <p className="text-[10px] text-green-400 mt-2">From this client's sessions</p>
                        </div>
                        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 bg-gradient-to-br from-[#FFD700]/10 to-transparent border-[#FFD700]/20">
-                         <span className="text-[10px] text-[#FFD700] uppercase tracking-widest font-bold">Client Billing Potential</span>
-                         <div className="text-3xl font-bold text-white mt-2">₹{(revenueData.totalCost * 15).toLocaleString()}</div>
-                         <p className="text-[10px] text-[#FFD700] mt-2">Est. at 15x ROI consulting fee</p>
+                         <span className="text-[10px] text-[#FFD700] uppercase tracking-widest font-bold">Actual Profit (ROI)</span>
+                         <div className="text-3xl font-bold text-white mt-2">
+                           ₹{((activeClient?.consultation_fee || 0) - revenueData.totalCost).toLocaleString()}
+                         </div>
+                         <p className="text-[10px] text-[#FFD700] mt-2">
+                           {revenueData.totalCost > 0 
+                             ? `${(((activeClient?.consultation_fee || 0) / revenueData.totalCost) * 100).toFixed(0)}% Profit Margin`
+                             : '100% Profit Margin'}
+                         </p>
                        </div>
                     </div>
                   ) : null}
@@ -1041,6 +1051,11 @@ export default function AstrologerDashboard() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Consultation Fee (INR)</label>
+                  <input type="number" value={formData.consultation_fee} onChange={e => setFormData({...formData, consultation_fee: parseInt(e.target.value)})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#FFD700]/50 outline-none transition-all" />
                 </div>
 
                 <div className="flex gap-3 pt-4">
