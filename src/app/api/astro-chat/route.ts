@@ -48,13 +48,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ── Freemius Premium Check ────────────────────────────────────────────────
-    const entitlement = await getUserEntitlement(user.id);
-    if (!entitlement) {
-      return NextResponse.json(
-        { error: "Premium Subscription Required", code: "subscription_required" },
-        { status: 403 }
-      );
+    // ── Astrologer Bypass ───────────────────────────────────────────────────
+    const { data: isAstrologer } = await supabaseAdmin
+      .from('astrologers')
+      .select('id, status')
+      .eq('id', user.id)
+      .eq('status', 'approved')
+      .maybeSingle();
+
+    // ── Freemius Premium Check (Bypass for Approved Astrologers) ─────────────
+    if (!isAstrologer) {
+      const entitlement = await getUserEntitlement(user.id);
+      if (!entitlement) {
+        return NextResponse.json(
+          { error: "Premium Subscription Required", code: "subscription_required" },
+          { status: 403 }
+        );
+      }
     }
 
     // ── Credits Check ─────────────────────────────────────────────────────────
@@ -104,7 +114,7 @@ export async function POST(req: Request) {
 
     // ── Resolve Birth Details ─────────────────────────────────────────────────
     let dob: string | undefined, tob: string | undefined,
-        pob: string | undefined, tz = "+05:30", pName = "User";
+        pob: string | undefined, tz = "+05:30", pName = "User", gender = "Male";
 
     let isAstroClient = false;
     if (!profileId || profileId === "self") {
@@ -113,6 +123,7 @@ export async function POST(req: Request) {
       dob = lead?.dob; tob = lead?.tob; pob = lead?.pob;
       tz  = lead?.timezone || "+05:30";
       pName = lead?.name || user.email?.split("@")[0] || "User";
+      gender = lead?.gender || "Male";
     } else {
       let { data: fp } = await supabase
         .from("family_profiles").select("*").eq("id", profileId).maybeSingle();
@@ -127,6 +138,7 @@ export async function POST(req: Request) {
       dob = fp?.dob; tob = fp?.tob; pob = fp?.pob;
       tz  = fp?.timezone || "+05:30";
       pName = fp?.name || "Client/Member";
+      gender = fp?.gender || "Male";
     }
 
     if (!dob || !tob || !pob) {
@@ -169,12 +181,14 @@ export async function POST(req: Request) {
     const namasteInstruction = isFirstMessage
       ? `\n\nIMPORTANT: This is ${pName}'s FIRST message. Begin your response with exactly: "Namaste ${pName} 🙏" on its own line, then answer.`
       : "";
+      
+    const genderContext = `\n[GENDER CONTEXT: The native is ${gender}. Adapt the Vedic astrological interpretations, relationship karakas, and timeline predictions accordingly.]\n`;
 
     // Full system prompt = persona + cached chart data
-    const fullSystemPrompt = `${ASTRO_SYSTEM_PROMPT}${namasteInstruction}
+    const fullSystemPrompt = `${ASTRO_SYSTEM_PROMPT}${namasteInstruction}${genderContext}
 
 ═══════════════════════════════════════════════════════════════
-VERIFIED CHART DATA — ${pName}
+VERIFIED CHART DATA — ${pName} (${gender})
 ═══════════════════════════════════════════════════════════════
 ${chartContext}
 ═══════════════════════════════════════════════════════════════`;
@@ -254,6 +268,7 @@ ${chartContext}
       cost_inr:         costInr.toFixed(6),
       credits_used:     1,
       question_preview: message.slice(0, 100),
+      usage_type:       isAstroClient ? 'astrologer' : 'user'
     });
 
     // ── Log AstrologyAPI Call (fire-and-forget) ───────────────────────────────
@@ -262,6 +277,7 @@ ${chartContext}
       endpoint:   "batch_chart",
       from_cache: fromCache,
       cost_inr:   fromCache ? 0 : ASTRO_CALL_COST_INR,
+      usage_type: isAstroClient ? 'astrologer' : 'user'
     });
 
     // ── PERSIST CHAT MESSAGES TO SUPABASE ────────────────────────────────────

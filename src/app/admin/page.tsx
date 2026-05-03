@@ -57,9 +57,22 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchAstrologers = useCallback(async (t: string) => {
-    const res = await fetch("/api/admin/astrologers", { headers: { Authorization: `Bearer ${t}` } });
-    if (res.ok) { const d = await res.json(); setAstrologersData(d); }
-    else if (res.status === 401) logout();
+    try {
+      const res = await fetch("/api/admin/astrologers", { headers: { Authorization: `Bearer ${t}` } });
+      if (res.ok) { 
+        const d = await res.json(); 
+        setAstrologersData(d); 
+      } else if (res.status === 401) {
+        logout();
+      } else {
+        const d = await res.json();
+        setError(d.error || "Failed to fetch astrologers");
+        setAstrologersData({ recentAstrologers: [], overallMetrics: { gemini: { input: 0, output: 0, cost: 0 }, claude: { input: 0, output: 0, cost: 0 }, api: { cost: 0 } } });
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred");
+      setAstrologersData({ recentAstrologers: [], overallMetrics: { gemini: { input: 0, output: 0, cost: 0 }, claude: { input: 0, output: 0, cost: 0 }, api: { cost: 0 } } });
+    }
   }, []);
 
   useEffect(() => {

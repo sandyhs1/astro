@@ -6,17 +6,22 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+function verifyAdmin(req: Request): boolean {
+  const authHeader = req.headers.get("authorization") || "";
+  const token = authHeader.replace("Bearer ", "").trim();
+  const expectedToken = Buffer.from(
+    process.env.ADMIN_PASSWORD || ""
+  ).toString("base64");
+  return (
+    token === expectedToken ||
+    token === process.env.ADMIN_SECRET_TOKEN ||
+    token === process.env.ADMIN_PASSWORD
+  );
+}
+
 export async function GET(req: Request) {
   try {
-    // Basic auth check - verify request comes from the admin user
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !user || user.email !== 'sandeshprasad7@gmail.com') {
+    if (!verifyAdmin(req)) {
       return NextResponse.json({ error: 'Unauthorized Access' }, { status: 403 });
     }
 
@@ -40,15 +45,15 @@ export async function GET(req: Request) {
       })
     );
 
-    // 2. Fetch API & LLM usage per astrologer
-    // We get all logs for the IDs of the recent astrologers
+    // 2. Fetch usage per astrologer
     const astroIds = recentAstrologers.map(a => a.id);
     
-    // token_usage_logs
+    // Filter specifically by usage_type = 'astrologer'
     const { data: tokenLogs } = await supabaseAdmin
       .from('token_usage_logs')
       .select('user_id, input_tokens, output_tokens, total_tokens, cost_inr, model_name')
-      .in('user_id', astroIds);
+      .in('user_id', astroIds)
+      .eq('usage_type', 'astrologer');
 
     // aggregate usage per astrologer
     const usagePerAstrologer: Record<string, any> = {};
@@ -73,51 +78,64 @@ export async function GET(req: Request) {
       usage: usagePerAstrologer[astro.id]
     }));
 
-    // 3. Fetch Overall input, output, tokens and cost grouped by Model
-    const { data: allTokens } = await supabaseAdmin
-      .from('token_usage_logs')
-      .select('model_name, input_tokens, output_tokens, total_tokens, cost_inr');
+    // 3. Calculate Overall metrics specifically for the ASTROLOGER segment
+    // Get ALL astrologer IDs to filter overall metrics
+    const { data: allAstroUsers } = await supabaseAdmin
+      .from('astrologers')
+      .select('id');
+    
+    const allAstroIds = allAstroUsers?.map(a => a.id) || [];
 
     const overallMetrics = {
       gemini: { input: 0, output: 0, total: 0, cost: 0 },
       claude: { input: 0, output: 0, total: 0, cost: 0 },
-      api: { cost: 0 } // Assuming astro API logs
+      api: { cost: 0 }
     };
 
-    if (allTokens) {
-      allTokens.forEach(log => {
-        const model = log.model_name || '';
-        const cost = parseFloat(log.cost_inr || 0);
-        if (model.toLowerCase().includes('gemini') || model.toLowerCase().includes('pro')) {
-          overallMetrics.gemini.input += log.input_tokens || 0;
-          overallMetrics.gemini.output += log.output_tokens || 0;
-          overallMetrics.gemini.total += log.total_tokens || 0;
-          overallMetrics.gemini.cost += cost;
-        } else if (model.toLowerCase().includes('claude') || model.toLowerCase().includes('sonnet')) {
-          overallMetrics.claude.input += log.input_tokens || 0;
-          overallMetrics.claude.output += log.output_tokens || 0;
-          overallMetrics.claude.total += log.total_tokens || 0;
-          overallMetrics.claude.cost += cost;
-        }
-      });
-    }
+    if (allAstroIds.length > 0) {
+      // Filter LLM logs by all astrologer IDs and strictly usage_type = 'astrologer'
+      const { data: astroTokens } = await supabaseAdmin
+        .from('token_usage_logs')
+        .select('model_name, input_tokens, output_tokens, total_tokens, cost_inr')
+        .in('user_id', allAstroIds)
+        .eq('usage_type', 'astrologer');
 
-    // Fetch total AstroAPI costs
-    const { data: apiLogs } = await supabaseAdmin
-      .from('astroapi_logs')
-      .select('cost_inr');
-      
-    if (apiLogs) {
-      apiLogs.forEach(log => {
-        overallMetrics.api.cost += parseFloat(log.cost_inr || 0);
-      });
+      if (astroTokens) {
+        astroTokens.forEach(log => {
+          const model = log.model_name || '';
+          const cost = parseFloat(log.cost_inr || 0);
+          if (model.toLowerCase().includes('gemini') || model.toLowerCase().includes('pro')) {
+            overallMetrics.gemini.input += log.input_tokens || 0;
+            overallMetrics.gemini.output += log.output_tokens || 0;
+            overallMetrics.gemini.total += log.total_tokens || 0;
+            overallMetrics.gemini.cost += cost;
+          } else if (model.toLowerCase().includes('claude') || model.toLowerCase().includes('sonnet')) {
+            overallMetrics.claude.input += log.input_tokens || 0;
+            overallMetrics.claude.output += log.output_tokens || 0;
+            overallMetrics.claude.total += log.total_tokens || 0;
+            overallMetrics.claude.cost += cost;
+          }
+        });
+      }
+
+      // Filter AstroAPI logs by all astrologer IDs and strictly usage_type = 'astrologer'
+      const { data: astroApiLogs } = await supabaseAdmin
+        .from('astroapi_logs')
+        .select('cost_inr')
+        .in('user_id', allAstroIds)
+        .eq('usage_type', 'astrologer');
+        
+      if (astroApiLogs) {
+        astroApiLogs.forEach(log => {
+          overallMetrics.api.cost += parseFloat(log.cost_inr || 0);
+        });
+      }
     }
 
     return NextResponse.json({
       recentAstrologers: finalAstrologers,
       overallMetrics
     });
-
   } catch (error: any) {
     console.error('Admin Fetch Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -127,14 +145,8 @@ export async function GET(req: Request) {
 // POST to update astrologer status
 export async function POST(req: Request) {
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-    
-    if (!user || user.email !== 'sandeshprasad7@gmail.com') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!verifyAdmin(req)) {
+      return NextResponse.json({ error: 'Unauthorized Access' }, { status: 403 });
     }
 
     const { astrologerId, status } = await req.json();

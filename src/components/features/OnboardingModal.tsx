@@ -72,6 +72,7 @@ export default function OnboardingModal() {
     const dataRef = useRef({
         fullName: "",
         email: "",
+        gender: "Male",
         dob: "",
         tob: "",
         tobAmPm: "AM",
@@ -141,6 +142,7 @@ export default function OnboardingModal() {
                     const emailParams = {
                         fullName: dataRef.current.fullName,
                         email: dataRef.current.email,
+                        gender: dataRef.current.gender,
                         dob: dataRef.current.dob,
                         tob: `${dataRef.current.tob} ${dataRef.current.tobAmPm}`,
                         pob: dataRef.current.pob,
@@ -187,15 +189,17 @@ export default function OnboardingModal() {
             const tob = formData.get("tob") as string;
             const tobAmPm = formData.get("tobAmPm") as string;
             const pob = formData.get("pob") as string;
+            const gender = formData.get("gender") as string;
 
             if (!dob || !tob || !pob.trim()) {
-                setError("We need your date, time, and place of birth to continue.");
+                setError("We need your birth details to continue.");
                 return;
             }
             dataRef.current.dob = dob;
             dataRef.current.tob = tob;
             dataRef.current.tobAmPm = tobAmPm;
             dataRef.current.pob = pob;
+            dataRef.current.gender = gender;
             setIdentityInsight(generateIdentityInsight(dob, dataRef.current.fullName, pob));
             setStep(3);
         }
@@ -214,6 +218,7 @@ export default function OnboardingModal() {
                 {
                     fullName: dataRef.current.fullName,
                     email: dataRef.current.email,
+                    gender: dataRef.current.gender,
                     dob: dataRef.current.dob,
                     tob: `${dataRef.current.tob} ${dataRef.current.tobAmPm}`,
                     pob: dataRef.current.pob,
@@ -242,6 +247,7 @@ export default function OnboardingModal() {
                 body: JSON.stringify({ 
                     fullName: dataRef.current.fullName,
                     email: dataRef.current.email,
+                    gender: dataRef.current.gender,
                     dob: dataRef.current.dob,
                     tob: `${dataRef.current.tob} ${dataRef.current.tobAmPm}`,
                     pob: dataRef.current.pob,
@@ -293,6 +299,7 @@ export default function OnboardingModal() {
         const emailParams = {
             fullName: dataRef.current.fullName,
             email: dataRef.current.email,
+            gender: dataRef.current.gender,
             dob: dataRef.current.dob,
             tob: `${dataRef.current.tob} ${dataRef.current.tobAmPm}`,
             pob: dataRef.current.pob,
@@ -320,7 +327,7 @@ export default function OnboardingModal() {
         setShowPayment(false);
         setShowSuccess(false);
         setWowRevealed(false);
-        dataRef.current = { fullName: "", email: "", dob: "", tob: "", tobAmPm: "AM", pob: "", questions: "" };
+        dataRef.current = { fullName: "", email: "", gender: "Male", dob: "", tob: "", tobAmPm: "AM", pob: "", questions: "" };
     };
 
     const handleCloseSuccess = () => {
@@ -520,9 +527,19 @@ export default function OnboardingModal() {
                                             <p className="text-sm text-gray-600 block">Provide approximate times if unsure.</p>
                                         </div>
                                         <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Date of Birth</label>
-                                                <input required name="dob" type="date" defaultValue={dataRef.current.dob} className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-gray-900 text-sm outline-none transition-all focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600" />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Date of Birth</label>
+                                                    <input required name="dob" type="date" defaultValue={dataRef.current.dob} className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-gray-900 text-sm outline-none transition-all focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Gender</label>
+                                                    <select required name="gender" defaultValue={dataRef.current.gender} className="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl text-gray-900 text-sm outline-none transition-all focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600">
+                                                        <option value="Male">Male</option>
+                                                        <option value="Female">Female</option>
+                                                        <option value="Other">Other</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Time of Birth</label>

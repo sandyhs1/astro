@@ -302,6 +302,7 @@ Key fields you will reference include:
 
 - planets[]: planet, rasi, house, degree, retrograde, nakshatra
 - dashas.current: { maha, antar, pratyantar, start_date, end_date }
+- DATE FORMAT: All dates provided in the context (birth, dasha ends, etc.) are in DD-MM-YYYY format unless otherwise specified.
 - divisional[]: { chart: "D9", placements: [...] }, { chart: "D60", deva: [...] }
 - ashtakavarga[]: { planet, house, score }
 - karakas: { AK, AMK, BK, MK, PK, GK, DK }

@@ -38,7 +38,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         console.log('📝 Received lead capture request:', JSON.stringify(body, null, 2));
         
-        const { fullName, email, dob, tob, pob, questions, paymentStatus, transactionId } = body;
+        const { fullName, email, gender, dob, tob, pob, questions, paymentStatus, transactionId } = body;
 
         // Guard: fullName and email are the minimum required to create a meaningful lead.
         if (!fullName || !email) {
@@ -53,6 +53,7 @@ export async function POST(req: Request) {
                 {
                     full_name: fullName,
                     email: email,
+                    gender: gender || null,
                     dob: dob || null,
                     tob: tob || null,
                     pob: pob || null,
