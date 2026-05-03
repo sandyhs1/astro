@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DeepCompatibilityWorkspace from '@/components/features/DeepCompatibilityWorkspace';
 import { formatDate } from '@/lib/utils/format';
+import RoyalRoast from '@/app/dashboard/components/RoyalRoast';
 
 interface AstrologerClient {
   id: string;
@@ -66,7 +67,7 @@ export default function AstrologerDashboard() {
   ]);
   const [input, setInput] = useState('');
   const [pobSuggestions, setPobSuggestions] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'chat' | 'notes' | 'timeline' | 'comparison' | 'revenue' | 'compatibility-tool'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'notes' | 'timeline' | 'comparison' | 'revenue' | 'compatibility-tool' | 'royal-roast'>('chat');
   const [clientNotes, setClientNotes] = useState<string>('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [timelineData, setTimelineData] = useState<any>(null);
@@ -631,6 +632,14 @@ export default function AstrologerDashboard() {
                  <Star className="w-4 h-4" />
                  <span className="text-[10px] font-bold uppercase tracking-widest hidden lg:inline">ROI</span>
                </button>
+               <button 
+                 onClick={() => setActiveTab('royal-roast')}
+                 className={`p-2 rounded-md transition-all flex items-center gap-2 ${activeTab === 'royal-roast' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-white'}`}
+                 title="Royal Roast"
+               >
+                 <span className="text-base leading-none">🔥</span>
+                 <span className="text-[10px] font-bold uppercase tracking-widest hidden lg:inline">Roast</span>
+               </button>
              </div>
           )}
           
@@ -686,10 +695,23 @@ export default function AstrologerDashboard() {
         {/* Chat Area - ABSOLUTE INSET PATTERN FOR GUARANTEED SCROLL */}
         <div className="flex-1 relative min-h-0 bg-[#05050A]">
           {activeClientId ? (
-            <div 
-              data-lenis-prevent 
-              className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-6 custom-scrollbar"
-            >
+            <>
+              {/* Royal Roast — full panel, manages its own scroll */}
+              {activeTab === 'royal-roast' && (
+                <div data-lenis-prevent className="absolute inset-0">
+                  <RoyalRoast
+                    profileId={activeClientId}
+                    profileName={activeClient?.name || 'Client'}
+                    isB2B
+                  />
+                </div>
+              )}
+              {/* All other tabs — padded scrollable wrapper */}
+              {activeTab !== 'royal-roast' && (
+              <div
+                data-lenis-prevent
+                className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-6 custom-scrollbar"
+              >
               {activeTab === 'chat' && (
                 <>
                   {messages.map((msg, i) => (
@@ -916,6 +938,8 @@ export default function AstrologerDashboard() {
                 </div>
               )}
             </div>
+              )}
+            </>
           ) : activeTab === 'compatibility-tool' ? (
             <div className="absolute inset-0 overflow-y-auto custom-scrollbar p-6">
               <DeepCompatibilityWorkspace />

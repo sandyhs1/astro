@@ -15,6 +15,7 @@ import KarmicPatterns from "./components/KarmicPatterns";
 import Roadmap from "./components/Roadmap";
 import TopupModal from "./components/TopupModal";
 import DetailsPanel from "./components/DetailsPanel";
+import RoyalRoast from "./components/RoyalRoast";
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -43,7 +44,7 @@ export default function DashboardPage() {
   const [geocodingReady, setGeocodingReady] = useState(false);
 
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
-  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "roadmap" | "details">("chat");
+  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "roadmap" | "details" | "royal-roast">("chat");
   
   const DEFAULT_WELCOME = "Namaste. I am your Quantum Karma Astrologer. How may I illuminate your path today?";
 
@@ -653,10 +654,10 @@ export default function DashboardPage() {
           <span className="text-xl leading-none">🗓️</span><span>Destiny</span>
         </button>
         <button onClick={() => setActiveFeature("karma-dna")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "karma-dna" ? "text-indigo-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">🧬</span><span>Karma DNA</span>
+          <span className="text-xl leading-none">🧬</span><span>DNA</span>
         </button>
-        <button onClick={() => setActiveFeature("karmic-patterns")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "karmic-patterns" ? "text-indigo-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">🔮</span><span>Patterns</span>
+        <button onClick={() => setActiveFeature("royal-roast")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "royal-roast" ? "text-orange-500" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">🔥</span><span>Roast</span>
         </button>
         <button onClick={() => setActiveFeature("roadmap")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "roadmap" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🗺️</span><span>Roadmap</span>
@@ -793,6 +794,17 @@ export default function DashboardPage() {
                >
                  <span className="text-base">📋</span> My Details
                </button>
+               {/* Royal Roast */}
+               <button
+                 onClick={() => setActiveFeature("royal-roast")}
+                 title={isOutOfCredits ? "Top up credits to generate Royal Roast" : undefined}
+                 className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                   activeFeature === "royal-roast" ? "bg-orange-50 text-orange-700" : "text-slate-600 hover:bg-slate-50"
+                 }`}
+               >
+                 <span className="flex items-center gap-3"><span className="text-base">🔥</span> Royal Roast</span>
+                 {isOutOfCredits && <span className="text-xs text-amber-500 font-bold">🔒</span>}
+               </button>
              </div>
           </div>
 
@@ -840,6 +852,13 @@ export default function DashboardPage() {
               activeProfileId={activeProfileId}
               familyProfiles={familyProfiles}
               userEmail={user?.email ?? ""}
+            />
+          )}
+          {/* Royal Roast Panel */}
+          {activeFeature === "royal-roast" && (
+            <RoyalRoast
+              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+              profileName={activeProfileName}
             />
           )}
           

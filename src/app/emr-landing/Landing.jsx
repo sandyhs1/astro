@@ -13,6 +13,7 @@ import {
   ArrowUpRight, Lock, Activity, Database, Shield, Cpu,
   Layers, GitBranch, Binary, Sigma, Orbit, Network, Eye, Zap, Users, KeyRound, Sparkles, Infinity as InfinityIcon, X
 } from "lucide-react";
+import posthog from 'posthog-js';
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -58,6 +59,7 @@ const PrimaryCTA = ({ children = "Initiate Life Intelligence Report", testid = "
     el.style.setProperty("--y", `${e.clientY - r.top}px`);
   };
   const onClick = () => {
+    posthog.capture('emr_primary_cta_clicked', { component: 'PrimaryCTA' });
     openAuthModal("sign_up");
   };
   return (
@@ -77,7 +79,10 @@ const PrimaryCTA = ({ children = "Initiate Life Intelligence Report", testid = "
 const GhostCTA = ({ children, onClick, testid }) => (
   <button
     data-testid={testid}
-    onClick={onClick}
+    onClick={(e) => {
+      posthog.capture('emr_secondary_cta_clicked', { text: children, component: 'GhostCTA' });
+      if (onClick) onClick(e);
+    }}
     className="sweep-underline inline-flex items-center gap-2 font-mono-tech text-[10px] text-zinc-400 hover:text-white transition-colors"
   >
     {children}
@@ -503,7 +508,10 @@ const VedicStack = () => {
           <div className="mt-10 flex items-center gap-3">
             <span className="w-8 h-px bg-[#7B61FF]/40" />
             <button
-              onClick={() => setShowStacks(true)}
+              onClick={() => {
+                posthog.capture('emr_stacks_modal_opened');
+                setShowStacks(true);
+              }}
               className="group flex flex-col items-start gap-1"
               style={{background:"none",border:"none",cursor:"pointer",padding:0}}
             >
