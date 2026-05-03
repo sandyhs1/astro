@@ -2183,6 +2183,7 @@ const Footer = () => {
             <button onClick={()=>setLegalType("refunds")} className={btnCls}>Refunds</button>
             <button onClick={()=>setLegalType("terms")}   className={btnCls}>Terms</button>
             <button onClick={()=>setLegalType("privacy")} className={btnCls}>Privacy</button>
+            <a href="/astrologer/auth" className={btnCls} style={{ textDecoration: 'none' }}>Partner Portal</a>
             <button onClick={()=>setShowSupport(true)}    className="sweep-underline font-mono-tech text-[10px] tracking-[0.1em] uppercase bg-transparent border-none cursor-pointer p-0 transition-colors duration-200"
               style={{background:"linear-gradient(90deg,#00E5FF,#7B61FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>
               Support

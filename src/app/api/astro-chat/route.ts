@@ -106,6 +106,7 @@ export async function POST(req: Request) {
     let dob: string | undefined, tob: string | undefined,
         pob: string | undefined, tz = "+05:30", pName = "User";
 
+    let isAstroClient = false;
     if (!profileId || profileId === "self") {
       const { data: lead } = await supabase
         .from("onboarding_leads").select("*").eq("email", user.email).maybeSingle();
@@ -113,11 +114,19 @@ export async function POST(req: Request) {
       tz  = lead?.timezone || "+05:30";
       pName = lead?.name || user.email?.split("@")[0] || "User";
     } else {
-      const { data: fp } = await supabase
+      let { data: fp } = await supabase
         .from("family_profiles").select("*").eq("id", profileId).maybeSingle();
+      
+      if (!fp) {
+        const { data: astroClient } = await supabase
+          .from("astrologer_clients").select("*").eq("id", profileId).maybeSingle();
+        fp = astroClient;
+        if (astroClient) isAstroClient = true;
+      }
+
       dob = fp?.dob; tob = fp?.tob; pob = fp?.pob;
       tz  = fp?.timezone || "+05:30";
-      pName = fp?.name || "Member";
+      pName = fp?.name || "Client/Member";
     }
 
     if (!dob || !tob || !pob) {
@@ -272,9 +281,20 @@ ${chartContext}
     }
 
     if (persistProfileId) {
+      const msgDataUser: any = { user_id: user.id, role: "user", content: message };
+      const msgDataAsst: any = { user_id: user.id, role: "assistant", content: llmResult.text };
+      
+      if (isAstroClient) {
+        msgDataUser.astrologer_client_id = persistProfileId;
+        msgDataAsst.astrologer_client_id = persistProfileId;
+      } else {
+        msgDataUser.profile_id = persistProfileId;
+        msgDataAsst.profile_id = persistProfileId;
+      }
+
       const { error: chatSaveErr } = await supabaseAdmin.from("chat_messages").insert([
-        { user_id: user.id, profile_id: persistProfileId, role: "user",      content: message },
-        { user_id: user.id, profile_id: persistProfileId, role: "assistant", content: llmResult.text },
+        msgDataUser,
+        msgDataAsst,
       ]);
       if (chatSaveErr) {
         console.error("[CHAT] ❌ Failed to save messages:", chatSaveErr.message, chatSaveErr.code, chatSaveErr.details);

@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Upload, LogOut, Copy, CheckCircle2, Loader2, Users, Activity, Database, RefreshCw, IndianRupee, Zap, TrendingUp } from "lucide-react";
 import "./admin.css";
 
-type Tab = "users" | "ai" | "astro" | "promos";
+type Tab = "users" | "ai" | "astro" | "promos" | "astrologers";
 
 const fmt = (n: number) => n.toLocaleString("en-IN");
 const inr = (n: number) => `₹${n.toFixed(4)}`;
@@ -24,6 +24,7 @@ export default function AdminDashboard() {
   const [usersData, setUsersData] = useState<any>(null);
   const [metrics, setMetrics] = useState<any>(null);
   const [promos, setPromos] = useState<any>(null);
+  const [astrologersData, setAstrologersData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -55,6 +56,12 @@ export default function AdminDashboard() {
     if (res.ok) { const d = await res.json(); setPromos(d); }
   }, []);
 
+  const fetchAstrologers = useCallback(async (t: string) => {
+    const res = await fetch("/api/admin/astrologers", { headers: { Authorization: `Bearer ${t}` } });
+    if (res.ok) { const d = await res.json(); setAstrologersData(d); }
+    else if (res.status === 401) logout();
+  }, []);
+
   useEffect(() => {
     const saved = localStorage.getItem("adminToken");
     if (saved) { setToken(saved); setAuthed(true); fetchUsers(saved).finally(() => setFetching(false)); }
@@ -65,6 +72,7 @@ export default function AdminDashboard() {
     if (authed && token && tab === "users") fetchUsers(token);
     if (authed && token && (tab === "ai" || tab === "astro")) fetchMetrics(token);
     if (authed && token && tab === "promos") fetchPromos(token);
+    if (authed && token && tab === "astrologers") fetchAstrologers(token);
   }, [tab, authed, token]);
 
   useEffect(() => {
@@ -82,7 +90,12 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  const logout = () => { localStorage.removeItem("adminToken"); setAuthed(false); setToken(""); setClients([]); setMetrics(null); };
+  const logout = () => { localStorage.removeItem("adminToken"); setAuthed(false); setToken(""); setClients([]); setMetrics(null); setAstrologersData(null); };
+
+  const updateAstrologerStatus = async (astrologerId: string, status: string) => {
+    await fetch("/api/admin/astrologers", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ astrologerId, status }) });
+    fetchAstrologers(token);
+  };
 
   const updatePayment = async (leadId: string, status: string) => {
     setLoading(true);
@@ -134,8 +147,8 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-3 mb-6 px-6">
-        {([[ "users", "Users & Plans", <Users size={15} key="u"/>],["ai","LLM Usage & Cost",<Activity size={15} key="ai"/>],["astro","AstrologyAPI",<Database size={15} key="db"/>],["promos","Promo Codes",<Zap size={15} key="z"/>]] as const).map(([id, label, icon]) => (
+      <div className="flex gap-3 mb-6 px-6 flex-wrap">
+        {([[ "users", "Users & Plans", <Users size={15} key="u"/>],["ai","LLM Usage & Cost",<Activity size={15} key="ai"/>],["astro","AstrologyAPI",<Database size={15} key="db"/>],["promos","Promo Codes",<Zap size={15} key="z"/>],["astrologers","Astrologers",<Users size={15} key="a"/>]] as const).map(([id, label, icon]) => (
           <button key={id} onClick={() => setTab(id as Tab)}
             className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${tab === id ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>
             {icon}{label}
@@ -505,6 +518,96 @@ export default function AdminDashboard() {
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+          }
+        </div>
+      )}
+      {/* ── ASTROLOGERS TAB ──────────────────────────────────── */}
+      {tab === "astrologers" && (
+        <div className="px-6 pb-12">
+          {!astrologersData ? <div className="flex justify-center py-16"><Loader2 className="animate-spin text-indigo-500 w-8 h-8" /></div> : <>
+
+            {/* LLM Cost Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              {[
+                { label: "Gemini 3.1 Pro", input: astrologersData.overallMetrics?.gemini?.input, output: astrologersData.overallMetrics?.gemini?.output, cost: astrologersData.overallMetrics?.gemini?.cost, color: "text-blue-400" },
+                { label: "Claude Sonnet", input: astrologersData.overallMetrics?.claude?.input, output: astrologersData.overallMetrics?.claude?.output, cost: astrologersData.overallMetrics?.claude?.cost, color: "text-purple-400" },
+                { label: "Astro API", input: null, output: null, cost: astrologersData.overallMetrics?.api?.cost, color: "text-green-400" },
+              ].map(k => (
+                <div key={k.label} className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">{k.label}</div>
+                  {k.input !== null && <><div className="flex justify-between text-xs mb-1"><span className="text-slate-400">Tokens In</span><span className="text-indigo-400 font-mono">{fmt(k.input || 0)}</span></div>
+                  <div className="flex justify-between text-xs mb-2"><span className="text-slate-400">Tokens Out</span><span className="text-emerald-400 font-mono">{fmt(k.output || 0)}</span></div></>}
+                  <div className="flex justify-between text-sm font-bold border-t border-slate-700 pt-2 mt-1"><span className="text-slate-300">Cost</span><span className={k.color}>{inr(k.cost || 0)}</span></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Astrologers Management Table */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 className="font-bold text-white">Astrologer Applications (10 Most Recent)</h2>
+                <button onClick={() => fetchAstrologers(token)} className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-sm text-white transition-all">
+                  <RefreshCw size={14} /> Refresh
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-900/60 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700">
+                    <tr>
+                      <th className="px-5 py-3">Astrologer</th>
+                      <th className="px-5 py-3">Experience</th>
+                      <th className="px-5 py-3">Applied On</th>
+                      <th className="px-5 py-3">Status</th>
+                      <th className="px-5 py-3">LLM Usage</th>
+                      <th className="px-5 py-3 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {(astrologersData.recentAstrologers || []).length === 0
+                      ? <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">No astrologer applications yet.</td></tr>
+                      : (astrologersData.recentAstrologers || []).map((a: any) => (
+                        <tr key={a.id} className="hover:bg-slate-800/50 transition-colors">
+                          <td className="px-5 py-4">
+                            <div className="font-semibold text-white">{a.full_name || '—'}</div>
+                            <div className="text-xs text-slate-500">{a.email}</div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-900/40 text-amber-400 border border-amber-700/40">
+                              {a.experience_level || '—'}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-xs text-slate-400 font-mono">
+                            {new Date(a.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className={`inline-flex px-2.5 py-0.5 rounded text-xs font-bold ${
+                              a.status === 'approved' ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700/40'
+                              : a.status === 'declined' ? 'bg-red-900/40 text-red-400 border border-red-700/40'
+                              : 'bg-blue-900/40 text-blue-400 border border-blue-700/40'
+                            }`}>{a.status}</span>
+                          </td>
+                          <td className="px-5 py-4 font-mono">
+                            <div className="text-xs text-slate-400">{fmt(a.usage?.total || 0)} tokens</div>
+                            <div className="text-xs text-amber-400 font-bold mt-0.5">{inr(a.usage?.cost || 0)}</div>
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <select
+                              value={a.status}
+                              onChange={(e) => updateAstrologerStatus(a.id, e.target.value)}
+                              className="bg-slate-900 border border-slate-600 text-white text-xs rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="approved">Approve ✓</option>
+                              <option value="declined">Decline ✗</option>
+                            </select>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>

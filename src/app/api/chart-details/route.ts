@@ -362,13 +362,23 @@ export async function GET(req: NextRequest) {
         dob_display=lead.dob; tob_display=lead.tob;
       }
     } else {
-      const { data: fp } = await supabase
+      // Try family_profiles first
+      let { data: fp } = await supabase
         .from("family_profiles").select("*").eq("id",profileId).maybeSingle();
+      
+      // If not found in family_profiles, try astrologer_clients
+      if (!fp) {
+        const { data: astroClient } = await supabase
+          .from("astrologer_clients").select("*").eq("id",profileId).maybeSingle();
+        fp = astroClient;
+      }
+
       if (!fp?.dob||!fp?.tob||!fp?.pob)
-        return NextResponse.json({ error:"Family profile not found." },{status:404});
+        return NextResponse.json({ error:"Profile not found." },{status:404});
+      
       dob=fp.dob; tob=fp.tob; pob=fp.pob;
       tz=fp.timezone||"+05:30";
-      fullName=fp.name||"Family Member";
+      fullName=fp.name||"Client/Family Member";
       dob_display=fp.dob; tob_display=fp.tob;
     }
 
