@@ -3,20 +3,22 @@
 /**
  * IntercomProvider.tsx
  * ─────────────────────────────────────────────────────────────────────────────
- * Correctly mounts the Intercom Messenger and identifies users.
+ * Correctly mounts Intercom with Identity Verification enabled.
  *
- * ROOT CAUSE OF PREVIOUS BUG:
- * The Intercom() init function from the SDK only runs once because it checks
- * an internal `!ref` guard. Calling Intercom(bootData) again after a user
- * logs in silently does nothing — the widget stays anonymous or disappears.
+ * WHY user_hash IS REQUIRED:
+ * Identity Verification is enabled on this Intercom workspace. When enabled,
+ * the Messenger will NOT load for signed-in users unless a valid user_hash is
+ * passed. The hash is HMAC-SHA256(secret, user_id) — generated server-side
+ * via /api/intercom/hash so the secret is never exposed to the browser.
  *
- * CORRECT PATTERN:
- * 1. Call Intercom({ app_id }) ONCE on mount → loads the script, shows widget
- * 2. For signed-in users → call window.Intercom('boot', { app_id, ...userInfo })
- * 3. For sign-out      → call window.Intercom('shutdown'), then boot anonymously
+ * BOOT PATTERN (correct for SPAs):
+ * 1. Intercom({ app_id }) — called ONCE to inject the script (visitor mode)
+ * 2. window.Intercom('boot', { app_id, user_id, user_hash, ... }) — for sign-in
+ * 3. window.Intercom('shutdown') + boot anonymously — for sign-out
  *
- * The SDK exports boot() and shutdown() helpers that call window.Intercom()
- * directly and work correctly for re-identification after initial load.
+ * The Intercom() init function from the SDK contains a one-shot guard
+ * (!ref) that silently no-ops on repeat calls — so we use window.Intercom
+ * directly for all re-identification after the first load.
  */
 
 import { useEffect, useRef } from 'react';
@@ -26,62 +28,64 @@ import { createClient } from '@/lib/supabase/client';
 
 const APP_ID = process.env.NEXT_PUBLIC_INTERCOM_APP_ID as string;
 
-/** Directly call window.Intercom — works after the script is loaded */
 function callIntercom(method: string, ...args: any[]) {
   if (typeof window !== 'undefined' && (window as any).Intercom) {
     (window as any).Intercom(method, ...args);
   }
 }
 
-/** Boot Intercom with a payload (works for both anonymous and identified) */
 function intercomBoot(payload: Record<string, any>) {
   callIntercom('boot', { app_id: APP_ID, ...payload });
 }
 
-/** Shut down the current Intercom session */
 function intercomShutdown() {
   callIntercom('shutdown');
+}
+
+/** Fetch the HMAC-SHA256 user_hash from our server-side API route */
+async function fetchUserHash(): Promise<string | null> {
+  try {
+    const res = await fetch('/api/intercom/hash');
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.hash ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export default function IntercomProvider() {
   const { user, loading } = useAuth();
   const supabase = createClient();
 
-  // Has the Intercom script been loaded (Intercom() called at least once)?
   const scriptLoadedRef = useRef(false);
-  // Track the last identified user ID to avoid redundant re-boots
   const lastUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Wait until auth state is resolved
     if (loading) return;
 
-    // ── Step 1: Load the Intercom script exactly once ─────────────────────────
-    // Intercom() (the default export) injects the <script> tag and sets up
-    // window.Intercom. It must only be called once per page session.
+    // ── Load Intercom script exactly once ──────────────────────────────────────
     if (!scriptLoadedRef.current) {
       Intercom({ app_id: APP_ID });
       scriptLoadedRef.current = true;
     }
 
-    // ── Step 2: Handle sign-out ───────────────────────────────────────────────
+    // ── Signed-out: boot anonymously ───────────────────────────────────────────
     if (!user) {
       if (lastUserIdRef.current) {
-        // User signed out: shut down identified session, re-boot as visitor
         intercomShutdown();
         lastUserIdRef.current = null;
       }
-      // Boot anonymously so the widget is still visible to logged-out visitors
       intercomBoot({});
       return;
     }
 
-    // ── Step 3: Handle sign-in / user already logged in ───────────────────────
-    // Skip if this exact user is already booted
+    // ── Signed-in: already identified this user, skip ─────────────────────────
     if (lastUserIdRef.current === user.id) return;
 
-    // Resolve name and boot with full identity
+    // ── Signed-in: resolve name + hash, then boot with full identity ───────────
     (async () => {
+      // 1. Resolve display name
       let displayName: string | undefined;
 
       try {
@@ -92,11 +96,9 @@ export default function IntercomProvider() {
           .eq('relationship', 'Self')
           .maybeSingle();
 
-        if (selfProfile?.name) {
-          displayName = selfProfile.name;
-        }
+        if (selfProfile?.name) displayName = selfProfile.name;
       } catch {
-        // Non-fatal — fall through to metadata fallbacks
+        // Non-fatal
       }
 
       if (!displayName) {
@@ -114,15 +116,22 @@ export default function IntercomProvider() {
         ? Math.floor(new Date(user.created_at).getTime() / 1000)
         : undefined;
 
-      // Shut down the anonymous session first, then boot as identified user.
-      // Using window.Intercom('boot') directly — NOT the Intercom() init
-      // function — because the init function only runs once and silently
-      // no-ops on subsequent calls.
+      // 2. Fetch the HMAC-SHA256 user_hash (required by Identity Verification)
+      const userHash = await fetchUserHash();
+
+      if (!userHash) {
+        console.warn('[IntercomProvider] Could not obtain user_hash — Messenger will not load for signed-in users. Check /api/intercom/hash.');
+        return;
+      }
+
+      // 3. Shut down anonymous session, boot as identified user
       intercomShutdown();
 
       const payload: Record<string, any> = {
-        user_id: user.id,
+        user_id:   user.id,
+        user_hash: userHash,   // ← Required for Identity Verification
       };
+
       if (user.email)    payload.email      = user.email;
       if (displayName)   payload.name       = displayName;
       if (createdAtUnix) payload.created_at = createdAtUnix;
@@ -133,7 +142,7 @@ export default function IntercomProvider() {
     })();
   }, [user, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Cleanup on full unmount only (page close / hard navigation)
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       intercomShutdown();
