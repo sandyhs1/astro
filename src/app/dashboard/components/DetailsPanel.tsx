@@ -89,7 +89,21 @@ export default function DetailsPanel({activeProfileId}:Props) {
     load();
   },[activeProfileId]);
 
-  if(loading) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:300}}><div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"#94A3B8",letterSpacing:"0.12em"}}>LOADING COSMIC BLUEPRINT...</div></div>;
+  if(loading) return (
+    <div className="flex flex-col items-center justify-center min-h-[400px] p-10 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-300 m-4">
+      <div className="relative mb-6">
+        <div className="text-6xl animate-bounce">🔮</div>
+        <div className="absolute -top-2 -right-2 text-2xl animate-pulse">✨</div>
+      </div>
+      <div className="text-lg font-black text-slate-800 mb-2">Generating your Astrological Blueprint... 🌸</div>
+      <div className="text-[13px] text-slate-500 leading-relaxed max-w-sm mb-6">
+        Hang in there, beautiful soul! 💖 Our deep-astro algorithms and high-fidelity calculation engines are rendering your precise astrological details in real-time.
+      </div>
+      <div className="text-[10px] font-black text-indigo-600 tracking-wider uppercase bg-indigo-50 px-4 py-2.5 rounded-xl border border-indigo-200 animate-pulse">
+        ⚠️ Please don't close this tab! Realtime magic is happening...
+      </div>
+    </div>
+  );
   if(error) return <div style={{padding:24,background:"#FEF2F2",borderRadius:12,color:"#991B1B",fontSize:13,margin:16}}>{error}</div>;
   if(!data) return null;
 

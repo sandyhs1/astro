@@ -178,7 +178,22 @@ export default function PlanetaryTransits({ profileId }: { profileId: string }) 
       .finally(() => setLoading(false));
   }, [profileId]);
 
-  if (loading) return <div className="h-64 animate-pulse bg-slate-100 rounded-2xl" />;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-purple-50/50 rounded-3xl border border-purple-100/50 shadow-inner my-4">
+      <div className="relative mb-6">
+        <div className="text-6xl animate-bounce" style={{ animationDelay: '0.2s' }}>🪐</div>
+        <div className="absolute -top-2 -right-2 text-2xl animate-spin">☄️</div>
+        <div className="absolute -bottom-2 -left-2 text-2xl animate-pulse">✨</div>
+      </div>
+      <h3 className="text-lg font-black text-purple-900 mb-2">Tracking the Planets... 🚀</h3>
+      <p className="text-sm text-purple-700/80 max-w-sm leading-relaxed mb-4">
+        Just a brief second! 🌠 Our high-fidelity astro-engines are triangulating live orbital mechanics to map your real-time transits.
+      </p>
+      <div className="bg-white/80 px-4 py-2.5 rounded-xl text-[11px] font-bold text-purple-600 uppercase tracking-wider border border-purple-200 shadow-sm animate-pulse">
+        ⚠️ Please don't close this tab! Heavy calculations in progress...
+      </div>
+    </div>
+  );
   if (!data) return <div className="text-center py-8 text-slate-400">Failed to load transits.</div>;
 
   // Group planets by sign

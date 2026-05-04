@@ -1983,8 +1983,68 @@ const CreditsModal = ({ onClose }) => {
   );
 };
 
+const NEW_FEATURES = [
+  { t: "Dasha Life Planner", d: "A precise chronological breakdown of your active planetary periods (Mahadasha, Antardasha) and their real-world impact. Know exactly when your underlying karmic operating system shifts." },
+  { t: "Live Planetary Transits", d: "High-fidelity mapping of current planetary positions overlaid on your birth chart. Understand exactly how real-time orbital mechanics are interacting with your baseline identity." },
+  { t: "Destiny Calendar", d: "Calculate mathematically optimal windows for major life events. We identify your peak periods for career moves, financial investments, and relationship decisions based on aggregate planetary momentum." },
+  { t: "Karma DNA Analysis", d: "Deep ancestral metric calculation using D12 and D60 divisional charts. Uncover inherited psychological blindspots and multi-generational behavioral loops that are quietly running your life." },
+  { t: "Deep Compatibility Matrix", d: "Beyond basic sign matching. We run a 36-point structural analysis alongside intense divisional crossover metrics (D9 Navamsa resonance) to determine genuine long-term psychological and physical alignment." },
+  { t: "Predictive Question Engine", d: "Ask direct, highly specific questions about your future. Our AI engines use your hyper-accurate astronomical data to calculate probable outcomes and optimal strategic actions." }
+];
+
+const FeaturesModal = ({ onClose }) => {
+  useEffect(() => { document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = ""; }; }, []);
+  return (
+    <AnimatePresence>
+      <motion.div key="features-modal-bg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", background: "rgba(5,5,7,0.92)", backdropFilter: "blur(20px)", overflowY: "auto" }}>
+        <motion.div key="features-modal-card" initial={{ y: 24, scale: 0.96, opacity: 0 }} animate={{ y: 0, scale: 1, opacity: 1 }} exit={{ y: 24, scale: 0.96, opacity: 0 }}
+          transition={{ type: "spring", damping: 30, stiffness: 280 }} onClick={e => e.stopPropagation()}
+          style={{ width: "100%", maxWidth: 640, height: "min(88vh,700px)", display: "flex", flexDirection: "column", flexShrink: 0, background: "#0B0B12", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 40px 80px -20px rgba(0,0,0,0.9)", overflow: "hidden" }}>
+          
+          <div style={{ height: 2, background: "linear-gradient(90deg,#00E5FF,#7B61FF,#FF5E3A)", flexShrink: 0 }} />
+          
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 28px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+            <div>
+              <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "9px", letterSpacing: "0.2em", color: "#FF5E3A", textTransform: "uppercase", marginBottom: 6 }}>INTELLIGENCE UPGRADE</div>
+              <div style={{ fontFamily: "'Instrument Serif',serif", fontSize: "1.75rem", color: "#fff" }}>Advanced<span style={{ color: "#FF5E3A" }}>.</span> <span style={{ fontStyle: "italic", color: "rgba(255,255,255,0.4)" }}>Capabilities.</span></div>
+            </div>
+            <button onClick={onClose} style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", cursor: "pointer" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "#fff" }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)" }}>
+              <X size={13} strokeWidth={1.5} />
+            </button>
+          </div>
+          
+          <div data-lenis-prevent style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "28px 28px 40px", WebkitOverflowScrolling: "touch" }}>
+            <div style={{ background: "rgba(255,94,58,0.07)", border: "1px solid rgba(255,94,58,0.25)", padding: "18px 22px", marginBottom: 28 }}>
+              <p style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", lineHeight: 1.75 }}>
+                Your AI Credits unlock continuous access to an expanding suite of highly personalized, math-backed astrological engines. No generic horoscopes — just pure computation tailored to your exact coordinates.
+              </p>
+            </div>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {NEW_FEATURES.map((pt, i) => (
+                <div key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#FF5E3A" }} />
+                    <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)" }}>{pt.t}</div>
+                  </div>
+                  <p style={{ fontFamily: "'IBM Plex Sans',sans-serif", fontSize: "0.875rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.75, paddingLeft: 16 }}>{pt.d}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 const PlanCard = ({ plan, isCredits, currency = "INR" }) => {
   const [showModal, setShowModal] = useState(false);
+  const [showFeaturesModal, setShowFeaturesModal] = useState(false);
   const { openAuthModal } = useAuthModal();
 
   return (
@@ -2032,7 +2092,7 @@ const PlanCard = ({ plan, isCredits, currency = "INR" }) => {
 
           {/* disclaimer for credits plan */}
           {isCredits && (
-            <div className="mt-6 pt-5 border-t border-white/5">
+            <div className="mt-6 pt-5 border-t border-white/5 flex items-center justify-between">
               <button
                 onClick={() => setShowModal(true)}
                 title="How credits work"
@@ -2041,6 +2101,14 @@ const PlanCard = ({ plan, isCredits, currency = "INR" }) => {
               >
                 <span style={{ width: 16, height: 16, borderRadius: "50%", border: "1px solid rgba(0,229,255,0.5)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#00E5FF", fontSize: 9, flexShrink: 0, transition: "background 0.2s" }} className="group-hover:bg-[rgba(0,229,255,0.12)]">?</span>
                 <span className="font-mono-tech text-[8px] text-zinc-600 group-hover:text-zinc-400 transition-colors">How credits work</span>
+              </button>
+              
+              <button
+                onClick={() => setShowFeaturesModal(true)}
+                className="sweep-underline font-mono-tech text-[9px] text-[#FF5E3A] font-bold tracking-wider hover:text-white transition-colors"
+                style={{background:"none",border:"none",cursor:"pointer",padding:0}}
+              >
+                +Many more...
               </button>
             </div>
           )}
@@ -2053,6 +2121,7 @@ const PlanCard = ({ plan, isCredits, currency = "INR" }) => {
       </div>
 
       {showModal && <CreditsModal onClose={() => setShowModal(false)} />}
+      {showFeaturesModal && <FeaturesModal onClose={() => setShowFeaturesModal(false)} />}
     </>
   );
 };

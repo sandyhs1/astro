@@ -112,15 +112,18 @@ export default function IntercomProvider() {
       // Shut down any anonymous/previous session before re-identifying
       shutdownIntercom();
 
+      const bootData: any = {
+        app_id: APP_ID,
+        user_id: user.id,
+      };
+
+      if (user.email) bootData.email = user.email;
+      if (displayName) bootData.name = displayName;
+      if (createdAtUnix) bootData.created_at = createdAtUnix;
+
       // Boot with full identity — this populates the Intercom inbox with
       // the user's Name, Email, User ID, and Signed-up date automatically.
-      Intercom({
-        app_id:     APP_ID,
-        user_id:    user.id,          // Unique, stable identifier
-        email:      user.email ?? undefined,
-        name:       displayName,
-        created_at: createdAtUnix,
-      });
+      Intercom(bootData);
 
       lastUserIdRef.current = user.id;
     })();

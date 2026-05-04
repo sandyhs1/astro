@@ -107,10 +107,19 @@ export default function DashaLifePlanner({ profileId }: { profileId: string }) {
   }, [profileId]);
 
   if (loading) return (
-    <div className="space-y-3">
-      {[1,2,3].map(i => (
-        <div key={i} className="h-28 animate-pulse rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50" />
-      ))}
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-indigo-50/50 rounded-3xl border border-indigo-100/50 shadow-inner my-4">
+      <div className="relative mb-6">
+        <div className="text-6xl animate-bounce">✨</div>
+        <div className="absolute -top-2 -right-2 text-2xl animate-spin">🌟</div>
+        <div className="absolute -bottom-2 -left-2 text-2xl animate-pulse">💫</div>
+      </div>
+      <h3 className="text-lg font-black text-indigo-900 mb-2">Consulting the Astro-Engine... 🔭</h3>
+      <p className="text-sm text-indigo-700/80 max-w-sm leading-relaxed mb-4">
+        Hold tight, starseed! 🌌 Our quantum-karmic engines are cross-referencing thousands of celestial data points to generate your precise Dasha timeline.
+      </p>
+      <div className="bg-white/80 px-4 py-2.5 rounded-xl text-[11px] font-bold text-indigo-600 uppercase tracking-wider border border-indigo-200 shadow-sm animate-pulse">
+        ⚠️ Please don't close this tab! Realtime calculations taking place...
+      </div>
     </div>
   );
 
