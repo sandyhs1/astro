@@ -12,11 +12,14 @@ import PanchangMuhurat    from "./PanchangMuhurat";
 import PanchangCalendar   from "./PanchangCalendar";
 import DashaLifePlanner   from "./DashaLifePlanner";
 import ScoreHistory       from "./ScoreHistory";
+import PlanetaryTransits  from "./PlanetaryTransits";
+
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DayData { dateStr: string; score: number; grade: "excellent"|"good"|"neutral"|"caution"|"rest"; color: string; factors: string[]; dominantPlanet: string; }
-type Tab = "today" | "choghadiya" | "horas" | "muhurat" | "month" | "calendar" | "dasha" | "history";
+type Tab = "today" | "choghadiya" | "horas" | "muhurat" | "calendar" | "dasha" | "transits" | "history" | "month";
+
 
 
 
@@ -122,7 +125,9 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
           <TabBtn active={tab==="muhurat"}    onClick={() => setTab("muhurat")}    emoji="🔭" label="Muhurat Finder" />
           <TabBtn active={tab==="calendar"}   onClick={() => setTab("calendar")}   emoji="📅" label="My Calendar" />
           <TabBtn active={tab==="dasha"}      onClick={() => setTab("dasha")}      emoji="🧘" label="Dasha Planner" />
+          <TabBtn active={tab==="transits"}   onClick={() => setTab("transits")}   emoji="🪐" label="Live Transits" />
           <TabBtn active={tab==="history"}    onClick={() => setTab("history")}    emoji="📊" label="Score History" />
+
           <TabBtn active={tab==="month"}      onClick={() => setTab("month")}      emoji="📆" label="30-Day Map" />
 
         </div>
@@ -167,7 +172,11 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
           {/* DASHA LIFE PLANNER */}
           {tab === "dasha" && <DashaLifePlanner profileId={profileId} />}
 
+          {/* PLANETARY TRANSITS */}
+          {tab === "transits" && <PlanetaryTransits profileId={profileId} />}
+
           {/* SCORE HISTORY */}
+
           {tab === "history" && <ScoreHistory profileId={profileId} />}
 
           {/* 30-DAY MAP */}
