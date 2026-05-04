@@ -55,7 +55,8 @@ export function ScoreRing({ score }: { score: number }) {
           strokeDasharray={`${dash} ${c}`} strokeLinecap="round" style={{ transition: "stroke-dasharray 1s ease" }} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-sm font-black text-slate-900">{score}</span>
+        <span className="text-sm font-black text-white drop-shadow-sm">{score}</span>
+        <span className="text-[8px] font-bold text-white/60 leading-none">score</span>
       </div>
     </div>
   );
