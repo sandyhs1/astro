@@ -11,7 +11,8 @@ import { useAuthModal } from "./hooks/useAuthModal";
 import { toast } from "sonner";
 import {
   ArrowUpRight, Lock, Activity, Database, Shield, Cpu,
-  Layers, GitBranch, Binary, Sigma, Orbit, Network, Eye, Zap, Users, KeyRound, Sparkles, Infinity as InfinityIcon, X
+  Layers, GitBranch, Binary, Sigma, Orbit, Network, Eye, Zap, Users, KeyRound, Sparkles, Infinity as InfinityIcon, X,
+  Clock, Calendar, Search
 } from "lucide-react";
 import posthog from 'posthog-js';
 
@@ -1021,84 +1022,238 @@ const Grandmaster = () => (
   </section>
 );
 
-/* ------------------------------------------------------------------ */
-/* 9. KARMIC ARCHITECTURE                                              */
-/* ------------------------------------------------------------------ */
-const ARCH_STEPS = [
-  { step: "01", label: "Input",   title: "Coords",      icon: <Database size={16} strokeWidth={1}/>, accent: "#FF5E3A" },
-  { step: "02", label: "Compute", title: "Cast",        icon: <Cpu size={16} strokeWidth={1}/>,      accent: "#FFB547" },
-  { step: "03", label: "Index",   title: "Variables",   icon: <Sigma size={16} strokeWidth={1}/>,    accent: "#00E5FF" },
-  { step: "04", label: "Match",   title: "Signatures",  icon: <Network size={16} strokeWidth={1}/>,  accent: "#7B61FF" },
-  { step: "05", label: "Output",  title: "Probabilities",icon: <Activity size={16} strokeWidth={1}/>,accent: "#FF5E3A" },
+const DASHBOARD_FEATURES = [
+  {
+    id: "dasha",
+    title: "Vimshottari Timeline",
+    kicker: "Exact Timing of Life Chapters",
+    accent: "#00E5FF",
+    icon: <Clock size={20} strokeWidth={1.5} />,
+    problem: "Sudden job loss? Painful divorce?",
+    solution: "See the exact month your current painful Mahadasha ends, down to the minute. Know exactly when your peak earning years actually begin.",
+  },
+  {
+    id: "remedy",
+    title: "Custom Mantric Remedies",
+    kicker: "Vibrational Corrections",
+    accent: "#FF5E3A",
+    icon: <Shield size={20} strokeWidth={1.5} />,
+    problem: "Experiencing a sudden, massive financial drain?",
+    solution: "Stop relying on generic advice. We prescribe the exact 2 mantras required to pacify the specific planets wrecking your chart right now.",
+  },
+  {
+    id: "calendar",
+    title: "Destiny Window Calendar",
+    kicker: "Monthly Auspicious Mapping",
+    accent: "#FFB547",
+    icon: <Calendar size={20} strokeWidth={1.5} />,
+    problem: "Signing a major contract next week?",
+    solution: "Do not sign on a Thursday if your transit Mars destroys your leverage. See exactly which days guarantee success.",
+  },
+  {
+    id: "karma",
+    title: "Karma DNA & Patterns",
+    kicker: "Generational Blueprint Decoding",
+    accent: "#7B61FF",
+    icon: <Search size={20} strokeWidth={1.5} />,
+    problem: "Stuck in a cycle of repeated relationship failures?",
+    solution: "Find out exactly what your deepest birth chart divisions demand you change. Break the cycle permanently.",
+  }
 ];
 
-const KarmicArchitecture = () => (
-  <section data-testid="section-architecture" className="relative py-28 md:py-36 border-t border-white/5 overflow-hidden">
+const StackedFeatures = () => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div 
+      className="relative w-full max-w-lg mx-auto h-[500px] md:h-[600px] flex items-center justify-center cursor-pointer perspective-1000"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={() => setIsHovered(!isHovered)}
+    >
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <p className={`font-mono-tech text-[10px] text-zinc-500 transition-opacity duration-500 ${isHovered ? 'opacity-0' : 'opacity-100 animate-pulse'}`}>
+          [ HOVER TO EXPAND COMMAND CENTER ]
+        </p>
+      </div>
+
+      {DASHBOARD_FEATURES.map((feature, i) => {
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+        const baseZIndex = DASHBOARD_FEATURES.length - i;
+        
+        // Stacked state (folded)
+        const stackY = i * 20;
+        const stackScale = 1 - (i * 0.06);
+        const stackRotate = i % 2 === 0 ? i * 2.5 : -i * 2.5;
+        
+        // Expanded state (fanned out)
+        // Desktop: Fan out horizontally/diagonally. Mobile: Fan out vertically.
+        const spreadX = isMobile ? 0 : (i - 1.5) * 140;
+        const spreadY = isMobile ? (i - 1.5) * 130 : (i - 1.5) * 40;
+        const spreadRotate = isMobile ? 0 : (i - 1.5) * 8;
+
+        return (
+          <motion.div
+            key={feature.id}
+            initial={false}
+            animate={{
+              x: isHovered ? spreadX : 0,
+              y: isHovered ? spreadY : stackY,
+              scale: isHovered ? 1 : stackScale,
+              rotate: isHovered ? spreadRotate : stackRotate,
+              zIndex: baseZIndex,
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 25, mass: 0.8 }}
+            whileHover={{ scale: 1.05, zIndex: 50, rotate: 0 }}
+            className="absolute w-full max-w-[320px] bg-[#0A0A12] border p-6 rounded-2xl flex flex-col pointer-events-auto"
+            style={{ 
+              borderColor: `${feature.accent}50`, 
+              boxShadow: `0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px -10px ${feature.accent}30` 
+            }}
+          >
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 flex items-center justify-center bg-[#050507] border rounded-lg" style={{ borderColor: `${feature.accent}66`, color: feature.accent }}>
+                {feature.icon}
+              </div>
+              <div className="font-mono-tech text-[9px] uppercase tracking-widest" style={{ color: feature.accent }}>
+                {feature.kicker}
+              </div>
+            </div>
+            <h3 className="font-serif-display text-2xl text-white mb-5 leading-tight">
+              {feature.title}
+            </h3>
+            
+            <div className="space-y-3 flex-1 flex flex-col justify-end">
+              <div className="bg-white/5 border border-white/10 p-3 rounded-lg">
+                <div className="text-zinc-500 font-mono-tech text-[8px] mb-1.5 uppercase tracking-wider">The Problem</div>
+                <p className="text-zinc-300 font-body text-xs leading-relaxed">{feature.problem}</p>
+              </div>
+              <div className="bg-[#050507] border p-3 rounded-lg border-l-2" style={{ borderLeftColor: feature.accent, borderTopColor: 'rgba(255,255,255,0.05)', borderRightColor: 'rgba(255,255,255,0.05)', borderBottomColor: 'rgba(255,255,255,0.05)' }}>
+                <div className="font-mono-tech text-[8px] mb-1.5 uppercase tracking-wider" style={{ color: feature.accent }}>The Solution</div>
+                <p className="text-white font-body text-xs leading-relaxed">{feature.solution}</p>
+              </div>
+            </div>
+          </motion.div>
+        )
+      })}
+    </div>
+  )
+};
+
+const CalendarMockup = () => {
+  const days = [
+    { date: "10", type: "neutral" },
+    { date: "11", type: "neutral" },
+    { date: "12", type: "auspicious", task: "Sign Contract" },
+    { date: "13", type: "neutral" },
+    { date: "14", type: "neutral" },
+    { date: "15", type: "inauspicious", task: "Avoid Conflict" },
+    { date: "16", type: "neutral" },
+  ];
+  return (
+    <div className="bg-[#0A0A12] border border-white/10 rounded-2xl p-6 w-full max-w-sm mx-auto shadow-2xl relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-10 -mt-10" />
+      
+      <div className="flex items-center justify-between mb-6 relative z-10">
+        <h3 className="text-white font-mono-tech text-[10px] tracking-widest">PERSONAL CALENDAR</h3>
+        <span className="bg-white/10 px-2 py-1 rounded text-[9px] text-zinc-300">THIS WEEK</span>
+      </div>
+      
+      <div className="grid grid-cols-7 gap-2 mb-2 text-center relative z-10">
+        {["M","T","W","T","F","S","S"].map((d,i) => <div key={i} className="text-zinc-500 text-[9px]">{d}</div>)}
+      </div>
+      
+      <div className="grid grid-cols-7 gap-2 relative z-10">
+        {days.map((d, i) => (
+          <div key={i} className={`group relative flex flex-col items-center justify-center p-2 rounded-md border transition-colors cursor-default ${
+            d.type === 'auspicious' ? 'border-[#00E5FF] bg-[#00E5FF]/10' :
+            d.type === 'inauspicious' ? 'border-[#FF5E3A] bg-[#FF5E3A]/10' :
+            'border-white/5 bg-white/5 hover:bg-white/10'
+          } aspect-square`}>
+            <span className={`text-[11px] font-bold ${
+              d.type === 'auspicious' ? 'text-[#00E5FF]' :
+              d.type === 'inauspicious' ? 'text-[#FF5E3A]' :
+              'text-zinc-400'
+            }`}>{d.date}</span>
+            {d.task && (
+              <div className={`w-1 h-1 rounded-full mt-1 ${d.type === 'auspicious' ? 'bg-[#00E5FF]' : 'bg-[#FF5E3A]'}`} />
+            )}
+          </div>
+        ))}
+      </div>
+      
+      <div className="mt-6 flex flex-col gap-3 relative z-10">
+        <div className="bg-[#00E5FF]/5 border border-[#00E5FF]/20 rounded-lg p-3 flex items-center justify-between group hover:bg-[#00E5FF]/10 transition-colors cursor-pointer">
+           <div>
+             <div className="text-[#00E5FF] text-[9px] font-mono-tech mb-1">12TH · AUSPICIOUS WINDOW</div>
+             <div className="text-white text-xs font-semibold flex items-center gap-2">
+               <div className="w-2 h-2 rounded-full border border-[#00E5FF]" />
+               Sign Business Contract
+             </div>
+           </div>
+        </div>
+        <div className="bg-[#FF5E3A]/5 border border-[#FF5E3A]/20 rounded-lg p-3 flex items-center justify-between group hover:bg-[#FF5E3A]/10 transition-colors cursor-pointer">
+           <div>
+             <div className="text-[#FF5E3A] text-[9px] font-mono-tech mb-1">15TH · DESTRUCTIVE TRANSIT</div>
+             <div className="text-white text-xs font-semibold flex items-center gap-2">
+               <div className="w-2 h-2 rounded-full bg-[#FF5E3A]" />
+               Avoid Client Conflict
+             </div>
+           </div>
+        </div>
+      </div>
+      
+      <div className="mt-5 text-center relative z-10">
+        <button className="text-[10px] font-mono-tech text-zinc-400 hover:text-white transition-colors flex items-center justify-center gap-2 w-full border border-white/10 rounded-lg py-2 hover:bg-white/5">
+          + ADD NEW TASK
+        </button>
+      </div>
+    </div>
+  )
+};
+
+const DashboardShowcase = () => (
+  <section data-testid="section-dashboard-showcase" className="relative py-28 md:py-36 border-t border-white/5 overflow-hidden">
     <div className="absolute inset-0 grid-bg opacity-20" />
     <div className="max-w-[1600px] mx-auto px-6 md:px-10 lg:px-16 relative">
-      <SectionLabel n={9} label="KARMIC DATA ARCHITECTURE" accent="#FFB547" />
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-end">
-        <Reveal className="lg:col-span-7">
+      <SectionLabel n={9} label="YOUR PERSONAL COMMAND CENTER" accent="#00E5FF" />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center mb-16">
+        <Reveal className="lg:col-span-6">
           <h2 className="font-serif-display text-5xl md:text-6xl lg:text-7xl leading-[0.92] tracking-[-0.03em]">
-            Birth data is <br />
-            <span className="italic-serif text-zinc-500">the</span> <span className="shimmer-text">initial condition</span>.
+            Stop guessing. <br />
+            <span className="italic-serif text-zinc-500">Take control of your</span> <span className="text-white">exact timeline</span>.
           </h2>
-        </Reveal>
-        <Reveal delay={2} className="lg:col-span-5">
-          <p className="font-body text-zinc-400 leading-relaxed">
-            From four data points to a lifelong trajectory — in five steps.
+          <p className="font-body text-zinc-400 leading-relaxed text-lg mt-8">
+            This is what you get inside. A dashboard built for immediate, real-world application. No vague predictions. Just hard facts, exact dates, and specific actions. 
           </p>
+          <div className="mt-8 flex flex-col gap-4 border-l border-white/10 pl-6">
+            <p className="font-mono-tech text-[10px] text-zinc-500 tracking-widest uppercase">The Edge You Gain:</p>
+            <ul className="space-y-3 font-body text-sm text-zinc-300">
+              <li className="flex items-center gap-3"><div className="w-1.5 h-1.5 bg-[#00E5FF] rounded-full"/> Know exactly when your peak earning years begin.</li>
+              <li className="flex items-center gap-3"><div className="w-1.5 h-1.5 bg-[#FF5E3A] rounded-full"/> Stop sudden financial drains with precise planetary pacification.</li>
+              <li className="flex items-center gap-3"><div className="w-1.5 h-1.5 bg-[#FFB547] rounded-full"/> Never sign a major contract on a destructive transit day.</li>
+            </ul>
+          </div>
+        </Reveal>
+        
+        <Reveal delay={2} className="lg:col-span-6 flex flex-col md:flex-row items-center justify-center gap-8 lg:gap-12">
+          <div className="w-full md:w-1/2 flex-shrink-0 z-20">
+            <StackedFeatures />
+          </div>
+          <div className="w-full md:w-1/2 flex-shrink-0 z-10 hidden md:block opacity-90 hover:opacity-100 transition-opacity">
+            <CalendarMockup />
+          </div>
         </Reveal>
       </div>
 
-      <Reveal delay={3}>
-        <div className="mt-16 relative">
-          {/* animated pipeline track */}
-          <div className="absolute top-[28px] left-[8%] right-[8%] h-px bg-white/10 overflow-hidden">
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: "100%" }}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-y-0 w-1/3"
-              style={{
-                background: "linear-gradient(90deg, transparent, #FF5E3A, #FFB547, #00E5FF, #7B61FF, transparent)",
-              }}
-            />
-          </div>
-
-          <div className="grid grid-cols-5 gap-2 md:gap-4 relative">
-            {ARCH_STEPS.map((s, i) => (
-              <motion.div
-                key={s.step}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
-                className="relative group text-center"
-              >
-                {/* pulsing node */}
-                <div className="relative z-10 mx-auto w-14 h-14 flex items-center justify-center border bg-[#050507] group-hover:scale-110 transition-transform duration-500"
-                  style={{ borderColor: `${s.accent}66` }}
-                >
-                  <span style={{ color: s.accent }}>{s.icon}</span>
-                  <motion.span
-                    className="absolute inset-0 pointer-events-none"
-                    style={{ border: `1px solid ${s.accent}` }}
-                    animate={{ opacity: [0.6, 0, 0.6], scale: [1, 1.4, 1] }}
-                    transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.4 }}
-                  />
-                </div>
-                <div className="mt-5">
-                  <div className="font-mono-tech text-[9px]" style={{ color: s.accent }}>
-                    {s.step} · {s.label}
-                  </div>
-                  <div className="font-serif-display text-xl md:text-2xl mt-2 leading-none">{s.title}</div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </Reveal>
+      {/* Mobile Calendar Mockup (only shows on small screens below the stack) */}
+      <div className="md:hidden mt-8">
+        <Reveal delay={4}>
+          <CalendarMockup />
+        </Reveal>
+      </div>
+      
     </div>
   </section>
 );
@@ -2246,7 +2401,7 @@ export const Landing = () => (
     <Shodasavarga />
     <Manifesto />
     <Grandmaster />
-    <KarmicArchitecture />
+    <DashboardShowcase />
     <LifestylePillars />
     <FamilyOffice />
     <TestimonialsEMR />
