@@ -83,56 +83,56 @@ export default function DailyBriefingWidget({ profileId }: { profileId: string }
   const scoreColor = SCORE_COLOR(score);
 
   return (
-    <div className="bg-gradient-to-r from-slate-900 to-indigo-950 border-b border-slate-800 px-4 py-2.5 overflow-x-auto">
-      <div className="flex items-center gap-4 min-w-max">
+    <div className="flex-shrink-0 bg-gradient-to-r from-slate-900 to-indigo-950 border-b border-slate-800 px-4 py-3 overflow-x-auto scrollbar-hide shadow-md z-20">
+      <div className="flex items-center gap-5 min-w-max">
 
         {/* Score */}
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white"
+        <div className="flex items-center gap-2 bg-black/20 px-2 py-1 rounded-lg">
+          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black text-white shadow-sm"
             style={{ background: scoreColor }}>
             {score}
           </div>
-          <span className="text-[11px] font-black text-white/70 uppercase tracking-wider">Day Score</span>
+          <span className="text-[11px] font-black text-white uppercase tracking-wider">Day Score</span>
         </div>
 
-        <div className="w-px h-4 bg-white/10" />
+        <div className="w-px h-5 bg-white/20" />
 
         {/* Active Choghadiya */}
         {activeChog && (
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: CHOG_COLOR[activeChog.name] || "#6B7280" }} />
-            <span className="text-[11px] font-black" style={{ color: CHOG_COLOR[activeChog.name] || "#fff" }}>{activeChog.name}</span>
-            <span className="text-[10px] text-white/40">until {fmtT(activeChog.end)}</span>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full animate-pulse shadow-sm" style={{ background: CHOG_COLOR[activeChog.name] || "#9CA3AF" }} />
+            <span className="text-[12px] font-black drop-shadow-sm" style={{ color: CHOG_COLOR[activeChog.name] || "#fff" }}>{activeChog.name}</span>
+            <span className="text-[11px] font-semibold text-slate-300">until {fmtT(activeChog.end)}</span>
           </div>
         )}
 
-        <div className="w-px h-4 bg-white/10" />
+        <div className="w-px h-5 bg-white/20" />
 
         {/* Next good window */}
         {nextGood && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-white/40">Next ✦</span>
-            <span className="text-[11px] font-black" style={{ color: CHOG_COLOR[nextGood.name] }}>{nextGood.name}</span>
-            <span className="text-[10px] text-white/50">in {countdown(msUntil(nextGood.start))} · {fmtT(nextGood.start)}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-400">Next ✦</span>
+            <span className="text-[12px] font-black drop-shadow-sm" style={{ color: CHOG_COLOR[nextGood.name] }}>{nextGood.name}</span>
+            <span className="text-[11px] font-semibold text-slate-300">in {countdown(msUntil(nextGood.start))}</span>
           </div>
         )}
 
-        <div className="w-px h-4 bg-white/10" />
+        <div className="w-px h-5 bg-white/20" />
 
         {/* Nakshatra */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-white/40">⭐</span>
-          <span className="text-[11px] font-semibold text-white/70">{p.nakshatra}</span>
+          <span className="text-[12px] text-slate-300">⭐</span>
+          <span className="text-[12px] font-bold text-white">{p.nakshatra}</span>
         </div>
 
-        <div className="w-px h-4 bg-white/10" />
+        <div className="w-px h-5 bg-white/20" />
 
         {/* Rahu warning */}
         {(rahuNow || rahuSoon) && (
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${rahuNow ? "bg-red-600/30 border border-red-500/40" : "bg-amber-500/20 border border-amber-500/30"}`}>
-            <span className="text-[10px]">⚠️</span>
-            <span className={`text-[11px] font-black ${rahuNow ? "text-red-300" : "text-amber-300"}`}>
-              {rahuNow ? `Rahu Kaal until ${fmtT(p.rahuKaal.end)}` : `Rahu in ${countdown(msUntil(p.rahuKaal.start))}`}
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${rahuNow ? "bg-red-600/40 border border-red-500/60" : "bg-amber-500/30 border border-amber-500/50"}`}>
+            <span className="text-[11px]">⚠️</span>
+            <span className={`text-[12px] font-black tracking-wide ${rahuNow ? "text-red-100" : "text-amber-100"}`}>
+              {rahuNow ? `RAHU KAAL UNTIL ${fmtT(p.rahuKaal.end).toUpperCase()}` : `Rahu in ${countdown(msUntil(p.rahuKaal.start))}`}
             </span>
           </div>
         )}
@@ -140,18 +140,19 @@ export default function DailyBriefingWidget({ profileId }: { profileId: string }
         {/* Abhijit */}
         {msUntil(p.abhijit.end) > 0 && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px]">👑</span>
-            <span className="text-[10px] text-emerald-300 font-semibold">
+            <span className="text-[12px]">👑</span>
+            <span className="text-[12px] text-emerald-200 font-bold">
               Abhijit {msUntil(p.abhijit.start) > 0 ? `in ${countdown(msUntil(p.abhijit.start))}` : `until ${fmtT(p.abhijit.end)}`}
             </span>
           </div>
         )}
 
-        <div className="w-px h-4 bg-white/10" />
+        <div className="w-px h-5 bg-white/20" />
 
         {/* Location */}
-        <span className="text-[10px] text-white/30 font-medium">📍 {location?.split(",")[0]}</span>
+        <span className="text-[11px] text-slate-400 font-bold tracking-wide">📍 {location?.split(",")[0].toUpperCase()}</span>
       </div>
     </div>
   );
+
 }

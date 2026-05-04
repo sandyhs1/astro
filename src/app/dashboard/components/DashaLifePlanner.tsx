@@ -139,14 +139,16 @@ export default function DashaLifePlanner({ profileId }: { profileId: string }) {
     : 50;
 
   const adEndDate = data.antardashaEnd ? new Date(data.antardashaEnd) : null;
-  const adYears   = VIMSHOTTARI_YEARS[data.antardasha] || 1;
-  const adPct     = adEndDate
-    ? ((adYears - msToYears(adEndDate.getTime() - Date.now())) / adYears) * 100
+  const adYearsTotal = VIMSHOTTARI_YEARS[data.antardasha] || 1;
+  const adDurationMs = ((mdYears * adYearsTotal) / 120) * 365.25 * 86400000;
+  const adStart   = adEndDate ? new Date(adEndDate.getTime() - adDurationMs) : null;
+  const adPct     = adStart && adEndDate
+    ? ((Date.now() - adStart.getTime()) / adDurationMs) * 100
     : 50;
 
   const SECTIONS = [
-    { key: "md", planet: data.mahadasha, meta: MD, label: "Mahadasha", pct: mdPct, endDate: data.mahadashaEnd, years: mdYears },
-    { key: "ad", planet: data.antardasha, meta: AD, label: "Antardasha", pct: adPct, endDate: data.antardashaEnd, years: adYears },
+    { key: "md", planet: data.mahadasha, meta: MD, label: "Mahadasha (Major)", pct: mdPct, start: mdStart, end: mdEndDate, years: mdYears },
+    { key: "ad", planet: data.antardasha, meta: AD, label: "Antardasha (Minor)", pct: adPct, start: adStart, end: adEndDate, years: ((mdYears * adYearsTotal)/120).toFixed(1) },
   ];
 
   return (
@@ -176,13 +178,18 @@ export default function DashaLifePlanner({ profileId }: { profileId: string }) {
                   ))}
                 </div>
               </div>
-              {sec.endDate && <TimeTag label="Ends" date={sec.endDate} />}
+              <div className="text-right flex flex-col items-end gap-1">
+                 {sec.start && <span className="text-[10px] font-bold text-slate-500 bg-white/60 px-2 py-0.5 rounded-md border border-slate-200">Start: {sec.start.toLocaleDateString("en-IN",{month:"short",year:"numeric"})}</span>}
+                 {sec.end && <span className="text-[10px] font-bold text-slate-500 bg-white/60 px-2 py-0.5 rounded-md border border-slate-200">End: {sec.end.toLocaleDateString("en-IN",{month:"short",year:"numeric"})}</span>}
+                 {sec.end && msToYears(sec.end.getTime() - Date.now()) > 0 && <span className="text-[10px] text-slate-400 mt-1">{msToYears(sec.end.getTime() - Date.now()).toFixed(1)} yrs left</span>}
+              </div>
             </div>
             <ProgressBar pct={sec.pct} color={sec.meta.color} />
-            <div className="flex justify-between mt-1">
-              <span className="text-[9px] text-slate-400">{Math.round(sec.pct)}% complete</span>
-              <span className="text-[9px] text-slate-400">{sec.years}yr period</span>
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[9px] font-semibold text-slate-400">{Math.round(sec.pct)}% complete</span>
+              <span className="text-[9px] font-semibold text-slate-400">{sec.years} yr period</span>
             </div>
+
             <p className="text-[11px] text-slate-500 mt-1.5">
               {expanded===sec.key ? "▲" : "▼"} {expanded===sec.key ? "Hide" : "Show"} insights
             </p>
@@ -225,24 +232,54 @@ export default function DashaLifePlanner({ profileId }: { profileId: string }) {
       ))}
 
       {/* Vimshottari sequence reference */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Vimshottari Sequence Reference</p>
-        <div className="grid grid-cols-3 gap-2">
-          {Object.entries(VIMSHOTTARI_YEARS).map(([planet, years]) => {
-            const m = PLANET_META[planet];
-            const isActive = planet === data.mahadasha;
-            return (
-              <div key={planet} className={`flex items-center gap-2 p-2 rounded-xl border ${isActive ? "ring-2 ring-offset-1" : ""}`}
-                style={{ background:m?.bg, borderColor:m?.border, outline: isActive ? `2px solid ${m?.color}` : undefined }}>
-                <span className="text-base">{m?.emoji}</span>
-                <div>
-                  <p className="text-[11px] font-black" style={{ color:m?.color }}>{planet}</p>
-                  <p className="text-[10px] text-slate-400">{years}yr</p>
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mt-6">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Your Lifetime Timeline (Upcoming Dashas)</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+          {(() => {
+            const SEQ = ["Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury"];
+            let startIdx = SEQ.indexOf(data.mahadasha);
+            if (startIdx === -1) startIdx = 0;
+            
+            // Reorder sequence to start from current Mahadasha
+            const ordered = [...SEQ.slice(startIdx), ...SEQ.slice(0, startIdx)];
+            
+            let currentStartDate = mdStart;
+            
+            return ordered.map((planet, i) => {
+              const m = PLANET_META[planet];
+              const years = VIMSHOTTARI_YEARS[planet];
+              const isActive = i === 0; // Current Mahadasha is first in ordered list
+              
+              let displayDates = "";
+              let nextDate = null;
+              
+              if (currentStartDate) {
+                nextDate = new Date(currentStartDate.getTime() + years * 365.25 * 86400000);
+                displayDates = `${currentStartDate.getFullYear()} - ${nextDate.getFullYear()}`;
+              }
+              
+              const res = (
+                <div key={planet} className={`flex items-center gap-3 p-3 rounded-xl border ${isActive ? "ring-2 ring-offset-2 ring-indigo-500 shadow-md scale-[1.02] transition-transform" : "opacity-70 hover:opacity-100 transition-opacity"}`}
+                  style={{ background:m?.bg, borderColor:m?.border }}>
+                  <span className="text-2xl drop-shadow-sm">{m?.emoji}</span>
+                  <div className="flex-1">
+                    <p className="text-[12px] font-black tracking-wide" style={{ color:m?.color }}>{planet.toUpperCase()}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">{years} Years</p>
+                  </div>
+                  <div className="text-right">
+                    {isActive ? (
+                       <span className="text-[9px] font-black text-white px-2 py-1 rounded shadow-sm" style={{ background:m?.color }}>ACTIVE NOW</span>
+                    ) : (
+                       <span className="text-[11px] font-black text-slate-600">{displayDates}</span>
+                    )}
+                  </div>
                 </div>
-                {isActive && <span className="ml-auto text-[8px] font-black text-white px-1 py-0.5 rounded" style={{ background:m?.color }}>NOW</span>}
-              </div>
-            );
-          })}
+              );
+              
+              currentStartDate = nextDate;
+              return res;
+            });
+          })()}
         </div>
       </div>
     </div>

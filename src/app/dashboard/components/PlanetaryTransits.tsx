@@ -47,6 +47,26 @@ export default function PlanetaryTransits({ profileId }: { profileId: string }) 
     <div className="space-y-4">
       <SectionHeader emoji="🪐" title="Live Planetary Transits" subtitle={`Current planetary positions · Moon in ${data.moonSign}`} />
 
+      {/* How to use section */}
+      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-4 shadow-sm">
+        <h4 className="text-[12px] font-black uppercase tracking-widest text-indigo-800 mb-2 flex items-center gap-2">
+          <span>🔭</span> How to Read Your Transits
+        </h4>
+        <div className="space-y-2 text-sm text-indigo-900/80 leading-relaxed font-medium">
+          <p>
+            <strong className="text-indigo-900">What is this?</strong> This shows exactly where the 9 planets are moving in the sky <em>right now</em>, mapped against the 12 Zodiac signs. 
+          </p>
+          <p>
+            <strong className="text-indigo-900">Why it matters:</strong> While your Birth Chart is locked, these "Transits" are live. When a heavy planet like Saturn or Jupiter moves into your <strong>Moon Sign</strong> or <strong>Ascendant</strong>, it triggers major life events, shifts in mood, and new karmic lessons.
+          </p>
+          <ul className="list-disc pl-5 space-y-1 mt-1 text-[13px]">
+            <li>Check your <span className="text-[10px] font-black text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded">ASCENDANT</span> sign: Planets here impact your physical health, identity, and major life path.</li>
+            <li>Check your <span className="text-[10px] font-black text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded">MOON SIGN</span>: Planets here directly impact your emotions, mental peace, and daily reactions.</li>
+            <li><strong className="text-red-700">® Retrograde</strong>: Planets marked with ® are appearing to move backward. Their energy becomes internalized, delayed, or more intense.</li>
+          </ul>
+        </div>
+      </div>
+
       {/* Grid of Zodaic Signs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {ZODIAC_SIGNS.map((sign, idx) => {
