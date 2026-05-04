@@ -19,7 +19,7 @@ import type { BirthParams } from "./client";
 import { computeExtras, type ChartExtras } from "./compute-extras";
 import crypto from "crypto";
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 2;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

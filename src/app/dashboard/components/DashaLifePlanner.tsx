@@ -196,15 +196,15 @@ export default function DashaLifePlanner({ profileId }: { profileId: string }) {
                 </div>
               </div>
               <div className="text-right flex flex-col items-end gap-1">
-                 {sec.start && <span className="text-[10px] font-bold text-slate-500 bg-white/60 px-2 py-0.5 rounded-md border border-slate-200">Start: {sec.start.toLocaleDateString("en-IN",{month:"short",year:"numeric"})}</span>}
-                 {sec.end && <span className="text-[10px] font-bold text-slate-500 bg-white/60 px-2 py-0.5 rounded-md border border-slate-200">End: {sec.end.toLocaleDateString("en-IN",{month:"short",year:"numeric"})}</span>}
-                 {sec.end && msToYears(sec.end.getTime() - Date.now()) > 0 && <span className="text-[10px] text-slate-400 mt-1">{msToYears(sec.end.getTime() - Date.now()).toFixed(1)} yrs left</span>}
+                 {sec.start && !isNaN(sec.start.getTime()) && <span className="text-[10px] font-bold text-slate-500 bg-white/60 px-2 py-0.5 rounded-md border border-slate-200">Start: {sec.start.toLocaleDateString("en-IN",{month:"short",year:"numeric"})}</span>}
+                 {sec.end && !isNaN(sec.end.getTime()) && <span className="text-[10px] font-bold text-slate-500 bg-white/60 px-2 py-0.5 rounded-md border border-slate-200">End: {sec.end.toLocaleDateString("en-IN",{month:"short",year:"numeric"})}</span>}
+                 {sec.end && !isNaN(sec.end.getTime()) && msToYears(sec.end.getTime() - Date.now()) > 0 && <span className="text-[10px] text-slate-400 mt-1">{msToYears(sec.end.getTime() - Date.now()).toFixed(1)} yrs left</span>}
               </div>
             </div>
-            <ProgressBar pct={sec.pct} color={sec.meta.color} />
+            <ProgressBar pct={isNaN(sec.pct) ? 0 : sec.pct} color={sec.meta.color} />
             <div className="flex justify-between mt-1.5">
-              <span className="text-[9px] font-semibold text-slate-400">{Math.round(sec.pct)}% complete</span>
-              <span className="text-[9px] font-semibold text-slate-400">{sec.years} yr period</span>
+              <span className="text-[9px] font-semibold text-slate-400">{isNaN(sec.pct) ? "--" : Math.round(sec.pct)}% complete</span>
+              <span className="text-[9px] font-semibold text-slate-400">{isNaN(Number(sec.years)) ? "--" : sec.years} yr period</span>
             </div>
 
             <p className="text-[11px] text-slate-500 mt-1.5">

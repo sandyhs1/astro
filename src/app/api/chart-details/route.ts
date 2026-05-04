@@ -304,19 +304,28 @@ function formatDate(raw: string): string {
   return `${d} ${months[parseInt(m)-1]} ${y}`;
 }
 
-function dashaRemaining(endRaw: string): string {
-  if (!endRaw) return "";
-  const [datePart] = endRaw.trim().split(" ");
-  const [d,m,y] = datePart.split("-").map(Number);
-  if (!d||!m||!y) return "";
-  const end = new Date(y,m-1,d);
-  const now = new Date();
-  if (end<now) return "Completed";
-  const diffMs = end.getTime()-now.getTime();
-  const days = Math.floor(diffMs/86400000);
-  const years = Math.floor(days/365);
-  const months = Math.floor((days%365)/30);
-  return years>0 ? `${years}y ${months}m remaining` : `${months}m remaining`;
+function dashaRemaining(endDateStr: string): string {
+  if (!endDateStr) return "";
+  const end = new Date(endDateStr);
+  if (isNaN(end.getTime())) return "";
+  const diff = end.getTime() - Date.now();
+  if (diff < 0) return "Ended";
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const years = Math.floor(days / 365);
+  const months = Math.floor((days % 365) / 30);
+  if (years > 0) return `${years}y ${months}m left`;
+  if (months > 0) return `${months}m left`;
+  return `${days}d left`;
+}
+
+function parseAstroDate(s: string): Date {
+  if (!s) return new Date(NaN);
+  const clean=s.trim().replace(/\s+/g," ");
+  const parts=clean.split(" ");
+  const [d,m,y]=parts[0].split("-").map(Number);
+  const [hr,mn]=(parts[1]||"0:00").split(":").map(Number);
+  if(!d||!m||!y) return new Date(NaN);
+  return new Date(y,m-1,d,hr||0,mn||0,0);
 }
 
 // ─── Route Handler ─────────────────────────────────────────────────────────────
@@ -403,6 +412,25 @@ export async function GET(req: NextRequest) {
     const nextMDSt = (dasha.full as any)?.currentDasha?._nextMahadashaStart ?? "";
     const nextMDEn = (dasha.full as any)?.currentDasha?._nextMahadashaEnd ?? "";
 
+    // Fallback logic for pratyantar dates if schema is v2 and dates aren't at the top level
+    let pdStart = dasha.pratyantarStart || "";
+    let pdEnd   = dasha.pratyantarEnd || "";
+    if (!pdStart || !pdEnd) {
+      const cd = (dasha.full as any)?.currentDasha;
+      const now = new Date();
+      if (cd?.sub_minor?.dasha_period) {
+        const ap = cd.sub_minor.dasha_period.find((p: any) => {
+          const s = parseAstroDate(p.start || "");
+          const e = parseAstroDate(p.end || "");
+          return !isNaN(s.getTime()) && !isNaN(e.getTime()) && now >= s && now <= e;
+        });
+        if (ap) {
+          pdStart = ap.start || "";
+          pdEnd = ap.end || "";
+        }
+      }
+    }
+
     return NextResponse.json({
       fromCache,
       person: {
@@ -432,9 +460,9 @@ export async function GET(req: NextRequest) {
         antardashaEnd:  formatDate(dasha.antardashaEnd),
         antardashaRemaining: dashaRemaining(dasha.antardashaEnd),
         pratyantar:     dasha.pratyantar || "—",
-        pratyantarStart: formatDate(dasha.pratyantarStart),
-        pratyantarEnd:   formatDate(dasha.pratyantarEnd),
-        pratyantarRemaining: dashaRemaining(dasha.pratyantarEnd),
+        pratyantarStart: pdStart ? formatDate(pdStart) : "",
+        pratyantarEnd:   pdEnd ? formatDate(pdEnd) : "",
+        pratyantarRemaining: pdEnd ? dashaRemaining(pdEnd) : "",
         nextMahadasha:  nextMD,
         nextMahadashaStart: formatDate(nextMDSt),
         nextMahadashaEnd:   formatDate(nextMDEn),

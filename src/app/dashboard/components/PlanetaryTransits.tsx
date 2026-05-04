@@ -82,6 +82,13 @@ export default function PlanetaryTransits({ profileId }: { profileId: string }) 
         </div>
       </div>
 
+      {data.transits.length === 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-sm">
+          <p className="font-bold mb-1">⚠️ Astronomical API Limit Reached</p>
+          <p>The daily trial limit for the live planetary engine has been exceeded. Live positions will refresh at midnight. Meanwhile, you can review your natal alignments below.</p>
+        </div>
+      )}
+
       {/* Grid of Zodaic Signs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {ZODIAC_SIGNS.map((sign, idx) => {
