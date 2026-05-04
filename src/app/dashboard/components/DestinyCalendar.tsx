@@ -9,10 +9,13 @@ import PanchangToday      from "./PanchangToday";
 import PanchangChoghadiya from "./PanchangChoghadiya";
 import PanchangHoras      from "./PanchangHoras";
 import PanchangMuhurat    from "./PanchangMuhurat";
+import PanchangCalendar   from "./PanchangCalendar";
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DayData { dateStr: string; score: number; grade: "excellent"|"good"|"neutral"|"caution"|"rest"; color: string; factors: string[]; dominantPlanet: string; }
-type Tab = "today" | "choghadiya" | "horas" | "muhurat" | "month";
+type Tab = "today" | "choghadiya" | "horas" | "muhurat" | "month" | "calendar";
+
 
 const GRADE_BG   = { excellent:"bg-emerald-50 border-emerald-200", good:"bg-green-50 border-green-200", neutral:"bg-amber-50 border-amber-200", caution:"bg-orange-50 border-orange-200", rest:"bg-red-50 border-red-200" };
 const GRADE_TEXT = { excellent:"text-emerald-700", good:"text-green-700", neutral:"text-amber-700", caution:"text-orange-700", rest:"text-red-600" };
@@ -114,7 +117,9 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
           <TabBtn active={tab==="choghadiya"} onClick={() => setTab("choghadiya")} emoji="☀️" label="Choghadiya" />
           <TabBtn active={tab==="horas"}      onClick={() => setTab("horas")}      emoji="🕐" label="Horas" />
           <TabBtn active={tab==="muhurat"}    onClick={() => setTab("muhurat")}    emoji="🔭" label="Muhurat Finder" />
+          <TabBtn active={tab==="calendar"}   onClick={() => setTab("calendar")}   emoji="📅" label="My Calendar" />
           <TabBtn active={tab==="month"}      onClick={() => setTab("month")}      emoji="📆" label="30-Day Map" />
+
         </div>
       </div>
 
@@ -150,6 +155,9 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
 
           {/* MUHURAT FINDER */}
           {tab === "muhurat" && <PanchangMuhurat profileId={profileId} />}
+
+          {/* MY CALENDAR */}
+          {tab === "calendar" && <PanchangCalendar profileId={profileId} />}
 
           {/* 30-DAY MAP */}
           {tab === "month" && (

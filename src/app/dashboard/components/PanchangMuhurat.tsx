@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { SectionHeader } from "./PanchangUtils";
+import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-utils";
+
 
 const EVENT_TYPES = ["Business Launch","Wedding","Travel","House Warming","Medical Procedure","Job / Interview","Finance","Education","General"];
 const GRADE_CONFIG = {
@@ -113,6 +115,21 @@ export default function PanchangMuhurat({ profileId }: { profileId: string }) {
           {results.map((w, i) => {
             const g = GRADE_CONFIG[w.grade as keyof typeof GRADE_CONFIG] || GRADE_CONFIG.gold;
             const chogColor = CHOG_COLORS[w.choghadiya] || "#6B7280";
+            // Build date string from ISO
+            const startDt = new Date(w.start);
+            const dateStr = `${startDt.getFullYear()}-${String(startDt.getMonth()+1).padStart(2,'0')}-${String(startDt.getDate()).padStart(2,'0')}`;
+            const startHM = `${String(startDt.getHours()).padStart(2,'0')}:${String(startDt.getMinutes()).padStart(2,'0')}`;
+            const endDt   = new Date(w.end);
+            const endHM   = `${String(endDt.getHours()).padStart(2,'0')}:${String(endDt.getMinutes()).padStart(2,'0')}`;
+            const gcUrl   = buildGoogleCalendarUrl({ title: `${eventType} — ${w.choghadiya} Choghadiya`, date: dateStr, startTime: startHM, endTime: endHM, description: w.reasons.join('. ') });
+
+            async function saveToCalendar() {
+              await fetch("/api/calendar", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: `${eventType} — ${w.choghadiya}`, event_type: eventType.toLowerCase().replace(/\s+/g,"_"), event_date: dateStr, start_time: startHM, end_time: endHM, choghadiya: w.choghadiya, muhurat_grade: w.grade, notes: w.reasons.join('. '), color: w.grade==="god"?"#F59E0B":w.grade==="diamond"?"#3B82F6":"#10B981" }),
+              });
+            }
+
             return (
               <div key={i} className="rounded-2xl border p-4" style={{ background: g.bg, borderColor: g.border }}>
                 <div className="flex items-start justify-between gap-3">
@@ -144,6 +161,21 @@ export default function PanchangMuhurat({ profileId }: { profileId: string }) {
                     ))}
                   </div>
                 )}
+                {/* Calendar Actions */}
+                <div className="mt-3 pt-2 border-t border-black/5 flex gap-2 flex-wrap">
+                  <a href={gcUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-white/80 border border-blue-200 text-blue-700 rounded-lg text-[11px] font-bold hover:bg-blue-50 transition-colors">
+                    📅 Google Calendar
+                  </a>
+                  <button onClick={() => downloadICS([{ title:`${eventType}`, date:dateStr, startTime:startHM, endTime:endHM, description:w.reasons.join('. ') }])}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-white/80 border border-slate-200 text-slate-600 rounded-lg text-[11px] font-bold hover:bg-slate-50 transition-colors">
+                    ⬇ ICS
+                  </button>
+                  <button onClick={saveToCalendar}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[11px] font-bold hover:bg-indigo-700 transition-colors">
+                    + Save to My Calendar
+                  </button>
+                </div>
               </div>
             );
           })}
