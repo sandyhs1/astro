@@ -19,7 +19,7 @@ import type { BirthParams } from "./client";
 import { computeExtras, type ChartExtras } from "./compute-extras";
 import crypto from "crypto";
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,7 +89,7 @@ export interface GoldenMasterJSON {
   dasha: {
     mahadasha: string; mahadashaEnd: string;
     antardasha: string; antardashaEnd: string;
-    pratyantar: string;
+    pratyantar: string; pratyantarStart: string; pratyantarEnd: string;
     full: any;
   };
   karakas: {
@@ -324,9 +324,14 @@ export function normalizeBundle(
     const ap=cd.minor.dasha_period.find((p:any)=>{const s=parseAstroDate(p.start||""),e=parseAstroDate(p.end||"");return!isNaN(s.getTime())&&!isNaN(e.getTime())&&now>=s&&now<=e;});
     if(ap){antardasha=ap.planet||"";antardashaEnd=ap.end||"";}
   }
+  let pratyantarStart="", pratyantarEnd="";
   if(cd.sub_minor?.dasha_period){
     const ap=cd.sub_minor.dasha_period.find((p:any)=>{const s=parseAstroDate(p.start||""),e=parseAstroDate(p.end||"");return!isNaN(s.getTime())&&!isNaN(e.getTime())&&now>=s&&now<=e;});
-    if(ap) pratyantar=ap.planet||"";
+    if(ap) {
+      pratyantar=ap.planet||"";
+      pratyantarStart=ap.start||"";
+      pratyantarEnd=ap.end||"";
+    }
   }
   if(!mahadasha) warnings.push("CRITICAL: Mahadasha could not be determined");
 
@@ -386,7 +391,7 @@ export function normalizeBundle(
     birth:{ dob:dobStr, tob:tobStr, pob, lat:params.lat, lon:params.lon, tzone:params.tzone },
     d1:{ ascendant, ascendantDegree:0, moonSign, moonNakshatra:moonNak, sunSign, planets, houses },
     divisional:{ d2,d3,d4,d7,d9,d10,d12,d16,d20,d24,d27,d30,d40,d45,d60 },
-    dasha:{ mahadasha, mahadashaEnd, antardasha, antardashaEnd, pratyantar,
+    dasha:{ mahadasha, mahadashaEnd, antardasha, antardashaEnd, pratyantar, pratyantarStart, pratyantarEnd,
       full:{ currentDasha:cd, majorDasha:md, allPeriods:majorPeriods } },
     karakas,
     specialPoints,

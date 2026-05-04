@@ -100,18 +100,21 @@ export default function DashaLifePlanner({ profileId }: { profileId: string }) {
   useEffect(() => {
     if (!profileId) return;
     setLoading(true);
-    // Fetch from destiny-calendar which has dasha data
-    fetch(`/api/destiny-calendar?profileId=${profileId}`)
+    // Fetch from chart-details which provides full dasha timeline accurately
+    fetch(`/api/chart-details?profileId=${profileId}`)
       .then(r => r.json())
       .then(d => {
-        if (d.found && d.reportData) {
+        if (d.dasha) {
           setData({
-            mahadasha:     d.reportData.mahadasha,
-            mahadashaEnd:  d.reportData.mahadashaEnd || "",
-            antardasha:    d.reportData.antardasha,
-            antardashaEnd: d.reportData.antardashaEnd || "",
-            moonSign:      d.reportData.moonSign || "",
-          });
+            mahadasha:     d.dasha.mahadasha,
+            mahadashaEnd:  d.dasha.mahadashaEnd || "",
+            antardasha:    d.dasha.antardasha,
+            antardashaEnd: d.dasha.antardashaEnd || "",
+            pratyantardasha: d.dasha.pratyantar || "",
+            pratyantarStart: d.dasha.pratyantarStart || "",
+            pratyantarEnd:   d.dasha.pratyantarEnd || "",
+            moonSign:      d.core?.moonSign || "",
+          } as any);
         }
       })
       .catch(() => {})
@@ -123,12 +126,13 @@ export default function DashaLifePlanner({ profileId }: { profileId: string }) {
   if (!data) return (
     <div className="text-center py-12 text-slate-400">
       <p className="text-4xl mb-3">🧘</p>
-      <p className="text-sm">Generate your Destiny Window first to unlock the Dasha Life Planner.</p>
+      <p className="text-sm">Unable to load Dasha Life Planner.</p>
     </div>
   );
 
   const MD  = PLANET_META[data.mahadasha]  || PLANET_META.Jupiter;
   const AD  = PLANET_META[data.antardasha] || PLANET_META.Moon;
+  const PD  = (data as any).pratyantardasha ? (PLANET_META[(data as any).pratyantardasha] || PLANET_META.Sun) : null;
 
   // Compute MD progress
   const mdEndDate = data.mahadashaEnd ? new Date(data.mahadashaEnd) : null;
@@ -146,10 +150,23 @@ export default function DashaLifePlanner({ profileId }: { profileId: string }) {
     ? ((Date.now() - adStart.getTime()) / adDurationMs) * 100
     : 50;
 
+  const pdEndDate = (data as any).pratyantarEnd ? new Date((data as any).pratyantarEnd) : null;
+  const pdStart   = (data as any).pratyantarStart ? new Date((data as any).pratyantarStart) : null;
+  const pdPct     = pdStart && pdEndDate
+    ? ((Date.now() - pdStart.getTime()) / (pdEndDate.getTime() - pdStart.getTime())) * 100
+    : 50;
+
   const SECTIONS = [
     { key: "md", planet: data.mahadasha, meta: MD, label: "Mahadasha (Major)", pct: mdPct, start: mdStart, end: mdEndDate, years: mdYears },
     { key: "ad", planet: data.antardasha, meta: AD, label: "Antardasha (Minor)", pct: adPct, start: adStart, end: adEndDate, years: ((mdYears * adYearsTotal)/120).toFixed(1) },
   ];
+  
+  if (PD && (data as any).pratyantardasha !== "—") {
+    SECTIONS.push({
+      key: "pd", planet: (data as any).pratyantardasha, meta: PD, label: "Pratyantardasha (Sub-minor)", 
+      pct: pdPct, start: pdStart, end: pdEndDate, years: (pdStart && pdEndDate ? (pdEndDate.getTime() - pdStart.getTime()) / (365.25 * 86400000) : 0).toFixed(2) as any
+    });
+  }
 
   return (
     <div className="space-y-4">

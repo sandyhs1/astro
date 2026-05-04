@@ -197,6 +197,9 @@ ABSOLUTE RULES:
       moonSign,
       antardasha:     chart.dasha.antardasha,
       mahadasha:      chart.dasha.mahadasha,
+      pratyantar:     chart.dasha.pratyantar,
+      pratyantarStart: chart.dasha.pratyantarStart,
+      pratyantarEnd:   chart.dasha.pratyantarEnd,
       generatedMonth: new Date().toLocaleString("en-IN", { month: "long", year: "numeric" }),
     };
 

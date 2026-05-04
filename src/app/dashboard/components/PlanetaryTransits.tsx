@@ -19,6 +19,21 @@ const PLANET_META: Record<string, { emoji: string; color: string; bg: string; bo
   Ketu:    { emoji:"☄️",  color:"#D97706", bg:"#FFFBEB", border:"#FCD34D" },
 };
 
+const HOUSE_MEANINGS: Record<number, string> = {
+  1: "Impacts your physical health, identity, and personal focus. Expect new beginnings and self-development.",
+  2: "Influences your wealth, family matters, speech, and material possessions.",
+  3: "Affects your courage, short travels, siblings, and communication skills.",
+  4: "Brings focus to your inner peace, mother, home environment, and real estate.",
+  5: "Impacts your creativity, intellect, children, and romantic pursuits.",
+  6: "Triggers themes of health, debts, overcoming enemies, and daily work routines.",
+  7: "Directly affects your marriage, business partnerships, and public image.",
+  8: "Brings sudden transformations, hidden matters, research, and unexpected gains/losses.",
+  9: "Influences your luck, long-distance travel, higher learning, and spiritual beliefs.",
+  10: "Impacts your career, public status, professional achievements, and authority.",
+  11: "Brings focus to your income, network, elder siblings, and fulfillment of desires.",
+  12: "Triggers themes of spirituality, expenses, foreign lands, and subconscious release."
+};
+
 export default function PlanetaryTransits({ profileId }: { profileId: string }) {
   const [data, setData] = useState<TransitsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,17 +109,52 @@ export default function PlanetaryTransits({ profileId }: { profileId: string }) 
                 <div className="flex-1 space-y-1.5 mt-1">
                   {planets.map(p => {
                     const meta = PLANET_META[p.planet] || { emoji:"🪐", color:"#94A3B8", bg:"#F8FAFC", border:"#E2E8F0" };
+                    
+                    // Personalized logic: calculate transit house relative to Ascendant
+                    let houseNum = 0;
+                    if (data.ascendantSign) {
+                      const pIdx = ZODIAC_SIGNS.findIndex(s => s === p.sign);
+                      const aIdx = ZODIAC_SIGNS.findIndex(s => s === data.ascendantSign);
+                      if (pIdx !== -1 && aIdx !== -1) {
+                        houseNum = ((pIdx - aIdx + 12) % 12) + 1;
+                      }
+                    }
+                    
                     return (
-                      <div key={p.planet} className="flex justify-between items-center px-1.5 py-1 rounded" style={{ background: meta.bg }}>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm">{meta.emoji}</span>
-                          <span className="text-[10px] font-black" style={{ color: meta.color }}>
-                            {p.planet} {p.isRetrograde ? "®" : ""}
+                      <div key={p.planet} className="group relative">
+                        <div className="flex justify-between items-center px-1.5 py-1 rounded cursor-pointer hover:ring-1 transition-all" style={{ background: meta.bg, borderColor: meta.color }}>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm">{meta.emoji}</span>
+                            <span className="text-[10px] font-black" style={{ color: meta.color }}>
+                              {p.planet} {p.isRetrograde ? "®" : ""}
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-bold text-slate-500 tabular-nums">
+                            {p.degree.toFixed(1)}°
                           </span>
                         </div>
-                        <span className="text-[9px] font-bold text-slate-500 tabular-nums">
-                          {p.degree.toFixed(1)}°
-                        </span>
+                        
+                        {/* Hover Tooltip for Personalized Meaning */}
+                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-48 bg-slate-900 text-white text-xs rounded-lg p-3 shadow-xl z-50 pointer-events-none">
+                          <div className="font-black mb-1 flex items-center gap-1">
+                            <span>{meta.emoji}</span> 
+                            {p.planet} {p.isRetrograde ? "Retrograde" : "Transit"}
+                          </div>
+                          {houseNum > 0 ? (
+                            <div className="text-slate-300 text-[11px] leading-snug">
+                              Transiting your <strong className="text-white">House {houseNum}</strong>.
+                              <div className="mt-1">
+                                {HOUSE_MEANINGS[houseNum as keyof typeof HOUSE_MEANINGS]}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-slate-300 text-[11px] leading-snug">
+                              Currently transiting {p.sign}. Generate your Destiny Window to see personalized house impacts.
+                            </div>
+                          )}
+                          {/* Triangle pointer */}
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-slate-900"></div>
+                        </div>
                       </div>
                     );
                   })}
