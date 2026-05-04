@@ -1,149 +1,212 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-utils";
-import { SectionHeader } from "./PanchangUtils";
 import { motion, AnimatePresence } from "framer-motion";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface CalEvent {
   id: string; title: string; event_type: string; event_date: string;
   start_time?: string; end_time?: string; choghadiya?: string;
-  hora_lord?: string; muhurat_grade?: string; notes?: string; color: string;
+  muhurat_grade?: string; notes?: string; color: string;
 }
-type View = "month" | "week" | "day";
 
-const GRADE_COLORS: Record<string, string> = { god:"#F59E0B", diamond:"#3B82F6", gold:"#10B981" };
-const EVENT_COLORS = ["#6366F1","#10B981","#F59E0B","#EF4444","#8B5CF6","#EC4899","#06B6D4"];
-const EVENT_TYPES  = ["general","Business Launch","Wedding","Travel","Health","Finance","Education","Personal"];
+const EVENT_COLORS = ["#6366F1","#10B981","#F59E0B","#EF4444","#8B5CF6","#EC4899","#06B6D4","#F97316"];
+const EVENT_TYPES  = ["General Task","Meeting","Business Launch","Travel","Health","Finance","Wedding","Education","Personal"];
 const DAYS         = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MONTHS       = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 function pad2(n: number) { return String(n).padStart(2,"0"); }
 function toDateStr(d: Date) { return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
 function fmt12(t?: string) {
-  if (!t) return ""; const [h,m] = t.split(":").map(Number);
+  if (!t) return "";
+  const [h,m] = t.split(":").map(Number);
   return `${h===0?12:h>12?h-12:h}:${pad2(m)} ${h<12?"AM":"PM"}`;
 }
+function gcUrl(ev: Partial<CalEvent>) {
+  return buildGoogleCalendarUrl({
+    title: ev.title || "Event",
+    date:  ev.event_date || toDateStr(new Date()),
+    startTime: ev.start_time,
+    endTime:   ev.end_time,
+    description: [ev.choghadiya && `Choghadiya: ${ev.choghadiya}`, ev.notes].filter(Boolean).join("\n"),
+  });
+}
 
-// ─── Event Modal ──────────────────────────────────────────────────────────────
-function EventModal({ date, onSave, onClose, prefill }: {
-  date: string; onSave: (ev: Partial<CalEvent>) => void;
-  onClose: () => void; prefill?: Partial<CalEvent>;
+// ─── Add / Edit Modal ─────────────────────────────────────────────────────────
+function EventModal({ defaultDate, prefill, onSave, onClose }: {
+  defaultDate: string;
+  prefill?: Partial<CalEvent>;
+  onSave: (ev: Partial<CalEvent>) => Promise<void>;
+  onClose: () => void;
 }) {
-  const [title,     setTitle]     = useState(prefill?.title || "");
-  const [type,      setType]      = useState(prefill?.event_type || "general");
-  const [start,     setStart]     = useState(prefill?.start_time || "");
-  const [end,       setEnd]       = useState(prefill?.end_time || "");
-  const [notes,     setNotes]     = useState(prefill?.notes || "");
-  const [color,     setColor]     = useState(prefill?.color || "#6366F1");
-  const [eventDate, setEventDate] = useState(prefill?.event_date || date);
+  const [title,  setTitle]  = useState(prefill?.title || "");
+  const [notes,  setNotes]  = useState(prefill?.notes || "");
+  const [type,   setType]   = useState(prefill?.event_type || "General Task");
+  const [date,   setDate]   = useState(prefill?.event_date || defaultDate);
+  const [start,  setStart]  = useState(prefill?.start_time || "");
+  const [end,    setEnd]    = useState(prefill?.end_time || "");
+  const [color,  setColor]  = useState(prefill?.color || "#6366F1");
+  const [saving, setSaving] = useState(false);
+  const [err,    setErr]    = useState("");
+
+  async function handleSave() {
+    if (!title.trim()) { setErr("Please add a title"); return; }
+    setSaving(true); setErr("");
+    try {
+      await onSave({ title: title.trim(), notes: notes.trim(), event_type: type, event_date: date, start_time: start||undefined, end_time: end||undefined, color, choghadiya: prefill?.choghadiya, muhurat_grade: prefill?.muhurat_grade });
+      onClose();
+    } catch (e: any) { setErr(e.message || "Save failed"); }
+    finally { setSaving(false); }
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <motion.div initial={{ opacity:0, y:40 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:40 }}
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <motion.div initial={{ opacity:0, y:30 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:30 }}
         className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="font-black text-slate-900">Add Event</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <h3 className="font-black text-slate-900 text-base">
+            {prefill?.id ? "Edit Event" : "Add Event / Task"}
+          </h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 text-lg leading-none">×</button>
         </div>
-        <div className="p-5 space-y-4">
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Event title…"
-            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-indigo-400" />
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Date</p>
-              <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Type</p>
-              <select value={type} onChange={e => setType(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400">
-                {EVENT_TYPES.map(t => <option key={t}>{t}</option>)}
-              </select>
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Start Time</p>
-              <input type="time" value={start} onChange={e => setStart(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase text-slate-400 mb-1">End Time</p>
-              <input type="time" value={end} onChange={e => setEnd(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400" />
-            </div>
-          </div>
-          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes (optional)…" rows={2}
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-400 resize-none" />
+
+        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+          {/* Title — large, prominent */}
           <div>
-            <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Colour</p>
-            <div className="flex gap-2">
-              {EVENT_COLORS.map(c => (
-                <button key={c} onClick={() => setColor(c)}
-                  className={`w-7 h-7 rounded-full transition-all ${color===c ? "ring-2 ring-offset-2 ring-slate-400 scale-110" : ""}`}
-                  style={{ background: c }} />
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1.5">Event / Task Title *</label>
+            <input autoFocus value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Sign business contract, Doctor appointment…"
+              className="w-full border-2 border-slate-200 focus:border-indigo-400 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none transition-colors" />
+          </div>
+
+          {/* Notes / Description */}
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1.5">Notes / Description</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
+              placeholder="Add any details, reminders, or intentions…"
+              className="w-full border-2 border-slate-200 focus:border-indigo-400 rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none transition-colors" />
+          </div>
+
+          {/* Type */}
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1.5">Category</label>
+            <div className="flex flex-wrap gap-1.5">
+              {EVENT_TYPES.map(t => (
+                <button key={t} onClick={() => setType(t)}
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full border transition-all ${type===t ? "bg-indigo-600 text-white border-indigo-600" : "border-slate-200 text-slate-600 hover:border-indigo-300"}`}>
+                  {t}
+                </button>
               ))}
             </div>
           </div>
+
+          {/* Date + Times */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="col-span-3 sm:col-span-1">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1.5">Date *</label>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                className="w-full border-2 border-slate-200 focus:border-indigo-400 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1.5">Start</label>
+              <input type="time" value={start} onChange={e => setStart(e.target.value)}
+                className="w-full border-2 border-slate-200 focus:border-indigo-400 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1.5">End</label>
+              <input type="time" value={end} onChange={e => setEnd(e.target.value)}
+                className="w-full border-2 border-slate-200 focus:border-indigo-400 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+            </div>
+          </div>
+
+          {/* Color */}
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1.5">Color</label>
+            <div className="flex gap-2.5">
+              {EVENT_COLORS.map(c => (
+                <button key={c} onClick={() => setColor(c)}
+                  className={`w-8 h-8 rounded-full border-2 transition-transform ${color===c ? "scale-125 border-white shadow-md" : "border-transparent"}`}
+                  style={{ background:c }} />
+              ))}
+            </div>
+          </div>
+
+          {/* Muhurat info (if pre-filled from Muhurat Finder) */}
+          {prefill?.choghadiya && (
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+              <p className="text-[10px] font-black uppercase text-indigo-400 mb-1">Vedic Timing (from Muhurat Finder)</p>
+              <p className="text-sm font-bold text-indigo-700">
+                {prefill.muhurat_grade === "god" ? "🏆" : prefill.muhurat_grade === "diamond" ? "💎" : "🥇"} {prefill.choghadiya} Choghadiya
+              </p>
+            </div>
+          )}
+
+          {err && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{err}</p>}
         </div>
-        <div className="px-5 pb-5 flex gap-3">
-          <button onClick={onClose} className="flex-1 py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50">
-            Cancel
-          </button>
-          <button disabled={!title.trim()} onClick={() => onSave({ title, event_type: type, event_date: eventDate, start_time: start||undefined, end_time: end||undefined, notes: notes||undefined, color, choghadiya: prefill?.choghadiya, hora_lord: prefill?.hora_lord, muhurat_grade: prefill?.muhurat_grade })}
-            className="flex-1 py-3 rounded-xl text-sm font-black text-white disabled:opacity-50"
+
+        {/* Actions */}
+        <div className="px-5 pb-5 space-y-2">
+          <button onClick={handleSave} disabled={saving || !title.trim()}
+            className="w-full py-3.5 rounded-xl font-black text-white text-sm disabled:opacity-50 transition-all hover:shadow-lg hover:-translate-y-0.5"
             style={{ background: "linear-gradient(135deg,#4F46E5,#7C3AED)" }}>
-            Save Event
+            {saving ? "Saving…" : "✓ Save Event"}
           </button>
+          {/* Google Calendar button — always visible in modal */}
+          {title.trim() && date && (
+            <a href={gcUrl({ title, notes, event_date: date, start_time: start||undefined, end_time: end||undefined, choghadiya: prefill?.choghadiya })}
+              target="_blank" rel="noopener noreferrer"
+              className="w-full py-3 rounded-xl font-bold text-blue-700 text-sm border-2 border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
+              📅 Also Add to Google Calendar
+            </a>
+          )}
+          <button onClick={onClose} className="w-full py-2.5 text-slate-400 text-sm font-semibold hover:text-slate-600">Cancel</button>
         </div>
       </motion.div>
     </div>
   );
 }
 
-// ─── Month View ───────────────────────────────────────────────────────────────
-function MonthView({ year, month, events, onDayClick, onEventClick }: {
+// ─── Month Grid ───────────────────────────────────────────────────────────────
+function MonthGrid({ year, month, events, onDayClick, onEventClick }: {
   year: number; month: number; events: CalEvent[];
   onDayClick: (d: string) => void; onEventClick: (e: CalEvent) => void;
 }) {
   const today    = toDateStr(new Date());
   const firstDay = new Date(year, month, 1).getDay();
-  const daysInM  = new Date(year, month + 1, 0).getDate();
-  const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({length:daysInM},(_,i)=>i+1)];
+  const daysInM  = new Date(year, month+1, 0).getDate();
+  const cells    = [...Array(firstDay).fill(null), ...Array.from({length:daysInM},(_,i)=>i+1)];
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const evMap: Record<string, CalEvent[]> = {};
-  events.forEach(e => { (evMap[e.event_date] ||= []).push(e); });
+  const evMap: Record<string,CalEvent[]> = {};
+  events.forEach(e => { (evMap[e.event_date]||=[]).push(e); });
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-      <div className="grid grid-cols-7 border-b border-slate-100">
+      <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50">
         {DAYS.map(d => <div key={d} className="py-2 text-center text-[10px] font-black uppercase text-slate-400">{d}</div>)}
       </div>
       <div className="grid grid-cols-7">
         {cells.map((day, i) => {
-          const dateStr = day ? `${year}-${pad2(month+1)}-${pad2(day)}` : "";
-          const dayEvs  = dateStr ? (evMap[dateStr] || []) : [];
-          const isToday = dateStr === today;
+          const ds   = day ? `${year}-${pad2(month+1)}-${pad2(day)}` : "";
+          const evs  = ds ? (evMap[ds]||[]) : [];
+          const isToday = ds === today;
           return (
-            <div key={i} onClick={() => day && onDayClick(dateStr)}
-              className={`min-h-[80px] sm:min-h-[100px] p-1.5 border-r border-b border-slate-50 cursor-pointer transition-colors ${day ? "hover:bg-indigo-50/40" : "bg-slate-50/50"} ${isToday ? "bg-indigo-50" : ""}`}>
+            <div key={i} onClick={() => day && onDayClick(ds)}
+              className={`min-h-[80px] p-1.5 border-r border-b border-slate-50 cursor-pointer transition-colors ${day?"hover:bg-indigo-50/40":"bg-slate-50/60"} ${isToday?"bg-indigo-50":""}`}>
               {day && (
                 <>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black mb-1 ${isToday ? "bg-indigo-600 text-white" : "text-slate-700"}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black mb-1 ${isToday?"bg-indigo-600 text-white":"text-slate-700"}`}>
                     {day}
                   </div>
-                  <div className="space-y-0.5">
-                    {dayEvs.slice(0,3).map(ev => (
-                      <div key={ev.id} onClick={e => { e.stopPropagation(); onEventClick(ev); }}
-                        className="text-[10px] font-bold px-1.5 py-0.5 rounded truncate text-white leading-tight"
-                        style={{ background: ev.color }}>
-                        {ev.muhurat_grade && <span className="mr-0.5">{ev.muhurat_grade==="god"?"🏆":ev.muhurat_grade==="diamond"?"💎":"🥇"}</span>}
-                        {ev.title}
-                      </div>
-                    ))}
-                    {dayEvs.length > 3 && <p className="text-[10px] text-slate-400 font-semibold pl-1">+{dayEvs.length-3} more</p>}
-                  </div>
+                  {evs.slice(0,3).map(ev => (
+                    <div key={ev.id} onClick={e => { e.stopPropagation(); onEventClick(ev); }}
+                      className="text-[10px] font-bold px-1.5 py-0.5 rounded mb-0.5 truncate text-white leading-tight cursor-pointer hover:opacity-80"
+                      style={{ background: ev.color }}>
+                      {ev.muhurat_grade==="god"?"🏆":ev.muhurat_grade==="diamond"?"💎":ev.muhurat_grade==="gold"?"🥇":""}{ev.title}
+                    </div>
+                  ))}
+                  {evs.length > 3 && <p className="text-[9px] text-slate-400 pl-1">+{evs.length-3} more</p>}
                 </>
               )}
             </div>
@@ -154,255 +217,185 @@ function MonthView({ year, month, events, onDayClick, onEventClick }: {
   );
 }
 
-// ─── Week View ────────────────────────────────────────────────────────────────
-function WeekView({ weekStart, events, onSlotClick, onEventClick }: {
-  weekStart: Date; events: CalEvent[];
-  onSlotClick: (d: string, h: number) => void; onEventClick: (e: CalEvent) => void;
-}) {
-  const days = Array.from({length:7}, (_,i) => { const d = new Date(weekStart); d.setDate(d.getDate()+i); return d; });
-  const today = toDateStr(new Date());
-  const evMap: Record<string, CalEvent[]> = {};
-  events.forEach(e => { (evMap[e.event_date] ||= []).push(e); });
-
-  const hours = Array.from({length:16}, (_,i) => i + 6); // 6AM to 9PM
+// ─── Event Detail Card ────────────────────────────────────────────────────────
+function EventCard({ ev, onClose, onDelete }: { ev: CalEvent; onClose: () => void; onDelete: () => void; }) {
+  const [deleted, setDeleted] = useState(false);
+  function handleDelete() { setDeleted(true); setTimeout(onDelete, 300); }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-      <div className="grid border-b border-slate-100" style={{ gridTemplateColumns:"48px repeat(7,1fr)" }}>
-        <div />
-        {days.map((d,i) => (
-          <div key={i} className={`py-2 text-center border-l border-slate-50 ${toDateStr(d)===today?"bg-indigo-50":""}`}>
-            <p className="text-[10px] font-black uppercase text-slate-400">{DAYS[d.getDay()]}</p>
-            <p className={`text-sm font-black ${toDateStr(d)===today?"text-indigo-600":"text-slate-700"}`}>{d.getDate()}</p>
-          </div>
-        ))}
-      </div>
-      <div className="overflow-y-auto max-h-[500px]">
-        {hours.map(h => (
-          <div key={h} className="grid border-b border-slate-50" style={{ gridTemplateColumns:"48px repeat(7,1fr)" }}>
-            <div className="py-2 pr-2 text-right text-[10px] text-slate-300 font-semibold">{h===12?"12PM":h>12?`${h-12}PM`:`${h}AM`}</div>
-            {days.map((d, di) => {
-              const ds   = toDateStr(d);
-              const evs  = (evMap[ds] || []).filter(e => e.start_time && parseInt(e.start_time) === h);
-              return (
-                <div key={di} onClick={() => onSlotClick(ds, h)}
-                  className="border-l border-slate-50 min-h-[44px] p-0.5 hover:bg-indigo-50/30 cursor-pointer relative">
-                  {evs.map(ev => (
-                    <div key={ev.id} onClick={e => { e.stopPropagation(); onEventClick(ev); }}
-                      className="text-[10px] font-bold px-1.5 py-1 rounded text-white mb-0.5 truncate"
-                      style={{ background: ev.color }}>
-                      {ev.title}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Event Detail Panel ───────────────────────────────────────────────────────
-function EventDetail({ event, onClose, onDelete }: { event: CalEvent; onClose: () => void; onDelete: () => void; }) {
-  const gcUrl = buildGoogleCalendarUrl({
-    title: event.title, date: event.event_date,
-    startTime: event.start_time, endTime: event.end_time,
-    description: [event.choghadiya && `Choghadiya: ${event.choghadiya}`, event.notes].filter(Boolean).join("\n"),
-  });
-
-  const handleICS = () => downloadICS([{
-    title: event.title, date: event.event_date,
-    startTime: event.start_time, endTime: event.end_time,
-    description: event.notes,
-  }], `${event.title.replace(/\s+/g,"-")}.ics`);
-
-  return (
-    <motion.div initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:20 }}
-      className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: event.color }} />
-            {event.muhurat_grade && (
-              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full"
-                style={{ background: (GRADE_COLORS[event.muhurat_grade]||"#6366F1")+"20", color: GRADE_COLORS[event.muhurat_grade]||"#6366F1" }}>
-                {event.muhurat_grade==="god"?"🏆 God Mode":event.muhurat_grade==="diamond"?"💎 Diamond":"🥇 Gold"}
-              </span>
-            )}
-          </div>
-          <h3 className="font-black text-slate-900 text-base">{event.title}</h3>
-          <p className="text-sm text-slate-500 font-medium">
-            {new Date(event.event_date).toLocaleDateString("en-IN",{weekday:"long",month:"long",day:"numeric"})}
-            {event.start_time && ` · ${fmt12(event.start_time)}${event.end_time?` – ${fmt12(event.end_time)}`:""}`}
+    <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity: deleted?0:1, y:0 }} exit={{ opacity:0 }}
+      className="bg-white rounded-2xl border border-slate-100 shadow-md p-4 space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="w-3 h-3 rounded-full mt-1 flex-shrink-0" style={{ background: ev.color }} />
+        <div className="flex-1">
+          <h4 className="font-black text-slate-900 text-base leading-tight">{ev.title}</h4>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {new Date(ev.event_date+"T00:00:00").toLocaleDateString("en-IN",{weekday:"short",month:"short",day:"numeric"})}
+            {ev.start_time && ` · ${fmt12(ev.start_time)}${ev.end_time?` – ${fmt12(ev.end_time)}`:""}`}
           </p>
+          {ev.event_type && ev.event_type !== "general" && (
+            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full mt-1 inline-block">{ev.event_type}</span>
+          )}
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">×</button>
+        <button onClick={onClose} className="text-slate-300 hover:text-slate-500 text-xl leading-none flex-shrink-0">×</button>
       </div>
-      {event.choghadiya && (
-        <div className="bg-slate-50 rounded-xl px-3 py-2 flex items-center gap-2">
-          <span className="text-xs font-black text-slate-400">Choghadiya:</span>
-          <span className="text-xs font-black text-indigo-700">{event.choghadiya}</span>
-          {event.hora_lord && <><span className="text-xs text-slate-300">·</span><span className="text-xs font-semibold text-slate-600">Hora: {event.hora_lord}</span></>}
+
+      {ev.notes && <p className="text-sm text-slate-600 bg-slate-50 rounded-xl px-3 py-2.5 leading-relaxed">{ev.notes}</p>}
+
+      {ev.choghadiya && (
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+          <span className="text-amber-600 font-black text-xs">✦ Muhurat</span>
+          <span className="text-amber-800 font-semibold text-sm">{ev.choghadiya} Choghadiya</span>
+          {ev.muhurat_grade && <span className="ml-auto">{ev.muhurat_grade==="god"?"🏆":ev.muhurat_grade==="diamond"?"💎":"🥇"}</span>}
         </div>
       )}
-      {event.notes && <p className="text-sm text-slate-600">{event.notes}</p>}
-      <div className="flex gap-2 pt-1 flex-wrap">
-        <a href={gcUrl} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors">
+
+      {/* Action buttons — large and clear */}
+      <div className="space-y-2 pt-1">
+        <a href={gcUrl(ev)} target="_blank" rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl transition-colors">
           📅 Add to Google Calendar
         </a>
-        <button onClick={handleICS}
-          className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors">
-          ⬇ Download ICS
+        <button onClick={() => downloadICS([{ title:ev.title, date:ev.event_date, startTime:ev.start_time, endTime:ev.end_time, description:ev.notes }])}
+          className="flex items-center justify-center gap-2 w-full py-2.5 border border-slate-200 text-slate-600 font-semibold text-sm rounded-xl hover:bg-slate-50 transition-colors">
+          ⬇ Download ICS (Apple / Outlook)
         </button>
-        <button onClick={onDelete}
-          className="ml-auto px-3 py-2 text-red-500 rounded-xl text-xs font-bold hover:bg-red-50 transition-colors">
-          🗑 Delete
+        <button onClick={handleDelete}
+          className="flex items-center justify-center gap-2 w-full py-2.5 text-red-500 font-semibold text-sm rounded-xl hover:bg-red-50 transition-colors">
+          🗑 Delete Event
         </button>
       </div>
     </motion.div>
   );
 }
 
-// ─── Main Calendar Component ──────────────────────────────────────────────────
+// ─── Main Calendar ────────────────────────────────────────────────────────────
 export default function PanchangCalendar({ profileId }: { profileId: string }) {
-  const now     = new Date();
-  const [view,  setView]  = useState<View>("month");
+  const now = new Date();
   const [year,  setYear]  = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-  const [weekStart, setWeekStart] = useState(() => {
-    const d = new Date(now); d.setDate(d.getDate() - d.getDay()); return d;
-  });
-  const [events,     setEvents]     = useState<CalEvent[]>([]);
-  const [showModal,  setShowModal]  = useState(false);
-  const [modalDate,  setModalDate]  = useState(toDateStr(now));
-  const [modalPre,   setModalPre]   = useState<Partial<CalEvent> | undefined>();
-  const [selected,   setSelected]   = useState<CalEvent | null>(null);
-  const [loading,    setLoading]    = useState(false);
+  const [events,    setEvents]    = useState<CalEvent[]>([]);
+  const [loading,   setLoading]   = useState(false);
+  const [saveErr,   setSaveErr]   = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [modalDate, setModalDate] = useState(toDateStr(now));
+  const [prefill,   setPrefill]   = useState<Partial<CalEvent>|undefined>();
+  const [selected,  setSelected]  = useState<CalEvent|null>(null);
+  const [saved,     setSaved]     = useState(false); // success flash
 
-  // Load events for visible range
   const loadEvents = useCallback(async () => {
-    setLoading(true);
-    const from = view === "month"
-      ? `${year}-${pad2(month+1)}-01`
-      : toDateStr(weekStart);
-    const to   = view === "month"
-      ? `${year}-${pad2(month+1)}-${new Date(year,month+1,0).getDate()}`
-      : toDateStr(new Date(weekStart.getTime() + 6 * 86400000));
-
+    setLoading(true); setSaveErr("");
+    const from = `${year}-${pad2(month+1)}-01`;
+    const to   = `${year}-${pad2(month+1)}-${new Date(year,month+1,0).getDate()}`;
     try {
-      const res = await fetch(`/api/calendar?from=${from}&to=${to}&profileId=${profileId}`);
+      const res  = await fetch(`/api/calendar?from=${from}&to=${to}&profileId=${profileId}`);
       const data = await res.json();
+      if (!res.ok) { setSaveErr(data.error || "Failed to load"); return; }
       setEvents(data.events || []);
-    } catch { /* silent */ }
+    } catch { setSaveErr("Network error — check your connection"); }
     finally { setLoading(false); }
-  }, [view, year, month, weekStart, profileId]);
+  }, [year, month, profileId]);
 
   useEffect(() => { loadEvents(); }, [loadEvents]);
 
   async function saveEvent(ev: Partial<CalEvent>) {
-    try {
-      await fetch("/api/calendar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...ev, profile_id: profileId }),
-      });
-      setShowModal(false);
-      setModalPre(undefined);
-      loadEvents();
-    } catch { /* silent */ }
+    const res  = await fetch("/api/calendar", {
+      method: "POST", headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ ...ev, profile_id: profileId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Save failed");
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+    loadEvents();
   }
 
   async function deleteEvent(id: string) {
-    await fetch(`/api/calendar?id=${id}`, { method: "DELETE" });
+    await fetch(`/api/calendar?id=${id}`, { method:"DELETE" });
     setSelected(null);
     loadEvents();
   }
 
-  function prevPeriod() {
-    if (view === "month") { if (month === 0) { setYear(y => y-1); setMonth(11); } else setMonth(m => m-1); }
-    else setWeekStart(d => new Date(d.getTime() - 7*86400000));
-  }
-  function nextPeriod() {
-    if (view === "month") { if (month === 11) { setYear(y => y+1); setMonth(0); } else setMonth(m => m+1); }
-    else setWeekStart(d => new Date(d.getTime() + 7*86400000));
-  }
-
-  const periodLabel = view === "month"
-    ? `${MONTHS[month]} ${year}`
-    : `${weekStart.toLocaleDateString("en-IN",{month:"short",day:"numeric"})} – ${new Date(weekStart.getTime()+6*86400000).toLocaleDateString("en-IN",{month:"short",day:"numeric"})}`;
+  function prevMonth() { if (month===0){setYear(y=>y-1);setMonth(11);}else setMonth(m=>m-1); }
+  function nextMonth() { if (month===11){setYear(y=>y+1);setMonth(0);}else setMonth(m=>m+1); }
 
   return (
     <div className="space-y-4">
-      {/* Controls */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* View toggle */}
-          <div className="flex bg-slate-100 rounded-xl p-1 gap-1">
-            {(["month","week"] as View[]).map(v => (
-              <button key={v} onClick={() => setView(v)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black capitalize transition-all ${view===v?"bg-white text-slate-900 shadow-sm":"text-slate-500"}`}>
-                {v}
-              </button>
-            ))}
-          </div>
 
-          {/* Navigation */}
-          <button onClick={prevPeriod} className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">‹</button>
-          <span className="font-black text-slate-900 text-sm min-w-[160px] text-center">{periodLabel}</span>
-          <button onClick={nextPeriod} className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">›</button>
+      {/* Top bar */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3 flex items-center gap-3 flex-wrap">
+        <button onClick={prevMonth} className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 font-bold text-lg">‹</button>
+        <span className="font-black text-slate-900 text-base min-w-[160px] text-center">{MONTHS[month]} {year}</span>
+        <button onClick={nextMonth} className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 font-bold text-lg">›</button>
+        <button onClick={() => { setYear(now.getFullYear()); setMonth(now.getMonth()); }}
+          className="px-3 py-1.5 text-xs font-bold text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50">
+          Today
+        </button>
+        <span className="text-sm text-slate-400">{events.length} event{events.length!==1?"s":""}</span>
+        {loading && <span className="text-xs text-slate-400 animate-pulse">Loading…</span>}
 
-          <button onClick={() => { setYear(now.getFullYear()); setMonth(now.getMonth()); }}
-            className="px-3 py-1.5 text-xs font-black text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50">
-            Today
-          </button>
-
-          {/* Add event */}
-          <button onClick={() => { setModalDate(toDateStr(now)); setModalPre(undefined); setShowModal(true); }}
-            className="ml-auto px-4 py-2 rounded-xl text-xs font-black text-white"
-            style={{ background:"linear-gradient(135deg,#4F46E5,#7C3AED)" }}>
-            + Add Event
-          </button>
-        </div>
-
-        {loading && <div className="mt-2 h-0.5 w-full bg-indigo-100 rounded overflow-hidden"><div className="h-full bg-indigo-400 animate-pulse w-2/3" /></div>}
+        {/* Primary CTA */}
+        <button onClick={() => { setModalDate(toDateStr(now)); setPrefill(undefined); setShowModal(true); }}
+          className="ml-auto px-5 py-2.5 rounded-xl text-sm font-black text-white shadow-lg shadow-indigo-200 hover:-translate-y-0.5 transition-all"
+          style={{ background:"linear-gradient(135deg,#4F46E5,#7C3AED)" }}>
+          + Add Event / Task
+        </button>
       </div>
+
+      {/* Success flash */}
+      <AnimatePresence>
+        {saved && (
+          <motion.div initial={{ opacity:0, y:-8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
+            className="bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-sm px-4 py-3 rounded-xl flex items-center gap-2">
+            ✓ Event saved! It's now showing in your calendar.
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Error */}
+      {saveErr && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
+          ⚠️ {saveErr}
+          {saveErr.includes("does not exist") && (
+            <span className="block mt-1 text-xs font-medium">
+              Run <code className="bg-red-100 px-1 rounded">create_calendar_events.sql</code> in your Supabase SQL Editor first.
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Selected event detail */}
       <AnimatePresence>
         {selected && (
-          <EventDetail event={selected} onClose={() => setSelected(null)} onDelete={() => deleteEvent(selected.id)} />
+          <EventCard ev={selected} onClose={() => setSelected(null)} onDelete={() => deleteEvent(selected.id)} />
         )}
       </AnimatePresence>
 
       {/* Calendar grid */}
-      {view === "month" && (
-        <MonthView year={year} month={month} events={events}
-          onDayClick={d => { setModalDate(d); setModalPre(undefined); setShowModal(true); }}
-          onEventClick={e => setSelected(selected?.id === e.id ? null : e)} />
-      )}
-      {view === "week" && (
-        <WeekView weekStart={weekStart} events={events}
-          onSlotClick={(d, h) => { setModalDate(d); setModalPre({ start_time: `${pad2(h)}:00` }); setShowModal(true); }}
-          onEventClick={e => setSelected(selected?.id === e.id ? null : e)} />
+      <MonthGrid year={year} month={month} events={events}
+        onDayClick={d => { setModalDate(d); setPrefill(undefined); setShowModal(true); }}
+        onEventClick={e => setSelected(prev => prev?.id===e.id ? null : e)} />
+
+      {/* Empty state */}
+      {!loading && events.length === 0 && (
+        <div className="text-center py-10 text-slate-400">
+          <p className="text-3xl mb-2">📅</p>
+          <p className="text-sm font-semibold">No events this month</p>
+          <p className="text-xs mt-1">Click any day or "+ Add Event" to get started</p>
+        </div>
       )}
 
-      {/* Legend */}
-      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-        <p className="text-[11px] font-bold text-blue-700 flex items-center gap-2">
-          <span>📅</span> Google Calendar Integration
-        </p>
-        <p className="text-[11px] text-blue-600 mt-1">
-          Click any event → "Add to Google Calendar" opens it pre-filled in your Google Calendar. Or download as ICS for Apple/Outlook.
-        </p>
+      {/* Tip */}
+      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-[12px] text-blue-700 font-medium space-y-1">
+        <p>💡 <strong>Tip:</strong> Click any event to see details and add it directly to Google Calendar or download as ICS.</p>
+        <p>🔭 Use <strong>Muhurat Finder</strong> tab to find the best timings — then save them directly to this calendar.</p>
       </div>
 
-      {/* Create modal */}
+      {/* Modal */}
       <AnimatePresence>
         {showModal && (
-          <EventModal date={modalDate} prefill={modalPre} onSave={saveEvent} onClose={() => { setShowModal(false); setModalPre(undefined); }} />
+          <EventModal defaultDate={modalDate} prefill={prefill} onSave={saveEvent}
+            onClose={() => { setShowModal(false); setPrefill(undefined); }} />
         )}
       </AnimatePresence>
     </div>

@@ -1,8 +1,11 @@
 /**
  * /api/calendar — CRUD for user calendar events
  * GET    ?from=YYYY-MM-DD&to=YYYY-MM-DD&profileId=xxx → list events
- * POST   { title, event_date, start_time, end_time, event_type, choghadiya, hora_lord, muhurat_grade, notes, color, profile_id }
+ * POST   { title, notes, event_date, start_time, end_time, event_type, choghadiya, muhurat_grade, color, profile_id }
  * DELETE ?id=UUID → delete event
+ *
+ * FIX: profile_id="self" is NOT a valid UUID — sanitise to null before DB ops
+ *      GET with profileId="self" returns ALL events for this user (not filtered by profile)
  */
 
 import { NextResponse } from "next/server";
@@ -14,6 +17,13 @@ const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+/** Returns null if id is falsy, "self", "all", or not a UUID */
+function sanitizeProfileId(id: string | null | undefined): string | null {
+  if (!id || id === "self" || id === "all") return null;
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return UUID_RE.test(id) ? id : null;
+}
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -32,26 +42,30 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const from      = searchParams.get("from");
     const to        = searchParams.get("to");
-    const profileId = searchParams.get("profileId");
+    const rawPid    = searchParams.get("profileId");
+    const profileId = sanitizeProfileId(rawPid);
 
     const { user } = await getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // Always filter by user_id — profile filter is optional (skip if "self" or null)
     let q = admin.from("calendar_events")
       .select("*")
       .eq("user_id", user.id)
-      .order("event_date", { ascending: true })
-      .order("start_time", { ascending: true });
+      .order("event_date",  { ascending: true })
+      .order("start_time",  { ascending: true, nullsFirst: true });
 
     if (from) q = q.gte("event_date", from);
     if (to)   q = q.lte("event_date", to);
-    if (profileId && profileId !== "all") q = q.eq("profile_id", profileId);
+    // Only filter by profile_id if it's a real UUID and not "self"
+    if (profileId) q = q.eq("profile_id", profileId);
 
     const { data, error } = await q;
     if (error) throw error;
 
     return NextResponse.json({ events: data || [] });
   } catch (err: any) {
+    console.error("[CALENDAR GET]", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
@@ -63,22 +77,35 @@ export async function POST(req: Request) {
     const { user } = await getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    if (!body.title?.trim()) {
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    }
+    if (!body.event_date) {
+      return NextResponse.json({ error: "Date is required" }, { status: 400 });
+    }
+
+    // FIX: sanitise profile_id — "self" is not a valid UUID
+    const profileId = sanitizeProfileId(body.profile_id);
+
     const { data, error } = await admin.from("calendar_events").insert({
       user_id:       user.id,
-      profile_id:    body.profile_id  || null,
-      title:         body.title,
-      event_type:    body.event_type  || "general",
+      profile_id:    profileId,
+      title:         body.title.trim(),
+      event_type:    body.event_type   || "general",
       event_date:    body.event_date,
-      start_time:    body.start_time  || null,
-      end_time:      body.end_time    || null,
-      choghadiya:    body.choghadiya  || null,
-      hora_lord:     body.hora_lord   || null,
+      start_time:    body.start_time   || null,
+      end_time:      body.end_time     || null,
+      choghadiya:    body.choghadiya   || null,
+      hora_lord:     body.hora_lord    || null,
       muhurat_grade: body.muhurat_grade || null,
-      notes:         body.notes       || null,
-      color:         body.color       || "#6366F1",
+      notes:         body.notes?.trim() || null,
+      color:         body.color        || "#6366F1",
     }).select().single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("[CALENDAR POST]", error);
+      throw error;
+    }
     return NextResponse.json({ event: data });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
