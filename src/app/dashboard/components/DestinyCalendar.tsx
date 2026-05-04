@@ -10,11 +10,14 @@ import PanchangChoghadiya from "./PanchangChoghadiya";
 import PanchangHoras      from "./PanchangHoras";
 import PanchangMuhurat    from "./PanchangMuhurat";
 import PanchangCalendar   from "./PanchangCalendar";
+import DashaLifePlanner   from "./DashaLifePlanner";
+import ScoreHistory       from "./ScoreHistory";
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DayData { dateStr: string; score: number; grade: "excellent"|"good"|"neutral"|"caution"|"rest"; color: string; factors: string[]; dominantPlanet: string; }
-type Tab = "today" | "choghadiya" | "horas" | "muhurat" | "month" | "calendar";
+type Tab = "today" | "choghadiya" | "horas" | "muhurat" | "month" | "calendar" | "dasha" | "history";
+
 
 
 const GRADE_BG   = { excellent:"bg-emerald-50 border-emerald-200", good:"bg-green-50 border-green-200", neutral:"bg-amber-50 border-amber-200", caution:"bg-orange-50 border-orange-200", rest:"bg-red-50 border-red-200" };
@@ -118,6 +121,8 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
           <TabBtn active={tab==="horas"}      onClick={() => setTab("horas")}      emoji="🕐" label="Horas" />
           <TabBtn active={tab==="muhurat"}    onClick={() => setTab("muhurat")}    emoji="🔭" label="Muhurat Finder" />
           <TabBtn active={tab==="calendar"}   onClick={() => setTab("calendar")}   emoji="📅" label="My Calendar" />
+          <TabBtn active={tab==="dasha"}      onClick={() => setTab("dasha")}      emoji="🧘" label="Dasha Planner" />
+          <TabBtn active={tab==="history"}    onClick={() => setTab("history")}    emoji="📊" label="Score History" />
           <TabBtn active={tab==="month"}      onClick={() => setTab("month")}      emoji="📆" label="30-Day Map" />
 
         </div>
@@ -158,6 +163,12 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
 
           {/* MY CALENDAR */}
           {tab === "calendar" && <PanchangCalendar profileId={profileId} />}
+
+          {/* DASHA LIFE PLANNER */}
+          {tab === "dasha" && <DashaLifePlanner profileId={profileId} />}
+
+          {/* SCORE HISTORY */}
+          {tab === "history" && <ScoreHistory profileId={profileId} />}
 
           {/* 30-DAY MAP */}
           {tab === "month" && (

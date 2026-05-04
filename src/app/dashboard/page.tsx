@@ -16,6 +16,8 @@ import Roadmap from "./components/Roadmap";
 import TopupModal from "./components/TopupModal";
 import DetailsPanel from "./components/DetailsPanel";
 import RoyalRoast from "./components/RoyalRoast";
+import DailyBriefingWidget from "./components/DailyBriefingWidget";
+
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -816,7 +818,10 @@ export default function DashboardPage() {
 
         {/* Main Chat Interface - Light Theme Redesign */}
         <section className="flex-1 w-full flex flex-col bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden relative min-h-0">
-            
+
+          {/* Daily Briefing Widget — always visible at top */}
+          <DailyBriefingWidget profileId={activeProfileId} />
+
           {activeFeature === "destiny"        && <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "karma-dna"      && <KarmaDNA        profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "karmic-patterns"&& <KarmicPatterns  profileId={activeProfileId} profileName={activeProfileName} />}

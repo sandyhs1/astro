@@ -6,13 +6,19 @@
 
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { astroClient, geocodePlace } from "@/lib/astrology/client";
 import {
   buildFullPanchang,
   findMuhurats,
-  calculateSunTimes,
 } from "@/lib/astrology/panchang-engine";
+
+const admin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 
 // ─── GET: Today's Panchang ────────────────────────────────────────────────────
 
@@ -84,6 +90,17 @@ export async function GET(req: Request) {
 
     // Compute success score (0-100) based on current Choghadiya + active Hora
     const score = computeDayScore(panchang, now);
+
+    // ── Auto-save today's score (fire-and-forget) ─────────────────────────
+    const today = now.toISOString().slice(0, 10);
+    void admin.from("day_scores").upsert({
+      user_id:    user.id,
+      profile_id: profileId && profileId !== "self" ? profileId : null,
+      score_date: today,
+      score:      score,
+      nakshatra:  panchang.nakshatra,
+      choghadiya: panchang.dayChoghadiya?.[0]?.name || null,
+    }, { onConflict: "user_id,profile_id,score_date" });
 
     return NextResponse.json({
       panchang: serializePanchang(panchang),
