@@ -665,178 +665,153 @@ export default function DashboardPage() {
       </nav>
 
       {/* Main Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 md:p-6 flex flex-col md:flex-row gap-4 md:gap-6 lg:gap-8 md:h-[calc(100vh-64px)] pb-16 md:pb-6">
+      <main className="flex-1 w-full mx-auto pl-0 pr-3 md:pr-6 pt-3 md:pt-6 pb-16 md:pb-6 flex flex-col md:flex-row gap-0 md:gap-5 md:h-[calc(100vh-64px)]">
         
-        {/* Sidebar - Clean & Structured */}
-        {/* Sidebar — hidden on mobile, visible on md+ */}
-        <aside className="hidden md:flex md:w-72 flex-shrink-0 flex-col gap-6 overflow-y-auto">
+        {/* Sidebar — flush to left edge, narrow, clean */}
+        <aside className="hidden md:flex md:w-52 flex-shrink-0 flex-col gap-3 overflow-y-auto pl-3 md:pl-5">
           
-          {/* Active Context Container */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
-              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                <Users size={14} className="text-indigo-600" /> Active Context
+          {/* ── Active Profile Selector ── */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50">
+              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <Users size={11} className="text-indigo-500" /> Reading For
               </h2>
             </div>
-            <div className="p-2 space-y-1">
+            <div className="p-1.5 space-y-0.5">
+              {/* Self */}
               <div className="relative group">
-                <button 
+                <button
                   onClick={() => setActiveProfileId("self")}
-                  className={`w-full text-left px-4 py-2.5 pr-10 rounded-lg text-sm font-medium transition-all ${activeProfileId === "self" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}
+                  className={`w-full text-left px-3 py-2 pr-8 rounded-lg text-[13px] font-semibold transition-all ${activeProfileId === "self" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}
                 >
-                  My Blueprint <span className="ml-2 text-xs text-slate-400 font-normal">(Primary)</span>
+                  ✦ My Blueprint
                 </button>
                 {selfProfile && (
-                  <button 
-                    onClick={() => {
-                      setModalType("self");
-                      setFormData({ 
-                        name: selfProfile.name, 
-                        relationship: "Self", 
-                        dob: selfProfile.dob, 
-                        tob: selfProfile.tob, 
-                        pob: selfProfile.pob 
-                      });
-                      setShowProfileModal(true);
-                    }}
-                    className="absolute right-2 top-2 p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md opacity-0 group-hover:opacity-100 transition-all border border-slate-200"
-                    title="Edit Coordinates"
+                  <button
+                    onClick={() => { setModalType("self"); setFormData({ name: selfProfile.name, relationship: "Self", dob: selfProfile.dob, tob: selfProfile.tob, pob: selfProfile.pob }); setShowProfileModal(true); }}
+                    className="absolute right-1.5 top-1.5 p-1 text-slate-300 hover:text-indigo-500 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                    title="Edit"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                   </button>
                 )}
               </div>
+              {/* Family profiles */}
               {familyProfiles.filter(p => p.relationship !== "Self").map(fp => (
                 <div key={fp.id} className="relative group">
-                  <button 
+                  <button
                     onClick={() => setActiveProfileId(fp.id)}
-                    className={`w-full text-left px-4 py-2.5 pr-10 rounded-lg text-sm font-medium transition-all ${activeProfileId === fp.id ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}
+                    className={`w-full text-left px-3 py-2 pr-8 rounded-lg text-[13px] font-semibold transition-all ${activeProfileId === fp.id ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}
                   >
-                    {fp.name} <span className="ml-2 text-xs text-slate-400 font-normal">({fp.relationship})</span>
+                    <span className="text-slate-400 text-[10px] font-bold block leading-none mb-0.5 uppercase tracking-wide">{fp.relationship}</span>
+                    {fp.name}
                   </button>
-                  <button 
-                    onClick={() => {
-                      setModalType("family");
-                      setFormData({ 
-                        name: fp.name, 
-                        relationship: fp.relationship, 
-                        dob: fp.dob, 
-                        tob: fp.tob, 
-                        pob: fp.pob 
-                      });
-                      setShowProfileModal(true);
-                    }}
-                    className="absolute right-2 top-2 p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md opacity-0 group-hover:opacity-100 transition-all border border-slate-200"
-                    title="Edit Bond"
+                  <button
+                    onClick={() => { setModalType("family"); setFormData({ name: fp.name, relationship: fp.relationship, dob: fp.dob, tob: fp.tob, pob: fp.pob }); setShowProfileModal(true); }}
+                    className="absolute right-1.5 top-2 p-1 text-slate-300 hover:text-indigo-500 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                    title="Edit"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                   </button>
                 </div>
               ))}
-              
-              <div className="pt-2 pb-1 px-2">
-                <button 
-                  onClick={() => {
-                    setModalType("family");
-                    setFormData({ name: "", relationship: "Spouse", dob: "", tob: "", pob: "" });
-                    setShowProfileModal(true);
-                  }}
-                  className="w-full text-xs font-semibold text-slate-500 hover:text-indigo-600 py-2.5 rounded-lg border border-dashed border-slate-300 hover:border-indigo-300 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
-                  <span className="text-lg leading-none">+</span> Add Bond
-                </button>
-              </div>
+              {/* Add Bond */}
+              <button
+                onClick={() => { setModalType("family"); setFormData({ name: "", relationship: "Spouse", dob: "", tob: "", pob: "" }); setShowProfileModal(true); }}
+                className="w-full text-[11px] font-bold text-slate-400 hover:text-indigo-600 py-2 rounded-lg border border-dashed border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all flex items-center justify-center gap-1.5 mt-1"
+              >
+                + Add Bond
+              </button>
             </div>
           </div>
 
-          {/* Navigation Menu */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-1">
-             <div className="p-2 space-y-1">
-               <button onClick={() => setActiveFeature("chat")} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeFeature === "chat" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}>
-                 <MessageCircle size={16} /> Oracle Chat
-               </button>
-               {/* Feature buttons — navigable always; generation blocked at 0 credits */}
-               <button
-                 onClick={() => setActiveFeature("destiny")}
-                 title={isOutOfCredits ? "Top up credits to generate new readings" : undefined}
-                 className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                   activeFeature === "destiny" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                 }`}
-               >
-                 <span className="flex items-center gap-3"><span className="text-base">🗓️</span> Destiny Window</span>
-                 {isOutOfCredits && <span className="text-xs text-amber-500 font-bold">🔒</span>}
-               </button>
-               <button
-                 onClick={() => setActiveFeature("karma-dna")}
-                 title={isOutOfCredits ? "Top up credits to generate new readings" : undefined}
-                 className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                   activeFeature === "karma-dna" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                 }`}
-               >
-                 <span className="flex items-center gap-3"><span className="text-base">🧬</span> Karma DNA</span>
-                 {isOutOfCredits && <span className="text-xs text-amber-500 font-bold">🔒</span>}
-               </button>
-               <button
-                 onClick={() => setActiveFeature("karmic-patterns")}
-                 title={isOutOfCredits ? "Top up credits to generate new readings" : undefined}
-                 className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                   activeFeature === "karmic-patterns" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                 }`}
-               >
-                 <span className="flex items-center gap-3"><span className="text-base">🔮</span> Karmic Patterns</span>
-                 {isOutOfCredits && <span className="text-xs text-amber-500 font-bold">🔒</span>}
-               </button>
-               {/* Details — always free, no credit gate */}
-               <button
-                 onClick={() => setActiveFeature("details")}
-                 className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                   activeFeature === "details" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                 }`}
-               >
-                 <span className="text-base">📋</span> My Details
-               </button>
-               {/* Royal Roast */}
-               <button
-                 onClick={() => setActiveFeature("royal-roast")}
-                 title={isOutOfCredits ? "Top up credits to generate Royal Roast" : undefined}
-                 className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                   activeFeature === "royal-roast" ? "bg-orange-50 text-orange-700" : "text-slate-600 hover:bg-slate-50"
-                 }`}
-               >
-                 <span className="flex items-center gap-3"><span className="text-base">🔥</span> Royal Roast</span>
-                 {isOutOfCredits && <span className="text-xs text-amber-500 font-bold">🔒</span>}
-               </button>
-             </div>
+          {/* ── Navigation ── */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50">
+              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Features</h2>
+            </div>
+            <div className="p-1.5 space-y-0.5">
+
+              {/* Oracle Chat */}
+              <button onClick={() => setActiveFeature("chat")}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "chat" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <MessageCircle size={14} className="flex-shrink-0" />
+                Oracle Chat
+              </button>
+
+              {/* Destiny Window */}
+              <button onClick={() => setActiveFeature("destiny")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "destiny" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🗓️</span> Destiny Window</span>
+                {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
+              </button>
+
+              {/* Karma DNA */}
+              <button onClick={() => setActiveFeature("karma-dna")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "karma-dna" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🧬</span> Karma DNA</span>
+                {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
+              </button>
+
+              {/* Karmic Patterns */}
+              <button onClick={() => setActiveFeature("karmic-patterns")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "karmic-patterns" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🔮</span> Karmic Patterns</span>
+                {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
+              </button>
+
+              {/* My Details */}
+              <button onClick={() => setActiveFeature("details")}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "details" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="text-sm leading-none">📋</span> My Details
+              </button>
+
+              {/* Royal Roast */}
+              <button onClick={() => setActiveFeature("royal-roast")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "royal-roast" ? "bg-orange-50 text-orange-600" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🔥</span> Royal Roast</span>
+                {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
+              </button>
+
+              {/* Separator */}
+              <div className="h-px bg-slate-100 my-1" />
+
+              {/* Intelligence Roadmap */}
+              <button onClick={() => setActiveFeature("roadmap")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "roadmap"
+                    ? "bg-indigo-600 text-white"
+                    : "text-indigo-600 hover:bg-indigo-50"
+                }`}>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🗺️</span> Roadmap</span>
+                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                  activeFeature === "roadmap" ? "bg-white/20 text-white" : "bg-indigo-100 text-indigo-600"
+                }`}>NEW</span>
+              </button>
+
+            </div>
           </div>
 
-          <div className="bg-amber-50 rounded-xl border border-amber-100 p-4 shadow-sm">
-             <div className="flex items-start gap-3">
-               <div className="p-1.5 bg-amber-100 rounded-lg text-amber-600 mt-0.5">
-                 <AlertTriangle size={16} />
-               </div>
-               <div>
-                 <h3 className="text-xs font-bold text-amber-800 uppercase tracking-wider">System Rules</h3>
-                 <p className="text-xs text-amber-700/80 mt-1.5 leading-relaxed font-medium">Multiple complex queries within a single prompt will consume multiple credits. Maintain focus.</p>
-               </div>
-             </div>
+          {/* System note */}
+          <div className="bg-amber-50 rounded-xl border border-amber-100 p-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle size={13} className="text-amber-500 flex-shrink-0 mt-0.5" />
+              <p className="text-[11px] text-amber-700 leading-relaxed font-medium">Complex queries consume multiple credits. Stay focused.</p>
+            </div>
           </div>
 
-          {/* Roadmap Button */}
-          <button
-            onClick={() => setActiveFeature("roadmap")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all mt-1 ${
-              activeFeature === "roadmap"
-                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-200"
-                : "bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200 hover:from-indigo-100 hover:to-purple-100"
-            }`}
-          >
-            <span className="text-base">🗺️</span>
-            <span className="flex-1 text-left">Intelligence Roadmap</span>
-            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-              activeFeature === "roadmap"
-                ? "bg-white/20 text-white"
-                : "bg-indigo-100 text-indigo-600"
-            }`}>NEW</span>
-          </button>
         </aside>
 
         {/* Main Chat Interface - Light Theme Redesign */}
