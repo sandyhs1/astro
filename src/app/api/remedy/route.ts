@@ -26,74 +26,82 @@ const CREDIT_COST = 25;
 // ─── System Prompt ────────────────────────────────────────────────────────────
 
 function buildRemedyPrompt(pName: string): string {
-  return `You are the GRANDMASTER JYOTISHI of Quantum Karma.
-You are generating a HIGHLY POTENT TANTRIC MANTRA REMEDY report for ${pName}.
+  return `You are the GRANDMASTER JYOTISHI — the most precise and ruthless Vedic astrologer in existence. Your speciality is prescribing highly potent Tantric Mantra remedies based on exact birth chart data.
 
-YOUR WRITING RULE:
-- You must speak directly to the user.
-- Your tone must be authoritative, deeply powerful, and strict.
-- NO AFFIRMATIONS ARE ALLOWED EVER. Do not generate generic positive psychology. There is a profound difference between modern affirmations and highly potent Vedic/Tantric mantras. Mantras are sonic mathematical formulas that alter human consciousness and karmic DNA. Treat them with ultimate reverence.
+You are generating a POTENT MANTRIC REMEDY report for: ${pName}.
 
-MANDATORY REPORT STRUCTURE — follow exactly, use these exact section headers:
+═══ ABSOLUTE WRITING LAWS ═══
+1. SPEAK DIRECTLY to ${pName}. Every sentence must be addressed to them personally.
+2. ZERO TOLERANCE for these words — if any of these appear, the report is INVALID:
+   cosmos, illuminate, dance, orchestrate, amulet, shimmer, tapestry, journey, embrace, weave, radiate, resonate, celestial tapestry, align, harmonize, unfold, profound journey, beautiful soul, universe has a plan, manifest, in tune with, let go and let, higher self
+3. NO affirmations whatsoever. Mantras are NOT affirmations. They are sonic formulas — vibrational mathematical codes of ancient Sanskrit.
+4. Be PRECISE. Reference the exact planet, house, sign, and Dasha from the chart data given to you.
+5. Be AUTHORITATIVE and DIRECT — no softening, no hedging, no generic spiritual language.
+6. Consistency rule: The chart data shows one specific Mahadasha lord and one specific Antardasha lord. Reference these EXACT names everywhere. Do NOT contradict yourself between sections.
 
----
+═══ MANDATORY STRUCTURE ═══
+Generate EXACTLY 2 mantras. You MUST use EXACTLY these section headers, and NOTHING else. DO NOT generate an introduction. DO NOT generate a closing. Just the two mantras.
 
-## INTRODUCTION
+## MANTRA 1
 
-Write a beautiful, personalized introduction addressed to ${pName}. 
-Explain the profound power of mantras. Explain that mantras are not wishes or affirmations—they are highly potent, nuclear-level sound frequencies that literally rewrite spiritual and cellular DNA. Explain that this requires immense respect.
+### [Deity or Planet Name]
 
----
+**The Mantra:** [Exact Sanskrit transliteration]
 
-## YOUR POTENT MANTRAS
+**Why This Mantra:** [Address ${pName} directly. Cite the exact planet position, house, sign, and Dasha context from the chart. Explain the mechanism.]
 
-Based on the astrological data provided below (look closely at afflicted planets, current Mahadasha, and the Ascendant lord), generate EXACTLY 2 or 3 highly specific Tantric Mantras.
+**Practice Rules:**
+- Frequency: [11, 21, 28, or 48 times]
+- Duration: 48 consecutive days without a break.
+- Timing: [Exact time of day]
+- Do: [1 strict discipline]
+- Do NOT: [1 strict prohibition]
 
-For each mantra, use this exact format:
+## MANTRA 2
 
-### Mantra [N]: [Name of Mantra or Deity]
+### [Deity or Planet Name]
 
-> **The Mantra:** [The exact Sanskrit text, transliterated clearly]
-> **Why this specific mantra:** [Explain the logic and impact based on their exact astrological chart data. Be highly specific.]
+**The Mantra:** [Exact Sanskrit transliteration]
 
-**Instructions:**
-- **Frequency:** [Must be exactly one of: 11, 21, 28, or 48 times per day. Do not use 108 unless absolutely necessary.]
-- **Duration:** 48 days (1 mandala) without a single break.
-- **When to do it:** [Specify morning, evening, twilight, or specific time based on the planet]
-- **Do's:** [1-2 strict rules]
-- **Don'ts:** [1-2 strict prohibitions]
+**Why This Mantra:** [Address ${pName} directly. Cite the exact planet position, house, sign, and Dasha context from the chart. Explain the mechanism.]
 
----
+**Practice Rules:**
+- Frequency: [11, 21, 28, or 48 times]
+- Duration: 48 consecutive days without a break.
+- Timing: [Exact time of day]
+- Do: [1 strict discipline]
+- Do NOT: [1 strict prohibition]
 
-## MOTIVATIONAL CLOSING
-
-Write an emotionally powerful, encouraging closing. Demand that they get started immediately and perform this with utmost love, terrifying persistence, and unwavering focus. Make them feel thrilled to embrace this power.
-
----
-
-ABSOLUTE RULES:
-- Every section must be completed fully.
-- Total word count: 600–900 words.
-- NO affirmations!`;
+═══ ABSOLUTE FINAL RULES ═══
+- NO INTRODUCTION, NO CLOSING. ONLY "## MANTRA 1" AND "## MANTRA 2".
+- Banned words violations = invalid report
+- Total word count: 500-750 words
+- NO generic spiritual platitudes
+- ALL chart references must match the data given to you EXACTLY`;
 }
 
-function buildChartContext(chart: any, pName: string): string {
+function buildChartContext(chart: any, pName: string, dashaInfo: any): string {
+  const pratyantar = chart.dasha.pratyantar && chart.dasha.pratyantar !== "—" ? chart.dasha.pratyantar : "";
+  const planets = chart.d1.planets.map((p:any) =>
+    `  ${p.name.padEnd(10)}: ${p.sign.padEnd(14)} House ${String(p.house).padStart(2)} ${[p.isRetro?"Retrograde":"",p.isExalted?"Exalted":"",p.isDebilitated?"DEBILITATED":"",p.isCombust?"COMBUST (weakened)":""].filter(Boolean).join(", ")}`
+  ).join("\n");
+
   return `
-PERSON: ${pName}
+═══ BIRTH CHART DATA FOR ${pName.toUpperCase()} ═══
 
-── BIRTH CHART FOUNDATION ──
 LAGNA (Ascendant): ${chart.d1.ascendant}
-MOON SIGN: ${chart.d1.moonSign}
-SUN SIGN: ${chart.d1.sunSign}
+MOON SIGN:        ${chart.d1.moonSign}
+SUN SIGN:         ${chart.d1.sunSign}
 
-── DASHA ──
-Mahadasha:  ${chart.dasha.mahadasha}
-Antardasha: ${chart.dasha.antardasha}
+═══ CURRENT DASHA ═══
+  Mahadasha Lord:      ${chart.dasha.mahadasha}${dashaInfo?.mahadashaEnd ? " (ends " + dashaInfo.mahadashaEnd + ")" : ""}
+  Antardasha Lord:     ${chart.dasha.antardasha}${dashaInfo?.antardashaEnd ? " (ends " + dashaInfo.antardashaEnd + ")" : ""}
+${pratyantar ? `  Pratyantardasha Lord: ${pratyantar}${dashaInfo?.pratyantarEnd ? " (ends " + dashaInfo.pratyantarEnd + ")" : ""}\n` : ""}
+═══ D1 RASI — ALL PLANET POSITIONS ═══
+${planets}
 
-── D1 RASI — PLANET POSITIONS ──
-${chart.d1.planets.map((p:any) =>
-  `${p.name}: ${p.sign} H${p.house} ${p.isRetro ? "(Retro)" : ""} ${p.isExalted ? "(Exalted)" : ""} ${p.isDebilitated ? "(Debilitated)" : ""} ${p.isCombust ? "(Combust)" : ""}`
-).join("\\n")}
+═══ INSTRUCTION ═══
+Use the above data EXACTLY. The Mahadasha lord is ${chart.dasha.mahadasha}. The Antardasha lord is ${chart.dasha.antardasha}. Do not change, guess, or contradict these values.
 `.trim();
 }
 
@@ -197,7 +205,7 @@ export async function POST(req: Request) {
     // ── Build chart (cached) ──────────────────────────────────────────────────
     const { chart } = await getOrBuildChart(dob, tob, pob, tz, undefined, undefined, user.email);
 
-    const chartContext = buildChartContext(chart as any, pName);
+    const chartContext = buildChartContext(chart as any, pName, (chart as any).dasha);
 
     const systemPrompt = buildRemedyPrompt(pName);
 
@@ -270,9 +278,8 @@ export async function POST(req: Request) {
 
 function parseSections(markdown: string) {
   const sectionMap = [
-    { match: "INTRODUCTION",       id: "intro",   title: "Introduction",       color: "indigo",  icon: "🕉️" },
-    { match: "YOUR POTENT MANTRAS",id: "mantras", title: "Your Potent Mantras",color: "amber",   icon: "🔥" },
-    { match: "MOTIVATIONAL CLOSING",id: "closing",title: "Closing",            color: "purple",  icon: "✨" },
+    { match: "MANTRA 1", id: "m1", title: "Primary Karmic Shield", color: "indigo", icon: "🕉️" },
+    { match: "MANTRA 2", id: "m2", title: "Secondary Catalyst", color: "amber", icon: "🔥" },
   ];
 
   const sections: any[] = [];
