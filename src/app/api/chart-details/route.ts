@@ -297,11 +297,19 @@ function getAscLordData(chart: GoldenMasterJSON) {
 function formatDate(raw: string): string {
   if (!raw) return "—";
   const clean = raw.trim().replace(/\s+/g," ");
-  const [datePart] = clean.split(" ");
-  const [d,m,y] = datePart.split("-");
+  const parts = clean.split(" ");
+  const [d,m,y] = parts[0].split("-");
   if (!d||!m||!y) return raw;
   const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return `${d} ${months[parseInt(m)-1]} ${y}`;
+  const dateStr = `${d} ${months[parseInt(m)-1]} ${y}`;
+  // Include time if available (format from API: "D-M-YYYY H:MM")
+  if (parts[1]) {
+    const [hr, mn] = parts[1].split(":").map(Number);
+    const hh = String(isNaN(hr) ? 0 : hr).padStart(2,"0");
+    const mm = String(isNaN(mn) ? 0 : mn).padStart(2,"0");
+    return `${dateStr} · ${hh}:${mm}`;
+  }
+  return dateStr;
 }
 
 function dashaRemaining(endDateStr: string): string {

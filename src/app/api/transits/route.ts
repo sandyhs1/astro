@@ -46,16 +46,12 @@ export async function GET(req: Request) {
     const tzFloat = parseTzToFloat(tz);
     const now = new Date();
 
-    let transitPlanets: any[] = [];
-    try {
-      transitPlanets = await astroClient.vedic.getPlanets({
-        day: now.getDate(), month: now.getMonth() + 1, year: now.getFullYear(),
-        hour: now.getHours(), min: now.getMinutes(),
-        lat, lon, tzone: tzFloat,
-      });
-    } catch (err) {
-      console.warn("Transits API limit reached:", err);
-    }
+    // Fetch live planetary positions — premium plan, no rate limits
+    const transitPlanets = await astroClient.vedic.getPlanets({
+      day: now.getDate(), month: now.getMonth() + 1, year: now.getFullYear(),
+      hour: now.getHours(), min: now.getMinutes(),
+      lat, lon, tzone: tzFloat,
+    });
 
     // 2. We also need to know the user's birth chart (Moon Sign, Ascendant) to show the transit in Houses
     // Let's fetch basic chart info from our API
