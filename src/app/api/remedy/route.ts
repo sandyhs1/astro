@@ -246,12 +246,15 @@ export async function POST(req: Request) {
 
     // ── Save report ───────────────────────────────────────────────────────────
     if (targetProfileId) {
-      await supabaseAdmin.from("saved_reports").insert({
+      const { error } = await supabaseAdmin.from("saved_reports").insert({
         user_id:     user.id,
         profile_id:  targetProfileId,
         report_type: "remedy",
         content:     reportData,
       });
+      if (error) {
+        console.error("Supabase insert error:", error);
+      }
     }
 
     return NextResponse.json({
@@ -273,11 +276,11 @@ function parseSections(markdown: string) {
   ];
 
   const sections: any[] = [];
-  const parts = markdown.split(/^##\\s+/m).filter(Boolean);
+  const parts = markdown.split(/^##\s+/m).filter(Boolean);
 
   for (const part of parts) {
-    const firstLine = part.split("\\n")[0].trim().toUpperCase();
-    const body = part.split("\\n").slice(1).join("\\n").trim();
+    const firstLine = part.split("\n")[0].trim().toUpperCase();
+    const body = part.split("\n").slice(1).join("\n").trim();
 
     const def = sectionMap.find(s => firstLine.includes(s.match));
     if (!def) continue;

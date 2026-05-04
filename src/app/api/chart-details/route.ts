@@ -307,7 +307,7 @@ function formatDate(raw: string): string {
     const [hr, mn] = parts[1].split(":").map(Number);
     const hh = String(isNaN(hr) ? 0 : hr).padStart(2,"0");
     const mm = String(isNaN(mn) ? 0 : mn).padStart(2,"0");
-    return `${dateStr} · ${hh}:${mm}`;
+    return `${dateStr} ${hh}:${mm}`;
   }
   return dateStr;
 }

@@ -80,12 +80,16 @@ function ProgressBar({ pct, color }: { pct: number; color: string }) {
 
 function TimeTag({ label, date }: { label: string; date: string }) {
   try {
-    const d = new Date(date);
+    const cleanDate = date.replace("·", "").trim();
+    const d = new Date(cleanDate);
+    if (isNaN(d.getTime())) return null;
     const remaining = msToYears(d.getTime() - Date.now());
+    const displayDate = d.toLocaleDateString("en-IN",{month:"short",day:"numeric",year:"numeric"});
+    const displayTime = d.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true});
     return (
       <div className="text-right">
         <p className="text-[10px] font-black uppercase text-slate-400">{label}</p>
-        <p className="text-sm font-bold text-slate-700">{d.toLocaleDateString("en-IN",{month:"short",year:"numeric"})}</p>
+        <p className="text-sm font-bold text-slate-700">{displayDate} <span className="text-slate-400 text-xs font-normal">· {displayTime}</span></p>
         {remaining > 0 && <p className="text-[10px] text-slate-400">{remaining.toFixed(1)}y left</p>}
       </div>
     );
@@ -135,14 +139,14 @@ export default function DashaLifePlanner({ profileId }: { profileId: string }) {
   const PD  = (data as any).pratyantardasha ? (PLANET_META[(data as any).pratyantardasha] || PLANET_META.Sun) : null;
 
   // Compute MD progress
-  const mdEndDate = data.mahadashaEnd ? new Date(data.mahadashaEnd) : null;
+  const mdEndDate = data.mahadashaEnd ? new Date(data.mahadashaEnd.replace("·", "").trim()) : null;
   const mdYears   = VIMSHOTTARI_YEARS[data.mahadasha] || 16;
   const mdStart   = mdEndDate ? new Date(mdEndDate.getTime() - mdYears * 365.25 * 86400000) : null;
   const mdPct     = mdStart && mdEndDate
     ? ((Date.now() - mdStart.getTime()) / (mdEndDate.getTime() - mdStart.getTime())) * 100
     : 50;
 
-  const adEndDate = data.antardashaEnd ? new Date(data.antardashaEnd) : null;
+  const adEndDate = data.antardashaEnd ? new Date(data.antardashaEnd.replace("·", "").trim()) : null;
   const adYearsTotal = VIMSHOTTARI_YEARS[data.antardasha] || 1;
   const adDurationMs = ((mdYears * adYearsTotal) / 120) * 365.25 * 86400000;
   const adStart   = adEndDate ? new Date(adEndDate.getTime() - adDurationMs) : null;
@@ -150,8 +154,8 @@ export default function DashaLifePlanner({ profileId }: { profileId: string }) {
     ? ((Date.now() - adStart.getTime()) / adDurationMs) * 100
     : 50;
 
-  const pdEndDate = (data as any).pratyantarEnd ? new Date((data as any).pratyantarEnd) : null;
-  const pdStart   = (data as any).pratyantarStart ? new Date((data as any).pratyantarStart) : null;
+  const pdEndDate = (data as any).pratyantarEnd ? new Date((data as any).pratyantarEnd.replace("·", "").trim()) : null;
+  const pdStart   = (data as any).pratyantarStart ? new Date((data as any).pratyantarStart.replace("·", "").trim()) : null;
   const pdPct     = pdStart && pdEndDate
     ? ((Date.now() - pdStart.getTime()) / (pdEndDate.getTime() - pdStart.getTime())) * 100
     : 50;
