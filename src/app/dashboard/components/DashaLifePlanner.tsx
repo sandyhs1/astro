@@ -168,8 +168,31 @@ export default function DashaLifePlanner({ profileId }: { profileId: string }) {
     });
   }
 
+  const msInDay = 86400000;
+  const daysToMdEnd = mdEndDate && !isNaN(mdEndDate.getTime()) ? (mdEndDate.getTime() - Date.now()) / msInDay : 999;
+  const isMdTransitioning = daysToMdEnd > 0 && daysToMdEnd <= 45;
+
   return (
     <div className="space-y-4">
+      {isMdTransitioning && (
+        <div className="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 p-5 shadow-2xl">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/20 rounded-full blur-3xl -mr-10 -mt-10 animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/20 rounded-full blur-3xl -ml-10 -mb-10 animate-pulse" style={{ animationDelay: "1s" }} />
+          <div className="relative z-10 flex gap-3.5">
+            <div className="flex-shrink-0 mt-1">
+              <span className="text-2xl animate-bounce block">⚠️</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mb-1">Critical Karmic Shift Approaching</p>
+              <h3 className="text-base font-bold text-white leading-tight">Your Mahadasha ends in {Math.ceil(daysToMdEnd)} days.</h3>
+              <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                The {data.mahadasha} era is closing. A massive energetic transition into the next Mahadasha is imminent. Prepare for profound changes in your destiny matrix.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <SectionHeader emoji="🧘" title="Dasha Life Planner"
         subtitle={`Vimshottari Dasha Timeline · Moon in ${data.moonSign}`} />
 

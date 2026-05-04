@@ -12,6 +12,7 @@ import PaymentGate from "./components/PaymentGate";
 import DestinyCalendar from "./components/DestinyCalendar";
 import KarmaDNA from "./components/KarmaDNA";
 import KarmicPatterns from "./components/KarmicPatterns";
+import RemedyPanel from "./components/RemedyPanel";
 import Roadmap from "./components/Roadmap";
 import TopupModal from "./components/TopupModal";
 import DetailsPanel from "./components/DetailsPanel";
@@ -46,7 +47,7 @@ export default function DashboardPage() {
   const [geocodingReady, setGeocodingReady] = useState(false);
 
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
-  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "roadmap" | "details" | "royal-roast">("chat");
+  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast">("chat");
   
   const DEFAULT_WELCOME = "Namaste. I am your Quantum Karma Astrologer. How may I illuminate your path today?";
 
@@ -664,6 +665,9 @@ export default function DashboardPage() {
         <button onClick={() => setActiveFeature("roadmap")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "roadmap" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🗺️</span><span>Roadmap</span>
         </button>
+        <button onClick={() => setActiveFeature("remedy")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "remedy" ? "text-indigo-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">📿</span><span>Remedy</span>
+        </button>
       </nav>
 
       {/* Main Layout */}
@@ -770,6 +774,15 @@ export default function DashboardPage() {
                 {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
               </button>
 
+              {/* Remedy */}
+              <button onClick={() => setActiveFeature("remedy")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "remedy" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">📿</span> Remedy</span>
+                {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
+              </button>
+
               {/* My Details */}
               <button onClick={() => setActiveFeature("details")}
                 className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
@@ -825,6 +838,7 @@ export default function DashboardPage() {
           {activeFeature === "destiny"        && <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "karma-dna"      && <KarmaDNA        profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "karmic-patterns"&& <KarmicPatterns  profileId={activeProfileId} profileName={activeProfileName} />}
+          {activeFeature === "remedy"         && <RemedyPanel     profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "roadmap"        && <Roadmap onClose={() => setActiveFeature("chat")} />}
           {/* Details Panel — free, always accessible, re-fetches on profile change */}
           {activeFeature === "details" && (
