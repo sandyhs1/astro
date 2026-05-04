@@ -33,11 +33,11 @@ export function LiveClock() {
   const date = time.toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   return (
     <div className="text-center py-6">
-      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600 mb-1">Live Vedic Clock</p>
-      <div className="font-black text-slate-900 tabular-nums" style={{ fontSize: "clamp(2.5rem, 10vw, 4.5rem)", letterSpacing: "-0.03em" }}>
-        {hh}<span className="text-emerald-500 animate-pulse">:</span>{mm}<span className="text-emerald-500 animate-pulse">:</span>{ss}
+      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-1">Live Vedic Clock</p>
+      <div className="font-black text-white tabular-nums" style={{ fontSize: "clamp(2.5rem, 10vw, 4.5rem)", letterSpacing: "-0.03em" }}>
+        {hh}<span className="text-emerald-400 animate-pulse">:</span>{mm}<span className="text-emerald-400 animate-pulse">:</span>{ss}
       </div>
-      <p className="text-sm font-semibold text-slate-500 mt-1 uppercase tracking-wider">{date}</p>
+      <p className="text-sm font-semibold text-white/60 mt-1 uppercase tracking-wider">{date}</p>
     </div>
   );
 }

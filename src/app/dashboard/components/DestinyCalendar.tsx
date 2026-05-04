@@ -232,7 +232,7 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
                     <div className="bg-gradient-to-b from-indigo-50 to-white border border-indigo-100 rounded-2xl p-5">
                       <div className="flex items-center gap-2 mb-4">
                         <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">🔮</div>
-                        <div><p className="font-bold text-sm text-slate-800">Quantum Oracle</p><p className="text-xs text-slate-400">Claude 4.6 · Vedic Analysis</p></div>
+                        <div><p className="font-bold text-sm text-slate-800">Quantum Oracle</p><p className="text-xs text-slate-400">Vedic Analysis</p></div>
                       </div>
                       <div className="prose-chat-light text-slate-700 text-sm leading-relaxed">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{narrative}</ReactMarkdown>
