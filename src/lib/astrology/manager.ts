@@ -102,6 +102,13 @@ export async function getOrBuildChart(
   const chart = normalizeBundle(bundle, params, pob, dob, tob);
 
   // 7. Save to Supabase
+  //
+  // STRATEGY: ALWAYS save to chart_cache by hash (persistent for ALL users).
+  // Also try onboarding_leads for legacy email-based lookup.
+  // This fixes the gap where family_profiles users (no onboarding_leads row)
+  // had their chart saved nowhere and rebuilt every request (30s + 22 API calls).
+
+  // 7a. Try onboarding_leads (email-based users — legacy path)
   if (userId) {
     const { error } = await supabase
       .from("onboarding_leads")
@@ -112,13 +119,22 @@ export async function getOrBuildChart(
       })
       .eq("email", userId);
     if (error) console.error("[manager] Save to onboarding_leads failed:", error.message);
-  } else {
-    // Upsert by hash for anonymous
+    // Note: if userId has no onboarding_leads row, this update affects 0 rows silently.
+    // chart_cache (7b) below guarantees persistence regardless.
+  }
+
+  // 7b. ALWAYS save to chart_cache by birth hash — covers ALL user types:
+  //   - family_profiles users (no onboarding_leads row)
+  //   - Anonymous users
+  //   - Any user whose onboarding_leads update failed
+  // This is the single source of truth for hash-based cache hits (step 4 above).
+  {
     const { error } = await supabase
       .from("chart_cache")
       .upsert({ hash, chart, created_at: new Date().toISOString() }, { onConflict: "hash" })
       .select();
     if (error) console.error("[manager] Save to chart_cache failed:", error.message);
+    else console.log(`[manager] Chart persisted to chart_cache (hash: ${hash})`);
   }
 
   console.log(`[manager] Chart built + saved (v${SCHEMA_VERSION}), confidence: ${chart.confidence.score}%`);

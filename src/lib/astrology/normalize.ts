@@ -90,6 +90,7 @@ export interface GoldenMasterJSON {
     mahadasha: string; mahadashaEnd: string;
     antardasha: string; antardashaEnd: string;
     pratyantar: string; pratyantarStart: string; pratyantarEnd: string;
+    sookshma: string; sookshmaStart: string; sookshmaEnd: string; // sub-Pratyantar (5th level)
     full: any;
   };
   karakas: {
@@ -333,6 +334,17 @@ export function normalizeBundle(
       pratyantarEnd=ap.end||"";
     }
   }
+  // Sookshma (sub-sub-minor / 5th level Dasha)
+  // AstrologyAPI key: sub_sub_minor — may or may not be returned depending on plan
+  let sookshma="", sookshmaStart="", sookshmaEnd="";
+  if(cd.sub_sub_minor?.dasha_period){
+    const ap=cd.sub_sub_minor.dasha_period.find((p:any)=>{const s=parseAstroDate(p.start||""),e=parseAstroDate(p.end||"");return!isNaN(s.getTime())&&!isNaN(e.getTime())&&now>=s&&now<=e;});
+    if(ap) {
+      sookshma=ap.planet||"";
+      sookshmaStart=ap.start||"";
+      sookshmaEnd=ap.end||"";
+    }
+  }
   if(!mahadasha) warnings.push("CRITICAL: Mahadasha could not be determined");
 
   // ── Karakas (Jaimini — 7 planets by normDegree desc) ──────────────────────
@@ -392,6 +404,7 @@ export function normalizeBundle(
     d1:{ ascendant, ascendantDegree:0, moonSign, moonNakshatra:moonNak, sunSign, planets, houses },
     divisional:{ d2,d3,d4,d7,d9,d10,d12,d16,d20,d24,d27,d30,d40,d45,d60 },
     dasha:{ mahadasha, mahadashaEnd, antardasha, antardashaEnd, pratyantar, pratyantarStart, pratyantarEnd,
+      sookshma, sookshmaStart, sookshmaEnd,
       full:{ currentDasha:cd, majorDasha:md, allPeriods:majorPeriods } },
     karakas,
     specialPoints,

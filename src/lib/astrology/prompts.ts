@@ -255,6 +255,9 @@ export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User",
       Pratyantar:     dasha.pratyantar
         ? `${dasha.pratyantar} (${dasha.pratyantarStart} → ${dasha.pratyantarEnd})`
         : "—",
+      Sookshma:       (dasha as any).sookshma
+        ? `${(dasha as any).sookshma} (${(dasha as any).sookshmaStart} → ${(dasha as any).sookshmaEnd})`
+        : "—",
       Next_Mahadasha: `${(dasha.full as any)?.currentDasha?._nextMahadasha||"—"} (starts: ${(dasha.full as any)?.currentDasha?._nextMahadashaStart||"—"})`,
     },
     // ── FULL VIMSHOTTARI SEQUENCE ───────────────────────────────────────────────────────────────────────────────────────
