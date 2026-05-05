@@ -89,8 +89,8 @@ export default function AccountsPage() {
           <p className="text-[#94A3B8]">You don't have an active subscription or plan at the moment.</p>
           <div className="pt-4">
             <p className="text-sm text-slate-400 mb-4">Current AI Credits: <span className="font-bold text-[#FFD700]">{profile?.credits || 0}</span></p>
-            <button onClick={() => router.push('/pricing')} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold h-11 px-8 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(138,43,226,0.4)]">
-              View Pricing Plans
+            <button onClick={() => router.push('/dashboard')} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold h-11 px-8 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(138,43,226,0.4)]">
+              Go to Dashboard
             </button>
           </div>
         </div>
@@ -99,7 +99,8 @@ export default function AccountsPage() {
   }
 
   const isPlan1 = profile.plan_type === 'plan1';
-  const isPlan2 = profile.plan_type === 'plan2';
+  // Ensure they actually have a subscription ID before allowing cancellation
+  const isPlan2 = profile.plan_type === 'plan2' && !!profile.subscription_id;
   const isPendingCancel = profile.payment_status === 'pending_cancellation';
 
   return (
@@ -157,12 +158,6 @@ export default function AccountsPage() {
           </p>
 
           <div className="pt-6 flex flex-wrap gap-4 border-t border-[#2d1b4e]">
-            {isPlan1 && (
-              <button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white h-10 px-6 rounded-md inline-flex items-center justify-center font-bold transition-all shadow-lg hover:shadow-purple-500/25" onClick={() => router.push('/pricing')}>
-                Upgrade to Monthly
-              </button>
-            )}
-
             {isPlan2 && !isPendingCancel && (
               <button 
                 className="bg-[#120a20] border border-red-900/50 text-red-400 hover:bg-red-950/30 hover:text-red-300 hover:border-red-800/50 h-10 px-6 rounded-md inline-flex items-center justify-center font-bold transition-all" 
@@ -173,16 +168,6 @@ export default function AccountsPage() {
                 Cancel Subscription
               </button>
             )}
-
-            {isPlan2 && isPendingCancel && (
-              <button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white h-10 px-6 rounded-md inline-flex items-center justify-center font-bold transition-all shadow-lg hover:shadow-purple-500/25" onClick={() => router.push('/pricing')}>
-                Re-subscribe
-              </button>
-            )}
-            
-            <button className="bg-[#2d1b4e] hover:bg-[#3d256a] text-white border border-[#4a2e82] h-10 px-6 rounded-md inline-flex items-center justify-center font-bold transition-colors" onClick={() => router.push('/pricing')}>
-              Buy Extra Credits
-            </button>
           </div>
         </div>
       </div>
