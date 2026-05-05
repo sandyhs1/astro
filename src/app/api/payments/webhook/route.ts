@@ -115,6 +115,40 @@ export async function POST(req: NextRequest) {
       console.log(`[webhook] Monthly renewal — user ${profile.id} credits hard-reset to 50`);
     }
 
+    // ── subscription.cancelled & subscription.halted ─────────────────────────
+    // Fires when a subscription ends (e.g., at the end of the billing cycle
+    // if the user requested cancellation earlier, or if it halted due to failed payments).
+    if (eventType === "subscription.cancelled" || eventType === "subscription.halted") {
+      const subscription = event.payload?.subscription?.entity;
+      const subscriptionId: string = subscription?.id;
+
+      if (!subscriptionId) {
+        console.warn(`[webhook] ${eventType} — no subscriptionId`);
+        return NextResponse.json({ received: true });
+      }
+
+      // Look up user by subscription_id
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("id")
+        .eq("subscription_id", subscriptionId)
+        .single();
+
+      if (!profile) {
+        console.warn(`[webhook] No user found for cancelled subscription ${subscriptionId}`);
+        return NextResponse.json({ received: true });
+      }
+
+      // Downgrade user cleanly
+      await supabase.from("user_profiles").update({
+        plan_type: null,
+        payment_status: null,
+        subscription_id: null,
+      }).eq("id", profile.id);
+
+      console.log(`[webhook] Subscription ended for user ${profile.id} — downgraded successfully`);
+    }
+
     return NextResponse.json({ received: true });
 
   } catch (error: any) {
