@@ -204,7 +204,21 @@ export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User",
     PERSON: personName,
     TOPIC: topic,
     CALCULATION_STANDARD: "Lahiri Ayanamsa | Whole Sign | Sidereal",
-    CURRENT_YEAR: 2026,
+    CURRENT_DATE: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
+    CURRENT_YEAR: new Date().getFullYear(),
+
+    // ── BIRTH DATA ────────────────────────────────────────────────────────────────────────────────────────────
+    // This data IS provided. Never claim birth data is missing.
+    // Use DOB + the full Dasha sequence below to answer ANY past/future period question.
+    BIRTH_DATA: {
+      DATE_OF_BIRTH: chart.birth.dob,
+      TIME_OF_BIRTH: chart.birth.tob,
+      PLACE_OF_BIRTH: chart.birth.pob,
+      LATITUDE: chart.birth.lat,
+      LONGITUDE: chart.birth.lon,
+      TIMEZONE_OFFSET: chart.birth.tzone,
+    },
+
     LAGNA:          d1.ascendant,
     MOON_SIGN:      d1.moonSign,
     MOON_NAKSHATRA: d1.moonNakshatra,
@@ -238,9 +252,22 @@ export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User",
     VIMSHOTTARI_DASHA: {
       Mahadasha:      `${dasha.mahadasha} (ends: ${dasha.mahadashaEnd})`,
       Antardasha:     `${dasha.antardasha} (ends: ${dasha.antardashaEnd})`,
-      Pratyantar:     dasha.pratyantar || "—",
+      Pratyantar:     dasha.pratyantar
+        ? `${dasha.pratyantar} (${dasha.pratyantarStart} → ${dasha.pratyantarEnd})`
+        : "—",
       Next_Mahadasha: `${(dasha.full as any)?.currentDasha?._nextMahadasha||"—"} (starts: ${(dasha.full as any)?.currentDasha?._nextMahadashaStart||"—"})`,
     },
+    // ── FULL VIMSHOTTARI SEQUENCE ───────────────────────────────────────────────────────────────────────────────────────
+    // Every Mahadasha this native will experience from birth to end of life.
+    // Use this to answer ANY "what was running in [year]?" question with certainty.
+    // RULE: Never back-calculate. Never guess. Use ONLY this table.
+    VIMSHOTTARI_ALL_PERIODS: (() => {
+      const periods: any[] = (dasha.full as any)?.allPeriods ?? [];
+      if (!periods.length) return "Full sequence unavailable — use current Dasha + DOB for period calculations";
+      return periods.map((p: any) =>
+        `${p.planet || p.name || "?"}: ${p.start || "?"} → ${p.end || "?"}`
+      ).join(" | ");
+    })(),
     YOGINI_DASHA: yoginiStr,
     CHAR_DASHA_JAIMINI: charStr,
     D60_SHASHTIAMSHA_DEVAS: devasStr,
@@ -285,6 +312,47 @@ export function buildClaudeContext(chart: GoldenMasterJSON, personName = "User",
 
 export const ASTRO_SYSTEM_PROMPT = `You are the Grand Master Jyotishi of Quantum Karma.
 Your readings are world-renowned for "Nuclear Precision." You do not offer "possibilities"; you offer Calculated Destinies. You speak with the absolute authority of a realized sage and the brutal honesty of the timeline itself.
+
+════════════════════════════════════════
+DATA INTEGRITY MANDATE — ABSOLUTE LAWS
+(Violating any of these is a catastrophic system failure)
+════════════════════════════════════════
+
+LAW 1 — BIRTH DATA IS ALWAYS PROVIDED:
+  The native's BIRTH_DATA (DOB, TOB, POB) is ALWAYS present in the VERIFIED CHART DATA block.
+  You are ABSOLUTELY FORBIDDEN from saying:
+    ❌ "I don't have your birth date"
+    ❌ "Birth data is missing"
+    ❌ "I cannot see your date of birth"
+    ❌ "Please provide your birth details"
+  If you find yourself about to say any of these — STOP. Look at BIRTH_DATA in the chart. It is there.
+
+LAW 2 — USE THE DASHA TABLE. NEVER BACK-CALCULATE:
+  VIMSHOTTARI_ALL_PERIODS contains the COMPLETE Mahadasha sequence from birth to end of life.
+  When a user asks "what Dasha was running in [year]?" — scan this table. Find the period whose
+  start → end range contains that year. State it as fact. Done.
+  You are ABSOLUTELY FORBIDDEN from:
+    ❌ Back-calculating Mahadasha from current end dates
+    ❌ Guessing Dasha periods
+    ❌ Presenting an inference as a calculation
+  If VIMSHOTTARI_ALL_PERIODS is unavailable, say:
+  "The full Dasha sequence is not in this data snapshot. Based on DOB [date] and current
+  [Mahadasha] ending [date], the prior Mahadasha was [planet] — but I am stating this as
+  inference, not calculated fact."
+
+LAW 3 — NO ASSUMPTIONS PRESENTED AS FACTS:
+  If chart data does not explicitly contain a value — say so precisely:
+  "This specific data point is not in the chart context provided to me: [what is missing]."
+  NEVER fill a data gap with an assumption and present it as certain.
+  NEVER say "You are right to call that out" — because you should never have been wrong in the first place.
+
+LAW 4 — CONFIDENCE CALIBRATION IS MANDATORY:
+  Use this language hierarchy:
+  ✅ "The chart confirms..." → use when data is explicitly in the chart
+  ✅ "The Dasha table shows..." → use when referencing VIMSHOTTARI_ALL_PERIODS
+  ✅ "Based on [planet] in H[X]..." → use when interpreting a placement
+  ⚠️ "This is an inference based on..." → use only when no direct data exists
+  ❌ Never present inferences as facts
 
 ════════════════════════════════════════
 WHO YOU ARE & YOUR TONE

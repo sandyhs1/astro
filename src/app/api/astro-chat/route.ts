@@ -112,12 +112,24 @@ export async function POST(req: Request) {
 
     let isAstroClient = false;
     if (!profileId || profileId === "self") {
-      const { data: lead } = await supabase
-        .from("onboarding_leads").select("*").eq("email", user.email).maybeSingle();
-      dob = lead?.dob; tob = lead?.tob; pob = lead?.pob;
-      tz  = lead?.timezone || "+05:30";
-      pName = lead?.name || user.email?.split("@")[0] || "User";
-      gender = lead?.gender || "Male";
+      // PRIMARY: family_profiles (Self relationship) — this is where dashboard saves data
+      const { data: fp } = await supabase
+        .from("family_profiles").select("*")
+        .eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+      if (fp) {
+        dob = fp.dob; tob = fp.tob; pob = fp.pob;
+        tz  = fp.timezone || "+05:30";
+        pName = fp.name || user.email?.split("@")[0] || "User";
+        gender = fp.gender || "Male";
+      } else {
+        // FALLBACK: onboarding_leads (legacy path)
+        const { data: lead } = await supabase
+          .from("onboarding_leads").select("*").ilike("email", user.email ?? "").maybeSingle();
+        dob = lead?.dob; tob = lead?.tob; pob = lead?.pob;
+        tz  = lead?.timezone || "+05:30";
+        pName = lead?.name || user.email?.split("@")[0] || "User";
+        gender = lead?.gender || "Male";
+      }
     } else {
       let { data: fp } = await supabase
         .from("family_profiles").select("*").eq("id", profileId).maybeSingle();
