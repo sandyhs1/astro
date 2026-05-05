@@ -476,8 +476,8 @@ export default function DashboardPage() {
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Seeker";
   const selfProfile = familyProfiles.find(p => p.relationship === "Self");
-  // Zero-credit state: block all generation but keep history/reports readable
-  const isOutOfCredits = (profile?.credits ?? 0) <= 0;
+  // Zero-credit state: block all generation when user has fewer than 1 credit
+  const isOutOfCredits = (profile?.credits ?? 0) < 1;
   
   let activeProfileName = "Unknown";
   if (activeProfileId === "self") {
@@ -600,7 +600,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-full border border-slate-200">
                 <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse flex-shrink-0" />
                 <span className="hidden sm:inline text-xs font-semibold text-slate-500 uppercase tracking-wider">Credits</span>
-                <span className="text-sm font-bold text-slate-900">{profile.credits ?? 50}</span>
+                <span className="text-sm font-bold text-slate-900">{Math.floor(profile.credits ?? 50)}</span>
               </div>
               {/* Topup button — only for plan2 and promo users */}
               {(profile.plan_type === "plan2" || profile.plan_type === "promo") && (

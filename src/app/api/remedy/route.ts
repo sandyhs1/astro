@@ -168,12 +168,32 @@ export async function POST(req: Request) {
     // ── Credits check ─────────────────────────────────────────────────────────
     const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).single();
     const credits = profile?.credits ?? 0;
+
+    // ── ONE-TIME GENERATION GUARD ─────────────────────────────────────────────
+    let earlyTargetId: string | null = profileId ?? null;
+    if (!profileId || profileId === "self") {
+      const { data: fp } = await supabase.from("family_profiles").select("id")
+        .eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+      earlyTargetId = fp?.id ?? null;
+    }
+    if (earlyTargetId) {
+      const { data: existing } = await supabaseAdmin
+        .from("saved_reports").select("content")
+        .eq("user_id", user.id).eq("profile_id", earlyTargetId)
+        .eq("report_type", "remedy").limit(1).maybeSingle();
+      if (existing) {
+        console.log("[REMEDY] ✅ Returning existing saved report (0 credits)");
+        return NextResponse.json({ ...existing.content, creditsRemaining: credits, fromCache: true });
+      }
+    }
+
     if (credits < CREDIT_COST) {
       return NextResponse.json(
         { error: `Insufficient credits. Remedy Mapping requires ${CREDIT_COST} credits. You have ${credits}.` },
         { status: 402 }
       );
     }
+
 
     // ── Resolve birth details ──────────────────────────────────────────────────
     let dob = "", tob = "", pob = "", tz = "+05:30", pName = "Seeker";

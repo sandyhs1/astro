@@ -145,12 +145,39 @@ export async function POST(req: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // ── Credits check ──────────────────────────────────────────────────────────
+    // ── Auth + profile ─────────────────────────────────────────────────────────
     const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).single();
     const credits = profile?.credits ?? 0;
+
+    // ── ONE-TIME GENERATION GUARD ─────────────────────────────────────────────
+    // Resolve the target profile ID first so we can check for an existing report
+    let earlyProfileId: string | null = profileId ?? null;
+    if (!profileId || profileId === "self") {
+      const { data: fp } = await supabase.from("family_profiles").select("id")
+        .eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+      earlyProfileId = fp?.id ?? null;
+    }
+    if (earlyProfileId) {
+      const { data: existing } = await supabaseAdmin
+        .from("saved_reports")
+        .select("content")
+        .eq("user_id", user.id)
+        .eq("profile_id", earlyProfileId)
+        .eq("report_type", "karma_dna")
+        .limit(1)
+        .maybeSingle();
+      if (existing) {
+        // Already generated — return saved report at ZERO credit cost
+        console.log("[KARMA DNA] ✅ Returning existing saved report (0 credits)");
+        return NextResponse.json({ ...existing.content, creditsRemaining: credits, fromCache: true });
+      }
+    }
+
+    // ── Credits check (only reached on first-time generation) ─────────────────
     if (credits < 20) {
       return NextResponse.json({ error: "Insufficient credits. Karma DNA Report costs 20 credits." }, { status: 402 });
     }
+
 
     // ── Resolve birth details ──────────────────────────────────────────────────
     let dob = "", tob = "", pob = "", tz = "+05:30", pName = "Seeker";

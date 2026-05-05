@@ -64,10 +64,13 @@ export async function GET(req: Request) {
     const astroLogs= astroLogsRes.data || [];
 
     // ── LLM Global Aggregates ──────────────────────────────────────────────────
-    const totalInputTokens  = logs.reduce((a, l) => a + (l.input_tokens  || 0), 0);
-    const totalOutputTokens = logs.reduce((a, l) => a + (l.output_tokens || 0), 0);
-    const totalLLMCostInr   = logs.reduce((a, l) => a + parseFloat(l.cost_inr || 0), 0);
-    const totalCreditsUsed  = logs.reduce((a, l) => a + (l.credits_used  || 0), 0);
+    const CREDIT_VALUE_INR_GLOBAL = 35.98; // ₹1799 / 50 credits
+    const totalInputTokens   = logs.reduce((a, l) => a + (l.input_tokens  || 0), 0);
+    const totalOutputTokens  = logs.reduce((a, l) => a + (l.output_tokens || 0), 0);
+    const totalLLMCostInr    = logs.reduce((a, l) => a + parseFloat(l.cost_inr || 0), 0);
+    const totalCreditsUsed   = logs.reduce((a, l) => a + (l.credits_used  || 0), 0); // = deducted (2×)
+    const totalActualCredits = parseFloat((totalLLMCostInr / CREDIT_VALUE_INR_GLOBAL).toFixed(4)); // real cost
+    const totalCreditsDeducted = totalCreditsUsed; // alias for clarity in admin UI
 
     // ── Model Breakdown ────────────────────────────────────────────────────────
     const modelUsage: Record<string, { tokens: number; count: number; costInr: number; inputTokens: number; outputTokens: number }> = {};
@@ -93,6 +96,7 @@ export async function GET(req: Request) {
     }
 
     // ── Per-User Stats ─────────────────────────────────────────────────────────
+    const CREDIT_VALUE_INR = 35.98; // ₹1799 / 50 credits
     const userStats = users.map((u) => {
       const userLogs     = logs.filter((l) => l.user_id === u.id);
       const userAstro    = astroLogs.filter((l) => l.user_id === u.id);
@@ -100,7 +104,10 @@ export async function GET(req: Request) {
       const outputTokens = userLogs.reduce((a, l) => a + (l.output_tokens || 0), 0);
       const llmCostInr   = userLogs.reduce((a, l) => a + parseFloat(l.cost_inr || 0), 0);
       const astroCostInr = userAstro.length * ASTRO_API_COST_INR;
-      const creditsUsed  = userLogs.reduce((a, l) => a + (l.credits_used  || 0), 0);
+      // creditsUsed = what was DEDUCTED from user (2× actual, the dynamic system)
+      const creditsDeducted  = userLogs.reduce((a, l) => a + (l.credits_used  || 0), 0);
+      // actualCreditCost = what it TRULY cost in credits (costInr / 35.98)
+      const actualCreditCost = llmCostInr / CREDIT_VALUE_INR;
       const models       = Array.from(new Set(userLogs.map((l) => l.model_name).filter(Boolean)));
 
       // Last activity
@@ -118,7 +125,10 @@ export async function GET(req: Request) {
         astroCalls:       userAstro.length,
         astroCostInr,
         totalCostInr:     llmCostInr + astroCostInr,
-        creditsUsed,
+        creditsUsed:      creditsDeducted,       // alias kept for backward-compat with admin UI
+        creditsDeducted,                          // 2× — what user was charged
+        actualCreditCost: parseFloat(actualCreditCost.toFixed(4)), // real cost in credits
+        profitMultiple:   creditsDeducted > 0 ? parseFloat((creditsDeducted / actualCreditCost).toFixed(2)) : null,
         creditsRemaining: u.credits ?? 0,
         modelsUsed:       models,
       };
@@ -156,6 +166,8 @@ export async function GET(req: Request) {
         totalTokens: totalInputTokens + totalOutputTokens,
         totalLLMCostInr,
         totalCreditsUsed,
+        totalActualCredits,      // real cost in credits (costInr / 35.98)
+        totalCreditsDeducted,    // 2× — what was actually taken from users
         totalAstroCalls,
         totalAstroCostInr,
         totalCostInr: totalLLMCostInr + totalAstroCostInr,

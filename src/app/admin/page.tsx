@@ -273,7 +273,7 @@ export default function AdminDashboard() {
           {!metrics ? <div className="flex justify-center py-16"><Loader2 className="animate-spin text-indigo-500 w-8 h-8" /></div> : <>
 
             {/* Top KPI cards */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
               {[
                 { label: "Total Tokens", value: fmt(g.totalTokens || 0), color: "text-white", icon: <Zap size={16}/> },
                 { label: "Input Tokens", value: fmt(g.totalInputTokens || 0), color: "text-indigo-400", icon: <TrendingUp size={16}/> },
@@ -286,6 +286,35 @@ export default function AdminDashboard() {
                   <div className={`text-2xl font-bold ${k.color}`}>{k.value}</div>
                 </div>
               ))}
+            </div>
+
+            {/* ── CREDIT P&L BANNER ── */}
+            <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gradient-to-br from-slate-800 to-indigo-900/30 p-5 rounded-xl border border-indigo-700/40">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                  <Activity size={16} className="text-indigo-400" /> Actual Credits (Real Cost)
+                </div>
+                <div className="text-2xl font-bold text-indigo-300">{(g.totalActualCredits || 0).toFixed(4)}</div>
+                <div className="text-xs text-slate-500 mt-1">= LLM Cost ÷ ₹35.98 per credit</div>
+              </div>
+              <div className="bg-gradient-to-br from-slate-800 to-rose-900/30 p-5 rounded-xl border border-rose-700/40">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                  <IndianRupee size={16} className="text-rose-400" /> Credits Deducted from Users
+                </div>
+                <div className="text-2xl font-bold text-rose-300">{(g.totalCreditsDeducted || 0).toFixed(4)}</div>
+                <div className="text-xs text-slate-500 mt-1">= 2× actual (what users were charged)</div>
+              </div>
+              <div className="bg-gradient-to-br from-slate-800 to-emerald-900/30 p-5 rounded-xl border border-emerald-700/40">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                  <TrendingUp size={16} className="text-emerald-400" /> Profit Multiple
+                </div>
+                <div className="text-2xl font-bold text-emerald-300">
+                  {g.totalActualCredits > 0
+                    ? `${(g.totalCreditsDeducted / g.totalActualCredits).toFixed(2)}×`
+                    : '—'}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">Deducted ÷ Actual (target: 2.00×)</div>
+              </div>
             </div>
 
             {/* Pricing reference */}
@@ -319,7 +348,10 @@ export default function AdminDashboard() {
             {/* Per-User Table */}
             <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center">
-                <h2 className="font-bold text-white">User Consumption</h2>
+                <div>
+                  <h2 className="font-bold text-white">User Consumption &amp; Credit P&amp;L</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Actual = real INR cost ÷ ₹35.98 · Deducted = 2× actual (profit buffer)</p>
+                </div>
                 <span className="text-xs text-slate-500">Auto-refreshes every 30s</span>
               </div>
               <div className="overflow-x-auto">
@@ -330,14 +362,16 @@ export default function AdminDashboard() {
                       <th className="px-5 py-3">Last Active</th>
                       <th className="px-5 py-3">Input / Output / Total</th>
                       <th className="px-5 py-3">LLM Cost ₹</th>
-                      <th className="px-5 py-3">Credits Used</th>
+                      <th className="px-5 py-3 text-indigo-300">Actual Credits</th>
+                      <th className="px-5 py-3 text-rose-300">Credits Deducted</th>
+                      <th className="px-5 py-3 text-emerald-300">Profit ×</th>
                       <th className="px-5 py-3">Credits Left</th>
                       <th className="px-5 py-3">Models</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-700/50">
                     {metrics.users.length === 0
-                      ? <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">No users found.</td></tr>
+                      ? <tr><td colSpan={9} className="px-5 py-8 text-center text-slate-500">No users found.</td></tr>
                       : metrics.users.map((u: any) => (
                         <tr key={u.id} className="hover:bg-slate-800/50 transition-colors">
                           <td className="px-5 py-4">
@@ -353,10 +387,26 @@ export default function AdminDashboard() {
                             <span className="text-white font-bold">{fmt(u.totalTokens)}</span>
                           </td>
                           <td className="px-5 py-4 font-mono font-bold text-amber-400">{inr(u.llmCostInr)}</td>
-                          <td className="px-5 py-4 font-mono font-bold text-rose-400">{u.creditsUsed}</td>
+                          <td className="px-5 py-4 font-mono font-bold text-indigo-300">
+                            {(u.actualCreditCost || 0).toFixed(4)}
+                            <div className="text-[10px] text-slate-500 font-normal">real cost</div>
+                          </td>
+                          <td className="px-5 py-4 font-mono font-bold text-rose-300">
+                            {(u.creditsDeducted || 0).toFixed(4)}
+                            <div className="text-[10px] text-slate-500 font-normal">charged</div>
+                          </td>
+                          <td className="px-5 py-4 font-mono font-bold">
+                            {u.profitMultiple != null ? (
+                              <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                                u.profitMultiple >= 1.9 ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-700/40'
+                                : u.profitMultiple >= 1.5 ? 'bg-amber-900/40 text-amber-400 border border-amber-700/40'
+                                : 'bg-red-900/40 text-red-400 border border-red-700/40'
+                              }`}>{u.profitMultiple}×</span>
+                            ) : <span className="text-slate-600">—</span>}
+                          </td>
                           <td className="px-5 py-4 font-mono font-bold">
                             <span className={u.creditsRemaining <= 5 ? "text-red-400" : u.creditsRemaining <= 20 ? "text-amber-400" : "text-emerald-400"}>
-                              {u.creditsRemaining}
+                              {typeof u.creditsRemaining === 'number' ? u.creditsRemaining.toFixed(2) : u.creditsRemaining}
                             </span>
                           </td>
                           <td className="px-5 py-4">

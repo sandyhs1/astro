@@ -14,15 +14,25 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// INR pricing (per 1K tokens)
+// INR pricing (per 1K tokens) — used for cost tracking in admin dashboard
 // ✅ PRIMARY: Claude Sonnet 4.6 | ✅ FALLBACK: Gemini 3.1 Pro | ⛔ BANNED: Claude 3.7
 const PRICE = {
-  "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26  },  // ✅ Active
-  "bedrock/claude-3-7-sonnet":               { in: 0.252,  out: 1.26  },  // ⛔ Legacy only (April 2026 logs)
-  "gemini/gemini-3.1-pro-preview":           { in: 0.105,  out: 0.42  },  // ✅ Fallback
-  "gemini/gemini-3.1-flash-lite-preview":    { in: 0.0063, out: 0.0063 }, // ✅ Gatekeeper only
+  "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26  },
+  "bedrock/claude-3-7-sonnet":               { in: 0.252,  out: 1.26  },
+  "gemini/gemini-3.1-pro-preview":           { in: 0.105,  out: 0.42  },
+  "gemini/gemini-3.1-flash-lite-preview":    { in: 0.0063, out: 0.0063 },
 } as Record<string, { in: number; out: number }>;
 const ASTRO_CALL_COST_INR = 0.084;
+
+// Credit value for admin tracking only
+const CREDIT_VALUE_INR = 35.98; // ₹1,799 ÷ 50 credits
+
+// ── CREDIT DEDUCTION TIERS (simple rounded numbers) ───────────────────────────
+// Tier 1 — Simple question / follow-up:      1 credit  (₹35.98 revenue vs ~₹5 cost)
+// Tier 2 — Substantive life prediction:       2 credits (₹71.96 revenue vs ~₹8 cost)
+// Users can ask as many questions as credits allow. No daily/monthly limits.
+const TIER_SIMPLE      = 1;  // whole number
+const TIER_SUBSTANTIVE = 2;  // whole number
 
 function calcCostInr(model: string, tokIn: number, tokOut: number): number {
   const p = PRICE[model] || { in: 0.252, out: 1.26 };
@@ -254,10 +264,9 @@ ${chartContext}
       { role: "user" as const, content: message },
     ];
 
-    // ── Route to LLM (Bedrock → Gemini) ──────────────────────────────────────
-    // Dynamic maxTokens: substantive prediction questions get 3500 tokens so the
-    // 3-Layer Date Pincer + full 5-part Grandmaster structure is never truncated.
-    // Short conversational replies (follow-ups, affirmatives) stay lean at 1800.
+    // ── CREDIT TIER DETECTION ────────────────────────────────────────────────────
+    // Tier 1 (1 credit):  short / follow-up / conversational questions
+    // Tier 2 (2 credits): substantive life predictions (marriage, career, wealth etc.)
     const PREDICTION_TOPICS = ['marriage','spouse','partner','career','job','wealth','money',
       'finance','children','child','property','house','land','travel','abroad','foreign',
       'health','sick','illness','business','promotion','education','spiritual','legal',
@@ -266,19 +275,34 @@ ${chartContext}
     const msgLc = message.toLowerCase();
     const isSubstantivePrediction = message.trim().length > 25 &&
       PREDICTION_TOPICS.some(kw => msgLc.includes(kw));
-    const maxTokens = isSubstantivePrediction ? 3500 : 1800;
+
+    const creditsToDeduct = isSubstantivePrediction ? TIER_SUBSTANTIVE : TIER_SIMPLE; // 2 or 1
+    const maxTokens       = isSubstantivePrediction ? 3500 : 1800;
+
+    // Guard: user must have enough credits for this tier
+    if (credits < creditsToDeduct) {
+      return NextResponse.json({
+        error: credits < TIER_SIMPLE
+          ? `You have ${credits} credit${credits === 1 ? '' : 's'} remaining. Please top up to continue.`
+          : `This prediction costs 2 credits. You have ${credits} credit left — enough for a simple follow-up question only.`,
+        creditsRemaining: credits,
+      }, { status: 402 });
+    }
 
     const llmResult = await routeLLM(fullSystemPromptWithSentiment, messages, maxTokens);
 
-    // ── Deduct Credit ─────────────────────────────────────────────────────────
-    const newCredits = Math.max(0, credits - 1);
+    // ── DEDUCT CREDITS (clean whole number) ─────────────────────────────────────
+    const newCredits = Math.max(0, credits - creditsToDeduct); // always whole number
     await supabase
       .from("user_profiles")
       .update({ credits: newCredits })
       .eq("id", user.id);
 
     // ── Log LLM Usage (fire-and-forget) ──────────────────────────────────────
+    // cost_inr     = real INR spent on LLM (for admin actual-cost tracking)
+    // credits_used = whole number deducted from user (1 or 2)
     const costInr = calcCostInr(llmResult.model, llmResult.tokensIn, llmResult.tokensOut);
+    const actualCreditCost = parseFloat((costInr / CREDIT_VALUE_INR).toFixed(4));
     supabaseAdmin.from("token_usage_logs").insert({
       user_id:          user.id,
       model_name:       llmResult.model,
@@ -286,7 +310,7 @@ ${chartContext}
       output_tokens:    llmResult.tokensOut,
       total_tokens:     llmResult.tokensIn + llmResult.tokensOut,
       cost_inr:         costInr.toFixed(6),
-      credits_used:     1,
+      credits_used:     creditsToDeduct,   // 1 or 2 — clean whole number charged to user
       question_preview: message.slice(0, 100),
       usage_type:       isAstroClient ? 'astrologer' : 'user'
     });
@@ -355,8 +379,11 @@ ${chartContext}
       suggestedPrompts,
       marker:           llmResult.model.includes("claude") ? "A" : llmResult.model.includes("pro") ? "B" : "C",
       usage: {
-        tokensIn:  llmResult.tokensIn,
-        tokensOut: llmResult.tokensOut,
+        tokensIn:        llmResult.tokensIn,
+        tokensOut:       llmResult.tokensOut,
+        actualCostInr:   parseFloat(costInr.toFixed(4)),
+        actualCredits:   parseFloat(actualCreditCost.toFixed(4)),  // real cost in credits
+        creditsDeducted: creditsToDeduct,                          // 2× — what user was charged
       },
     });
 
