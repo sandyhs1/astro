@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { getOrBuildChart } from "@/lib/astrology/manager";
 import { routeLLMCached } from "@/lib/astrology/llm-router";
+import { getCurrentGochar, formatGocharForContext } from "@/lib/astrology/gochar";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -209,7 +210,15 @@ export async function POST(req: Request) {
 
     const systemPrompt = buildRemedyPrompt(pName);
 
-    const staticContext = chartContext;
+    // ── Inject live Gochar transits ─────────────────────────────────────────
+    const gochar = getCurrentGochar();
+    const gocharBlock = `
+
+── CURRENT GOCHAR (Live Sidereal Transits — ${gochar.asOf}) ──
+${JSON.stringify(formatGocharForContext(gochar), null, 2)}
+Use these transits to make remedy prescriptions time-aware: identify which houses Saturn, Rahu, and Ketu currently transit for ${pName} from their Lagna, and reference this in explaining WHY each mantra is prescribed NOW.`;
+
+    const staticContext = chartContext + gocharBlock;
     const dynamicInstruction = `Generate the highly potent Tantric Mantra Remedy report for ${pName} now. Follow the exact structural requirements and bans strictly.`;
 
     const llmResult = await routeLLMCached(

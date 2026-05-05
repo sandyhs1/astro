@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { getOrBuildChart } from "@/lib/astrology/manager";
 import { routeLLMCached } from "@/lib/astrology/llm-router";
+import { getCurrentGochar, formatGocharForContext } from "@/lib/astrology/gochar";
 import { astroClient } from "@/lib/astrology/client";
 import { parseBirthParams, geocodePlace, tzStringToFloat } from "@/lib/astrology/client";
 import { computeKarmicEchoes, echoesToPromptString } from "@/lib/astrology/karmic-engine";
@@ -348,8 +349,16 @@ export async function POST(req: Request) {
     // ── Build full chart context ──────────────────────────────────────────────
     const chartContext = buildChartContext(chart as any, pName, d3Raw, d12Raw, d60Raw, echoesStr);
 
+    // ── Inject live Gochar transits ───────────────────────────────────────────
+    const gochar = getCurrentGochar();
+    const gocharBlock = `
+
+── CURRENT GOCHAR (Live Sidereal Transits — ${gochar.asOf}) ──
+${JSON.stringify(formatGocharForContext(gochar), null, 2)}
+Use these transits to specify WHICH karmic patterns are actively triggered right now for ${pName}. State the transit house from Lagna and from Moon for Saturn, Rahu, and Ketu.`;
+
     // ── Call Claude Sonnet 4.6 (Bedrock) with Prompt Caching ─────────────────
-    // staticContext  = large chart + echoes block → cached (saves ~90% tokens on cache hit)
+    // staticContext  = large chart + echoes + gochar block → cached
     // dynamicInstruction = small per-request command  → NOT cached
     const systemPrompt = buildGrandmasterPrompt(
       pName,
@@ -357,8 +366,8 @@ export async function POST(req: Request) {
       chart.dasha.mahadasha  || "Unknown"
     );
 
-    const staticContext     = chartContext;          // the large 16-chart + echoes block
-    const dynamicInstruction = `Generate the complete Karmic Patterns Mapping report for ${pName} now. Use the computed KARMIC ECHOES section above as the primary data source for [THE RECURRING PATTERNS] section. Cite exact planet, sign, house, and chart (D1/D3/D9/D10/D12/D60) references for every claim. Follow the mandatory structure exactly.`;
+    const staticContext      = chartContext + gocharBlock;  // the large 16-chart + echoes + gochar block
+    const dynamicInstruction = `Generate the complete Karmic Patterns Mapping report for ${pName} now. Use the computed KARMIC ECHOES section above as the primary data source for [THE RECURRING PATTERNS] section. Cite exact planet, sign, house, and chart (D1/D3/D9/D10/D12/D60) references for every claim. Reference the CURRENT GOCHAR section to specify which patterns are live RIGHT NOW. Follow the mandatory structure exactly.`;
 
     const llmResult = await routeLLMCached(
       systemPrompt,

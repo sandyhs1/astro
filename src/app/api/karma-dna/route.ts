@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { getOrBuildChart } from "@/lib/astrology/manager";
 import { routeLLM } from "@/lib/astrology/llm-router";
+import { getCurrentGochar, formatGocharForContext } from "@/lib/astrology/gochar";
 import { astroClient } from "@/lib/astrology/client";
 import { parseBirthParams, geocodePlace, tzStringToFloat } from "@/lib/astrology/client";
 
@@ -229,10 +230,18 @@ D60 SHASHTIAMSHA (Soul Karma — Most Precise):
 ${d60Data ? parseHoroChart(d60Data) : "Fetch failed — use D9 + Ketu placement for soul karma"}
 `;
 
+    // ── Inject live Gochar transits ──────────────────────────────────────────
+    const gochar = getCurrentGochar();
+    const gocharBlock = `
+
+── CURRENT GOCHAR (Live Sidereal Transits — ${gochar.asOf}) ──
+${JSON.stringify(formatGocharForContext(gochar), null, 2)}
+Use these transits to identify which houses are currently activated for ${pName} and reference them when discussing karmic clearing timelines.`;
+
     // ── Call Claude 4.6 via Bedrock ────────────────────────────────────────────
     const llmResult = await routeLLM(
       KARMA_DNA_SYSTEM_PROMPT(pName),
-      [{ role: "user", content: `Generate the complete Karma DNA Report for ${pName}.\n\n${chartContext}` }],
+      [{ role: "user", content: `Generate the complete Karma DNA Report for ${pName}.\n\n${chartContext}${gocharBlock}` }],
       4000  // Increased token limit to ensure complete report without cutoff
     );
 

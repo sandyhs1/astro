@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { getOrBuildChart } from "@/lib/astrology/manager";
 import { routeLLM } from "@/lib/astrology/llm-router";
+import { getCurrentGochar, formatGocharForContext } from "@/lib/astrology/gochar";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -208,10 +209,17 @@ D10 LAGNA: ${chart.divisional?.d10?.ascendant ?? "N/A"}
 D10: ${chart.divisional?.d10?.planets?.map((p: any) => `${p.name}:H${p.house}(${p.sign})`).join(" ") ?? "N/A"}
 `;
 
-    // ── Call LLM — increased to 5500 to guarantee completion ──────────────────
+    // ── Inject live Gochar transits ─────────────────────────────────────────
+    const gochar = getCurrentGochar();
+    const gocharBlock = `
+── CURRENT GOCHAR (Live Sidereal Transits — ${gochar.asOf}) ──
+${JSON.stringify(formatGocharForContext(gochar), null, 2)}
+Use these transits to anchor which traits/houses are CURRENTLY under activation for ${pName}. Reference in relevant sections (e.g. if Saturn transits H10, career section is live).`;
+
+    // ── Call LLM — increased to 5500 to guarantee completion ──────────────
     const llmResult = await routeLLM(
       ROYAL_ROAST_SYSTEM_PROMPT(pName),
-      [{ role: "user", content: `Generate the complete Royal Roast for ${pName}. Use the chart data. Be sharp and specific.\n\n${chartContext}` }],
+      [{ role: "user", content: `Generate the complete Royal Roast for ${pName}. Use the chart data. Be sharp and specific.\n\n${chartContext}\n\n${gocharBlock}` }],
       5500
     );
 
