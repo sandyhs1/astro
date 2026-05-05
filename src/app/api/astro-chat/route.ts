@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     const credits = userProfile?.credits ?? 0;
     if (credits <= 0) {
       return NextResponse.json({
-        systemWarning: "🌙 Your Cosmic Credits are depleted. Recharge to continue your destiny reading.",
+        systemWarning: "Your AI Credits are currently depleted. Please top up your credits for immediate access, or wait until your next billing cycle to continue your destiny reading.",
         creditsRemaining: 0,
       });
     }

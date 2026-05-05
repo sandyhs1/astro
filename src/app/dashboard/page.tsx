@@ -387,14 +387,9 @@ export default function DashboardPage() {
 
       const data = await res.json();
       
-      if (!res.ok) {
-        if (res.status === 403 && data.code === 'subscription_required') {
-          setMessages(prev => [...prev, { role: "system", content: "Premium Subscription Required to use this feature. Redirecting to Pricing..." }]);
-          setTimeout(() => router.push('/pricing'), 2000);
-        } else {
+        if (!res.ok) {
           setMessages(prev => [...prev, { role: "system", content: data.error || "An error occurred." }]);
-        }
-      } else {
+        } else {
         if (data.systemWarning) {
            setMessages(prev => [...prev, { role: "system", content: data.systemWarning }]);
         }
