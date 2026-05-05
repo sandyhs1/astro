@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getOrBuildChart } from "@/lib/astrology/manager";
 import { buildClaudeContext, ASTRO_SYSTEM_PROMPT, generateSuggestedPrompts, detectTopic } from "@/lib/astrology/prompts";
 import { routeLLM, gatekeeperCheck } from "@/lib/astrology/llm-router";
+import { getCurrentGochar } from "@/lib/astrology/gochar";
 // Freemius import removed — billing is via Razorpay credits in user_profiles
 
 // Service-role client — bypasses RLS for persistent chat saving
@@ -167,7 +168,9 @@ export async function POST(req: Request) {
 
     // ── Build Grandmaster Context (topic-aware divisional chart injection) ────
     const jyotishTopic = detectTopic(message);
-    const chartContext = buildClaudeContext(chart, pName, jyotishTopic);
+    // Fetch today's live sidereal transit positions (auto-calculated, no manual updates)
+    const gocharSnapshot = getCurrentGochar();
+    const chartContext = buildClaudeContext(chart, pName, jyotishTopic, gocharSnapshot);
 
     // Detect first message — inject Namaste instruction
     const isFirstMessage = !history || history.length === 0;
@@ -240,8 +243,20 @@ ${chartContext}
     ];
 
     // ── Route to LLM (Bedrock → Gemini) ──────────────────────────────────────
-    // maxTokens: 2500 — increased to allow richer storytelling responses without truncation
-    const llmResult = await routeLLM(fullSystemPromptWithSentiment, messages, 2500);
+    // Dynamic maxTokens: substantive prediction questions get 3500 tokens so the
+    // 3-Layer Date Pincer + full 5-part Grandmaster structure is never truncated.
+    // Short conversational replies (follow-ups, affirmatives) stay lean at 1800.
+    const PREDICTION_TOPICS = ['marriage','spouse','partner','career','job','wealth','money',
+      'finance','children','child','property','house','land','travel','abroad','foreign',
+      'health','sick','illness','business','promotion','education','spiritual','legal',
+      'court','debt','vehicle','sibling','parent','divorce','love','relationship','when will',
+      'when do','will i','will i get','will i meet','will i have','when am i','my future'];
+    const msgLc = message.toLowerCase();
+    const isSubstantivePrediction = message.trim().length > 25 &&
+      PREDICTION_TOPICS.some(kw => msgLc.includes(kw));
+    const maxTokens = isSubstantivePrediction ? 3500 : 1800;
+
+    const llmResult = await routeLLM(fullSystemPromptWithSentiment, messages, maxTokens);
 
     // ── Deduct Credit ─────────────────────────────────────────────────────────
     const newCredits = Math.max(0, credits - 1);
