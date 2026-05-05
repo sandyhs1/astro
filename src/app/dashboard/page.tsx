@@ -590,16 +590,10 @@ export default function DashboardPage() {
           </div>
           
           <div className="flex items-center gap-6">
-            {/* Freemius Subscription Badge */}
-            {entitlement ? (
-              <button onClick={() => router.push('/accounts')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 text-white text-xs font-bold shadow-sm shadow-amber-200">
-                <Sparkles size={14} /> Premium
-              </button>
-            ) : (
-              <button onClick={() => router.push('/pricing')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition-colors">
-                Subscribe
-              </button>
-            )}
+            {/* Account & Billing Button */}
+            <button onClick={() => router.push('/accounts')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition-colors shadow-sm">
+              Account
+            </button>
 
             {/* Credits badge + Topup button */}
             <div className="flex items-center gap-2">
