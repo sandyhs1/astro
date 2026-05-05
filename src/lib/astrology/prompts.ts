@@ -59,21 +59,21 @@ export type JyotishTopic = "marriage"|"career"|"children"|"property"|"siblings"|
 
 export function detectTopic(message: string): JyotishTopic {
   const m = message.toLowerCase();
-  if (/marriag|spouse|partner|husband|wife|love|relation|d9|navamsh/.test(m)) return "marriage";
+  if (/marriag|spouse|partner|husband|wife|love|relation|d9|navamsh|cheat|affair|sex|fantasy|desire|secret|intimacy|kink/.test(m)) return "marriage";
   if (/career|job|work|business|profession|d10|dashamsh|office|salary/.test(m)) return "career";
-  if (/child|baby|pregnan|son|daughter|progeny|d7|saptamsh/.test(m)) return "children";
+  if (/child|baby|pregnan|son|daughter|progeny|d7|saptamsh|ivf|fertil|conceiv/.test(m)) return "children";
   if (/property|home|house|land|real.estate|d4|chaturtham/.test(m)) return "property";
   if (/sibling|brother|sister|courage|d3|drekkana/.test(m)) return "siblings";
-  if (/wealth|financ|money|income|d2|hora/.test(m)) return "wealth";
+  if (/wealth|financ|money|income|debt|d2|hora/.test(m)) return "wealth";
   if (/vehicle|car|comfort|luxury|d16|shodash/.test(m)) return "vehicle";
   if (/spirit|moksha|liberation|god|puja|meditation|d20|vimsh/.test(m)) return "spiritual";
-  if (/educat|study|degree|learning|d24/.test(m)) return "education";
+  if (/educat|study|degree|learning|exam|d24/.test(m)) return "education";
   if (/strength|weakness|fatal|d27|bhamsh/.test(m)) return "strength";
-  if (/suffer|misfortun|evil|d30|trimsham/.test(m)) return "suffering";
+  if (/suffer|misfortun|evil|accident|tragedy|trauma|d30|trimsham/.test(m)) return "suffering";
   if (/mother|maternal|d40|khaved/.test(m)) return "maternal";
-  if (/father|paternal|d45|akshaved/.test(m)) return "paternal";
+  if (/father|paternal|pitru|dosh|curse|ancestor|d45|akshaved/.test(m)) return "paternal";
   if (/soul|past.life|karma|d60|shashti/.test(m)) return "soul";
-  if (/health|illness|disease|sick|body/.test(m)) return "health";
+  if (/health|illness|disease|sick|body|surgery|hospital/.test(m)) return "health";
   return "general";
 }
 

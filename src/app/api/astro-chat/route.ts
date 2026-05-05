@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { getOrBuildChart } from "@/lib/astrology/manager";
 import { buildClaudeContext, ASTRO_SYSTEM_PROMPT, generateSuggestedPrompts, detectTopic } from "@/lib/astrology/prompts";
+import { buildPredictionContext } from "@/lib/astrology/prediction-engine";
 import { routeLLM, gatekeeperCheck } from "@/lib/astrology/llm-router";
 import { getCurrentGochar } from "@/lib/astrology/gochar";
 // Freemius import removed — billing is via Razorpay credits in user_profiles
@@ -193,6 +194,7 @@ export async function POST(req: Request) {
     // Fetch today's live sidereal transit positions (auto-calculated, no manual updates)
     const gocharSnapshot = getCurrentGochar();
     const chartContext = buildClaudeContext(chart, pName, jyotishTopic, gocharSnapshot);
+    const predictionContext = buildPredictionContext(chart, jyotishTopic, message);
 
     // Detect first message — inject Namaste instruction
     const isFirstMessage = !history || history.length === 0;
@@ -202,8 +204,10 @@ export async function POST(req: Request) {
       
     const genderContext = `\n[GENDER CONTEXT: The native is ${gender}. Adapt the Vedic astrological interpretations, relationship karakas, and timeline predictions accordingly.]\n`;
 
-    // Full system prompt = persona + cached chart data
+    // Full system prompt = persona + prediction engine + cached chart data
     const fullSystemPrompt = `${ASTRO_SYSTEM_PROMPT}${namasteInstruction}${genderContext}
+
+${predictionContext}
 
 ═══════════════════════════════════════════════════════════════
 VERIFIED CHART DATA — ${pName} (${gender})
