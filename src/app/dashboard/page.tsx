@@ -500,7 +500,7 @@ export default function DashboardPage() {
 
   return (
     <PaymentGate>
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-indigo-200 selection:text-indigo-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-indigo-200 selection:text-indigo-900 overflow-x-hidden">
       
       {/* Profile Modal - Light Theme */}
       {showProfileModal && (
@@ -613,14 +613,14 @@ export default function DashboardPage() {
       {/* Header - Light & Clean */}
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => router.push("/")}>
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
                <Sparkles size={16} className="text-indigo-600" />
             </div>
-            <span className="font-bold text-lg tracking-tight text-slate-900">Quantum <span className="text-indigo-600">Karma</span></span>
+            <span className="hidden sm:inline font-bold text-lg tracking-tight text-slate-900">Quantum <span className="text-indigo-600">Karma</span></span>
           </div>
           
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 sm:gap-6">
             {/* Account & Billing Button */}
             <button onClick={() => router.push('/accounts')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition-colors shadow-sm">
               Account
@@ -649,8 +649,8 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="flex items-center gap-4 border-l border-slate-200 pl-6">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-4 border-l border-slate-200 pl-2 sm:pl-6">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <div className="text-right hidden md:block">
                   <div className="text-sm font-semibold text-slate-900">{displayName}</div>
                   <div className="text-xs text-indigo-600 font-medium">Seeker</div>
@@ -661,9 +661,11 @@ export default function DashboardPage() {
               </div>
               <button 
                 onClick={handleSignOut} 
-                className="px-4 py-2 ml-2 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-bold transition-all shadow-sm"
+                className="px-2 sm:px-4 py-1.5 sm:py-2 ml-1 sm:ml-2 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-bold transition-all shadow-sm flex items-center justify-center"
+                title="Sign Out"
               >
-                Sign Out
+                <span className="hidden sm:inline">Sign Out</span>
+                <LogOut size={14} className="sm:hidden" />
               </button>
             </div>
           </div>
@@ -672,7 +674,8 @@ export default function DashboardPage() {
 
       {/* Main Layout - Light Theme */}
       {/* ── Mobile Bottom Tab Bar (hidden on md+) ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 flex items-stretch h-16 safe-area-bottom">
+      {/* pr-[70px] reserves right-side space so Intercom widget doesn't block the Remedy button */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 flex items-stretch h-16 safe-area-bottom pr-[70px]">
         <button onClick={() => { setActiveFeature("chat"); }} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "chat" ? "text-indigo-600" : "text-slate-400"}`}>
           <MessageCircle size={20} /><span>Oracle</span>
         </button>
@@ -896,9 +899,9 @@ export default function DashboardPage() {
                          setShowProfileModal(true);
                       }
                     }}
-                    className="md:hidden text-[10px] bg-indigo-50 text-indigo-600 font-bold px-2 py-0.5 rounded border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                    className="md:hidden text-[11px] bg-indigo-600 text-white font-bold px-3 py-1.5 rounded-md shadow-sm hover:bg-indigo-700 transition-colors flex items-center gap-1 ml-1"
                   >
-                    Edit
+                    ✏️ Edit Profile
                   </button>
                 </div>
               </div>
