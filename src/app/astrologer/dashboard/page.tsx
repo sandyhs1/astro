@@ -58,7 +58,7 @@ export default function AstrologerDashboard() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Form State
-  const [formData, setFormData] = useState({ name: '', dob: '', tob: '', pob: '', gender: 'Male', consultation_fee: 0 });
+  const [formData, setFormData] = useState({ name: '', dob: '', tob: '', pob: '', gender: 'male', consultation_fee: 0 });
   const [searchQuery, setSearchQuery] = useState('');
   
   // Chat State
@@ -272,7 +272,7 @@ export default function AstrologerDashboard() {
       setClients([data, ...clients]);
       setActiveClientId(data.id);
       setShowAddClient(false);
-      setFormData({ name: '', dob: '', tob: '', pob: '', gender: 'Male', consultation_fee: 0 });
+      setFormData({ name: '', dob: '', tob: '', pob: '', gender: 'male', consultation_fee: 0 });
       toast.success('Client added successfully');
       setIsMobileMenuOpen(false);
     } catch (error: any) {
@@ -682,7 +682,7 @@ export default function AstrologerDashboard() {
                            dob: activeClient.dob, 
                            tob: activeClient.tob, 
                            pob: activeClient.pob,
-                           gender: activeClient.gender || 'Male',
+                           gender: activeClient.gender || 'male',
                            consultation_fee: activeClient.consultation_fee || 0
                          });
                          setShowEditClient(true);
@@ -1032,9 +1032,9 @@ export default function AstrologerDashboard() {
                   <div>
                     <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Gender</label>
                     <select required value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#FFD700]/50 focus:ring-1 focus:ring-[#FFD700]/50 outline-none transition-all appearance-none">
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
                     </select>
                   </div>
                 </div>
@@ -1134,9 +1134,9 @@ export default function AstrologerDashboard() {
                   <div>
                     <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Gender</label>
                     <select required value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#FFD700]/50 focus:ring-1 focus:ring-[#FFD700]/50 outline-none transition-all appearance-none">
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
                     </select>
                   </div>
                 </div>
