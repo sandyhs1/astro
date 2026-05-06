@@ -36,7 +36,8 @@ export default function DashboardPage() {
     relationship: "Self",
     dob: "",
     tob: "",
-    pob: ""
+    pob: "",
+    gender: "male"
   });
   const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
@@ -308,6 +309,7 @@ export default function DashboardPage() {
           dob: formData.dob,
           tob: formData.tob,
           pob: formData.pob,
+          gender: formData.gender,
           timezone: "+05:30"
         }).eq("id", existingProfile.id).select().single();
       } else {
@@ -318,6 +320,7 @@ export default function DashboardPage() {
           dob: formData.dob,
           tob: formData.tob,
           pob: formData.pob,
+          gender: formData.gender,
           timezone: "+05:30"
         }).select().single();
       }
@@ -331,7 +334,7 @@ export default function DashboardPage() {
           setFamilyProfiles(prev => [...prev, data]);
         }
         setShowProfileModal(false);
-        setFormData({ name: "", relationship: "Self", dob: "", tob: "", pob: "" });
+        setFormData({ name: "", relationship: "Self", dob: "", tob: "", pob: "", gender: "male" });
         if (modalType === "self") {
            setActiveProfileId(data.id);
         }
@@ -502,7 +505,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3 mb-2">
               <Sparkles className="text-indigo-600" size={20} />
               <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                {modalType === "self" ? "Cosmic Identity" : "Add Bond"}
+                {modalType === "self" ? "Your Identity" : "Add Bond"}
               </h2>
             </div>
             <p className="text-sm text-slate-500 mb-8">
@@ -510,9 +513,19 @@ export default function DashboardPage() {
             </p>
             
             <form onSubmit={handleSaveProfile} className="space-y-5">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Full Name</label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400" placeholder="e.g. John Doe" />
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Full Name</label>
+                  <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400" placeholder="e.g. John Doe" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Gender</label>
+                  <select required value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 transition-all">
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
               </div>
               
               {modalType === "family" && (
@@ -571,6 +584,15 @@ export default function DashboardPage() {
                     ))}
                   </ul>
                 )}
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
+                <p className="text-[11px] font-semibold text-amber-800 uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                  <span className="text-sm">⚠️</span> Caution
+                </p>
+                <p className="text-xs text-amber-700 leading-relaxed">
+                  Please verify and double-check all details before saving. Vedic astrology requires absolute precision—even a 5-minute error in your time of birth can completely alter your chart and predictions.
+                </p>
               </div>
 
               <div className="flex gap-4 pt-6">
@@ -691,7 +713,7 @@ export default function DashboardPage() {
                 </button>
                 {selfProfile && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); setModalType("self"); setFormData({ name: selfProfile.name, relationship: "Self", dob: selfProfile.dob, tob: selfProfile.tob, pob: selfProfile.pob }); setShowProfileModal(true); }}
+                    onClick={(e) => { e.stopPropagation(); setModalType("self"); setFormData({ name: selfProfile.name, relationship: "Self", dob: selfProfile.dob, tob: selfProfile.tob, pob: selfProfile.pob, gender: selfProfile.gender || 'male' }); setShowProfileModal(true); }}
                     className="absolute right-1.5 top-1.5 p-1 text-slate-400 hover:text-indigo-600 bg-white hover:bg-indigo-50 border border-slate-200 rounded shadow-sm transition-all z-10"
                     title="Edit Details"
                   >
@@ -710,7 +732,7 @@ export default function DashboardPage() {
                     {fp.name}
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setModalType("family"); setFormData({ name: fp.name, relationship: fp.relationship, dob: fp.dob, tob: fp.tob, pob: fp.pob }); setShowProfileModal(true); }}
+                    onClick={(e) => { e.stopPropagation(); setModalType("family"); setFormData({ name: fp.name, relationship: fp.relationship, dob: fp.dob, tob: fp.tob, pob: fp.pob, gender: fp.gender || 'male' }); setShowProfileModal(true); }}
                     className="absolute right-1.5 top-2 p-1 text-slate-400 hover:text-indigo-600 bg-white hover:bg-indigo-50 border border-slate-200 rounded shadow-sm transition-all z-10"
                     title="Edit Details"
                   >
@@ -720,7 +742,7 @@ export default function DashboardPage() {
               ))}
               {/* Add Bond */}
               <button
-                onClick={() => { setModalType("family"); setFormData({ name: "", relationship: "Spouse", dob: "", tob: "", pob: "" }); setShowProfileModal(true); }}
+                onClick={() => { setModalType("family"); setFormData({ name: "", relationship: "Spouse", dob: "", tob: "", pob: "", gender: "male" }); setShowProfileModal(true); }}
                 className="w-full text-[11px] font-bold text-slate-400 hover:text-indigo-600 py-2 rounded-lg border border-dashed border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all flex items-center justify-center gap-1.5 mt-1"
               >
                 + Add Bond
