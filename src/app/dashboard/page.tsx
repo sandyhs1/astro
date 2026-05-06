@@ -50,10 +50,8 @@ export default function DashboardPage() {
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
   const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast">("chat");
   
-  const DEFAULT_WELCOME = "Namaste. I am your Quantum Karma Astrologer. How may I illuminate your path today?";
-
   const [messages, setMessages] = useState<{role: "user" | "assistant" | "system", content: string, marker?: string}[]>([
-    { role: "assistant", content: DEFAULT_WELCOME, marker: "A" }
+    { role: "assistant", content: "Hey there, I am your Quantum Karma Astrologer...", marker: "A" }
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -148,6 +146,9 @@ export default function DashboardPage() {
     async function loadChatHistory() {
       if (!user) return;
 
+      const userFirstName = profile?.full_name?.split(' ')[0] || user?.email?.split("@")[0] || "Seeker";
+      const welcomeMsg = `Hey ${userFirstName}, I am your Quantum Karma Astrologer. What brings you here today? Ask away all your questions—I'm here to uncover the deepest truths of your chart just for you.`;
+
       // Always resolve to the actual UUID — same logic as the API
       let targetId: string | null = null;
       if (activeProfileId === "self") {
@@ -158,7 +159,7 @@ export default function DashboardPage() {
       }
 
       if (!targetId) {
-        setMessages([{ role: "assistant", content: DEFAULT_WELCOME }]);
+        setMessages([{ role: "assistant", content: welcomeMsg }]);
         setHistoryLoaded(true);
         return;
       }
@@ -182,21 +183,21 @@ export default function DashboardPage() {
             }
             return { role: m.role as "user" | "assistant" | "system", content: text, marker: mkr };
           });
-          setMessages([{ role: "assistant", content: DEFAULT_WELCOME }, ...loaded]);
+          setMessages([{ role: "assistant", content: welcomeMsg }, ...loaded]);
           const lastUserMsg = [...loaded].reverse().find(m => m.role === "user");
           if (lastUserMsg) updateChipsFromContext(lastUserMsg.content);
         } else {
-          setMessages([{ role: "assistant", content: DEFAULT_WELCOME }]);
+          setMessages([{ role: "assistant", content: welcomeMsg }]);
           setSuggestionChips(INITIAL_CHIPS);
         }
       } catch (err) {
         console.error("Failed to load chat history:", err);
-        setMessages([{ role: "assistant", content: DEFAULT_WELCOME }]);
+        setMessages([{ role: "assistant", content: welcomeMsg }]);
       }
       setHistoryLoaded(true);
     }
     loadChatHistory();
-  }, [activeProfileId, familyProfiles, user]);
+  }, [activeProfileId, familyProfiles, user, profile?.full_name]);
 
   // Geocode all profiles exactly ONCE when familyProfiles loads
   // Stores { pob → { lat, lon } } to avoid hitting Nominatim per-feature
@@ -461,8 +462,11 @@ export default function DashboardPage() {
         throw new Error(data.error || "Failed to clear chat");
       }
 
+      const userFirstName = profile?.full_name?.split(' ')[0] || user?.email?.split("@")[0] || "Seeker";
+      const welcomeMsg = `Hey ${userFirstName}, I am your Quantum Karma Astrologer. What brings you here today? Ask away all your questions—I'm here to uncover the deepest truths of your chart just for you.`;
+
       // Reset local messages state
-      setMessages([{ role: "assistant", content: DEFAULT_WELCOME }]);
+      setMessages([{ role: "assistant", content: welcomeMsg }]);
       setSuggestionChips(INITIAL_CHIPS);
     } catch (err) {
       console.error("Failed to clear chat:", err);

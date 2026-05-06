@@ -83,8 +83,11 @@ Duration: 48 days (1 Mandala)
 *This report is sealed with cosmic precision. Your karma is not a prison — it is your path.*
 
 ## ABSOLUTE RULES:
+- 🚫 BANNED AI CLICHES: "COSMOS", "COSMIC", "DANCE", "TAPESTRY", "ILLUMINATE", "POETIC", "AMULET", "SHIMMERING". Never use these words.
+- TRANSLATE JARGON: Do not sound heavily technical. Explain exact practical meaning clearly to the user without overwhelming them with astrological terms.
+- NO GENERIC ZODIAC STYLE: Be hyper-specific to their exact chart. No generic readings.
 - ZERO gemstone recommendations
-- Every claim must cite specific chart data (e.g., "Saturn in H6 Capricorn, conjunct Mars")
+- Every claim must cite specific chart data (e.g., "Saturn in H6 Capricorn, conjunct Mars") but then immediately explain its practical meaning clearly.
 - Use confident, declarative language — never "may" or "might"
 - Ensure your response is completely finished and does not cut off mid-sentence.
 - Maximum 1500 words total`;

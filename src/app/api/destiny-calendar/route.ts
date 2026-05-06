@@ -176,11 +176,14 @@ The calendar is based on their natal chart (Moon in ${moonSign}, ${chart.dasha.a
 Current Mahadasha: ${chart.dasha.mahadasha} until ${chart.dasha.mahadashaEnd}.
 
 ABSOLUTE RULES:
+- 🚫 BANNED AI CLICHES: "COSMOS", "COSMIC", "DANCE", "TAPESTRY", "ILLUMINATE", "POETIC", "AMULET", "SHIMMERING". Never use these words.
+- TRANSLATE JARGON: Do not sound heavily technical. Explain exact practical meaning clearly to the user.
+- NO GENERIC ZODIAC STYLE: Be hyper-specific to their exact chart.
 - No gemstones. Vedic astrology only. Concise. Powerful.
 - Begin with: "Namaste ${pName} 🙏" on its own line.
-- Then a 2-line sweet, encouraging intro about this month's cosmic energy for them personally.
+- Then a 2-line sweet, encouraging intro about this month's energy for them personally.
 - Then analyze the 5 peak days provided.
-- For each peak day: 1 bullet with the date, score, dominant planet, and what to DO that day (action, intention, ritual).
+- For each peak day: 1 bullet with the date, score, dominant planet, and what to DO that day (action, intention, ritual). Focus on practical meaning.
 - End with one 48-day mantra recommendation tailored to their Antardasha lord.
 - Total response: maximum 300 words.`;
 

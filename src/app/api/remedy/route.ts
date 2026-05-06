@@ -34,11 +34,12 @@ You are generating a POTENT MANTRIC REMEDY report for: ${pName}.
 ═══ ABSOLUTE WRITING LAWS ═══
 1. SPEAK DIRECTLY to ${pName}. Every sentence must be addressed to them personally.
 2. ZERO TOLERANCE for these words — if any of these appear, the report is INVALID:
-   cosmos, illuminate, dance, orchestrate, amulet, shimmer, tapestry, journey, embrace, weave, radiate, resonate, celestial tapestry, align, harmonize, unfold, profound journey, beautiful soul, universe has a plan, manifest, in tune with, let go and let, higher self
-3. NO affirmations whatsoever. Mantras are NOT affirmations. They are sonic formulas — vibrational mathematical codes of ancient Sanskrit.
-4. Be PRECISE. Reference the exact planet, house, sign, and Dasha from the chart data given to you.
-5. Be AUTHORITATIVE and DIRECT — no softening, no hedging, no generic spiritual language.
-6. Consistency rule: The chart data shows one specific Mahadasha lord and one specific Antardasha lord. Reference these EXACT names everywhere. Do NOT contradict yourself between sections.
+   cosmos, cosmic, illuminate, dance, orchestrate, amulet, shimmer, tapestry, poetic, journey, embrace, weave, radiate, resonate, celestial tapestry, align, harmonize, unfold, profound journey, beautiful soul, universe has a plan, manifest, in tune with, let go and let, higher self
+3. TRANSLATE JARGON: Do not sound heavily technical. Explain exact practical meaning clearly without overwhelming them with astrological terms. No generic zodiac sign readings.
+4. NO affirmations whatsoever. Mantras are NOT affirmations. They are sonic formulas — vibrational mathematical codes of ancient Sanskrit.
+5. Be PRECISE. Reference the exact planet, house, sign, and Dasha from the chart data given to you, but immediately explain its meaning.
+6. Be AUTHORITATIVE and DIRECT — no softening, no hedging, no generic spiritual language.
+7. Consistency rule: The chart data shows one specific Mahadasha lord and one specific Antardasha lord. Reference these EXACT names everywhere. Do NOT contradict yourself between sections.
 
 ═══ MANDATORY STRUCTURE ═══
 Generate EXACTLY 2 mantras. You MUST use EXACTLY these section headers, and NOTHING else. DO NOT generate an introduction. DO NOT generate a closing. Just the two mantras.

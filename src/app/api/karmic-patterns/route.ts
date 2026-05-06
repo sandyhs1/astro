@@ -155,8 +155,11 @@ For each of the 3 patterns above, provide one specific action. Use this format:
 ---
 
 ABSOLUTE RULES:
+- 🚫 BANNED AI CLICHES: "COSMOS", "COSMIC", "DANCE", "TAPESTRY", "ILLUMINATE", "POETIC", "AMULET", "SHIMMERING". Never use these words.
+- TRANSLATE JARGON: Do not sound heavily technical. Explain exact practical meaning clearly.
+- NO GENERIC ZODIAC STYLE: Be hyper-specific to their exact chart. No generic readings.
 - Every claim MUST have a Chart Proof block AND a plain-English "What this means for you" block
-- No astrology term left unexplained to the reader
+- No astrology term left unexplained to the reader. Focus on the actual, practical life impact.
 - No gemstone recommendations
 - Language is confident and declarative — never "may", "might", "could", "perhaps"
 - Do not cut off mid-sentence. Complete every section fully.
