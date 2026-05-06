@@ -250,7 +250,7 @@ export default function AstrologerDashboard() {
           tob: formData.tob,
           pob: formData.pob,
           gender: formData.gender,
-          // consultation_fee: formData.consultation_fee, // Requires consultation_fee column in Supabase
+          consultation_fee: formData.consultation_fee,
           timezone: '+05:30'
         }])
         .select()
@@ -281,6 +281,7 @@ export default function AstrologerDashboard() {
           tob: formData.tob,
           pob: formData.pob,
           gender: formData.gender,
+          consultation_fee: formData.consultation_fee,
         })
         .eq('id', activeClient.id);
 
