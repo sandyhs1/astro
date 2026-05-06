@@ -265,20 +265,25 @@ export default function DashboardPage() {
     
     setIsSearchingLocation(true);
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`, {
-        headers: {
-          "User-Agent": "QuantumKarma/1.0 (contact@quantumkarma.tech)"
-        }
-      });
+      // Use Photon API (Komoot) which is built on Elasticsearch for perfect typeahead
+      const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`);
       const data = await res.json();
-      if (data && data.length > 0) {
-        // Map nominatim results to the expected UI structure
-        const suggestions = data.map((item: any) => ({
-          Name: item.display_name,
-          lat: item.lat,
-          lon: item.lon
-        }));
-        setLocationSuggestions(suggestions);
+      if (data && data.features && data.features.length > 0) {
+        // Map Photon GeoJSON results to the expected UI structure
+        const suggestions = data.features.map((feature: any) => {
+          const props = feature.properties;
+          const nameParts = [props.name, props.state, props.country].filter(Boolean);
+          return {
+            Name: nameParts.join(', '),
+            lat: feature.geometry.coordinates[1], // GeoJSON is [lon, lat]
+            lon: feature.geometry.coordinates[0]
+          };
+        });
+        
+        // Deduplicate suggestions by Name
+        const uniqueSuggestions = Array.from(new Map(suggestions.map((item: any) => [item.Name, item])).values());
+        
+        setLocationSuggestions(uniqueSuggestions as any[]);
         setShowSuggestions(true);
       } else {
         setLocationSuggestions([]);
@@ -628,8 +633,11 @@ export default function DashboardPage() {
                   {displayName.charAt(0).toUpperCase()}
                 </div>
               </div>
-              <button onClick={handleSignOut} className="p-2 text-slate-400 hover:text-slate-900 transition-colors">
-                <LogOut size={18} />
+              <button 
+                onClick={handleSignOut} 
+                className="px-4 py-2 ml-2 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-bold transition-all shadow-sm"
+              >
+                Sign Out
               </button>
             </div>
           </div>
@@ -683,11 +691,11 @@ export default function DashboardPage() {
                 </button>
                 {selfProfile && (
                   <button
-                    onClick={() => { setModalType("self"); setFormData({ name: selfProfile.name, relationship: "Self", dob: selfProfile.dob, tob: selfProfile.tob, pob: selfProfile.pob }); setShowProfileModal(true); }}
-                    className="absolute right-1.5 top-1.5 p-1 text-slate-300 hover:text-indigo-500 rounded-md opacity-0 group-hover:opacity-100 transition-all"
-                    title="Edit"
+                    onClick={(e) => { e.stopPropagation(); setModalType("self"); setFormData({ name: selfProfile.name, relationship: "Self", dob: selfProfile.dob, tob: selfProfile.tob, pob: selfProfile.pob }); setShowProfileModal(true); }}
+                    className="absolute right-1.5 top-1.5 p-1 text-slate-400 hover:text-indigo-600 bg-white hover:bg-indigo-50 border border-slate-200 rounded shadow-sm transition-all z-10"
+                    title="Edit Details"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                   </button>
                 )}
               </div>
@@ -702,11 +710,11 @@ export default function DashboardPage() {
                     {fp.name}
                   </button>
                   <button
-                    onClick={() => { setModalType("family"); setFormData({ name: fp.name, relationship: fp.relationship, dob: fp.dob, tob: fp.tob, pob: fp.pob }); setShowProfileModal(true); }}
-                    className="absolute right-1.5 top-2 p-1 text-slate-300 hover:text-indigo-500 rounded-md opacity-0 group-hover:opacity-100 transition-all"
-                    title="Edit"
+                    onClick={(e) => { e.stopPropagation(); setModalType("family"); setFormData({ name: fp.name, relationship: fp.relationship, dob: fp.dob, tob: fp.tob, pob: fp.pob }); setShowProfileModal(true); }}
+                    className="absolute right-1.5 top-2 p-1 text-slate-400 hover:text-indigo-600 bg-white hover:bg-indigo-50 border border-slate-200 rounded shadow-sm transition-all z-10"
+                    title="Edit Details"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                   </button>
                 </div>
               ))}

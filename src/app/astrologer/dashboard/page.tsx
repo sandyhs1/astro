@@ -110,10 +110,21 @@ export default function AstrologerDashboard() {
     const timer = setTimeout(async () => {
       setIsSearchingPob(true);
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formData.pob)}&limit=5`);
+        // Use Photon API (Komoot) which is built on Elasticsearch for perfect typeahead
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(formData.pob)}&limit=5`);
         const data = await res.json();
-        const suggestions = data.map((item: any) => item.display_name);
-        setPobSuggestions(suggestions);
+        if (data && data.features) {
+          const suggestions = data.features.map((feature: any) => {
+            const props = feature.properties;
+            const nameParts = [props.name, props.state, props.country].filter(Boolean);
+            return nameParts.join(', ');
+          });
+          // Deduplicate
+          const uniqueSuggestions = Array.from(new Set(suggestions));
+          setPobSuggestions(uniqueSuggestions);
+        } else {
+          setPobSuggestions([]);
+        }
       } catch (error) {
         console.error('POB search failed:', error);
       } finally {
@@ -378,11 +389,13 @@ export default function AstrologerDashboard() {
       lon = geocoordCache[activeClient.pob].lon;
     } else {
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(activeClient.pob)}&limit=1`);
+        // Use Photon API for robust geocoding
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(activeClient.pob)}&limit=1`);
         const data = await res.json();
-        if (data && data[0]) {
-          const parsedLat = parseFloat(data[0].lat);
-          const parsedLon = parseFloat(data[0].lon);
+        if (data && data.features && data.features[0]) {
+          // Photon returns coordinates as [lon, lat]
+          const parsedLat = data.features[0].geometry.coordinates[1];
+          const parsedLon = data.features[0].geometry.coordinates[0];
           lat = parsedLat;
           lon = parsedLon;
           setGeocoordCache(prev => ({...prev, [activeClient.pob]: {lat: parsedLat, lon: parsedLon}}));
@@ -543,8 +556,10 @@ export default function AstrologerDashboard() {
             
             {/* User Bottom Area */}
             <div className="p-4 border-t border-white/10">
-               <button onClick={() => supabase.auth.signOut().then(() => window.location.href='/astrologer/auth')} className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
-                 <LogOut className="w-4 h-4" />
+               <button 
+                 onClick={() => supabase.auth.signOut().then(() => window.location.href='/astrologer/auth')} 
+                 className="w-full flex justify-center items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+               >
                  Sign Out
                </button>
             </div>
