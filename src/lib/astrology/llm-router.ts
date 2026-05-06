@@ -156,24 +156,33 @@ export async function routeLLMCached(
   dynamicInstruction: string,
   maxTokens = 5000
 ): Promise<LLMResponse & { usedFallback: boolean }> {
+  // Primary: combine context into single message for Gemini 3.1 Pro
+  const combinedMessage = `${staticContext}\n\n${dynamicInstruction}`;
+  try {
+    const result = await routeLLM(
+      systemPrompt,
+      [{ role: "user", content: combinedMessage }],
+      maxTokens
+    );
+    // routeLLM already tries Gemini first, so we just return it
+    if (!result.usedFallback) return { ...result, usedFallback: false };
+  } catch (err: any) {
+    console.warn(`⚠️ [LLM-CACHED] Gemini via routeLLM failed: ${err.message?.slice(0, 100)}`);
+  }
+
+  // Fallback: Bedrock with prompt caching
   if (hasBedRockCreds()) {
     try {
       const result = await callBedrockCached(systemPrompt, staticContext, dynamicInstruction, maxTokens);
       console.log(`✅ [LLM-CACHED] Bedrock ${BEDROCK_MODEL} [in:${result.tokensIn} out:${result.tokensOut}]`);
-      return { ...result, usedFallback: false };
+      return { ...result, usedFallback: true };
     } catch (err: any) {
-      console.warn(`⚠️ [LLM-CACHED] Bedrock cached call failed: ${err.message?.slice(0, 100)} → falling back to standard routeLLM`);
+      console.warn(`⚠️ [LLM-CACHED] Bedrock cached call failed: ${err.message?.slice(0, 100)}`);
     }
   }
 
-  // Fallback: combine context into single message for Gemini
-  const combinedMessage = `${staticContext}\n\n${dynamicInstruction}`;
-  const result = await routeLLM(
-    systemPrompt,
-    [{ role: "user", content: combinedMessage }],
-    maxTokens
-  );
-  return { ...result };
+  // Last Resort fallback handled inside routeLLM if called again or just return a default
+  return await routeLLM(systemPrompt, [{ role: "user", content: combinedMessage }], maxTokens);
 }
 
 // ─── Fallback: Gemini 3.1 Pro ─────────────────────────────────────────────────
@@ -241,24 +250,24 @@ export async function routeLLM(
   maxTokens = 2000
 ): Promise<LLMResponse & { usedFallback: boolean }> {
 
-  // PRIMARY: Bedrock (only if IAM keys present)
+  // PRIMARY: Gemini 3.1 Pro
+  try {
+    const result = await callGeminiPro(systemPrompt, messages, maxTokens);
+    console.log(`✅ [LLM] Gemini 3.1 Pro [in:${result.tokensIn} out:${result.tokensOut}]`);
+    return { ...result, usedFallback: false };
+  } catch (err: any) {
+    console.warn(`⚠️ [LLM] Gemini Pro failed: ${err.message?.slice(0, 80)} → switching to Bedrock/Claude`);
+  }
+
+  // FALLBACK: Bedrock (Claude Sonnet 4.6)
   if (hasBedRockCreds()) {
     try {
       const result = await callBedrock(systemPrompt, messages, maxTokens);
       console.log(`✅ [LLM] Bedrock ${BEDROCK_MODEL} [in:${result.tokensIn} out:${result.tokensOut}]`);
-      return { ...result, usedFallback: false };
+      return { ...result, usedFallback: true };
     } catch (err: any) {
-      console.warn(`⚠️ [LLM] Bedrock failed: ${err.message?.slice(0, 100)} → switching to Gemini`);
+      console.warn(`⚠️ [LLM] Bedrock failed: ${err.message?.slice(0, 100)} → Flash fallback`);
     }
-  }
-
-  // FALLBACK: Gemini 3.1 Pro
-  try {
-    const result = await callGeminiPro(systemPrompt, messages, maxTokens);
-    console.log(`✅ [LLM] Gemini 3.1 Pro [in:${result.tokensIn} out:${result.tokensOut}]`);
-    return { ...result, usedFallback: !hasBedRockCreds() };
-  } catch (err: any) {
-    console.warn(`⚠️ [LLM] Gemini Pro failed: ${err.message?.slice(0, 80)} → Flash fallback`);
   }
 
   // LAST RESORT: Gemini Flash Lite
