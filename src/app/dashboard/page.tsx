@@ -694,7 +694,7 @@ export default function DashboardPage() {
       </nav>
 
       {/* Main Layout */}
-      <main className="flex-1 w-full mx-auto pl-0 pr-3 md:pr-6 pt-3 md:pt-6 pb-16 md:pb-6 flex flex-col md:flex-row gap-0 md:gap-5 md:h-[calc(100vh-64px)]">
+      <main className="flex-1 w-full mx-auto px-0 md:pl-0 md:pr-6 pt-0 md:pt-6 pb-16 md:pb-6 flex flex-col md:flex-row gap-0 md:gap-5 md:h-[calc(100vh-64px)] bg-slate-50 md:bg-transparent">
         
         {/* Sidebar — flush to left edge, narrow, clean */}
         <aside className="hidden md:flex md:w-52 flex-shrink-0 flex-col gap-3 overflow-y-auto pl-3 md:pl-5">
@@ -853,7 +853,7 @@ export default function DashboardPage() {
         </aside>
 
         {/* Main Chat Interface - Light Theme Redesign */}
-        <section className="flex-1 w-full flex flex-col bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden relative min-h-0">
+        <section className="flex-1 w-full flex flex-col bg-white md:rounded-2xl md:border md:border-slate-200 md:shadow-lg overflow-hidden relative min-h-0">
 
           {/* Daily Briefing Widget — always visible at top */}
           <DailyBriefingWidget profileId={activeProfileId} />
@@ -885,7 +885,22 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
               <div className="flex flex-col">
-                <h1 className="font-semibold text-sm text-slate-800">Reading: {activeProfileName}</h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-semibold text-sm text-slate-800">Reading: {activeProfileName}</h1>
+                  <button 
+                    onClick={() => {
+                      const p = activeProfileId === "self" ? familyProfiles.find(fp => fp.relationship === "Self") : familyProfiles.find(fp => fp.id === activeProfileId);
+                      if (p) {
+                         setModalType(p.relationship === "Self" ? "self" : "family");
+                         setFormData({ name: p.name, relationship: p.relationship, dob: p.dob, tob: p.tob, pob: p.pob, gender: p.gender || 'male' });
+                         setShowProfileModal(true);
+                      }
+                    }}
+                    className="md:hidden text-[10px] bg-indigo-50 text-indigo-600 font-bold px-2 py-0.5 rounded border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                  >
+                    Edit
+                  </button>
+                </div>
               </div>
             </div>
             
@@ -900,7 +915,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Messages Area */}
-          <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-3 md:px-6 lg:px-8 py-4 md:py-6 space-y-6 md:space-y-8 custom-scrollbar">
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 md:py-6 space-y-6 md:space-y-8 custom-scrollbar">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex flex-col animate-fade-in ${msg.role === "system" ? "items-center" : msg.role === "user" ? "items-end" : "items-start"}`}>
                 
