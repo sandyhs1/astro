@@ -58,10 +58,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "This promo code has already been used." }, { status: 409 });
     }
 
-    // ── Mark code as used ────────────────────────────────────────────────────
+    // ── Mark code as used and capture user details ───────────────────────────
+    // First fetch the user's name and email from user_profiles
+    const { data: profile } = await supabaseAdmin
+      .from("user_profiles")
+      .select("full_name, email")
+      .eq("id", user.id)
+      .single();
+
+    const userName = profile?.full_name || user.user_metadata?.full_name || user.email;
+    const userEmail = profile?.email || user.email;
+
     const { error: markError } = await supabaseAdmin
       .from("promo_codes")
-      .update({ used_by: user.id, used_at: new Date().toISOString() })
+      .update({ 
+        used_by: user.id, 
+        used_at: new Date().toISOString(),
+        used_by_name: userName,
+        used_by_email: userEmail
+      })
       .eq("id", promo.id)
       .is("used_by", null); // Double-check still unused (race condition guard)
 
