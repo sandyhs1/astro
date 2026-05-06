@@ -16,6 +16,7 @@ type GateState =
   | "plan1_form"     // Plan 1 paid → show intake form
   | "plan1_success"  // Plan 1 form submitted → final thank you
   | "plan2_success"  // Plan 2 paid → unblurred (gate hidden)
+  | "promo_success"  // Promo applied successfully
   | "open";          // previously paid, gate bypassed
 
 interface PaymentGateProps {
@@ -125,6 +126,12 @@ export default function PaymentGate({ children }: PaymentGateProps) {
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
   const [paying, setPaying] = useState(false); // immediate button feedback
+
+  // ── Promo Code State ────────────────────────────────────────────────────────
+  const [promoCode, setPromoCode] = useState("");
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoSuccessMessage, setPromoSuccessMessage] = useState("");
 
   // ── Intake form state ──────────────────────────────────────────────────────
   const [intakeForm, setIntakeForm] = useState({
@@ -390,6 +397,45 @@ export default function PaymentGate({ children }: PaymentGateProps) {
     }
   }
 
+  // ── Apply Promo Code ───────────────────────────────────────────────────────
+  async function handleApplyPromo(e: React.FormEvent) {
+    e.preventDefault();
+    if (!promoCode.trim()) return;
+    
+    setPromoError(null);
+    setIsApplyingPromo(true);
+    
+    try {
+      const res = await fetch("/api/apply-promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ promoCode })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setPromoError(data.error || "Failed to apply promo code");
+        return;
+      }
+      
+      // Success!
+      fireConfetti("plan2");
+      setPromoSuccessMessage(data.message);
+      setGateState("promo_success");
+      
+      // Auto reload after 3.5 seconds
+      setTimeout(() => {
+        window.location.reload();
+      }, 3500);
+      
+    } catch (err: any) {
+      setPromoError("Network error. Please try again.");
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  }
+
   // ── Shared form styles ─────────────────────────────────────────────────────
   const labelStyle: React.CSSProperties = {
     display: "block",
@@ -440,6 +486,54 @@ export default function PaymentGate({ children }: PaymentGateProps) {
           </div>
           <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em" }}>
             50 CREDITS LOADED · LOADING YOUR DASHBOARD...
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Promo Code Success — hyper personalized flash ─────────────────────────
+  if (gateState === "promo_success") {
+    return (
+      <div className="min-h-screen bg-[#050507] flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Glow behind modal */}
+        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "40vw", height: "40vw", background: "radial-gradient(circle, rgba(0,229,255,0.15) 0%, transparent 70%)", filter: "blur(40px)", pointerEvents: "none" }} />
+        
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          style={{ 
+            textAlign: "center", 
+            padding: "48px",
+            background: "#0A0A12",
+            border: "1px solid rgba(0, 229, 255, 0.4)",
+            boxShadow: "0 0 50px rgba(0, 229, 255, 0.15)",
+            borderRadius: "24px",
+            position: "relative",
+            zIndex: 10,
+            maxWidth: 600,
+            width: "100%"
+          }}
+        >
+          <div style={{ fontSize: 64, marginBottom: 24, filter: "drop-shadow(0 0 10px rgba(255,215,0,0.5))" }}>✨</div>
+          
+          <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: "clamp(2rem, 5vw, 3rem)", color: "#FFFFFF", marginBottom: 16, lineHeight: 1.1 }}>
+            Welcome to the<br />
+            <span style={{ color: "#00E5FF", fontWeight: 700 }}>Quantum Karma Inner Circle</span>
+          </div>
+          
+          <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: "2rem", color: "#FFD700", marginBottom: 24, fontStyle: "italic" }}>
+            {userName ? userName.split(' ')[0] : 'Initiate'}
+          </div>
+          
+          <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(0,229,255,0.5), transparent)", marginBottom: 24 }} />
+          
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.9)", letterSpacing: "0.15em", marginBottom: 8, textTransform: "uppercase" }}>
+            {promoSuccessMessage}
+          </div>
+          
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: "0.2em", marginTop: 24 }}>
+            LOADING YOUR DASHBOARD...
           </div>
         </motion.div>
       </div>
@@ -972,7 +1066,50 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                 </div>
               )}
 
-              <div style={{ marginTop: 14, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.08em" }}>
+              {/* Promo Code Input */}
+              <div style={{ marginTop: 24, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                <form onSubmit={handleApplyPromo} style={{ display: "flex", gap: 8, maxWidth: 320, margin: "0 auto" }}>
+                  <input
+                    type="text"
+                    placeholder="ENTER PROMO CODE"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    style={{
+                      ...inputStyle,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.15em",
+                      textAlign: "center"
+                    }}
+                  />
+                  <motion.button
+                    type="submit"
+                    disabled={isApplyingPromo || !promoCode.trim()}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      padding: "0 20px",
+                      background: "rgba(0,229,255,0.1)",
+                      border: "1px solid rgba(0,229,255,0.3)",
+                      color: "#00E5FF",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: "10px",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      cursor: (isApplyingPromo || !promoCode.trim()) ? "not-allowed" : "pointer",
+                      opacity: (isApplyingPromo || !promoCode.trim()) ? 0.5 : 1,
+                    }}
+                  >
+                    {isApplyingPromo ? "..." : "APPLY"}
+                  </motion.button>
+                </form>
+                {promoError && (
+                  <div style={{ textAlign: "center", marginTop: 8, fontFamily: "'IBM Plex Mono', monospace", fontSize: "10px", color: "#FF5E3A" }}>
+                    {promoError}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginTop: 24, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.08em" }}>
                 SECURED BY {currency === "INR" ? "RAZORPAY" : "FREEMIUS"} · 256-BIT SSL ENCRYPTION · PAYMENTS NEVER STORED ON OUR SERVERS
               </div>
             </motion.div>
