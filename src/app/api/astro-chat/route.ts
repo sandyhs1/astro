@@ -7,6 +7,7 @@ import { buildClaudeContext, ASTRO_SYSTEM_PROMPT, generateSuggestedPrompts, dete
 import { buildPredictionContext } from "@/lib/astrology/prediction-engine";
 import { routeLLM, gatekeeperCheck } from "@/lib/astrology/llm-router";
 import { getCurrentGochar } from "@/lib/astrology/gochar";
+import { getRelevantScriptures } from "@/lib/astrology/rag";
 // Freemius import removed — billing is via Razorpay credits in user_profiles
 
 // Service-role client — bypasses RLS for persistent chat saving
@@ -196,6 +197,9 @@ export async function POST(req: Request) {
     const chartContext = buildClaudeContext(chart, pName, jyotishTopic, gocharSnapshot);
     const predictionContext = buildPredictionContext(chart, jyotishTopic, message);
 
+    // ── RAG: Fetch Authoritative Scriptural References ────────────────────────
+    const scripturalReferences = await getRelevantScriptures(message);
+
     // Detect first message — inject Namaste instruction
     const isFirstMessage = !history || history.length === 0;
     const namasteInstruction = isFirstMessage
@@ -203,6 +207,14 @@ export async function POST(req: Request) {
       : "";
       
     const genderContext = `\n[GENDER CONTEXT: The native is ${gender}. Adapt the Vedic astrological interpretations, relationship karakas, and timeline predictions accordingly.]\n`;
+
+    const antiHallucinationInstruction = `
+═══════════════════════════════════════════════════════════════
+MANDATORY PREDICTION LAWS (ANTI-HALLUCINATION)
+═══════════════════════════════════════════════════════════════
+1. You MUST use the Scriptural References provided above if they exist. 
+2. NEVER hallucinate or assume astrological rules. If a rule contradicts another, use your profound logical judgment as a Grand Master, but explicitly state your reasoning based on the provided texts.
+3. Your predictions must be flawlessly accurate, citing solid proofs and logic from the provided texts and the verified chart data.`;
 
     // Full system prompt = persona + prediction engine + cached chart data
     const fullSystemPrompt = `${ASTRO_SYSTEM_PROMPT}${namasteInstruction}${genderContext}
@@ -213,7 +225,9 @@ ${predictionContext}
 VERIFIED CHART DATA — ${pName} (${gender})
 ═══════════════════════════════════════════════════════════════
 ${chartContext}
-═══════════════════════════════════════════════════════════════`;
+═══════════════════════════════════════════════════════════════
+${scripturalReferences}
+${antiHallucinationInstruction}`;
 
     // ── Sentiment Detection — 4-State Emotional Calibration ──────────────────
     // Detects the user's primary emotional state and injects the appropriate
