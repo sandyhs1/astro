@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Users, Plus, MessageCircle, Star, Search, CheckCircle2, MoreVertical, LogOut, Navigation, Menu, X, Trash2, Edit } from 'lucide-react';
@@ -78,6 +78,14 @@ export default function AstrologerDashboard() {
 
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
   
   const [geocoordCache, setGeocoordCache] = useState<Record<string, { lat: number; lon: number }>>({});
 
@@ -376,6 +384,9 @@ export default function AstrologerDashboard() {
 
     const userMessage = input.trim();
     setInput('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsTyping(true);
 
@@ -981,13 +992,16 @@ export default function AstrologerDashboard() {
             <div className="shrink-0 p-4 bg-[#0A0A12] border-t border-white/10">
               <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto relative flex items-end gap-2 bg-black/40 border border-white/10 rounded-2xl p-2 transition-all focus-within:border-[#FFD700]/50 focus-within:ring-1 focus-within:ring-[#FFD700]/50">
                 <textarea
+                  ref={textareaRef}
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  onChange={(e) => { setInput(e.target.value); autoResize(); }}
                   placeholder={`Generate reading for ${activeClient?.name}...`}
-                  className="w-full bg-transparent text-white placeholder-gray-500 resize-none py-3 px-4 focus:outline-none max-h-32 min-h-[52px]"
+                  className="w-full bg-transparent text-white placeholder-gray-500 resize-none py-3 px-4 focus:outline-none custom-scrollbar"
+                  style={{ maxHeight: "300px", minHeight: "52px", overflowY: "auto" }}
                   rows={1}
+                  data-lenis-prevent="true"
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                       e.preventDefault();
                       handleSendMessage();
                     }

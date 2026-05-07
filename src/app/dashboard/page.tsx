@@ -1025,15 +1025,16 @@ export default function DashboardPage() {
                 value={input}
                 onChange={e => { setInput(e.target.value); autoResize(); }}
                 onKeyDown={e => {
-                  // Enter sends, Shift+Enter inserts newline
-                  if (e.key === "Enter" && !e.shiftKey) {
+                  // Cmd/Ctrl+Enter sends, Enter inserts newline
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                     e.preventDefault();
                     handleSendMessage();
                   }
                 }}
                 placeholder={(!selfProfile && activeProfileId === "self") ? "Setup profile to begin..." : "Message Quantum Oracle..."}
                 className="w-full bg-transparent text-slate-900 placeholder-slate-400 pl-4 pr-14 py-3.5 focus:outline-none text-[15px] font-medium resize-none leading-relaxed"
-                style={{ maxHeight: "140px", overflowY: "auto" }}
+                style={{ maxHeight: "300px", overflowY: "auto" }}
+                data-lenis-prevent="true"
                 disabled={isTyping || (!selfProfile && activeProfileId === "self")}
               />
               <button
