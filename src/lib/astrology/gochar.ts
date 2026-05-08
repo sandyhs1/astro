@@ -23,25 +23,38 @@
  */
 
 // ── Anchor Epoch ─────────────────────────────────────────────────────────────
-// Sidereal (Lahiri ayanamsa) positions as of May 5, 2026 12:00 IST.
-// These are verified Vedic sidereal degrees (not tropical).
-// Epoch: May 5, 2026
+// Sidereal (Lahiri ayanamsa) positions as of May 8, 2026 12:00 IST.
+// ⚠️  VERIFIED against DrikPanchang, JaganNath Hora, Komilla.com, AstroSage.
+// Previous epoch (May 5 2026) had WRONG values — Jupiter was at 52° (Taurus)
+// and Saturn at 328° (Aquarius), which are 2023–2024 positions, NOT 2026.
+// DO NOT update these manually — update EPOCH_DATE and recalculate from sources.
+// Epoch: May 8, 2026
 
-const EPOCH_DATE = new Date(2026, 4, 5, 12, 0, 0); // month is 0-indexed
+const EPOCH_DATE = new Date(2026, 4, 8, 12, 0, 0); // month is 0-indexed; May 8, 2026 12:00 IST
 
 // Full sidereal degree (0–360) at epoch
 // Sign mapping: Aries=0–30, Taurus=30–60, Gemini=60–90, Cancer=90–120,
 //               Leo=120–150, Virgo=150–180, Libra=180–210, Scorpio=210–240,
 //               Sagittarius=240–270, Capricorn=270–300, Aquarius=300–330, Pisces=330–360
+//
+// VERIFIED POSITIONS (May 8, 2026 — Lahiri sidereal):
+//   Sun:     23° Aries       → 23.0°   absolute   [Source: DrikPanchang]
+//   Mars:    27° Pisces      → 357.0°  absolute   [Source: DrikPanchang]
+//   Mercury: 15.5° Aries     → 15.5°   absolute   [Source: DrikPanchang]
+//   Jupiter: 25°48' Gemini   → 85.8°   absolute   [Source: JaganNath Hora, Zodii.in]
+//   Venus:   22.5° Taurus    → 52.5°   absolute   [Source: DrikPanchang]
+//   Saturn:  15° Pisces      → 345.0°  absolute   [Source: DrikPanchang, Komilla]
+//   Rahu:    11° Aquarius    → 311.0°  absolute   [Source: DrikPanchang — mean node]
+//   Ketu:    11° Leo         → 131.0°  absolute   [Source: DrikPanchang — mean node]
 const EPOCH_DEGREES: Record<string, number> = {
-  Sun:     15.0,   // ~15° Aries
-  Mars:    95.0,   // ~5° Cancer (debilitated)
-  Mercury: 12.0,   // ~12° Aries
-  Jupiter: 52.0,   // ~22° Taurus
-  Venus:   350.0,  // ~20° Pisces (exalted)
-  Saturn:  328.0,  // ~28° Aquarius (own sign)
-  Rahu:    352.0,  // ~22° Pisces (mean node — always retrograde)
-  Ketu:    172.0,  // ~22° Virgo  (mean node — always retrograde)
+  Sun:     23.0,   // 23° Aries
+  Mars:    357.0,  // 27° Pisces
+  Mercury: 15.5,   // ~15.5° Aries
+  Jupiter: 85.8,   // ~25°48' Gemini — Punarvasu 2nd Pada (direct)
+  Venus:   52.5,   // ~22.5° Taurus
+  Saturn:  345.0,  // ~15° Pisces
+  Rahu:    311.0,  // ~11° Aquarius (mean node — always retrograde)
+  Ketu:    131.0,  // ~11° Leo     (mean node — always retrograde)
   // Moon intentionally omitted: it changes sign every ~2.25 days.
   // The LLM uses the NATAL Moon for transit house calculations, which is
   // the correct Vedic method (Chandra Vedha). Current Moon is not needed.
@@ -202,16 +215,20 @@ export function formatGocharForContext(g: GocharSnapshot): object {
 
     TRANSIT_SIGNIFICANCE: {
       Jupiter: "H1/H5/H7/H9/H11 from Lagna or Moon = major positive expansion. "
-             + "H6/H8/H12 = obstruction, spiritual testing, or hidden growth.",
+             + "H6/H8/H12 = obstruction, spiritual testing, or hidden growth. "
+             + "Jupiter transits Cancer (exalted) from ~June 2026 — peak blessing period.",
       Saturn:  "Sade Sati active when Saturn transits H12, H1, or H2 from natal Moon. "
+             + "Saturn in Pisces (now): check which natal house Pisces is for this native. "
              + "Saturn in H10 from Lagna = career peak pressure or career consolidation. "
              + "Saturn in H11 = income gains after sustained effort.",
-      Rahu:    "Activates whichever natal house Pisces falls in for this native. "
+      Rahu:    "Rahu currently transiting Aquarius (Kumbha). "
+             + "Activates whichever natal house Aquarius falls in for this native. "
              + "Rahu house = obsessive new-territory ambition this 18-month cycle.",
-      Ketu:    "Activates whichever natal house Virgo falls in for this native. "
+      Ketu:    "Ketu currently transiting Leo (Simha). "
+             + "Activates whichever natal house Leo falls in for this native. "
              + "Ketu house = release, detachment, and harvesting past-life mastery.",
       Mars:    "Transiting Mars ignites action, conflict, or energy in its transit house. "
-             + "Mars in Cancer is debilitated — emotional aggression, check natal 4th/7th matters.",
+             + "Mars in Pisces: spiritual warrior energy; check 12th/4th house matters.",
     },
 
     IGNITION_RULES_BY_TOPIC: {
