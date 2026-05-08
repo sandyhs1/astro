@@ -987,9 +987,9 @@ export default function AstrologerDashboard() {
           )}
         </div>
 
-          {/* Input Area */}
+          {/* Input Area — pr-[88px] on mobile pushes form left of Intercom widget */}
           {activeClientId && activeTab === 'chat' && (
-            <div className="shrink-0 p-4 bg-[#0A0A12] border-t border-white/10">
+            <div className="shrink-0 p-4 pr-[88px] md:pr-4 bg-[#0A0A12] border-t border-white/10">
               <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto relative flex items-end gap-2 bg-black/40 border border-white/10 rounded-2xl p-2 transition-all focus-within:border-[#FFD700]/50 focus-within:ring-1 focus-within:ring-[#FFD700]/50">
                 <textarea
                   ref={textareaRef}
