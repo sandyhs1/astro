@@ -18,6 +18,8 @@ import TopupModal from "./components/TopupModal";
 import DetailsPanel from "./components/DetailsPanel";
 import RoyalRoast from "./components/RoyalRoast";
 import DailyBriefingWidget from "./components/DailyBriefingWidget";
+import YourGotra from "./components/YourGotra";
+import IshtaDevata from "./components/IshtaDevata";
 
 
 export default function DashboardPage() {
@@ -48,7 +50,7 @@ export default function DashboardPage() {
   const [geocodingReady, setGeocodingReady] = useState(false);
 
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
-  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast">("chat");
+  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast" | "gotra" | "ishta-devata">("chat");
   
   const [messages, setMessages] = useState<{role: "user" | "assistant" | "system", content: string, marker?: string}[]>([
     { role: "assistant", content: "Hey there, I am your Quantum Karma Astrologer...", marker: "A" }
@@ -688,6 +690,12 @@ export default function DashboardPage() {
         <button onClick={() => setActiveFeature("royal-roast")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "royal-roast" ? "text-orange-500" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🔥</span><span>Roast</span>
         </button>
+        <button onClick={() => setActiveFeature("gotra")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "gotra" ? "text-amber-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">🕉️</span><span>Gotra</span>
+        </button>
+        <button onClick={() => setActiveFeature("ishta-devata")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "ishta-devata" ? "text-indigo-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">🙏</span><span>Devata</span>
+        </button>
         <button onClick={() => setActiveFeature("roadmap")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "roadmap" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🗺️</span><span>Roadmap</span>
         </button>
@@ -826,6 +834,28 @@ export default function DashboardPage() {
                 {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
               </button>
 
+              {/* Your Gotra */}
+              <button onClick={() => setActiveFeature("gotra")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "gotra" ? "bg-amber-50 text-amber-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🕉️</span> Your Gotra</span>
+                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                  activeFeature === "gotra" ? "bg-amber-200/60 text-amber-800" : "bg-amber-100 text-amber-600"
+                }`}>NEW</span>
+              </button>
+
+              {/* Ishta Devata */}
+              <button onClick={() => setActiveFeature("ishta-devata")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "ishta-devata" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🙏</span> Ishta Devata</span>
+                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                  activeFeature === "ishta-devata" ? "bg-indigo-200/60 text-indigo-800" : "bg-indigo-100 text-indigo-600"
+                }`}>NEW</span>
+              </button>
+
               {/* Separator */}
               <div className="h-px bg-slate-100 my-1" />
 
@@ -877,6 +907,22 @@ export default function DashboardPage() {
           {/* Royal Roast Panel */}
           {activeFeature === "royal-roast" && (
             <RoyalRoast
+              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+              profileName={activeProfileName}
+            />
+          )}
+
+          {/* Your Gotra Panel */}
+          {activeFeature === "gotra" && (
+            <YourGotra
+              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+              profileName={activeProfileName}
+            />
+          )}
+
+          {/* Ishta Devata Panel */}
+          {activeFeature === "ishta-devata" && (
+            <IshtaDevata
               profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
               profileName={activeProfileName}
             />

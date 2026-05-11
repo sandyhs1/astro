@@ -10,6 +10,7 @@ import remarkGfm from 'remark-gfm';
 import DeepCompatibilityWorkspace from '@/components/features/DeepCompatibilityWorkspace';
 import { formatDate } from '@/lib/utils/format';
 import RoyalRoast from '@/app/dashboard/components/RoyalRoast';
+import YourGotra from '@/app/dashboard/components/YourGotra';
 
 interface AstrologerClient {
   id: string;
@@ -67,7 +68,7 @@ export default function AstrologerDashboard() {
   ]);
   const [input, setInput] = useState('');
   const [pobSuggestions, setPobSuggestions] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'chat' | 'notes' | 'timeline' | 'comparison' | 'revenue' | 'compatibility-tool' | 'royal-roast'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'notes' | 'timeline' | 'comparison' | 'revenue' | 'compatibility-tool' | 'royal-roast' | 'gotra'>('chat');
   const [clientNotes, setClientNotes] = useState<string>('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [timelineData, setTimelineData] = useState<any>(null);
@@ -510,6 +511,22 @@ export default function AstrologerDashboard() {
                 <Users className="w-4 h-4 text-[#FFD700]" />
                 Deep Compatibility
               </button>
+              <button 
+                onClick={() => {
+                  setActiveClientId(null);
+                  setActiveTab('gotra');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center justify-center gap-2 py-3 px-4 border rounded-xl text-sm font-medium transition-colors ${
+                  activeTab === 'gotra' && !activeClientId
+                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' 
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 text-gray-300'
+                }`}
+              >
+                <span className="text-base leading-none">🕉️</span>
+                <span>Gotra Lookup</span>
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 ml-1">NEW</span>
+              </button>
             </div>
 
             <div className="px-4 mb-2">
@@ -676,6 +693,14 @@ export default function AstrologerDashboard() {
                >
                  <span className="text-base leading-none">🔥</span>
                  <span className="text-[10px] font-bold uppercase tracking-widest hidden lg:inline">Roast</span>
+               </button>
+               <button 
+                 onClick={() => setActiveTab('gotra')}
+                 className={`p-2 rounded-md transition-all flex items-center gap-2 ${activeTab === 'gotra' ? 'bg-amber-500/20 text-amber-400' : 'text-gray-400 hover:text-white'}`}
+                 title="Gotra Lookup"
+               >
+                 <span className="text-base leading-none">🕉️</span>
+                 <span className="text-[10px] font-bold uppercase tracking-widest hidden lg:inline">Gotra</span>
                </button>
              </div>
           )}
@@ -1023,6 +1048,10 @@ export default function AstrologerDashboard() {
             </div>
               )}
             </>
+          ) : activeTab === 'gotra' ? (
+            <div className="absolute inset-0 overflow-y-auto custom-scrollbar">
+              <YourGotra />
+            </div>
           ) : activeTab === 'compatibility-tool' ? (
             <div className="absolute inset-0 overflow-y-auto custom-scrollbar p-6">
               <DeepCompatibilityWorkspace />
