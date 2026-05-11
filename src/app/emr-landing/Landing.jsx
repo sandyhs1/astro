@@ -1707,7 +1707,7 @@ const FamilyOffice = () => {
                 </div>
 
                 {/* message stream */}
-                <div className="relative p-6 md:p-8 min-h-[540px] flex flex-col gap-5">
+                <div className="relative p-6 md:p-8 h-[850px] sm:h-[700px] md:h-[600px] flex flex-col gap-5">
                   {CHAT_SCRIPT.slice(0, step).map((m, i) => (
                     <motion.div
                       key={i}
