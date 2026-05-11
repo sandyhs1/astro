@@ -2458,7 +2458,7 @@ const ScrollProgress = () => {
 /* Landing Assembly                                                    */
 /* ------------------------------------------------------------------ */
 export const Landing = () => (
-  <div className="relative bg-[#050507] text-white">
+  <div className="emr-landing-root relative bg-[#050507] text-white overflow-x-hidden">
     <CursorGlow />
     <ScrollProgress />
     <Navbar />

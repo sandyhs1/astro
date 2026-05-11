@@ -48,6 +48,21 @@ body {
   box-sizing: border-box;
 }
 
+/* Mobile horizontal overflow safety net — prevents ANY element from
+   creating a horizontal scrollbar on any page of the app.
+   Does NOT affect desktop layout (min-width: 768px is untouched). */
+@media (max-width: 767px) {
+  html {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  body {
+    overflow-x: hidden;
+    max-width: 100%;
+    position: relative; /* required for overflow-x: hidden to work on body in iOS Safari */
+  }
+}
+
 /* Reusable UI Components */
 @layer components {
   .chat-container {

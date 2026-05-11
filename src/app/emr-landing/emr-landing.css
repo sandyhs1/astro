@@ -18,6 +18,49 @@
 
 /* Base html/body styles handled by Next.js layout */
 
+/* ═══════════════════════════════════════════════════════════
+   MOBILE HORIZONTAL OVERFLOW FIX
+   Root cause: aurora blobs (620-720px, positioned -10% to -20%),
+   marquee whitespace-nowrap, and large serif headings bleed past
+   viewport on mobile. This fix is mobile-only — zero desktop impact.
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  /* Landing root wrapper — clip all child overflow */
+  .emr-landing-root {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  /* Every section must be contained within viewport width */
+  .emr-landing-root section,
+  .emr-landing-root footer,
+  .emr-landing-root header {
+    max-width: 100vw;
+    overflow-x: clip;
+  }
+  /* Aurora blobs overflow their containing sections — clip them */
+  .aurora-blob {
+    max-width: 100vw !important;
+  }
+  /* Marquee must be clipped, not scroll the page */
+  .marquee-track,
+  .marquee-track-fast {
+    will-change: transform;
+  }
+  /* Prevent shimmer text (whitespace-nowrap cycling words) from overflowing */
+  .shimmer-text {
+    white-space: normal;
+    word-break: break-word;
+  }
+  /* Large hero h1 clamp on mobile */
+  #hero h1 {
+    overflow: hidden;
+  }
+}
+
 ::selection {
   background: var(--accent-coral);
   color: var(--bg-void);
