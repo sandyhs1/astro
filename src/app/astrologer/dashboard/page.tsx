@@ -594,6 +594,17 @@ export default function AstrologerDashboard() {
           .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
           .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
           .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 215, 0, 0.3); }
+          /* ── Quantum Karma computation loader animations ────────────────────── */
+          @keyframes qk-phase-in {
+            from { opacity: 0; transform: translateX(-10px); }
+            to   { opacity: 1; transform: translateX(0);     }
+          }
+          @keyframes qk-progress {
+            0%   { width: 12%; margin-left: 0%;  }
+            50%  { width: 55%; margin-left: 22%; }
+            100% { width: 12%; margin-left: 0%;  }
+          }
+          .qk-progress-bar { animation: qk-progress 2.8s ease-in-out infinite; }
         `}</style>
 
         {/* Top Bar Context */}
@@ -768,10 +779,56 @@ export default function AstrologerDashboard() {
                   ))}
                   {isTyping && (
                     <div className="flex justify-start">
-                      <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-5 py-4 flex items-center gap-2">
-                         <div className="w-2 h-2 rounded-full bg-[#FFD700]/50 animate-bounce" />
-                         <div className="w-2 h-2 rounded-full bg-[#FFD700]/50 animate-bounce" style={{ animationDelay: '0.2s' }} />
-                         <div className="w-2 h-2 rounded-full bg-[#FFD700]/50 animate-bounce" style={{ animationDelay: '0.4s' }} />
+                      <div className="max-w-[90%] sm:max-w-[80%] rounded-2xl rounded-tl-sm p-5 shadow-xl" style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.06) 0%, rgba(255,255,255,0.04) 100%)', border: '1px solid rgba(255,215,0,0.2)' }}>
+
+                        {/* Live pulse header */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="relative flex h-2.5 w-2.5 shrink-0">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FFD700] opacity-50" />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FFD700]" />
+                          </span>
+                          <span className="text-[10px] font-black text-[#FFD700] uppercase tracking-[0.18em]">Live Cosmic Computation</span>
+                        </div>
+
+                        {/* Personalised headline */}
+                        <p className="text-sm font-bold text-white mb-1">
+                          Unlocking {activeClient?.name?.split(' ')[0]}&apos;s cosmic blueprint...
+                        </p>
+                        <p className="text-[11px] text-gray-400 leading-relaxed mb-4">
+                          Cross-referencing 16 divisional charts, all Dasha layers,
+                          karmic echoes &amp; live Gochar transit triggers.
+                        </p>
+
+                        {/* Computation phases — stagger-reveal via CSS */}
+                        <div className="space-y-2 mb-4">
+                          {[
+                            { icon: '📐', text: 'Scanning all 16 divisional charts (D1 → D60)' },
+                            { icon: '⚡', text: 'Computing Vimshottari · Yogini · Char Dasha layers' },
+                            { icon: '🔮', text: 'Cross-referencing D60 soul blueprint & karmic echoes' },
+                            { icon: '🌍', text: 'Injecting live Gochar transit triggers' },
+                            { icon: '✨', text: 'Applying grandmaster-level synthesis & proof citations' },
+                          ].map((item, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-2 text-[11px] text-gray-300 font-medium"
+                              style={{ animation: `qk-phase-in 0.45s cubic-bezier(0.16,1,0.3,1) both`, animationDelay: `${i * 0.65}s` }}
+                            >
+                              <span className="text-sm leading-none shrink-0">{item.icon}</span>
+                              <span>{item.text}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Animated progress bar */}
+                        <div className="h-0.5 bg-white/10 rounded-full overflow-hidden mb-3">
+                          <div className="h-full rounded-full qk-progress-bar" style={{ background: 'linear-gradient(90deg, #FFD700, #FDB931, #FFD700)' }} />
+                        </div>
+
+                        {/* Footer notice */}
+                        <p className="text-[10px] text-gray-500 flex items-center gap-1.5">
+                          <span>⏱️</span>
+                          <span>Keep this window open · Precision analysis may take up to 60 seconds</span>
+                        </p>
                       </div>
                     </div>
                   )}

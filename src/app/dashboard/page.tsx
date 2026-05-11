@@ -959,15 +959,62 @@ export default function DashboardPage() {
             ))}
 
             {isTyping && (
-              <div className="flex gap-4 animate-fade-in w-full max-w-[85%]">
-                <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0 mt-1">
-                   <MessageCircle size={20} className="text-indigo-600" />
+              <div className="flex gap-3 animate-fade-in w-full">
+                <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-shrink-0 mt-1 shrink-0">
+                  <MessageCircle size={20} className="text-indigo-600" />
                 </div>
-                <div className="flex-1 pt-3">
-                  <div className="flex items-center gap-1.5 text-indigo-400">
-                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-slate-800 mb-2">Quantum Oracle</div>
+                  <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50/70 border border-indigo-100 rounded-2xl rounded-tl-sm p-4 md:p-5 shadow-sm">
+
+                    {/* Live pulse header */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="relative flex h-2.5 w-2.5 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-70" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500" />
+                      </span>
+                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.18em]">Live Cosmic Computation</span>
+                    </div>
+
+                    {/* Personalised headline */}
+                    <p className="text-sm font-bold text-slate-800 mb-1">
+                      Unlocking your blueprint, {displayName.split(' ')[0]}...
+                    </p>
+                    <p className="text-[11px] text-slate-500 leading-relaxed mb-4">
+                      Your question is being cross-referenced across 16 divisional charts,
+                      all active Dasha layers, karmic echoes &amp; live planetary transits.
+                    </p>
+
+                    {/* Computation phases — stagger-reveal via CSS */}
+                    <div className="space-y-2 mb-4">
+                      {[
+                        { icon: '📐', text: 'Scanning all 16 divisional charts (D1 → D60)' },
+                        { icon: '⚡', text: 'Computing Vimshottari · Yogini · Char Dasha layers' },
+                        { icon: '🔮', text: 'Cross-referencing D60 soul blueprint & karmic echoes' },
+                        { icon: '🌍', text: 'Injecting live Gochar transit triggers' },
+                        { icon: '✨', text: 'Applying grandmaster-level synthesis & proof citations' },
+                      ].map((item, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 text-[11px] text-slate-600 font-medium"
+                          style={{ animation: `qk-phase-in 0.45s cubic-bezier(0.16,1,0.3,1) both`, animationDelay: `${i * 0.65}s` }}
+                        >
+                          <span className="text-sm leading-none shrink-0">{item.icon}</span>
+                          <span>{item.text}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Animated progress bar */}
+                    <div className="h-1 bg-indigo-100 rounded-full overflow-hidden mb-3">
+                      <div className="h-full rounded-full qk-progress-bar" style={{ background: 'linear-gradient(90deg, #6366f1, #a855f7, #6366f1)' }} />
+                    </div>
+
+                    {/* Footer notice */}
+                    <p className="text-[10px] text-slate-400 flex items-center gap-1.5">
+                      <span>⏱️</span>
+                      <span>Please keep this window open &middot; Precision analysis may take up to 60 seconds</span>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1097,6 +1144,19 @@ export default function DashboardPage() {
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
           }
+        }
+        /* ── Quantum Karma computation loader animations ─────────────────────── */
+        @keyframes qk-phase-in {
+          from { opacity: 0; transform: translateX(-10px); }
+          to   { opacity: 1; transform: translateX(0);     }
+        }
+        @keyframes qk-progress {
+          0%   { width: 12%; margin-left: 0%;  }
+          50%  { width: 55%; margin-left: 22%; }
+          100% { width: 12%; margin-left: 0%;  }
+        }
+        .qk-progress-bar {
+          animation: qk-progress 2.8s ease-in-out infinite;
         }
       `}} />
 
