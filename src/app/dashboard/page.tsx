@@ -20,7 +20,7 @@ import RoyalRoast from "./components/RoyalRoast";
 import DailyBriefingWidget from "./components/DailyBriefingWidget";
 import YourGotra from "./components/YourGotra";
 import IshtaDevata from "./components/IshtaDevata";
-
+import LifeJournal from "./components/LifeJournal";
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -50,7 +50,7 @@ export default function DashboardPage() {
   const [geocodingReady, setGeocodingReady] = useState(false);
 
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
-  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast" | "gotra" | "ishta-devata">("chat");
+  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast" | "gotra" | "ishta-devata" | "journal">("chat");
   
   const [messages, setMessages] = useState<{role: "user" | "assistant" | "system", content: string, marker?: string}[]>([
     { role: "assistant", content: "Hey there, I am your Quantum Karma Astrologer...", marker: "A" }
@@ -696,6 +696,9 @@ export default function DashboardPage() {
         <button onClick={() => setActiveFeature("ishta-devata")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "ishta-devata" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🙏</span><span>Devata</span>
         </button>
+        <button onClick={() => setActiveFeature("journal")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "journal" ? "text-indigo-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">🎙️</span><span>Journal</span>
+        </button>
         <button onClick={() => setActiveFeature("roadmap")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "roadmap" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🗺️</span><span>Roadmap</span>
         </button>
@@ -856,6 +859,17 @@ export default function DashboardPage() {
                 }`}>NEW</span>
               </button>
 
+              {/* Life Journal */}
+              <button onClick={() => setActiveFeature("journal")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "journal" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🎙️</span> Life Journal</span>
+                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                  activeFeature === "journal" ? "bg-indigo-200/60 text-indigo-800" : "bg-indigo-100 text-indigo-600"
+                }`}>FREE</span>
+              </button>
+
               {/* Separator */}
               <div className="h-px bg-slate-100 my-1" />
 
@@ -925,6 +939,13 @@ export default function DashboardPage() {
             <IshtaDevata
               profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
               profileName={activeProfileName}
+            />
+          )}
+
+          {/* Life Journal Panel */}
+          {activeFeature === "journal" && (
+            <LifeJournal
+              activeProfileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
             />
           )}
           

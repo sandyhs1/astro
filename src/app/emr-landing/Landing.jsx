@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import {
   ArrowUpRight, Lock, Activity, Database, Shield, Cpu,
   Layers, GitBranch, Binary, Sigma, Orbit, Network, Eye, Zap, Users, KeyRound, Sparkles, Infinity as InfinityIcon, X,
-  Clock, Calendar, Search
+  Clock, Calendar, Search, Mic
 } from "lucide-react";
 import posthog from 'posthog-js';
 
@@ -1058,6 +1058,33 @@ const DASHBOARD_FEATURES = [
     icon: <Search size={20} strokeWidth={1.5} />,
     problem: "Stuck in a cycle of repeated relationship failures?",
     solution: "Find out exactly what your deepest birth chart divisions demand you change. Break the cycle permanently.",
+  },
+  {
+    id: "journal",
+    title: "Life Journal Therapist",
+    kicker: "AI Sentiment & Transit Analysis",
+    accent: "#E879F9",
+    icon: <Mic size={20} strokeWidth={1.5} />,
+    problem: "Feeling overwhelmed and disconnected from why you're struggling today?",
+    solution: "Speak your truth. We use advanced vocal sentiment analysis mapped against your active transits to validate your emotions and provide a 1-step behavioral remedy.",
+  },
+  {
+    id: "ishta",
+    title: "Ishta Devata Alignment",
+    kicker: "Soul-Level Spiritual Acceleration",
+    accent: "#00E5FF",
+    icon: <Eye size={20} strokeWidth={1.5} />,
+    problem: "Struggling to find the right meditation practice or focal point for your spiritual energy?",
+    solution: "Discover your exact Ishta Devata—the specific deity mathematically aligned to your soul's D9 Navamsa signature—to unlock deep spiritual and material acceleration.",
+  },
+  {
+    id: "gotra",
+    title: "Ancestral Gotra Tracing",
+    kicker: "Vedic DNA & Lineage Decoding",
+    accent: "#FFB547",
+    icon: <Network size={20} strokeWidth={1.5} />,
+    problem: "Disconnected from your roots or unaware of the ancient sages your soul descends from?",
+    solution: "Trace your exact Vedic lineage. Discover the specific cosmic Rishis (Saptarishis) that govern your spiritual DNA and ancestral karmic inheritances.",
   }
 ];
 
@@ -1066,7 +1093,7 @@ const StackedFeatures = () => {
 
   return (
     <div 
-      className="relative w-full max-w-lg mx-auto h-[500px] md:h-[600px] flex items-center justify-center cursor-pointer perspective-1000"
+      className="relative w-full max-w-lg mx-auto h-[750px] md:h-[600px] flex items-center justify-center cursor-pointer perspective-1000"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => setIsHovered(!isHovered)}
@@ -1087,10 +1114,13 @@ const StackedFeatures = () => {
         const stackRotate = i % 2 === 0 ? i * 2.5 : -i * 2.5;
         
         // Expanded state (fanned out)
-        // Desktop: Fan out horizontally/diagonally. Mobile: Fan out vertically.
-        const spreadX = isMobile ? 0 : (i - 1.5) * 140;
-        const spreadY = isMobile ? (i - 1.5) * 130 : (i - 1.5) * 40;
-        const spreadRotate = isMobile ? 0 : (i - 1.5) * 8;
+        // Center index for 7 items is 3
+        const centerOffset = i - 3;
+        
+        // Desktop: Tighter horizontal spread, biased leftwards (centerOffset - 1.5) to avoid right-side cutoff
+        const spreadX = isMobile ? 0 : (centerOffset - 1.5) * 85;
+        const spreadY = isMobile ? centerOffset * 105 : centerOffset * 25;
+        const spreadRotate = isMobile ? 0 : centerOffset * 5;
 
         return (
           <motion.div
