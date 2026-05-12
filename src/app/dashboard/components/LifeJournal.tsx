@@ -275,17 +275,28 @@ export default function LifeJournal({ activeProfileId }: { activeProfileId: stri
              <div className="space-y-4">
                {entries.slice().reverse().map((entry) => (
                  <div key={entry.id} className="bg-slate-50 border border-slate-100 rounded-xl p-4 transition-all hover:shadow-sm">
-                   <div className="flex items-center justify-between mb-3">
+                   <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                      <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
                        {format(new Date(entry.created_at), "MMM d, yyyy • h:mm a")}
                      </span>
-                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                        entry.sentiment === "positive" ? "bg-green-100 text-green-700" :
-                        entry.sentiment === "negative" ? "bg-red-100 text-red-700" :
-                        "bg-slate-200 text-slate-700"
-                     }`}>
-                       {entry.sentiment}
-                     </span>
+                     <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                          entry.sentiment === "positive" ? "bg-green-100 text-green-700" :
+                          entry.sentiment === "negative" ? "bg-red-100 text-red-700" :
+                          "bg-slate-200 text-slate-700"
+                       }`}>
+                         {entry.sentiment}
+                       </span>
+                       {/* Intent pills from Deepgram Intent Recognition */}
+                       {Array.isArray(entry.intents) && entry.intents.length > 0 && entry.intents.map((intent: string) => (
+                         <span
+                           key={intent}
+                           className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-100 capitalize"
+                         >
+                           {intent}
+                         </span>
+                       ))}
+                     </div>
                    </div>
                    <p className="text-sm text-slate-700 italic mb-4">"{entry.transcription}"</p>
                    
