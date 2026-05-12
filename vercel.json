@@ -1,3 +1,9 @@
 {
-    "version": 2
+  "version": 2,
+  "crons": [
+    {
+      "path": "/api/cron/monthly-credit-reset",
+      "schedule": "29 18 * * *"
+    }
+  ]
 }
