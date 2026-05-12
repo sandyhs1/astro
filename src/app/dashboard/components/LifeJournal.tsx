@@ -144,33 +144,37 @@ export default function LifeJournal({ activeProfileId }: { activeProfileId: stri
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Life Journal</h1>
-            <p className="text-xs text-slate-500 font-medium">Record your thoughts. See how the cosmos affects your mood.</p>
+            <p className="text-xs text-slate-500 font-medium">Speak your thoughts. Get a precise behavioral and astrological pattern analysis.</p>
           </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-8">
         
-        {/* Adorable Intro Section */}
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <Sparkles size={80} className="text-indigo-600" />
-          </div>
-          <div className="relative z-10">
-            <h2 className="text-lg font-bold text-indigo-900 mb-2 flex items-center gap-2">
-              <span className="text-2xl">✨</span> The Cosmic Mirror
+        {/* Intro Section */}
+        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6 shadow-sm">
+          <div>
+            <h2 className="text-lg font-bold text-indigo-900 mb-1 tracking-tight">
+              Behavioral Intelligence Engine
             </h2>
-            <p className="text-sm text-indigo-800/80 leading-relaxed mb-4 max-w-2xl">
-              Your voice carries the invisible frequency of your soul. Speak your truth, vent your frustrations, or share your joy. Our advanced <strong>sentiment analysis engine</strong> listens to the micro-vibrations in your tone and cross-references them against live astrological transits to reveal <em>why</em> you feel the way you do.
+            <p className="text-[11px] font-semibold text-indigo-400 uppercase tracking-widest mb-4">
+              Sentiment · Intent · Dasha Correlation
             </p>
-            
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-indigo-50/50">
-              <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-2">How to use it:</h3>
-              <ul className="text-xs text-indigo-800/70 space-y-2 list-disc list-inside font-medium">
-                <li>Tap the microphone and speak naturally. Limit: 60 seconds.</li>
-                <li><strong>Example 1:</strong> "I feel incredibly anxious today and I don't know why..."</li>
-                <li><strong>Example 2:</strong> "I had a massive breakthrough at work! Everything is clicking."</li>
-                <li>Submit to receive a personalized Cosmic Insight and Action Plan.</li>
+            <p className="text-sm text-indigo-800/80 leading-relaxed mb-3 max-w-2xl">
+              Every time you speak into this journal, two precision AI systems analyze your audio in parallel. The first measures your <strong>emotional state</strong> — scoring sentiment on a continuous scale from highly negative to highly positive, capturing intensity that words alone cannot convey. The second identifies your <strong>behavioral intent</strong> — the underlying psychological driver behind what you are saying: are you seeking reassurance, processing a loss, venting frustration, or pushing for direction?
+            </p>
+            <p className="text-sm text-indigo-800/80 leading-relaxed mb-5 max-w-2xl">
+              Both signals are then cross-referenced against your active <strong>Vimshottari Dasha</strong> period and live planetary positions. The output is not a general reading — it is a precise, data-driven correlation between your psychological state right now and the astrological period you are currently in.
+            </p>
+
+            <div className="bg-white/70 rounded-xl p-4 border border-indigo-100">
+              <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-3">How to get the most accurate reading:</h3>
+              <ul className="text-xs text-indigo-800/70 space-y-2.5 list-disc list-inside font-medium">
+                <li>Tap the microphone and speak naturally for up to 60 seconds.</li>
+                <li>Be direct and specific — vague expressions produce weaker analysis than concrete statements.</li>
+                <li><strong>Example:</strong> "I feel stuck in my career. Nothing I try seems to work and I don't know why I keep hitting this wall."</li>
+                <li><strong>Example:</strong> "I got a major opportunity today but I'm terrified to take it. Something feels off."</li>
+                <li>After submission, you'll receive a pattern analysis tied to your current Dasha and transits, plus a direct, actionable step.</li>
               </ul>
             </div>
           </div>
