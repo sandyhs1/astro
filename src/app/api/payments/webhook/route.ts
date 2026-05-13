@@ -107,12 +107,14 @@ export async function POST(req: NextRequest) {
       }
 
       // ── Hard reset to exactly 50 credits every billing cycle ────────────────
+      // Also update paid_at so next billing date = paid_at + 30 days is always fresh
       await supabase.from("user_profiles").update({
         credits: 50,
         payment_status: "success",    // Keep active
+        paid_at: new Date().toISOString(), // Reset anchor for next billing date calc
       }).eq("id", profile.id);
 
-      console.log(`[webhook] Monthly renewal — user ${profile.id} credits hard-reset to 50`);
+      console.log(`[webhook] Monthly renewal — user ${profile.id} credits hard-reset to 50, paid_at refreshed`);
     }
 
     // ── subscription.cancelled & subscription.halted ─────────────────────────

@@ -624,8 +624,8 @@ export default function DashboardPage() {
           
           <div className="flex items-center gap-2 sm:gap-6">
             {/* Account & Billing Button */}
-            <button onClick={() => router.push('/accounts')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition-colors shadow-sm">
-              Account
+            <button onClick={() => router.push('/subscription')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition-colors shadow-sm">
+              Subscription
             </button>
 
             {/* Credits badge + Topup button */}
