@@ -378,56 +378,78 @@ export default function SubscriptionPage() {
 
       {/* ── Cancel Subscription Modal ── */}
       {showCancelModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-fade-in">
-            <div className="p-8 text-center">
-              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
-                <span className="text-3xl">💔</span>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden animate-fade-in max-h-[92vh] flex flex-col">
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1 px-6 pt-8 pb-2 sm:px-8">
+
+              {/* HYPER-PERSONALISED EMOTIONAL MESSAGE — always at top */}
+              <div className="text-center mb-6">
+                <div className="text-5xl mb-4">😢</div>
+
+                {/* Highlighted plea box — high contrast */}
+                <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl px-5 py-4 mb-4">
+                  <p className="text-rose-800 font-black text-lg sm:text-xl leading-snug">
+                    {firstName}, are you absolutely sure<br className="hidden sm:block" /> you want to leave?
+                  </p>
+                  <p className="text-rose-600 text-sm font-semibold mt-2 leading-relaxed">
+                    We've been mapping your cosmic journey together — your Dashas, your transits, your Karma. If you leave now, the mirror goes dark and your chart stops speaking to you. 💔
+                  </p>
+                </div>
+
+                <p className="text-slate-500 text-sm leading-relaxed">
+                  Quantum Karma was built for seekers like you, <strong className="text-slate-700">{firstName}</strong>. Every reading, every insight — it's been about your growth. Please don't go. 🙏
+                </p>
               </div>
-              <h3 className="text-2xl font-black text-slate-900 mb-2">Are you sure?</h3>
-              <p className="text-slate-600 leading-relaxed mb-2 text-sm">
-                Cancelling will stop your subscription from renewing. You keep <strong>full access and all remaining credits</strong> until the end of your current billing cycle.
+
+              <div className="h-px bg-slate-100 mb-5" />
+
+              <p className="text-slate-600 leading-relaxed mb-3 text-sm">
+                Cancelling will stop your subscription from renewing. You keep <strong className="text-slate-800">full access and all remaining credits</strong> until the end of your current billing cycle.
               </p>
-              <p className="text-slate-600 leading-relaxed mb-6 text-sm">
-                This action cancels both your <strong>Razorpay subscription</strong> and removes your plan from our system automatically — no manual steps needed.
+              <p className="text-slate-600 leading-relaxed mb-5 text-sm">
+                This action notifies our payment provider and updates your plan in our system automatically — no manual steps needed.
               </p>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-left space-y-2">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 space-y-2.5">
                 <div className="flex items-start gap-2 text-sm text-slate-700">
-                  <span className="text-emerald-500 font-bold mt-0.5">✓</span>
+                  <span className="text-emerald-500 font-bold mt-0.5 flex-shrink-0">✓</span>
                   <span>You keep your <strong>{profile?.credits} remaining credits</strong> until cycle ends</span>
                 </div>
                 <div className="flex items-start gap-2 text-sm text-slate-700">
-                  <span className="text-emerald-500 font-bold mt-0.5">✓</span>
+                  <span className="text-emerald-500 font-bold mt-0.5 flex-shrink-0">✓</span>
                   <span>Access continues until <strong>{nextBilling}</strong></span>
                 </div>
                 <div className="flex items-start gap-2 text-sm text-slate-700">
-                  <span className="text-emerald-500 font-bold mt-0.5">✓</span>
-                  <span>No future charges — Razorpay notified immediately</span>
+                  <span className="text-emerald-500 font-bold mt-0.5 flex-shrink-0">✓</span>
+                  <span>No future charges — payment provider notified immediately</span>
                 </div>
               </div>
-
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => setShowCancelModal(false)}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm h-12 rounded-xl transition-colors shadow-sm"
-                >
-                  Nevermind, keep my plan
-                </button>
-                <button
-                  onClick={confirmCancellation}
-                  disabled={cancelling}
-                  className="w-full bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 font-semibold text-sm h-12 rounded-xl transition-all flex items-center justify-center"
-                >
-                  {cancelling ? (
-                    <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-slate-300 border-t-red-500 rounded-full animate-spin" />
-                      Cancelling...
-                    </span>
-                  ) : 'Yes, cancel my subscription'}
-                </button>
-              </div>
             </div>
+
+            {/* Sticky action buttons */}
+            <div className="px-6 pb-8 pt-3 sm:px-8 space-y-3 border-t border-slate-100 bg-white flex-shrink-0">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-black text-sm py-4 rounded-xl transition-colors shadow-sm"
+              >
+                💙 Nevermind, keep my plan
+              </button>
+              <button
+                onClick={confirmCancellation}
+                disabled={cancelling}
+                className="w-full bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 active:bg-red-100 font-semibold text-sm py-4 rounded-xl transition-all flex items-center justify-center"
+              >
+                {cancelling ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-slate-300 border-t-red-500 rounded-full animate-spin" />
+                    Cancelling...
+                  </span>
+                ) : 'Yes, cancel my subscription'}
+              </button>
+            </div>
+
           </div>
         </div>
       )}
