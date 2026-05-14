@@ -17,6 +17,7 @@
 import type { RawAstroBundle } from "./batch-fetch";
 import type { BirthParams } from "./client";
 import { computeExtras, type ChartExtras } from "./compute-extras";
+import { isMrityuBhaga, isPushkaraBhaga, isPushkaraNavamsa } from "./advanced-points";
 import crypto from "crypto";
 
 export const SCHEMA_VERSION = 2;
@@ -37,6 +38,10 @@ export interface PlanetData {
   isExalted: boolean;
   isDebilitated: boolean;
   isCombust: boolean;
+  avastha: string;
+  isMrityuBhaga: boolean;
+  isPushkaraBhaga: boolean;
+  isPushkaraNavamsa: boolean;
 }
 
 export interface HouseData {
@@ -238,10 +243,17 @@ export function normalizeBundle(
     const isExalted: boolean      = !!(ext.isExalted ?? ext.is_exalted);
     const isDebilitated: boolean  = !!(ext.isDebilitated ?? ext.is_debilitated);
     const isCombust: boolean      = !!(ext.isCombust ?? ext.is_combust);
+    const avastha: string         = ext.planet_awastha ?? "";
+    const isMB: boolean           = isMrityuBhaga(name, pSignId, normDeg);
+    const isPB: boolean           = isPushkaraBhaga(pSignId, normDeg);
+    const isPN: boolean           = isPushkaraNavamsa(pSignId, normDeg);
+
     if (!pSign) warnings.push(`${name}: missing sign`);
     planets.push({ name, fullDegree:fullDeg, normDegree:normDeg, speed, isRetro,
       sign:pSign, signNum:pSignId, house, nakshatra:nak, nakshatraPada:pada,
-      isExalted, isDebilitated, isCombust });
+      isExalted, isDebilitated, isCombust, avastha, 
+      isMrityuBhaga: isMB, isPushkaraBhaga: isPB, isPushkaraNavamsa: isPN 
+    });
   }
   for (const expected of PLANET_ORDER) {
     if (!planets.find(p=>p.name.toLowerCase()===expected.toLowerCase()))

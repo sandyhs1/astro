@@ -1,8 +1,8 @@
 /**
  * LLM ROUTER
  *
- * Primary  : Claude Sonnet 4.6 (AWS Bedrock — requires IAM access key + secret)
- * Fallback : Gemini 3.1 Pro (Google AI SDK)
+ * Primary  : Gemini 3.1 Pro (Google AI SDK)
+ * Fallback : Claude Sonnet 4.6 (AWS Bedrock — requires IAM access key + secret)
  * Gatekeeper: Gemini 3.1 Flash Lite (cheap + fast)
  */
 
@@ -21,10 +21,10 @@ export interface LLMResponse {
 
 interface Message { role: "user" | "assistant"; content: string; }
 
-// ─── Primary: AWS Bedrock — Claude Sonnet 4.6 ONLY ──────────────────────────
+// ─── Fallback: AWS Bedrock — Claude Sonnet 4.6 ONLY ──────────────────────────
 // ⛔ Claude 3.7 Sonnet is STRICTLY BANNED. Never use it.
-// PRIMARY  = us.anthropic.claude-sonnet-4-6  (Sonnet 4.6 cross-region inference)
-// FALLBACK = Gemini 3.1 Pro (Google AI SDK)
+// PRIMARY  = Gemini 3.1 Pro (Google AI SDK)
+// FALLBACK = us.anthropic.claude-sonnet-4-6  (Sonnet 4.6 cross-region inference)
 
 const BEDROCK_MODEL  = "us.anthropic.claude-sonnet-4-6"; // ✅ Claude Sonnet 4.6 ONLY
 const BEDROCK_REGION = process.env.AWS_BEDROCK_REGION || "us-east-1";

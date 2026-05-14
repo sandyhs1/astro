@@ -29,6 +29,11 @@ const FRIENDS: Record<string,string[]> = {
   Mercury:["Sun","Venus"],Jupiter:["Sun","Moon","Mars"],Venus:["Mercury","Saturn"],
   Saturn:["Mercury","Venus"],Rahu:["Venus","Saturn","Mercury"],Ketu:["Mars","Jupiter","Venus"],
 };
+const ENEMIES: Record<string,string[]> = {
+  Sun:["Venus","Saturn"],Moon:["Rahu","Ketu"],Mars:["Mercury"],
+  Mercury:["Moon"],Jupiter:["Mercury","Venus"],Venus:["Sun","Moon"],
+  Saturn:["Sun","Moon","Mars"],Rahu:["Sun","Moon","Mars"],Ketu:["Sun","Moon"],
+};
 
 function signIdx(s: string): number { return SIGNS.findIndex(x => x.toLowerCase()===s?.toLowerCase()); }
 function houseDistance(from: number, to: number): number { return ((to - from + 12) % 12) || 12; }
@@ -354,6 +359,59 @@ export function computeGrahaDrishti(chart: GoldenMasterJSON): PlanetAspect[] {
   return aspects;
 }
 
+// ─── 8. Lajjitadi Avasthas (Psychological State) ─────────────────────────────
+export function computeLajjitadiAvasthas(chart: GoldenMasterJSON, aspects: PlanetAspect[]): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+  const WATER_SIGNS = ["Cancer", "Scorpio", "Pisces"];
+  
+  for (const p of chart.d1.planets) {
+    if (p.name === "Rahu" || p.name === "Ketu") continue;
+    
+    const states: string[] = [];
+    const myEnemies = ENEMIES[p.name] || [];
+    const myFriends = FRIENDS[p.name] || [];
+    const lord = SIGN_LORD[p.sign];
+
+    // Find conjunctions (same house)
+    const conjunct = chart.d1.planets.filter(op => op.name !== p.name && op.house === p.house).map(op => op.name);
+    
+    // Find aspects received
+    const aspectedBy = aspects.filter(a => a.toHouse === p.house).map(a => a.from);
+    
+    const isAspectedByEnemy = aspectedBy.some(a => myEnemies.includes(a));
+    const isConjunctEnemy = conjunct.some(c => myEnemies.includes(c));
+    const isConjunctFriend = conjunct.some(c => myFriends.includes(c));
+
+    // 1. Lajjita (Ashamed)
+    if (p.house === 5 && conjunct.some(c => ["Rahu","Ketu","Sun","Saturn","Mars"].includes(c))) {
+      states.push("Lajjita(Ashamed)");
+    }
+    // 2. Garvita (Proud)
+    if (EXALT_SIGN[p.name] === p.sign || (OWN_SIGNS[p.name] || []).includes(p.sign)) {
+      states.push("Garvita(Proud)");
+    }
+    // 3. Kshudhita (Starved)
+    if (myEnemies.includes(lord) || isConjunctEnemy || isAspectedByEnemy || conjunct.includes("Saturn")) {
+      states.push("Kshudhita(Starved)");
+    }
+    // 4. Trushita (Thirsty)
+    if (WATER_SIGNS.includes(p.sign) && isAspectedByEnemy) {
+      states.push("Trushita(Thirsty)");
+    }
+    // 5. Mudita (Delighted)
+    if (myFriends.includes(lord) || isConjunctFriend || conjunct.includes("Jupiter")) {
+      states.push("Mudita(Delighted)");
+    }
+    // 6. Kshobhita (Agitated)
+    if (conjunct.includes("Sun") && isAspectedByEnemy) {
+      states.push("Kshobhita(Agitated)");
+    }
+
+    result[p.name] = states;
+  }
+  return result;
+}
+
 // ─── Master export ────────────────────────────────────────────────────────────
 export interface ChartExtras {
   arudhas:        Record<string,{sign:string;house:number}>;
@@ -363,6 +421,7 @@ export interface ChartExtras {
   charDasha:      { current:CharDashaPeriod; sequence:CharDashaPeriod[] };
   vimshopakaBala: Record<string,{score:number;max:number;percent:number}>;
   grahaDrishti:   PlanetAspect[];
+  lajjitadiAvasthas: Record<string, string[]>;
   computedAt:     string;
 }
 
@@ -375,6 +434,7 @@ export function computeExtras(chart: GoldenMasterJSON, birthDate: Date, birthDow
     charDasha:      computeCharDasha(chart, birthDate),
     vimshopakaBala: computeVimshopakaBala(chart),
     grahaDrishti:   computeGrahaDrishti(chart),
+    lajjitadiAvasthas: computeLajjitadiAvasthas(chart, computeGrahaDrishti(chart)),
     computedAt:     new Date().toISOString(),
   };
 }
