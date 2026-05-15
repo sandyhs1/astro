@@ -30,14 +30,12 @@ interface ReportData {
   generatedAt: string;
 }
 
-const CARD_COLORS: Record<string, {
-  bg: string; border: string; header: string; glow: string; badge: string; badgeText: string;
-}> = {
-  indigo:  { bg: "from-indigo-50/80 to-slate-50",  border: "border-indigo-200",  header: "text-indigo-800",  glow: "shadow-indigo-200/60",  badge: "bg-indigo-100",  badgeText: "text-indigo-700"  },
-  amber:   { bg: "from-amber-50/80 to-slate-50",   border: "border-amber-200",   header: "text-amber-800",   glow: "shadow-amber-200/60",   badge: "bg-amber-100",   badgeText: "text-amber-700"   },
-  rose:    { bg: "from-rose-50/80 to-slate-50",    border: "border-rose-200",    header: "text-rose-800",    glow: "shadow-rose-200/60",    badge: "bg-rose-100",    badgeText: "text-rose-700"    },
-  emerald: { bg: "from-emerald-50/80 to-slate-50", border: "border-emerald-200", header: "text-emerald-800", glow: "shadow-emerald-200/60", badge: "bg-emerald-100", badgeText: "text-emerald-700" },
-  purple:  { bg: "from-purple-50/80 to-slate-50",  border: "border-purple-200",  header: "text-purple-800",  glow: "shadow-purple-200/60",  badge: "bg-purple-100",  badgeText: "text-purple-700"  },
+const SECTION_ACCENTS: Record<string, { gradient: string; light: string; accent: string; dot: string }> = {
+  indigo:  { gradient: "from-indigo-500 to-indigo-600", light: "bg-indigo-50", accent: "text-indigo-700", dot: "bg-indigo-400" },
+  amber:   { gradient: "from-amber-500 to-orange-500",  light: "bg-amber-50",  accent: "text-amber-800",  dot: "bg-amber-400" },
+  rose:    { gradient: "from-rose-400 to-rose-600",     light: "bg-rose-50",   accent: "text-rose-700",   dot: "bg-rose-400" },
+  emerald: { gradient: "from-emerald-400 to-emerald-600", light:"bg-emerald-50", accent:"text-emerald-700", dot: "bg-emerald-400" },
+  purple:  { gradient: "from-purple-500 to-fuchsia-600",  light:"bg-purple-50",  accent:"text-purple-700",  dot: "bg-purple-400" },
 };
 
 const LOADING_STEPS = [
@@ -223,19 +221,19 @@ export default function RemedyPanel({ profileId, profileName }: Props) {
     return (
       <div className="h-full flex flex-col overflow-y-auto custom-scrollbar">
         {/* Header */}
-        <div className="flex-shrink-0 p-6 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-purple-50 to-slate-50">
+        <div className="flex-shrink-0 px-4 md:px-10 py-4 md:py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-purple-50 to-slate-50">
           <div className="flex items-start gap-3">
-            <span className="text-3xl">🔮</span>
+            <span className="text-2xl md:text-3xl">🔮</span>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">📿 Powerful Custom Remedies</h2>
-              <p className="text-sm text-slate-500 mt-0.5">
+              <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">📿 Powerful Custom Remedies</h2>
+              <p className="text-xs md:text-sm text-slate-500 mt-0.5">
                 Highly potent Tantric Mantras tailored to your exact birth chart · {profileName}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center gap-7 p-6 md:p-8">
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 p-5 md:p-8">
           {/* Feature grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-lg">
             {FEATURE_ITEMS.map((item, i) => (
@@ -325,16 +323,16 @@ export default function RemedyPanel({ profileId, profileName }: Props) {
     return (
       <div className="h-full flex flex-col overflow-y-auto custom-scrollbar">
         {/* Feature header */}
-        <div className="flex-shrink-0 p-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-purple-50 to-slate-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🔮</span>
-              <div>
-                <h2 className="text-lg font-bold text-slate-900 tracking-tight">📿 Powerful Custom Remedies</h2>
-                <p className="text-xs text-slate-500">{profileName} · {genDate}</p>
+        <div className="flex-shrink-0 px-4 md:px-10 py-4 md:py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-purple-50 to-slate-50">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <span className="text-xl md:text-2xl flex-shrink-0">🔮</span>
+              <div className="min-w-0">
+                <h2 className="text-sm md:text-lg font-black text-slate-900 tracking-tight leading-tight truncate">📿 Powerful Custom Remedies</h2>
+                <p className="text-[10px] md:text-xs text-slate-500 truncate">{profileName} · {genDate}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 flex items-center gap-3">
               {/* Data badges */}
               <div className="hidden md:flex gap-1.5">
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-700">
@@ -343,88 +341,110 @@ export default function RemedyPanel({ profileId, profileName }: Props) {
               </div>
               <button
                 onClick={handlePrint}
-                className="px-3.5 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50 hover:border-indigo-300 transition-all flex items-center gap-1.5"
+                className="px-2.5 md:px-3.5 py-1.5 md:py-2 bg-white border border-slate-200 text-slate-600 text-[11px] md:text-xs font-semibold rounded-xl hover:bg-slate-50 hover:border-indigo-300 transition-all flex items-center gap-1.5"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
-                Save as PDF
+                <span className="hidden md:inline">Save as PDF</span>
+                <span className="md:hidden">Save</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Intelligence Cards */}
-        <div ref={printRef} className="flex-1 p-5 md:p-7 grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl mx-auto w-full">
+        {/* Full-width free-flowing sections */}
+        <div ref={printRef} className="flex-1 px-4 md:px-8 lg:px-12 py-5 md:py-8 space-y-8 md:space-y-10">
           <AnimatePresence>
             {reportData.sections.map((section, idx) => {
-              const palette = CARD_COLORS[section.color] ?? CARD_COLORS.indigo;
+              const palette = SECTION_ACCENTS[section.color] ?? SECTION_ACCENTS.indigo;
               return (
                 <motion.div
                   key={section.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.12, duration: 0.45, ease: "easeOut" }}
-                  className={`rounded-2xl border ${palette.border} bg-gradient-to-br ${palette.bg} shadow-lg ${palette.glow} overflow-hidden`}
-                  style={{
-                    boxShadow: `0 4px 24px -4px var(--tw-shadow-color, rgba(0,0,0,0.08))`,
-                  }}
+                  transition={{ delay: idx * 0.1, duration: 0.4, ease: "easeOut" }}
                 >
-                  {/* Card header */}
-                  <div className={`px-5 py-3.5 border-b ${palette.border} flex items-center gap-2.5`}>
-                    <span className="text-xl">{section.icon}</span>
-                    <h3 className={`font-bold text-sm uppercase tracking-widest ${palette.header}`}>
-                      {section.title}
-                    </h3>
-                    <div className="ml-auto">
-                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold ${palette.badge} ${palette.badgeText}`}>
-                        Pattern {idx + 1} of {reportData.sections.length}
-                      </span>
+                  {/* Section title — full-width accent bar, no border box */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className={`w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br ${palette.gradient} flex items-center justify-center text-lg shadow-md flex-shrink-0`}>
+                      <span className="drop-shadow-sm">{section.icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-[15px] md:text-[17px] font-black text-slate-900 tracking-tight uppercase">
+                          {section.title}
+                        </h3>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${palette.light} ${palette.accent} flex-shrink-0`}>
+                          Remedy {idx + 1} of {reportData.sections.length}
+                        </span>
+                      </div>
+                      <div className={`h-0.5 mt-1.5 rounded-full bg-gradient-to-r ${palette.gradient} opacity-20`} />
                     </div>
                   </div>
 
-                  {/* Card content */}
-                  <div className="px-5 md:px-6 py-5">
-                    <div className="prose prose-sm max-w-none text-slate-700 leading-relaxed">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          h2: ({ children }) => (
-                            <h2 className="text-sm font-bold text-slate-900 mt-5 mb-2 pb-1.5 border-b border-slate-200">{children}</h2>
-                          ),
-                          h3: ({ children }) => (
-                            <h3 className={`text-xs font-bold uppercase tracking-wider mt-4 mb-2 ${palette.header}`}>{children}</h3>
-                          ),
-                          strong: ({ children }) => (
-                            <strong className="font-bold text-slate-900">{children}</strong>
-                          ),
-                          em: ({ children }) => (
-                            <em className="text-slate-500 not-italic text-xs">{children}</em>
-                          ),
-                          hr: () => <hr className="my-4 border-slate-200" />,
-                          blockquote: ({ children }) => (
-                            <blockquote className={`border-l-4 pl-4 py-1 rounded-r-xl my-3 text-slate-600 italic text-sm ${palette.border}`}>
-                              {children}
-                            </blockquote>
-                          ),
-                          li: ({ children }) => (
-                            <li className="text-slate-700 mb-1.5 flex gap-1.5">
-                              <span className={`mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full ${palette.badge.replace("bg-", "bg-").replace("100", "400")}`} />
-                              <span>{children}</span>
-                            </li>
-                          ),
-                          ul: ({ children }) => (
-                            <ul className="space-y-1 list-none pl-0 my-2">{children}</ul>
-                          ),
-                          p: ({ children }) => (
-                            <p className="text-[14px] text-slate-700 leading-relaxed mb-3">{children}</p>
-                          ),
-                        }}
-                      >
-                        {section.content}
-                      </ReactMarkdown>
-                    </div>
+                  {/* Free-flowing content — no card wrapper */}
+                  <div className="pl-0 md:pl-12">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        h1: ({ children }) => <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight mb-4 mt-2">{children}</h1>,
+                        h2: ({ children }) => (
+                          <div className="mt-8 mb-4">
+                            <h2 className="text-[16px] md:text-[18px] font-black text-slate-900 tracking-tight">{children}</h2>
+                          </div>
+                        ),
+                        h3: ({ children }) => (
+                          <h3 className={`text-sm font-extrabold mt-6 mb-2 flex items-center gap-2 ${palette.accent}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${palette.dot} flex-shrink-0`} />
+                            {children}
+                          </h3>
+                        ),
+                        h4: ({ children }) => <h4 className="text-sm font-bold text-slate-700 mt-5 mb-2">{children}</h4>,
+                        p: ({ children }) => <p className="text-[14px] md:text-[15px] text-slate-700 leading-relaxed mb-4">{children}</p>,
+                        strong: ({ children }) => <strong className="font-extrabold text-slate-900">{children}</strong>,
+                        em: ({ children }) => <em className={`font-medium not-italic ${palette.accent}`}>{children}</em>,
+                        blockquote: ({ children }) => (
+                          <div className="my-4 relative">
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b ${palette.gradient}`} />
+                            <div className={`pl-4 md:pl-5 pr-4 py-3 ${palette.light} rounded-r-xl`}>
+                              <div className="text-[13px] md:text-[14px] text-slate-700 leading-relaxed font-medium italic">{children}</div>
+                            </div>
+                          </div>
+                        ),
+                        ul: ({ children }) => <ul className="space-y-2 my-3 pl-0 list-none">{children}</ul>,
+                        ol: ({ children }) => <ol className="space-y-2 my-3 pl-0 list-none">{children}</ol>,
+                        li: ({ children }) => (
+                          <li className="flex gap-2.5 text-[14px] md:text-[15px] text-slate-700 leading-relaxed">
+                            <span className={`flex-shrink-0 w-5 h-5 mt-0.5 rounded-md ${palette.light} flex items-center justify-center`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
+                            </span>
+                            <span className="flex-1">{children}</span>
+                          </li>
+                        ),
+                        table: ({ children }) => (
+                          <div className="my-5 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                            <table className="w-full text-sm border-collapse min-w-[500px]">{children}</table>
+                          </div>
+                        ),
+                        thead: ({ children }) => <thead className="bg-slate-800">{children}</thead>,
+                        th: ({ children }) => <th className="text-left px-4 py-3 text-xs font-bold text-white uppercase tracking-wider">{children}</th>,
+                        td: ({ children }) => <td className="px-4 py-3 text-slate-700 font-medium border-t border-slate-100">{children}</td>,
+                        tr: ({ children }) => <tr className="even:bg-slate-50 hover:bg-slate-100 transition-colors">{children}</tr>,
+                      }}
+                    >
+                      {section.content}
+                    </ReactMarkdown>
                   </div>
+
+                  {/* Divider between sections */}
+                  {idx < reportData.sections.length - 1 && (
+                    <div className="mt-10 flex items-center gap-4">
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                      <span className="text-slate-300 text-xs">✦</span>
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                    </div>
+                  )}
                 </motion.div>
               );
             })}
@@ -434,11 +454,11 @@ export default function RemedyPanel({ profileId, profileName }: Props) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: reportData.sections.length * 0.12 + 0.3 }}
-            className="text-center py-4"
+            transition={{ delay: reportData.sections.length * 0.1 + 0.3 }}
+            className="text-center py-6 border-t border-slate-100"
           >
             <p className="text-xs text-slate-400 font-medium">
-              Generated by Quantum Oracle · Grandmaster Jyotishi Engine · {genDate}
+              Report generated by Quantum Oracle · Grandmaster Jyotishi Engine · {genDate}
             </p>
           </motion.div>
         </div>

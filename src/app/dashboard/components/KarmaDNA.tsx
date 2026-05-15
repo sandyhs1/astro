@@ -152,48 +152,46 @@ export default function KarmaDNA({ profileId, profileName }: Props) {
   return (
     <div className="h-full flex flex-col overflow-y-auto custom-scrollbar">
       {/* Header */}
-      <div className="flex-shrink-0 p-6 border-b border-slate-100 bg-gradient-to-r from-purple-50 to-indigo-50">
-        <div className="flex items-start justify-between">
-          <div>
+      <div className="flex-shrink-0 px-4 md:px-10 py-4 md:py-5 border-b border-slate-100 bg-gradient-to-r from-purple-50 via-indigo-50/60 to-slate-50">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-2xl">🧬</span>
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">Karma DNA Report</h2>
+              <span className="text-xl flex-shrink-0">🧬</span>
+              <h2 className="text-base md:text-xl font-black text-slate-900 tracking-tight leading-tight">Karma DNA Report</h2>
             </div>
-            <p className="text-sm text-slate-500">Past-life karma, soul contracts & dharmic mission · {profileName}</p>
+            <p className="text-xs md:text-sm text-slate-500 leading-relaxed">Past-life karma, soul contracts & dharmic mission · {profileName}</p>
             {meta && (
-              <div className="flex gap-2 mt-3 flex-wrap">
-                <span className="text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-semibold">
+              <div className="flex gap-1.5 mt-2 flex-wrap">
+                <span className="text-[11px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
                   Quantum Oracle
                 </span>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${meta.d12 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
-                  D12: {meta.d12 ? "✓ Fetched" : "Estimated"}
+                <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${meta.d12 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
+                  D12: {meta.d12 ? "✓" : "Est."}
                 </span>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${meta.d60 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
-                  D60: {meta.d60 ? "✓ Fetched" : "Estimated"}
+                <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${meta.d60 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
+                  D60: {meta.d60 ? "✓" : "Est."}
                 </span>
               </div>
             )}
           </div>
-          <div className="flex gap-2">
-            {generated && (
-              <button
-                onClick={handlePrint}
-                className="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                  <rect x="6" y="14" width="12" height="8"/>
-                </svg>
-                Print / PDF
-              </button>
-            )}
-          </div>
+          {generated && (
+            <button
+              onClick={handlePrint}
+              className="flex-shrink-0 p-2 md:px-4 md:py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+              </svg>
+              <span className="hidden md:inline">Print / PDF</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="m-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+        <div className="mx-6 md:mx-10 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
           {error}
         </div>
       )}
@@ -209,8 +207,8 @@ export default function KarmaDNA({ profileId, profileName }: Props) {
             <p className="font-semibold text-slate-700 mb-1">Consulting the Akashic Records</p>
             <p className="text-sm text-slate-400">Analyzing D1, D9, D12, D60 + Nadi + Jaimini...</p>
           </div>
-          <div className="flex gap-4 text-xs text-slate-400">
-            {["Fetching D12","Fetching D60","Calling Quantum Oracle","Generating report"].map((step, i) => (
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-slate-400 px-4">
+            {["Fetching D12","Fetching D60","Calling Oracle","Generating"].map((step, i) => (
               <div key={i} className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
                 {step}
@@ -222,7 +220,7 @@ export default function KarmaDNA({ profileId, profileName }: Props) {
 
       {/* Idle — Pre-generation */}
       {!generated && !loading && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-5 md:p-8 text-center">
           <div className="text-6xl">🧬</div>
           <div>
             <h3 className="text-lg font-bold text-slate-800 mb-2">Your Soul's Sacred Blueprint</h3>
@@ -279,7 +277,7 @@ export default function KarmaDNA({ profileId, profileName }: Props) {
         </div>
       )}
 
-      {/* Report Output */}
+      {/* Report Output — FULL WIDTH PREMIUM LAYOUT */}
       {generated && report && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -287,7 +285,7 @@ export default function KarmaDNA({ profileId, profileName }: Props) {
           className="flex-1 overflow-y-auto custom-scrollbar"
         >
           {/* Print/download bar */}
-          <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-6 py-3 flex items-center justify-between z-10">
+          <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-6 md:px-10 py-3 flex items-center justify-between z-10">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-emerald-500 rounded-full" />
               <span className="text-xs font-semibold text-slate-600">Report Generated · Quantum Oracle</span>
@@ -298,37 +296,100 @@ export default function KarmaDNA({ profileId, profileName }: Props) {
             </button>
           </div>
 
-          {/* Report content (printable) */}
-          <div className="p-6 lg:p-8 max-w-3xl mx-auto">
+          {/* Report content — FULL WIDTH, no max-w constraint */}
+          <div className="px-4 md:px-8 lg:px-12 py-5 md:py-8">
             <div ref={printRef}>
-              <div className="prose prose-slate max-w-none text-slate-700 text-[15px] leading-relaxed">
+              <div className="karma-dna-report">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    h2: ({ children }) => (
-                      <h2 className="text-lg font-bold text-slate-900 mt-8 mb-3 pb-2 border-b border-slate-200 flex items-center gap-2">
+                    h1: ({ children }) => (
+                      <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-4 mt-2">
                         {children}
-                      </h2>
+                      </h1>
+                    ),
+                    h2: ({ children }) => (
+                      <div className="mt-10 mb-5">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-1.5 h-8 rounded-full bg-gradient-to-b from-purple-500 to-indigo-600" />
+                          <h2 className="text-[19px] font-black text-slate-900 tracking-tight uppercase">
+                            {children}
+                          </h2>
+                        </div>
+                        <div className="h-px bg-gradient-to-r from-purple-200 via-indigo-100 to-transparent" />
+                      </div>
                     ),
                     h3: ({ children }) => (
-                      <h3 className="text-sm font-bold text-indigo-700 mt-5 mb-2">{children}</h3>
+                      <h3 className="text-[15px] font-extrabold text-indigo-700 mt-7 mb-2.5 flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-indigo-400 flex-shrink-0" />
+                        {children}
+                      </h3>
+                    ),
+                    h4: ({ children }) => (
+                      <h4 className="text-sm font-bold text-slate-700 mt-5 mb-2">{children}</h4>
+                    ),
+                    p: ({ children }) => (
+                      <p className="text-[15px] text-slate-700 leading-[1.85] mb-4 font-normal">{children}</p>
                     ),
                     strong: ({ children }) => (
-                      <strong className="font-bold text-slate-900">{children}</strong>
+                      <strong className="font-extrabold text-slate-900">{children}</strong>
                     ),
                     em: ({ children }) => (
-                      <em className="text-slate-500 not-italic text-sm">{children}</em>
+                      <em className="text-indigo-600 font-medium not-italic">{children}</em>
                     ),
-                    hr: () => <hr className="my-6 border-slate-200" />,
+                    hr: () => (
+                      <div className="my-8 flex items-center gap-3">
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                        <span className="text-slate-300 text-xs">✦</span>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                      </div>
+                    ),
                     blockquote: ({ children }) => (
-                      <blockquote className="border-l-4 border-indigo-400 pl-4 py-1 bg-indigo-50 rounded-r-xl my-4 text-slate-600 italic text-sm">
-                        {children}
-                      </blockquote>
+                      <div className="my-5 relative">
+                        <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500" />
+                        <div className="pl-5 pr-4 py-3 bg-gradient-to-r from-indigo-50/80 to-transparent rounded-r-xl">
+                          <div className="text-[14px] text-indigo-800 leading-relaxed font-medium italic">
+                            {children}
+                          </div>
+                        </div>
+                      </div>
+                    ),
+                    ul: ({ children }) => (
+                      <ul className="space-y-2.5 my-4 pl-0 list-none">{children}</ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol className="space-y-2.5 my-4 pl-0 list-none counter-reset-item">{children}</ol>
                     ),
                     li: ({ children }) => (
-                      <li className="text-slate-700 mb-1.5">
-                        <span className="text-indigo-400 mr-1">◆</span>{children}
+                      <li className="flex gap-3 text-[15px] text-slate-700 leading-relaxed">
+                        <span className="flex-shrink-0 w-5 h-5 mt-0.5 rounded-md bg-purple-100 flex items-center justify-center">
+                          <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                        </span>
+                        <span className="flex-1">{children}</span>
                       </li>
+                    ),
+                    table: ({ children }) => (
+                      <div className="my-6 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                        <table className="w-full text-sm border-collapse">{children}</table>
+                      </div>
+                    ),
+                    thead: ({ children }) => (
+                      <thead className="bg-gradient-to-r from-slate-800 to-slate-700">{children}</thead>
+                    ),
+                    th: ({ children }) => (
+                      <th className="text-left px-5 py-3 text-xs font-bold text-white uppercase tracking-wider">{children}</th>
+                    ),
+                    td: ({ children }) => (
+                      <td className="px-5 py-3 text-slate-700 font-medium border-t border-slate-100">{children}</td>
+                    ),
+                    tr: ({ children }) => (
+                      <tr className="even:bg-slate-50/70 hover:bg-indigo-50/40 transition-colors">{children}</tr>
+                    ),
+                    a: ({ href, children }) => (
+                      <a href={href} className="text-indigo-600 font-semibold underline decoration-indigo-300 underline-offset-2 hover:text-indigo-800 transition-colors" target="_blank" rel="noopener noreferrer">{children}</a>
+                    ),
+                    code: ({ children }) => (
+                      <span className="bg-indigo-50 text-indigo-700 text-[13px] font-semibold px-2 py-0.5 rounded-md border border-indigo-100">{children}</span>
                     ),
                   }}
                 >

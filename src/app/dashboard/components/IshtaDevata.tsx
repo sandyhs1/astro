@@ -111,36 +111,34 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
     <div className="h-full flex flex-col overflow-hidden bg-slate-50">
 
       {/* ── Header ── */}
-      <div className="flex-shrink-0 px-6 py-4 border-b border-slate-100 bg-white flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex-shrink-0 px-4 md:px-10 py-3 md:py-4 border-b border-slate-100 bg-white flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-xl"
+            className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-lg"
             style={{ background: `linear-gradient(135deg, ${colors.from}22, ${colors.to}33)`, border: `1px solid ${colors.to}30` }}
           >
             🙏
           </div>
-          <div>
-            <h2 className="font-black text-slate-900 text-base leading-tight">Your Ishta Devata</h2>
-            <p className="text-[11px] text-slate-400 font-medium">
+          <div className="min-w-0">
+            <h2 className="font-black text-slate-900 text-sm md:text-base leading-tight">Your Ishta Devata</h2>
+            <p className="text-[10px] md:text-[11px] text-slate-400 font-medium truncate">
               {reportData
                 ? `${reportData.ishtaDevata} · ${profileName}`
-                : `Soul's Chosen Deity via Jaimini Navamsa · ${profileName}`}
+                : `Jaimini Navamsa · ${profileName}`}
             </p>
           </div>
         </div>
         {status === "done" && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
+          <div className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="text-[11px] font-bold text-emerald-700">Saved Permanently</span>
+            <span className="text-[10px] md:text-[11px] font-bold text-emerald-700 whitespace-nowrap">Saved</span>
           </div>
         )}
       </div>
 
       {/* ── IDLE ── */}
       {status === "idle" && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-8">
-
-          {/* Hero visual */}
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-5 md:p-8 gap-6 md:gap-8 overflow-y-auto custom-scrollbar">
           <div className="relative">
             <div
               className="w-28 h-28 rounded-3xl flex items-center justify-center text-5xl shadow-xl"
@@ -159,8 +157,8 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
             </div>
           </div>
 
-          <div className="max-w-lg space-y-4">
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">
+          <div className="max-w-lg space-y-3 md:space-y-4 w-full">
+            <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-tight">
               Your Soul's Deity is Hidden in Your D-9 Chart
             </h3>
             <p className="text-slate-500 text-sm leading-relaxed">
@@ -171,7 +169,6 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
               unique to you alone.
             </p>
 
-            {/* Logic preview card */}
             <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-left space-y-2">
               <p className="text-[11px] font-black uppercase tracking-widest text-indigo-600 mb-2">The Jaimini Derivation</p>
               {[
@@ -187,7 +184,6 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
             </div>
           </div>
 
-          {/* Info chips */}
           <div className="flex flex-wrap justify-center gap-2 max-w-md">
             {["Mathematical Derivation", "Jaimini Sutram", "All Divine Forms", "Soul Alignment", "Sadhana Prescription", "90-Day Protocol", "Moksha Path"].map(label => (
               <span key={label} className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -217,7 +213,6 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
       {/* ── LOADING ── */}
       {status === "loading" && !reportData && (
         <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
-          {/* Pulsing sacred icon */}
           <div className="relative">
             <div
               className="w-24 h-24 rounded-3xl flex items-center justify-center text-4xl"
@@ -260,7 +255,6 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
             </AnimatePresence>
           </div>
 
-          {/* Computation steps */}
           <div className="w-full max-w-xs space-y-2.5">
             {[
               { icon: "🪐", label: "Identifying Atmakaraka in Navamsa" },
@@ -279,7 +273,6 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
             ))}
           </div>
 
-          {/* Progress bar */}
           <div className="w-full max-w-xs h-0.5 rounded-full overflow-hidden bg-slate-100">
             <div
               className="h-full rounded-full"
@@ -321,16 +314,16 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
         </div>
       )}
 
-      {/* ── DONE ── */}
+      {/* ── DONE — Full-Width Premium Report ── */}
       {status === "done" && reportData && (
         <div data-lenis-prevent className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="max-w-3xl mx-auto px-4 md:px-8 py-6">
+          <div className="px-4 md:px-8 lg:px-12 py-4 md:py-6">
 
             {/* Hero Header */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative rounded-2xl overflow-hidden mb-7 p-6"
+              className="relative rounded-2xl overflow-hidden mb-6 md:mb-8 p-4 md:p-6"
               style={{
                 background: `linear-gradient(135deg, ${colors.from} 0%, ${colors.to} 100%)`,
                 boxShadow: `0 16px 48px ${colors.to}40`,
@@ -349,7 +342,7 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
                         Ishta Devata · Jaimini Revelation
                       </span>
                     </div>
-                    <h2 className="text-2xl font-black text-white tracking-tight leading-tight mb-1">
+                    <h2 className="text-xl md:text-2xl font-black text-white tracking-tight leading-tight mb-1">
                       {reportData.ishtaDevata}
                     </h2>
                     <p className="text-white/60 text-xs font-semibold">
@@ -371,7 +364,7 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
                 <div className="h-px bg-white/15 mt-4 mb-4" />
 
                 {/* Derivation chain */}
-                <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+                <div className="flex flex-wrap items-center gap-2 text-[10px] md:text-[11px] font-bold">
                   {[
                     { label: "AK", value: reportData.ak },
                     { label: "Karakamsa", value: reportData.karakamsaSign },
@@ -407,30 +400,100 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
               </div>
             </motion.div>
 
-            {/* Report Content */}
+            {/* Report Content — Full width, free-flowing, no card wrapper */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
             >
-              <div className="px-6 py-6 md:px-8 prose prose-slate max-w-none
-                prose-headings:font-black prose-headings:tracking-tight
-                prose-h2:text-slate-900 prose-h2:text-[17px] prose-h2:mt-7 prose-h2:mb-3
-                prose-h3:text-slate-800 prose-h3:text-[15px] prose-h3:mt-5 prose-h3:mb-2
-                prose-p:text-slate-600 prose-p:leading-relaxed prose-p:text-sm
-                prose-li:text-slate-600 prose-li:text-sm
-                prose-strong:text-slate-900 prose-strong:font-black
-                prose-hr:border-slate-100
-                prose-blockquote:border-indigo-300 prose-blockquote:bg-indigo-50 prose-blockquote:rounded-r-xl prose-blockquote:text-slate-700
-              ">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <div className="ishta-devata-report">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({ children }) => (
+                      <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-4 mt-2">{children}</h1>
+                    ),
+                    h2: ({ children }) => (
+                      <div className="mt-10 mb-5">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-1.5 h-8 rounded-full" style={{ background: `linear-gradient(to bottom, ${colors.from}, ${colors.to})` }} />
+                          <h2 className="text-[19px] font-black text-slate-900 tracking-tight uppercase">{children}</h2>
+                        </div>
+                        <div className="h-px" style={{ background: `linear-gradient(to right, ${colors.to}40, transparent)` }} />
+                      </div>
+                    ),
+                    h3: ({ children }) => (
+                      <h3 className="text-[15px] font-extrabold mt-7 mb-2.5 flex items-center gap-2" style={{ color: colors.to }}>
+                        <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: colors.to }} />
+                        {children}
+                      </h3>
+                    ),
+                    h4: ({ children }) => (
+                      <h4 className="text-sm font-bold text-slate-700 mt-5 mb-2">{children}</h4>
+                    ),
+                    p: ({ children }) => (
+                      <p className="text-[15px] text-slate-700 leading-[1.85] mb-4">{children}</p>
+                    ),
+                    strong: ({ children }) => (
+                      <strong className="font-extrabold text-slate-900">{children}</strong>
+                    ),
+                    em: ({ children }) => (
+                      <em className="font-medium not-italic" style={{ color: colors.to }}>{children}</em>
+                    ),
+                    hr: () => (
+                      <div className="my-8 flex items-center gap-3">
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                        <span className="text-slate-300 text-xs">✦</span>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                      </div>
+                    ),
+                    blockquote: ({ children }) => (
+                      <div className="my-5 relative">
+                        <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full" style={{ background: `linear-gradient(to bottom, ${colors.from}, ${colors.to})` }} />
+                        <div className="pl-5 pr-4 py-3 rounded-r-xl" style={{ background: `${colors.to}10` }}>
+                          <div className="text-[14px] text-slate-700 leading-relaxed font-medium italic">{children}</div>
+                        </div>
+                      </div>
+                    ),
+                    ul: ({ children }) => (
+                      <ul className="space-y-2.5 my-4 pl-0 list-none">{children}</ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol className="space-y-2.5 my-4 pl-0 list-none">{children}</ol>
+                    ),
+                    li: ({ children }) => (
+                      <li className="flex gap-3 text-[15px] text-slate-700 leading-relaxed">
+                        <span className="flex-shrink-0 w-5 h-5 mt-0.5 rounded-md flex items-center justify-center" style={{ background: `${colors.to}15` }}>
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: colors.to }} />
+                        </span>
+                        <span className="flex-1">{children}</span>
+                      </li>
+                    ),
+                    table: ({ children }) => (
+                      <div className="my-6 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                        <table className="w-full text-sm border-collapse">{children}</table>
+                      </div>
+                    ),
+                    thead: ({ children }) => (
+                      <thead style={{ background: `linear-gradient(to right, ${colors.from}, ${colors.to})` }}>{children}</thead>
+                    ),
+                    th: ({ children }) => (
+                      <th className="text-left px-5 py-3 text-xs font-bold text-white uppercase tracking-wider">{children}</th>
+                    ),
+                    td: ({ children }) => (
+                      <td className="px-5 py-3 text-slate-700 font-medium border-t border-slate-100">{children}</td>
+                    ),
+                    tr: ({ children }) => (
+                      <tr className="even:bg-slate-50/70 hover:bg-indigo-50/40 transition-colors">{children}</tr>
+                    ),
+                  }}
+                >
                   {reportData.report}
                 </ReactMarkdown>
               </div>
 
               {/* Footer */}
-              <div className="px-6 md:px-8 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-4">
+              <div className="mt-10 pt-5 border-t border-slate-100 flex items-center justify-between gap-4">
                 <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider leading-relaxed">
                   Derived via Jaimini Sutram · For spiritual guidance only
                 </p>

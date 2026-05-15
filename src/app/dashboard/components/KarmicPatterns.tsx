@@ -30,14 +30,12 @@ interface ReportData {
   generatedAt: string;
 }
 
-const CARD_COLORS: Record<string, {
-  bg: string; border: string; header: string; glow: string; badge: string; badgeText: string;
-}> = {
-  indigo:  { bg: "from-indigo-50/80 to-slate-50",  border: "border-indigo-200",  header: "text-indigo-800",  glow: "shadow-indigo-200/60",  badge: "bg-indigo-100",  badgeText: "text-indigo-700"  },
-  amber:   { bg: "from-amber-50/80 to-slate-50",   border: "border-amber-200",   header: "text-amber-800",   glow: "shadow-amber-200/60",   badge: "bg-amber-100",   badgeText: "text-amber-700"   },
-  rose:    { bg: "from-rose-50/80 to-slate-50",    border: "border-rose-200",    header: "text-rose-800",    glow: "shadow-rose-200/60",    badge: "bg-rose-100",    badgeText: "text-rose-700"    },
-  emerald: { bg: "from-emerald-50/80 to-slate-50", border: "border-emerald-200", header: "text-emerald-800", glow: "shadow-emerald-200/60", badge: "bg-emerald-100", badgeText: "text-emerald-700" },
-  purple:  { bg: "from-purple-50/80 to-slate-50",  border: "border-purple-200",  header: "text-purple-800",  glow: "shadow-purple-200/60",  badge: "bg-purple-100",  badgeText: "text-purple-700"  },
+const SECTION_ACCENTS: Record<string, { gradient: string; accent: string; light: string; dot: string }> = {
+  indigo:  { gradient: "from-indigo-600 to-indigo-500",  accent: "text-indigo-700",  light: "bg-indigo-50",  dot: "bg-indigo-500" },
+  amber:   { gradient: "from-amber-600 to-amber-500",   accent: "text-amber-700",   light: "bg-amber-50",   dot: "bg-amber-500" },
+  rose:    { gradient: "from-rose-600 to-rose-500",     accent: "text-rose-700",    light: "bg-rose-50",    dot: "bg-rose-500" },
+  emerald: { gradient: "from-emerald-600 to-emerald-500", accent: "text-emerald-700", light: "bg-emerald-50", dot: "bg-emerald-500" },
+  purple:  { gradient: "from-purple-600 to-purple-500",  accent: "text-purple-700",  light: "bg-purple-50",  dot: "bg-purple-500" },
 };
 
 const LOADING_STEPS = [
@@ -180,23 +178,106 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
     setTimeout(() => { printWindow.focus(); printWindow.print(); }, 500);
   };
 
+  /* ── Premium Markdown renderer for section content ── */
+  const renderMarkdown = (content: string, color: string) => {
+    const palette = SECTION_ACCENTS[color] ?? SECTION_ACCENTS.indigo;
+    return (
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h2: ({ children }) => (
+            <div className="mt-8 mb-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-1 h-6 rounded-full bg-gradient-to-b ${palette.gradient}`} />
+                <h2 className="text-[16px] font-black text-slate-900 tracking-tight uppercase">{children}</h2>
+              </div>
+              <div className="h-px bg-gradient-to-r from-slate-200 to-transparent" />
+            </div>
+          ),
+          h3: ({ children }) => (
+            <h3 className={`text-[14px] font-extrabold mt-6 mb-2 flex items-center gap-2 ${palette.accent}`}>
+              <span className={`w-1 h-1 rounded-full ${palette.dot} flex-shrink-0`} />
+              {children}
+            </h3>
+          ),
+          h4: ({ children }) => (
+            <h4 className="text-sm font-bold text-slate-700 mt-4 mb-1.5">{children}</h4>
+          ),
+          p: ({ children }) => (
+            <p className="text-[15px] text-slate-700 leading-[1.85] mb-3.5">{children}</p>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-extrabold text-slate-900">{children}</strong>
+          ),
+          em: ({ children }) => (
+            <em className={`font-medium not-italic ${palette.accent}`}>{children}</em>
+          ),
+          hr: () => (
+            <div className="my-7 flex items-center gap-3">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+              <span className="text-slate-300 text-xs">✦</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+            </div>
+          ),
+          blockquote: ({ children }) => (
+            <div className="my-4 relative">
+              <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b ${palette.gradient}`} />
+              <div className={`pl-5 pr-4 py-3 ${palette.light} rounded-r-xl`}>
+                <div className="text-[14px] text-slate-700 leading-relaxed font-medium italic">{children}</div>
+              </div>
+            </div>
+          ),
+          ul: ({ children }) => (
+            <ul className="space-y-2 my-3 pl-0 list-none">{children}</ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="space-y-2 my-3 pl-0 list-none">{children}</ol>
+          ),
+          li: ({ children }) => (
+            <li className="flex gap-2.5 text-[15px] text-slate-700 leading-relaxed">
+              <span className={`flex-shrink-0 w-5 h-5 mt-0.5 rounded-md ${palette.light} flex items-center justify-center`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
+              </span>
+              <span className="flex-1">{children}</span>
+            </li>
+          ),
+          table: ({ children }) => (
+            <div className="my-5 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+              <table className="w-full text-sm border-collapse">{children}</table>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-gradient-to-r from-slate-800 to-slate-700">{children}</thead>
+          ),
+          th: ({ children }) => (
+            <th className="text-left px-5 py-3 text-xs font-bold text-white uppercase tracking-wider">{children}</th>
+          ),
+          td: ({ children }) => (
+            <td className="px-5 py-3 text-slate-700 font-medium border-t border-slate-100">{children}</td>
+          ),
+          tr: ({ children }) => (
+            <tr className="even:bg-slate-50/70 hover:bg-indigo-50/40 transition-colors">{children}</tr>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    );
+  };
+
   // ── LOADING STATE ─────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-7 p-8">
-        {/* Animated orb */}
         <div className="relative w-20 h-20">
           <div className="absolute inset-0 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin" />
           <div className="absolute inset-2 rounded-full border-4 border-purple-100 border-b-purple-500 animate-spin" style={{ animationDirection: "reverse", animationDuration: "1.2s" }} />
           <div className="absolute inset-0 flex items-center justify-center text-2xl">🔮</div>
         </div>
-
         <div className="text-center">
           <p className="font-bold text-slate-800 text-lg mb-1">Karmic Analysis in Progress</p>
           <p className="text-sm text-slate-500">Scanning 16 divisional charts &amp; Jaimini Karakas...</p>
         </div>
-
-        {/* Step indicators */}
         <div className="flex flex-col gap-2.5 w-full max-w-xs">
           {LOADING_STEPS.map((step, i) => (
             <div key={i} className={`flex items-center gap-3 transition-all duration-500 ${i <= loadingStep ? "opacity-100" : "opacity-25"}`}>
@@ -225,12 +306,11 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
   if (!generated && !loading) {
     return (
       <div className="h-full flex flex-col overflow-y-auto custom-scrollbar">
-        {/* Header */}
-        <div className="flex-shrink-0 p-6 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-purple-50 to-slate-50">
+        <div className="flex-shrink-0 px-4 md:px-10 py-4 md:py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-purple-50 to-slate-50">
           <div className="flex items-start gap-3">
             <span className="text-3xl">🔮</span>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">Karmic Patterns Mapping</h2>
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">Karmic Patterns Mapping</h2>
               <p className="text-sm text-slate-500 mt-0.5">
                 Deep-layer Vedic intelligence across 16 divisional charts · {profileName}
               </p>
@@ -239,7 +319,6 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center gap-7 p-6 md:p-8">
-          {/* Feature grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-lg">
             {FEATURE_ITEMS.map((item, i) => (
               <motion.div
@@ -258,7 +337,6 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
             ))}
           </div>
 
-          {/* Cost notice */}
           <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-5 max-w-sm w-full">
             <div className="flex items-start gap-3">
               <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
@@ -274,14 +352,12 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
             </div>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="w-full max-w-sm p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium">
               {error}
             </div>
           )}
 
-          {/* CTA */}
           {!confirmed ? (
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -299,18 +375,8 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
             >
               <p className="text-sm font-bold text-slate-800">Confirm 25 credit deduction?</p>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setConfirmed(false)}
-                  className="px-5 py-2.5 bg-slate-100 text-slate-600 font-semibold rounded-xl hover:bg-slate-200 text-sm transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={generate}
-                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-200 text-sm transition-all"
-                >
-                  Yes, Generate Report
-                </button>
+                <button onClick={() => setConfirmed(false)} className="px-5 py-2.5 bg-slate-100 text-slate-600 font-semibold rounded-xl hover:bg-slate-200 text-sm transition-all">Cancel</button>
+                <button onClick={generate} className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-200 text-sm transition-all">Yes, Generate Report</button>
               </div>
             </motion.div>
           )}
@@ -319,7 +385,7 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
     );
   }
 
-  // ── REPORT STATE — Intelligence Cards ────────────────────────────────────
+  // ── REPORT STATE — Full-Width Premium Layout ────────────────────────────
   if (generated && reportData) {
     const genDate = reportData.generatedAt
       ? new Date(reportData.generatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
@@ -328,17 +394,16 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
     return (
       <div className="h-full flex flex-col overflow-y-auto custom-scrollbar">
         {/* Feature header */}
-        <div className="flex-shrink-0 p-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-purple-50 to-slate-50">
+        <div className="flex-shrink-0 px-4 md:px-10 py-4 md:py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-purple-50/60 to-slate-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🔮</span>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 tracking-tight">Karmic Patterns Mapping</h2>
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">Karmic Patterns Mapping</h2>
                 <p className="text-xs text-slate-500">{profileName} · {genDate}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {/* Data badges */}
               <div className="hidden md:flex gap-1.5">
                 {[
                   { label: "D3",  ok: reportData.d3Available  },
@@ -363,77 +428,49 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
           </div>
         </div>
 
-        {/* Intelligence Cards */}
-        <div ref={printRef} className="flex-1 p-5 md:p-7 space-y-5 max-w-3xl mx-auto w-full">
+        {/* Full-width free-flowing sections */}
+        <div ref={printRef} className="flex-1 px-4 md:px-8 lg:px-12 py-5 md:py-8 space-y-8 md:space-y-10">
           <AnimatePresence>
             {reportData.sections.map((section, idx) => {
-              const palette = CARD_COLORS[section.color] ?? CARD_COLORS.indigo;
+              const palette = SECTION_ACCENTS[section.color] ?? SECTION_ACCENTS.indigo;
               return (
                 <motion.div
                   key={section.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.12, duration: 0.45, ease: "easeOut" }}
-                  className={`rounded-2xl border ${palette.border} bg-gradient-to-br ${palette.bg} shadow-lg ${palette.glow} overflow-hidden`}
-                  style={{
-                    boxShadow: `0 4px 24px -4px var(--tw-shadow-color, rgba(0,0,0,0.08))`,
-                  }}
+                  transition={{ delay: idx * 0.1, duration: 0.4, ease: "easeOut" }}
                 >
-                  {/* Card header */}
-                  <div className={`px-5 py-3.5 border-b ${palette.border} flex items-center gap-2.5`}>
-                    <span className="text-xl">{section.icon}</span>
-                    <h3 className={`font-bold text-sm uppercase tracking-widest ${palette.header}`}>
-                      {section.title}
-                    </h3>
-                    <div className="ml-auto">
-                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold ${palette.badge} ${palette.badgeText}`}>
-                        Pattern {idx + 1} of {reportData.sections.length}
-                      </span>
+                  {/* Section title — full-width accent bar, no border box */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className={`w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br ${palette.gradient} flex items-center justify-center text-lg shadow-md flex-shrink-0`}>
+                      <span className="drop-shadow-sm">{section.icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-[15px] md:text-[17px] font-black text-slate-900 tracking-tight uppercase">
+                          {section.title}
+                        </h3>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${palette.light} ${palette.accent} flex-shrink-0`}>
+                          {idx + 1} / {reportData.sections.length}
+                        </span>
+                      </div>
+                      <div className={`h-0.5 mt-1.5 rounded-full bg-gradient-to-r ${palette.gradient} opacity-20`} />
                     </div>
                   </div>
 
-                  {/* Card content */}
-                  <div className="px-5 md:px-6 py-5">
-                    <div className="prose prose-sm max-w-none text-slate-700 leading-relaxed">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          h2: ({ children }) => (
-                            <h2 className="text-sm font-bold text-slate-900 mt-5 mb-2 pb-1.5 border-b border-slate-200">{children}</h2>
-                          ),
-                          h3: ({ children }) => (
-                            <h3 className={`text-xs font-bold uppercase tracking-wider mt-4 mb-2 ${palette.header}`}>{children}</h3>
-                          ),
-                          strong: ({ children }) => (
-                            <strong className="font-bold text-slate-900">{children}</strong>
-                          ),
-                          em: ({ children }) => (
-                            <em className="text-slate-500 not-italic text-xs">{children}</em>
-                          ),
-                          hr: () => <hr className="my-4 border-slate-200" />,
-                          blockquote: ({ children }) => (
-                            <blockquote className={`border-l-4 pl-4 py-1 rounded-r-xl my-3 text-slate-600 italic text-sm ${palette.border}`}>
-                              {children}
-                            </blockquote>
-                          ),
-                          li: ({ children }) => (
-                            <li className="text-slate-700 mb-1.5 flex gap-1.5">
-                              <span className={`mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full ${palette.badge.replace("bg-", "bg-").replace("100", "400")}`} />
-                              <span>{children}</span>
-                            </li>
-                          ),
-                          ul: ({ children }) => (
-                            <ul className="space-y-1 list-none pl-0 my-2">{children}</ul>
-                          ),
-                          p: ({ children }) => (
-                            <p className="text-[14px] text-slate-700 leading-relaxed mb-3">{children}</p>
-                          ),
-                        }}
-                      >
-                        {section.content}
-                      </ReactMarkdown>
-                    </div>
+                  {/* Free-flowing content — no card wrapper */}
+                  <div className="pl-0 md:pl-12">
+                    {renderMarkdown(section.content, section.color)}
                   </div>
+
+                  {/* Divider between sections */}
+                  {idx < reportData.sections.length - 1 && (
+                    <div className="mt-10 flex items-center gap-4">
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                      <span className="text-slate-300 text-xs">✦</span>
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                    </div>
+                  )}
                 </motion.div>
               );
             })}
@@ -443,8 +480,8 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: reportData.sections.length * 0.12 + 0.3 }}
-            className="text-center py-4"
+            transition={{ delay: reportData.sections.length * 0.1 + 0.3 }}
+            className="text-center py-6 border-t border-slate-100"
           >
             <p className="text-xs text-slate-400 font-medium">
               Report generated by Quantum Oracle · {reportData.model?.split("/").pop() || "AI"} · {genDate}
