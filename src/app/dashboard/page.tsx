@@ -706,6 +706,10 @@ export default function DashboardPage() {
         <button onClick={() => setActiveFeature("journal")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "journal" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🎙️</span><span>Journal</span>
         </button>
+        {/* Year Ahead — mobile only (was missing from mobile nav) */}
+        <button onClick={() => setActiveFeature("year-ahead")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "year-ahead" ? "text-amber-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">📅</span><span>Year Ahead</span>
+        </button>
         <button onClick={() => setActiveFeature("roadmap")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "roadmap" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🗺️</span><span>Roadmap</span>
         </button>
@@ -715,13 +719,18 @@ export default function DashboardPage() {
         <button onClick={() => setActiveFeature("reports")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "reports" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">📜</span><span>Reports</span>
         </button>
+        {/* Tech page link — mobile nav */}
+        <a href="/technology" className="flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors text-slate-400 hover:text-indigo-600">
+          <span className="text-xl leading-none">⚙️</span><span>Tech</span>
+        </a>
       </nav>
 
       {/* Main Layout */}
       <main className="flex-1 w-full mx-auto px-0 md:pl-0 md:pr-6 pt-0 md:pt-6 pb-16 md:pb-6 flex flex-col md:flex-row gap-0 md:gap-5 min-h-0 bg-slate-50 md:bg-transparent overflow-hidden">
         
         {/* Sidebar — flush to left edge, narrow, clean */}
-        <aside data-lenis-prevent className="hidden md:flex md:w-52 flex-shrink-0 flex-col gap-3 overflow-y-auto pl-3 md:pl-5">
+        {/* Desktop sidebar: flex-1 min-h-0 ensures it fills the flex column and scrolls internally */}
+        <aside data-lenis-prevent className="hidden md:flex md:w-52 flex-shrink-0 flex-col gap-3 overflow-y-auto pl-3 md:pl-5 flex-1 min-h-0">
           
           {/* ── Active Profile Selector ── */}
           <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
@@ -941,6 +950,15 @@ export default function DashboardPage() {
               <p className="text-[11px] text-amber-700 leading-relaxed font-medium">Complex queries consume multiple credits. Stay focused.</p>
             </div>
           </div>
+
+          {/* Tech footer link — desktop sidebar */}
+          <a
+            href="/technology"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-semibold text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all border border-dashed border-slate-200 hover:border-indigo-200"
+          >
+            <span className="text-sm">⚙️</span>
+            Tech Stack
+          </a>
 
         </aside>
 
