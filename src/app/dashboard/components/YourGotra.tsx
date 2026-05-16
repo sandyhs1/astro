@@ -124,7 +124,7 @@ export default function YourGotra({ profileId, profileName }: YourGotraProps) {
 
       {/* ── IDLE ── */}
       {status === "idle" && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-5 md:p-8 gap-6 md:gap-8 overflow-y-auto custom-scrollbar">
+        <div data-lenis-prevent className="flex-1 flex flex-col items-center justify-center text-center p-5 md:p-8 gap-6 md:gap-8 overflow-y-auto custom-scrollbar">
           <div className="relative">
             <div
               className="w-28 h-28 rounded-3xl flex items-center justify-center text-5xl shadow-xl"

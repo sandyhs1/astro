@@ -219,7 +219,7 @@ export default function RemedyPanel({ profileId, profileName }: Props) {
   // ── IDLE — Pre-generation ─────────────────────────────────────────────────
   if (!generated && !loading) {
     return (
-      <div className="h-full flex flex-col overflow-y-auto custom-scrollbar">
+      <div data-lenis-prevent className="h-full flex flex-col overflow-y-auto custom-scrollbar">
         {/* Header */}
         <div className="flex-shrink-0 px-4 md:px-10 py-4 md:py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-purple-50 to-slate-50">
           <div className="flex items-start gap-3">
@@ -321,7 +321,7 @@ export default function RemedyPanel({ profileId, profileName }: Props) {
       : "";
 
     return (
-      <div className="h-full flex flex-col overflow-y-auto custom-scrollbar">
+      <div data-lenis-prevent className="h-full flex flex-col overflow-y-auto custom-scrollbar">
         {/* Feature header */}
         <div className="flex-shrink-0 px-4 md:px-10 py-4 md:py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-purple-50 to-slate-50">
           <div className="flex items-center justify-between gap-3">

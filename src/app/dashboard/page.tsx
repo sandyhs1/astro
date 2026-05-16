@@ -706,12 +706,14 @@ export default function DashboardPage() {
         <button onClick={() => setActiveFeature("journal")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "journal" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🎙️</span><span>Journal</span>
         </button>
+        <button onClick={() => setActiveFeature("year-ahead")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "year-ahead" ? "text-amber-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">📅</span><span>Year</span>
+        </button>
+        <button onClick={() => setActiveFeature("soul-code")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "soul-code" ? "text-purple-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">🔱</span><span>Soul</span>
+        </button>
         <button onClick={() => setActiveFeature("roadmap")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "roadmap" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🗺️</span><span>Roadmap</span>
-        </button>
-        {/* Year Ahead — was missing from mobile nav, now added */}
-        <button onClick={() => setActiveFeature("year-ahead")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "year-ahead" ? "text-amber-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">📅</span><span>Year Ahead</span>
         </button>
         <button onClick={() => setActiveFeature("remedy")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "remedy" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">📿</span><span>Remedy</span>
@@ -719,17 +721,13 @@ export default function DashboardPage() {
         <button onClick={() => setActiveFeature("reports")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "reports" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">📜</span><span>Reports</span>
         </button>
-        {/* Tech link — navigates to /technology page */}
-        <button onClick={() => router.push('/technology')} className="flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors text-slate-400 hover:text-indigo-600">
-          <span className="text-xl leading-none">⚙️</span><span>Tech</span>
-        </button>
       </nav>
 
       {/* Main Layout */}
       <main className="flex-1 w-full mx-auto px-0 md:pl-0 md:pr-6 pt-0 md:pt-6 pb-16 md:pb-6 flex flex-col md:flex-row gap-0 md:gap-5 min-h-0 bg-slate-50 md:bg-transparent overflow-hidden">
         
-        {/* Sidebar — flush to left edge, narrow, clean */}
-        <aside data-lenis-prevent className="hidden md:flex md:w-52 flex-shrink-0 flex-col gap-3 overflow-y-auto pl-3 md:pl-5">
+        {/* Sidebar — flush to left edge, narrow, clean; min-h-0 lets it scroll within the locked viewport */}
+        <aside data-lenis-prevent className="hidden md:flex md:w-52 flex-shrink-0 flex-col gap-3 overflow-y-auto pl-3 md:pl-5 min-h-0 pb-4">
           
           {/* ── Active Profile Selector ── */}
           <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
@@ -787,7 +785,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ── Navigation ── */}
-          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm">
             <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50">
               <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Features</h2>
             </div>
@@ -949,14 +947,6 @@ export default function DashboardPage() {
               <p className="text-[11px] text-amber-700 leading-relaxed font-medium">Complex queries consume multiple credits. Stay focused.</p>
             </div>
           </div>
-
-          {/* Tech footer link — navigates to /technology page, visible on desktop sidebar */}
-          <button
-            onClick={() => router.push('/technology')}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-semibold text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all border border-dashed border-slate-200 hover:border-indigo-200"
-          >
-            <span className="text-sm leading-none">⚙️</span> Tech
-          </button>
 
         </aside>
 

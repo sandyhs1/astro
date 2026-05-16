@@ -109,7 +109,7 @@ export default function YearAheadPanel({ profileId }: { profileId: string }) {
   const parsed = reportData?.parsed;
 
   return (
-    <div className="flex flex-col h-full bg-[#FAFAFA] overflow-y-auto w-full text-slate-800">
+    <div data-lenis-prevent className="flex flex-col h-full bg-[#FAFAFA] overflow-y-auto w-full text-slate-800">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-5 md:px-10 py-5 md:py-6 sticky top-0 z-10 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3 md:gap-4">

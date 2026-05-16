@@ -33,6 +33,7 @@ export default function TheVoid() {
                     <a href="/our-process" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Our Process</a>
                     <a href="/myths" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Myths</a>
                     <a href="https://quantumkarma.substack.com/" target="_blank" rel="noopener noreferrer" className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase">Blog</a>
+                    <a href="/technology" className="font-mono text-xs text-gray-600 hover:text-[#00FF41] transition-colors uppercase">Tech</a>
                     <button
                         onClick={() => openLegal('refunds')}
                         className="font-mono text-xs text-gray-600 hover:text-[#FFD700] transition-colors uppercase"

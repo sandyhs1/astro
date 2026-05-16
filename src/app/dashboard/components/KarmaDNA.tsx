@@ -150,7 +150,7 @@ export default function KarmaDNA({ profileId, profileName }: Props) {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto custom-scrollbar">
+    <div data-lenis-prevent className="h-full flex flex-col overflow-y-auto custom-scrollbar">
       {/* Header */}
       <div className="flex-shrink-0 px-4 md:px-10 py-4 md:py-5 border-b border-slate-100 bg-gradient-to-r from-purple-50 via-indigo-50/60 to-slate-50">
         <div className="flex items-start justify-between gap-3">

@@ -2442,6 +2442,7 @@ const Footer = () => {
             <a href="/our-process"   className={linkCls}>Our Process</a>
             <a href="/myths"         className={linkCls}>Myths</a>
             <a href="https://quantumkarma.substack.com/" target="_blank" rel="noopener noreferrer" className={linkCls}>Blog ↗</a>
+            <a href="/technology" className={linkCls}>Tech</a>
             <button onClick={()=>setLegalType("refunds")} className={btnCls}>Refunds</button>
             <button onClick={()=>setLegalType("terms")}   className={btnCls}>Terms</button>
             <button onClick={()=>setLegalType("privacy")} className={btnCls}>Privacy</button>
@@ -2454,7 +2455,7 @@ const Footer = () => {
         </div>
         {/* Bottom bar */}
         <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
-          <span className="font-mono-tech text-[10px] text-zinc-600">© 2025 Quantum Karma · v.1</span>
+          <span className="font-mono-tech text-[10px] text-zinc-600">© 2026 Quantum Karma · v.1</span>
           <button onClick={()=>setLegalType("refunds")}
             className="font-mono-tech text-[10px] text-zinc-700 hover:text-zinc-500 transition-colors bg-transparent border-none cursor-pointer p-0">
             No refunds on karma. Precision is guaranteed; your ego is not.

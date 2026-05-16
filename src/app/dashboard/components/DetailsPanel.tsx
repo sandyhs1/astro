@@ -194,7 +194,7 @@ export default function DetailsPanel({activeProfileId}:Props) {
   const dormant=yogas?.filter((y:any)=>y.status==="DORMANT")||[];
 
   return (
-    <div style={{padding:"16px 20px",overflowY:"auto",height:"100%",background:"#F8FAFC"}}>
+    <div data-lenis-prevent style={{padding:"16px 20px",overflowY:"auto",height:"100%",background:"#F8FAFC"}}>
 
       {/* Header */}
       <div style={{...card,background:"linear-gradient(135deg,#6366F1,#8B5CF6)",color:"#fff",marginBottom:16}}>

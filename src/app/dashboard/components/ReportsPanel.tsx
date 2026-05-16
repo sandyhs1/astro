@@ -86,7 +86,7 @@ export default function ReportsPanel({ profileId }: { profileId: string }) {
   ] as const;
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-y-auto w-full">
+    <div data-lenis-prevent className="flex flex-col h-full bg-white overflow-y-auto w-full">
       {/* Header */}
       <div className="bg-white border-b border-slate-100 px-6 md:px-10 py-5 sticky top-0 z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">

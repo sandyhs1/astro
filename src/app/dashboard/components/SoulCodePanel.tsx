@@ -113,7 +113,7 @@ export default function SoulCodePanel({ profileId }: { profileId: string }) {
   const bio = reportData?.rawBiorhythm;
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-y-auto w-full text-slate-800">
+    <div data-lenis-prevent className="flex flex-col h-full bg-white overflow-y-auto w-full text-slate-800">
       {/* Header */}
       <div className="px-5 md:px-10 py-5 md:py-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-10 bg-white/95 backdrop-blur-md shadow-sm">
         <div className="flex items-center gap-3 md:gap-4">

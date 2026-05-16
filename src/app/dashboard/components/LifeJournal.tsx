@@ -149,7 +149,7 @@ export default function LifeJournal({ activeProfileId }: { activeProfileId: stri
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-8">
+      <div data-lenis-prevent className="flex-1 overflow-y-auto p-6 space-y-8">
         
         {/* Intro Section */}
         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6 shadow-sm">
