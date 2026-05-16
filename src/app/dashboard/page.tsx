@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { LogOut, Sparkles, Send, Users, AlertTriangle, MessageCircle } from "lucide-react";
+import { LogOut, Sparkles, Send, Users, AlertTriangle, MessageCircle, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -24,6 +24,7 @@ import LifeJournal from "./components/LifeJournal";
 import ReportsPanel from "./components/ReportsPanel";
 import SoulCodePanel from "./components/SoulCodePanel";
 import YearAheadPanel from "./components/YearAheadPanel";
+import ExplainerPanel from "./components/ExplainerPanel";
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -53,7 +54,7 @@ export default function DashboardPage() {
   const [geocodingReady, setGeocodingReady] = useState(false);
 
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
-  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast" | "gotra" | "ishta-devata" | "journal" | "reports" | "soul-code" | "year-ahead">("chat");
+  const [activeFeature, setActiveFeature] = useState<"chat" | "explainer" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast" | "gotra" | "ishta-devata" | "journal" | "reports" | "soul-code" | "year-ahead">("chat");
   
   const [messages, setMessages] = useState<{role: "user" | "assistant" | "system", content: string, marker?: string}[]>([
     { role: "assistant", content: "Hey there, I am your Quantum Karma Astrologer...", marker: "A" }
@@ -505,7 +506,7 @@ export default function DashboardPage() {
 
   return (
     <PaymentGate>
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-indigo-200 selection:text-indigo-900 overflow-x-hidden">
+    <div className="h-[100dvh] bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-indigo-200 selection:text-indigo-900 overflow-hidden">
       
       {/* Profile Modal - Light Theme */}
       {showProfileModal && (
@@ -680,44 +681,47 @@ export default function DashboardPage() {
       {/* Main Layout - Light Theme */}
       {/* ── Mobile Bottom Tab Bar (hidden on md+) ── */}
       {/* pr-[70px] reserves right-side space so Intercom widget doesn't block the Remedy button */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 flex items-stretch h-16 safe-area-bottom pr-[70px]">
-        <button onClick={() => { setActiveFeature("chat"); }} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "chat" ? "text-indigo-600" : "text-slate-400"}`}>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 flex items-stretch h-16 safe-area-bottom pr-[70px] overflow-x-auto custom-scrollbar flex-nowrap">
+        <button onClick={() => { setActiveFeature("explainer"); }} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "explainer" ? "text-indigo-600" : "text-slate-400"}`}>
+          <BookOpen size={20} /><span>Explainer</span>
+        </button>
+        <button onClick={() => { setActiveFeature("chat"); }} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "chat" ? "text-indigo-600" : "text-slate-400"}`}>
           <MessageCircle size={20} /><span>Oracle</span>
         </button>
-        <button onClick={() => setActiveFeature("destiny")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "destiny" ? "text-indigo-600" : "text-slate-400"}`}>
+        <button onClick={() => setActiveFeature("destiny")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "destiny" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🗓️</span><span>Destiny</span>
         </button>
-        <button onClick={() => setActiveFeature("karma-dna")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "karma-dna" ? "text-indigo-600" : "text-slate-400"}`}>
+        <button onClick={() => setActiveFeature("karma-dna")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "karma-dna" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🧬</span><span>DNA</span>
         </button>
-        <button onClick={() => setActiveFeature("royal-roast")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "royal-roast" ? "text-orange-500" : "text-slate-400"}`}>
+        <button onClick={() => setActiveFeature("royal-roast")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "royal-roast" ? "text-orange-500" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🔥</span><span>Roast</span>
         </button>
-        <button onClick={() => setActiveFeature("gotra")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "gotra" ? "text-amber-600" : "text-slate-400"}`}>
+        <button onClick={() => setActiveFeature("gotra")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "gotra" ? "text-amber-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🕉️</span><span>Gotra</span>
         </button>
-        <button onClick={() => setActiveFeature("ishta-devata")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "ishta-devata" ? "text-indigo-600" : "text-slate-400"}`}>
+        <button onClick={() => setActiveFeature("ishta-devata")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "ishta-devata" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🙏</span><span>Devata</span>
         </button>
-        <button onClick={() => setActiveFeature("journal")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "journal" ? "text-indigo-600" : "text-slate-400"}`}>
+        <button onClick={() => setActiveFeature("journal")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "journal" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🎙️</span><span>Journal</span>
         </button>
-        <button onClick={() => setActiveFeature("roadmap")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "roadmap" ? "text-indigo-600" : "text-slate-400"}`}>
+        <button onClick={() => setActiveFeature("roadmap")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "roadmap" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">🗺️</span><span>Roadmap</span>
         </button>
-        <button onClick={() => setActiveFeature("remedy")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "remedy" ? "text-indigo-600" : "text-slate-400"}`}>
+        <button onClick={() => setActiveFeature("remedy")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "remedy" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">📿</span><span>Remedy</span>
         </button>
-        <button onClick={() => setActiveFeature("reports")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "reports" ? "text-indigo-600" : "text-slate-400"}`}>
+        <button onClick={() => setActiveFeature("reports")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "reports" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">📜</span><span>Reports</span>
         </button>
       </nav>
 
       {/* Main Layout */}
-      <main className="flex-1 w-full mx-auto px-0 md:pl-0 md:pr-6 pt-0 md:pt-6 pb-16 md:pb-6 flex flex-col md:flex-row gap-0 md:gap-5 md:h-[calc(100vh-64px)] bg-slate-50 md:bg-transparent">
+      <main className="flex-1 w-full mx-auto px-0 md:pl-0 md:pr-6 pt-0 md:pt-6 pb-16 md:pb-6 flex flex-col md:flex-row gap-0 md:gap-5 min-h-0 bg-slate-50 md:bg-transparent overflow-hidden">
         
         {/* Sidebar — flush to left edge, narrow, clean */}
-        <aside className="hidden md:flex md:w-52 flex-shrink-0 flex-col gap-3 overflow-y-auto pl-3 md:pl-5">
+        <aside data-lenis-prevent className="hidden md:flex md:w-52 flex-shrink-0 flex-col gap-3 overflow-y-auto pl-3 md:pl-5">
           
           {/* ── Active Profile Selector ── */}
           <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
@@ -780,6 +784,20 @@ export default function DashboardPage() {
               <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Features</h2>
             </div>
             <div className="p-1.5 space-y-0.5">
+
+              {/* Explainer Masterclass */}
+              <button onClick={() => setActiveFeature("explainer")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "explainer" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20" : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
+                }`}>
+                <span className="flex items-center gap-2.5">
+                  <BookOpen size={16} className={activeFeature === "explainer" ? "text-white" : "text-indigo-600"} /> 
+                  Explainer
+                </span>
+                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                  activeFeature === "explainer" ? "bg-white/20 text-white" : "bg-indigo-200 text-indigo-700"
+                }`}>START HERE</span>
+              </button>
 
               {/* Oracle Chat */}
               <button onClick={() => setActiveFeature("chat")}
@@ -932,6 +950,7 @@ export default function DashboardPage() {
           {/* Daily Briefing Widget — always visible at top */}
           <DailyBriefingWidget profileId={activeProfileId} />
 
+          {activeFeature === "explainer"      && <ExplainerPanel profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "destiny"        && <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "karma-dna"      && <KarmaDNA        profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "karmic-patterns"&& <KarmicPatterns  profileId={activeProfileId} profileName={activeProfileName} />}
@@ -997,7 +1016,7 @@ export default function DashboardPage() {
             />
           )}
           
-          <div className={activeFeature === "chat" ? "flex flex-col h-full" : "hidden"}>
+          <div className={activeFeature === "chat" ? "flex flex-col flex-1 min-h-0" : "hidden"}>
           {/* Chat Header */}
           <div className="h-14 px-6 flex items-center justify-between border-b border-slate-100 bg-white/90 backdrop-blur-md z-10 flex-shrink-0">
             <div className="flex items-center gap-3">
@@ -1033,7 +1052,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Messages Area */}
-          <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 md:py-6 space-y-6 md:space-y-8 custom-scrollbar">
+          <div data-lenis-prevent ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 md:py-6 space-y-6 md:space-y-8 custom-scrollbar">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex flex-col animate-fade-in ${msg.role === "system" ? "items-center" : msg.role === "user" ? "items-end" : "items-start"}`}>
                 
