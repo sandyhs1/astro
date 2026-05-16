@@ -483,6 +483,7 @@ export async function GET(req: NextRequest) {
       specialPoints,
       yogas,
       enrichments,
+      extras: chart.extras,
     });
 
   } catch (err: any) {

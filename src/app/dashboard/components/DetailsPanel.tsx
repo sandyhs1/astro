@@ -70,6 +70,82 @@ function YogaCard({yoga}:{yoga:any}) {
   );
 }
 
+function ChartViewer({profileId, data}: {profileId: string, data: any}) {
+  const [chart, setChart] = useState("D1");
+  const [svg, setSvg] = useState<string|null>(null);
+  const [loading, setLoading] = useState(false);
+  
+  const charts = [
+    {id:"D1", name:"D1 (Rasi)"}, {id:"D2", name:"D2 (Hora)"}, {id:"D3", name:"D3 (Drekkana)"}, 
+    {id:"D4", name:"D4 (Chaturthamsha)"}, {id:"D7", name:"D7 (Saptamsha)"}, {id:"D9", name:"D9 (Navamsha)"}, 
+    {id:"D10", name:"D10 (Dashamsha)"}, {id:"D12", name:"D12 (Dwadashamsha)"}, {id:"D16", name:"D16 (Shodashamsha)"},
+    {id:"D20", name:"D20 (Vimshamsha)"}, {id:"D24", name:"D24 (Chaturvimshamsha)"}, {id:"D27", name:"D27 (Bhamsha)"},
+    {id:"D30", name:"D30 (Trimshamsha)"}, {id:"D40", name:"D40 (Khavedamsha)"}, {id:"D45", name:"D45 (Akshavedamsha)"},
+    {id:"D60", name:"D60 (Shashtiamsha)"}
+  ];
+
+  useEffect(() => {
+    async function loadSvg() {
+      setLoading(true);
+      try {
+         const res = await fetch(`/api/chart-image?profileId=${profileId}&chartId=${chart}`);
+         const resData = await res.json();
+         if(resData.svg) setSvg(resData.svg);
+      } finally {
+         setLoading(false);
+      }
+    }
+    loadSvg();
+  }, [profileId, chart]);
+
+  const { person, core, extras } = data;
+  const panchang = extras?.panchang;
+
+  return (
+    <div style={card}>
+       <span style={sec}>Astrological Divisional Charts & Details</span>
+       
+       <div style={{background:"#F8FAFC", border:"1px solid #E2E8F0", borderRadius:10, padding:"16px", marginBottom: 20}}>
+          <div style={{fontSize:"14px", fontWeight:800, color:"#1E293B", marginBottom: 12}}>Personal Details</div>
+          <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px 24px"}}>
+             <Row label="Name" value={person.fullName} />
+             <Row label="DOB" value={person.dob} />
+             <Row label="TOB" value={person.tob} />
+             <Row label="POB" value={person.pob} />
+             <Row label="Nakshatra" value={core.moonNakshatra || "—"} />
+             <Row label="Pada" value={core.moonNakshatraPada?.toString() || "—"} />
+             <Row label="Rasi (Moon Sign)" value={core.moonSign || "—"} />
+             <Row label="Tithi" value={panchang ? `${panchang.tithiName} (${panchang.tithiPaksha})` : "—"} />
+          </div>
+       </div>
+
+       <div style={{fontSize:"13px", fontWeight:700, color:"#475569", marginBottom:10}}>Select Chart:</div>
+       <div style={{display:"flex", gap: 8, flexWrap:"wrap", marginBottom:16}}>
+         {charts.map(c => (
+           <button 
+             key={c.id} 
+             onClick={() => setChart(c.id)} 
+             style={{...pill(chart===c.id ? "#fff" : "#4F46E5", chart===c.id ? "#4F46E5" : "#EEF2FF"), border:"1px solid #C7D2FE", cursor:"pointer", padding:"6px 12px", fontSize:"11px", transition:"all 0.2s"}}
+           >
+             {c.name}
+           </button>
+         ))}
+       </div>
+       
+       <div style={{background:"#fff", padding: 16, borderRadius: 12, border: "1px solid #E2E8F0", minHeight: 350, display:"flex", alignItems:"center", justifyContent:"center"}}>
+         {loading ? (
+            <div style={{color:"#64748B", fontSize:"13px", fontWeight:600, display:"flex", flexDirection:"column", alignItems:"center", gap:8}}>
+              <div className="animate-spin text-2xl">⚙️</div>
+              <div>Generating {chart} computation...</div>
+            </div>
+         ) : (
+            <div dangerouslySetInnerHTML={{__html: svg || ""}} style={{width:"100%", maxWidth:400, display:"flex", justifyContent:"center"}} />
+         )}
+       </div>
+    </div>
+  );
+}
+
 export default function DetailsPanel({activeProfileId}:Props) {
   const [data,setData]=useState<any>(null);
   const [loading,setLoading]=useState(false);
@@ -356,6 +432,9 @@ export default function DetailsPanel({activeProfileId}:Props) {
         )}
         {(!yogas||yogas.length===0)&&<div style={{color:"#94A3B8",fontSize:"13px"}}>No classical yogas detected.</div>}
       </div>
+
+      {/* Chart Viewer */}
+      <ChartViewer profileId={activeProfileId} data={data} />
 
       <div style={{height:40}}/>
     </div>

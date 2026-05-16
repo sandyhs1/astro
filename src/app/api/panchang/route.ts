@@ -26,6 +26,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const profileId = searchParams.get("profileId");
+    const dateParam = searchParams.get("date");
 
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -61,7 +62,7 @@ export async function GET(req: Request) {
     } catch { /* use defaults */ }
 
     // ── Get today's Moon + Sun positions from astroClient ─────────────────
-    const now = new Date();
+    const now = dateParam ? new Date(dateParam) : new Date();
     let moonLon = 0;
     let sunLon  = 0;
 

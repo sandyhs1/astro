@@ -50,6 +50,71 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
   const [genMonth, setGenMonth]   = useState<string | null>(null);
   const currentMonth = new Date().toLocaleString("en-IN", { month:"long", year:"numeric" });
 
+  const [dayPanchang, setDayPanchang] = useState<any>(null);
+  const [dayPLoading, setDayPLoading] = useState(false);
+
+  const handleSelectDay = async (day: DayData) => {
+    if (selectedDay?.dateStr === day.dateStr) {
+      setSelectedDay(null);
+      return;
+    }
+    setSelectedDay(day);
+    setDayPanchang(null);
+    setDayPLoading(true);
+    try {
+      const year = new Date().getFullYear();
+      const parts = day.dateStr.split(",");
+      const monthDay = parts.length > 1 ? parts[1].trim() : day.dateStr;
+      const dateString = `${monthDay} ${year}`;
+      const res = await fetch(`/api/panchang?profileId=${profileId}&date=${encodeURIComponent(dateString)}`);
+      const data = await res.json();
+      if (data.panchang) {
+        setDayPanchang(data.panchang);
+      }
+    } catch(e) {
+      console.error(e);
+    } finally {
+      setDayPLoading(false);
+    }
+  };
+
+  const formatTime = (iso: string) => {
+    if (!iso) return "--:--";
+    return new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
+  };
+
+  const getRitu = (month: number) => {
+    if (month >= 2 && month <= 3) return "Vasant (Spring)";
+    if (month >= 4 && month <= 5) return "Grishma (Summer)";
+    if (month >= 6 && month <= 7) return "Varsha (Monsoon)";
+    if (month >= 8 && month <= 9) return "Sharad (Autumn)";
+    if (month >= 10 && month <= 11) return "Hemant (Pre-Winter)";
+    return "Shishir (Winter)";
+  };
+
+  const getAyana = (month: number) => {
+    return (month >= 0 && month <= 5) ? "Uttarayana" : "Dakshinayana";
+  };
+
+  const TITHI_SIGNS: Record<number, string> = {
+    1: "Pratipada — auspicious for new beginnings and ceremonies",
+    2: "Dwitiya — favorable for laying foundations and building",
+    3: "Tritiya — excellent for acquiring wealth and assets",
+    4: "Chaturthi — avoid new ventures; favorable for clearing obstacles",
+    5: "Panchami — auspicious for education, healing, and travel",
+    6: "Shashthi — favorable for property matters and war/competition",
+    7: "Saptami — auspicious for travel, vehicles, and health remedies",
+    8: "Ashtami — avoid major decisions; good for spiritual practices",
+    9: "Navami — favorable for overcoming enemies and aggressive action",
+    10: "Dashami — highly auspicious for all important and spiritual work",
+    11: "Ekadashi — spiritually potent; recommended for fasting and meditation",
+    12: "Dwadashi — completion of Ekadashi fast; auspicious for charity",
+    13: "Trayodashi — favorable for wealth, health, and overcoming obstacles",
+    14: "Chaturdashi — intense energy; avoid worldly pursuits, focus on spirituality",
+    15: "Purnima — full moon; extremely auspicious for all positive rituals",
+    30: "Amavasya — dark moon; reserved for ancestral offerings and rest",
+  };
+
   // Load panchang on mount / profile change
   useEffect(() => {
     if (!profileId) return;
@@ -222,7 +287,7 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
                   <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
                     {days.map((day, idx) => (
                       <motion.button key={idx} initial={{ opacity:0, scale:0.9 }} animate={{ opacity:1, scale:1 }} transition={{ delay:idx*0.02 }}
-                        onClick={() => setSelectedDay(selectedDay?.dateStr === day.dateStr ? null : day)}
+                        onClick={() => handleSelectDay(day)}
                         className={`relative p-2 rounded-xl border-2 text-left transition-all hover:shadow-md ${selectedDay?.dateStr === day.dateStr ? "ring-2 ring-indigo-400 scale-105" : ""} ${GRADE_BG[day.grade]}`}>
                         <p className="text-[10px] font-bold text-slate-500 leading-tight">{day.dateStr.split(",")[0]}</p>
                         <p className="text-sm font-bold text-slate-800 leading-tight">{day.dateStr.split(",")[1]}</p>
@@ -236,22 +301,177 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
                   <AnimatePresence>
                     {selectedDay && (
                       <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-10 }}
-                        className={`p-4 rounded-2xl border-2 ${GRADE_BG[selectedDay.grade]}`}>
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h3 className={`font-bold text-base ${GRADE_TEXT[selectedDay.grade]}`}>{selectedDay.dateStr}</h3>
-                            <p className={`text-sm font-semibold ${GRADE_TEXT[selectedDay.grade]}`}>{GRADE_LABELS[selectedDay.grade]} · Score: {selectedDay.score}/10</p>
+                        className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6 mb-4"
+                      >
+                        {/* Day Header */}
+                        <div className="p-5 border-b border-slate-100">
+                          <div className="flex flex-col gap-1.5 mb-4">
+                            <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                              {selectedDay.dateStr} {new Date().getFullYear()}
+                            </h2>
+                            {dayPLoading ? (
+                              <div className="h-4 bg-slate-100 animate-pulse rounded w-1/2"></div>
+                            ) : dayPanchang ? (
+                              <p className="text-sm font-medium text-slate-600">
+                                {dayPanchang.tithi?.paksha} · {dayPanchang.tithi?.name}
+                              </p>
+                            ) : null}
                           </div>
-                          <div className="text-right">
-                            <p className="text-xs text-slate-500">Dominant</p>
-                            <p className="text-sm font-bold text-slate-700">{selectedDay.dominantPlanet}</p>
+
+                          <div className="flex items-center gap-2 mb-4">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${GRADE_BG[selectedDay.grade]}`}>
+                              <span className={`w-2 h-2 rounded-full`} style={{ backgroundColor: SCORE_BG[selectedDay.grade] }}></span>
+                              <span className={GRADE_TEXT[selectedDay.grade]}>{selectedDay.score >= 70 ? "Auspicious" : selectedDay.score >= 40 ? "Neutral" : "Avoid"}</span>
+                            </span>
+                            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                              Score: {selectedDay.score}/10
+                            </span>
+                          </div>
+
+                          {/* Tithi Significance */}
+                          {!dayPLoading && dayPanchang && dayPanchang.tithi && (
+                            <div className="mt-2">
+                              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                <span>☁️</span> TITHI SIGNIFICANCE
+                              </h4>
+                              <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                                {TITHI_SIGNS[dayPanchang.tithi.number] || dayPanchang.tithi.name}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Factors List (from computeCalendar) */}
+                        <div className="p-5 bg-slate-50 border-b border-slate-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                              <span>✨</span> ASTROLOGICAL FACTORS
+                            </h4>
+                            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                              Dominant: {selectedDay.dominantPlanet}
+                            </span>
+                          </div>
+                          <div className="space-y-1.5 mt-3">
+                            {selectedDay.factors.map((f, i) => (
+                              <p key={i} className="text-sm text-slate-700 flex items-start gap-2">
+                                <span className="text-indigo-400 mt-0.5">✦</span>
+                                <span>{f}</span>
+                              </p>
+                            ))}
                           </div>
                         </div>
-                        <div className="space-y-1.5">
-                          {selectedDay.factors.map((f, i) => (
-                            <p key={i} className="text-xs text-slate-600 flex items-start gap-1.5"><span className="text-indigo-400 mt-0.5">◆</span>{f}</p>
-                          ))}
-                        </div>
+
+                        {/* Loading State for Panchang */}
+                        {dayPLoading && (
+                          <div className="p-8 flex justify-center">
+                            <div className="flex gap-2">
+                              <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></div>
+                              <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Rich Panchang Details */}
+                        {!dayPLoading && dayPanchang && (
+                          <div className="p-5">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                              {/* Cards */}
+                              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <p className="text-[10px] text-slate-400 font-bold mb-1">Nakshatra</p>
+                                <p className="text-sm font-bold text-slate-800">{dayPanchang.nakshatra}</p>
+                              </div>
+                              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <p className="text-[10px] text-slate-400 font-bold mb-1 flex items-center gap-1"><span>☀️</span> Sunrise</p>
+                                <p className="text-sm font-bold text-slate-800">{formatTime(dayPanchang.sunTimes?.sunrise)}</p>
+                              </div>
+                              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <p className="text-[10px] text-slate-400 font-bold mb-1 flex items-center gap-1"><span>🌇</span> Sunset</p>
+                                <p className="text-sm font-bold text-slate-800">{formatTime(dayPanchang.sunTimes?.sunset)}</p>
+                              </div>
+                              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <p className="text-[10px] text-slate-400 font-bold mb-1">Yoga</p>
+                                <p className="text-sm font-bold text-slate-800">{dayPanchang.yoga}</p>
+                              </div>
+                            </div>
+
+                            <div className="mb-6">
+                              <div className="p-3 bg-red-50 border border-red-100 rounded-xl flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-red-500">⚠️</span>
+                                  <span className="text-sm font-bold text-red-800">Rahu Kaal</span>
+                                </div>
+                                <span className="text-sm font-bold text-red-700">
+                                  {formatTime(dayPanchang.rahuKaal?.start)} - {formatTime(dayPanchang.rahuKaal?.end)}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Cosmic Context */}
+                            <div className="mb-6">
+                              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1">
+                                <span>🌌</span> TODAY'S COSMIC CONTEXT
+                              </h4>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="p-3 bg-indigo-50/50 rounded-xl border border-indigo-50">
+                                  <p className="text-[10px] text-slate-400 font-bold mb-1">Paksha</p>
+                                  <p className="text-sm font-bold text-indigo-900">{dayPanchang.tithi?.paksha?.replace(" Paksha", "")}</p>
+                                </div>
+                                <div className="p-3 bg-indigo-50/50 rounded-xl border border-indigo-50">
+                                  <p className="text-[10px] text-slate-400 font-bold mb-1">Ritu (Season)</p>
+                                  <p className="text-sm font-bold text-indigo-900">{getRitu(new Date(dayPanchang.sunTimes?.solarNoon || new Date()).getMonth())}</p>
+                                </div>
+                                <div className="p-3 bg-indigo-50/50 rounded-xl border border-indigo-50">
+                                  <p className="text-[10px] text-slate-400 font-bold mb-1">Ayana</p>
+                                  <p className="text-sm font-bold text-indigo-900">{getAyana(new Date(dayPanchang.sunTimes?.solarNoon || new Date()).getMonth())}</p>
+                                </div>
+                                <div className="p-3 bg-indigo-50/50 rounded-xl border border-indigo-50">
+                                  <p className="text-[10px] text-slate-400 font-bold mb-1">Day Lord</p>
+                                  <p className="text-sm font-bold text-indigo-900">{dayPanchang.weekdayLord}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Muhurta Windows */}
+                            <div>
+                              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1">
+                                <span>⏱️</span> MUHURTA WINDOWS
+                              </h4>
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                                  <div>
+                                    <p className="text-sm font-bold text-emerald-900 flex items-center gap-1"><span>✨</span> Abhijit Muhurta</p>
+                                    <p className="text-sm font-bold text-emerald-700 mt-0.5">
+                                      {formatTime(dayPanchang.abhijit?.start)} - {formatTime(dayPanchang.abhijit?.end)}
+                                    </p>
+                                  </div>
+                                  <span className="text-[10px] font-bold bg-emerald-200 text-emerald-800 px-2 py-1 rounded-full">Auspicious</span>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 bg-amber-50 rounded-xl border border-amber-100">
+                                  <div>
+                                    <p className="text-sm font-bold text-amber-900 flex items-center gap-1"><span>🔸</span> Guli Kaal</p>
+                                    <p className="text-sm font-bold text-amber-700 mt-0.5">
+                                      {formatTime(dayPanchang.gulikKaal?.start)} - {formatTime(dayPanchang.gulikKaal?.end)}
+                                    </p>
+                                  </div>
+                                  <span className="text-[10px] font-bold bg-amber-200 text-amber-800 px-2 py-1 rounded-full">Avoid</span>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 bg-red-50 rounded-xl border border-red-100">
+                                  <div>
+                                    <p className="text-sm font-bold text-red-900 flex items-center gap-1"><span>🔴</span> Yamaganda Kaal</p>
+                                    <p className="text-sm font-bold text-red-700 mt-0.5">
+                                      {formatTime(dayPanchang.yamaganda?.start)} - {formatTime(dayPanchang.yamaganda?.end)}
+                                    </p>
+                                  </div>
+                                  <span className="text-[10px] font-bold bg-red-200 text-red-800 px-2 py-1 rounded-full">Avoid</span>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>

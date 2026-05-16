@@ -21,6 +21,9 @@ import DailyBriefingWidget from "./components/DailyBriefingWidget";
 import YourGotra from "./components/YourGotra";
 import IshtaDevata from "./components/IshtaDevata";
 import LifeJournal from "./components/LifeJournal";
+import ReportsPanel from "./components/ReportsPanel";
+import SoulCodePanel from "./components/SoulCodePanel";
+import YearAheadPanel from "./components/YearAheadPanel";
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -50,7 +53,7 @@ export default function DashboardPage() {
   const [geocodingReady, setGeocodingReady] = useState(false);
 
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
-  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast" | "gotra" | "ishta-devata" | "journal">("chat");
+  const [activeFeature, setActiveFeature] = useState<"chat" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast" | "gotra" | "ishta-devata" | "journal" | "reports" | "soul-code" | "year-ahead">("chat");
   
   const [messages, setMessages] = useState<{role: "user" | "assistant" | "system", content: string, marker?: string}[]>([
     { role: "assistant", content: "Hey there, I am your Quantum Karma Astrologer...", marker: "A" }
@@ -705,6 +708,9 @@ export default function DashboardPage() {
         <button onClick={() => setActiveFeature("remedy")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "remedy" ? "text-indigo-600" : "text-slate-400"}`}>
           <span className="text-xl leading-none">📿</span><span>Remedy</span>
         </button>
+        <button onClick={() => setActiveFeature("reports")} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "reports" ? "text-indigo-600" : "text-slate-400"}`}>
+          <span className="text-xl leading-none">📜</span><span>Reports</span>
+        </button>
       </nav>
 
       {/* Main Layout */}
@@ -828,6 +834,30 @@ export default function DashboardPage() {
                 <span className="text-sm leading-none">📋</span> My Details
               </button>
 
+              {/* Reports */}
+              <button onClick={() => setActiveFeature("reports")}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "reports" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="text-sm leading-none">📜</span> Reports
+              </button>
+
+              {/* Soul Code */}
+              <button onClick={() => setActiveFeature("soul-code")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "soul-code" ? "bg-purple-50 text-purple-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🔱</span> Soul Code</span>
+              </button>
+
+              {/* Year Ahead */}
+              <button onClick={() => setActiveFeature("year-ahead")}
+                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeFeature === "year-ahead" ? "bg-amber-50 text-amber-700" : "text-slate-600 hover:bg-slate-50"
+                }`}>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">📅</span> Year Ahead</span>
+              </button>
+
               {/* Royal Roast */}
               <button onClick={() => setActiveFeature("royal-roast")}
                 className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
@@ -865,9 +895,6 @@ export default function DashboardPage() {
                   activeFeature === "journal" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
                 }`}>
                 <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🎙️</span> Life Journal</span>
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                  activeFeature === "journal" ? "bg-indigo-200/60 text-indigo-800" : "bg-indigo-100 text-indigo-600"
-                }`}>FREE</span>
               </button>
 
               {/* Separator */}
@@ -900,7 +927,7 @@ export default function DashboardPage() {
         </aside>
 
         {/* Main Chat Interface - Light Theme Redesign */}
-        <section className="flex-1 w-full flex flex-col bg-white md:rounded-2xl md:border md:border-slate-200 md:shadow-lg overflow-hidden relative min-h-0">
+        <section className="flex-1 w-full flex flex-col md:rounded-2xl md:border md:border-slate-200 md:shadow-lg overflow-hidden relative min-h-0">
 
           {/* Daily Briefing Widget — always visible at top */}
           <DailyBriefingWidget profileId={activeProfileId} />
@@ -946,6 +973,27 @@ export default function DashboardPage() {
           {activeFeature === "journal" && (
             <LifeJournal
               activeProfileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+            />
+          )}
+
+          {/* Reports Panel */}
+          {activeFeature === "reports" && (
+            <ReportsPanel
+              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+            />
+          )}
+
+          {/* Soul Code Panel */}
+          {activeFeature === "soul-code" && (
+            <SoulCodePanel
+              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+            />
+          )}
+
+          {/* Year Ahead Panel */}
+          {activeFeature === "year-ahead" && (
+            <YearAheadPanel
+              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
             />
           )}
           

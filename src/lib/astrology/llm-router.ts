@@ -194,13 +194,19 @@ const GEMINI_FLASH_MODEL = "gemini-3.1-flash-lite-preview";
 async function callGeminiPro(
   systemPrompt: string,
   messages: Message[],
-  maxTokens = 900
+  maxTokens = 900,
+  isJsonMode = false
 ): Promise<LLMResponse> {
   const gemini = new GoogleGenerativeAI(GEMINI_API_KEY);
+  const genConfig: any = { maxOutputTokens: maxTokens, temperature: 0.7 };
+  if (isJsonMode) {
+    genConfig.responseMimeType = "application/json";
+  }
+
   const model  = gemini.getGenerativeModel({
     model: GEMINI_PRO_MODEL,
     systemInstruction: systemPrompt,
-    generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 },
+    generationConfig: genConfig,
   });
 
   const history = messages.slice(0, -1).map(m => ({
@@ -247,12 +253,13 @@ async function callGeminiFlash(prompt: string, maxTokens = 900): Promise<LLMResp
 export async function routeLLM(
   systemPrompt: string,
   messages: Message[],
-  maxTokens = 2000
+  maxTokens = 2000,
+  isJsonMode = false
 ): Promise<LLMResponse & { usedFallback: boolean }> {
 
   // PRIMARY: Gemini 3.1 Pro
   try {
-    const result = await callGeminiPro(systemPrompt, messages, maxTokens);
+    const result = await callGeminiPro(systemPrompt, messages, maxTokens, isJsonMode);
     console.log(`✅ [LLM] Gemini 3.1 Pro [in:${result.tokensIn} out:${result.tokensOut}]`);
     return { ...result, usedFallback: false };
   } catch (err: any) {

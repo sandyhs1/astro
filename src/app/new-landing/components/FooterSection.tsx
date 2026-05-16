@@ -18,11 +18,13 @@ export default function FooterSection() {
   const grad = 'linear-gradient(135deg,hsl(245,60%,28%),hsl(270,60%,40%),hsl(30,80%,55%))';
 
   const navLinks = [
+    { label: 'Compare', href: '/compare' },
     { label: 'About', href: '/about' },
     { label: 'Reviews', href: '/reviews' },
     { label: 'Sample Report', href: '/sample-report' },
     { label: 'Roadmap', href: '/roadmap' },
     { label: 'Astrology', href: '/astrology' },
+    { label: 'Technology', href: '/technology' },
     { label: 'Our Process', href: '/our-process' },
     { label: 'Myths', href: '/myths' },
     { label: 'Blog', href: 'https://quantumkarma.substack.com/', external: true },
