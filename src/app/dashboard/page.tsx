@@ -314,8 +314,6 @@ export default function DashboardPage() {
           // Persist precise coordinates from AstrologyAPI autocomplete selection.
           // If user typed a custom string without selecting from dropdown, keep existing coords.
           ...(selectedGeocode ? {
-            lat: selectedGeocode.lat,
-            lng: selectedGeocode.lon, // Supabase column is 'lng'
             timezone: selectedGeocode.timezone,
           } : {}),
         }).eq("id", existingProfile.id).select().single();
@@ -328,9 +326,7 @@ export default function DashboardPage() {
           tob: formData.tob,
           pob: formData.pob,
           gender: formData.gender,
-          // Use precise coords from autocomplete selection, or fall back to IST default
-          lat: selectedGeocode?.lat ?? null,
-          lng: selectedGeocode?.lon ?? null, // Supabase column is 'lng'
+          // Use precise timezone from autocomplete selection, or fall back to IST default
           timezone: selectedGeocode?.timezone ?? "+05:30",
         }).select().single();
       }
