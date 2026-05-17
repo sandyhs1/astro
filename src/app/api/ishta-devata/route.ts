@@ -190,8 +190,7 @@ export async function GET(req: Request) {
 
     let targetProfileId = profileId;
     if (!profileId || profileId === "self") {
-      const { data: fp } = await supabase
-        .from("family_profiles").select("id")
+      const { data: fp } = await supabaseAdmin.from("family_profiles").select("id")
         .eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
       if (fp) targetProfileId = fp.id;
     }
@@ -230,7 +229,7 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // ── Credits check ─────────────────────────────────────────────────────────
-    const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).single();
+    const { data: profile } = await supabaseAdmin.from("user_profiles").select("*").eq("id", user.id).single();
     const credits = profile?.credits ?? 0;
     if (credits < CREDITS_COST) {
       return NextResponse.json(
@@ -242,7 +241,7 @@ export async function POST(req: Request) {
     // ── ONE-TIME GUARD: return existing if already generated ──────────────────
     let earlyProfileId: string | null = profileId ?? null;
     if (!profileId || profileId === "self") {
-      const { data: fp } = await supabase.from("family_profiles").select("id")
+      const { data: fp } = await supabaseAdmin.from("family_profiles").select("id")
         .eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
       earlyProfileId = fp?.id ?? null;
     }
@@ -259,17 +258,17 @@ export async function POST(req: Request) {
     // ── Resolve birth details ──────────────────────────────────────────────────
     let dob = "", tob = "", pob = "", tz = "+05:30", pName = "Seeker";
     if (!profileId || profileId === "self") {
-      const { data: fp } = await supabase.from("family_profiles").select("*")
+      const { data: fp } = await supabaseAdmin.from("family_profiles").select("*")
         .eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
       if (fp) { dob = fp.dob; tob = fp.tob; pob = fp.pob; tz = fp.timezone || "+05:30"; pName = fp.name; }
       else {
-        const { data: lead } = await supabase.from("onboarding_leads").select("*")
+        const { data: lead } = await supabaseAdmin.from("onboarding_leads").select("*")
           .eq("email", user.email).maybeSingle();
         dob = lead?.dob; tob = lead?.tob; pob = lead?.pob;
         tz = lead?.timezone || "+05:30"; pName = lead?.name || "Seeker";
       }
     } else {
-      const { data: fp } = await supabase.from("family_profiles").select("*")
+      const { data: fp } = await supabaseAdmin.from("family_profiles").select("*")
         .eq("id", profileId).maybeSingle();
       dob = fp?.dob; tob = fp?.tob; pob = fp?.pob;
       tz = fp?.timezone || "+05:30"; pName = fp?.name || "Seeker";

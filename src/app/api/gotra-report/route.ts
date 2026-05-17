@@ -81,8 +81,7 @@ export async function GET(req: Request) {
     // Resolve profile_id
     let targetProfileId = profileId;
     if (!profileId || profileId === "self") {
-      const { data: fp } = await supabase
-        .from("family_profiles")
+      const { data: fp } = await supabaseAdmin.from("family_profiles")
         .select("id")
         .eq("user_id", user.id)
         .eq("relationship", "Self")
@@ -131,8 +130,7 @@ export async function POST(req: Request) {
     // ── Credits check (only if saveReport is true — B2C mode) ────────────────
     let credits = 0;
     if (saveReport) {
-      const { data: profile } = await supabase
-        .from("user_profiles")
+      const { data: profile } = await supabaseAdmin.from("user_profiles")
         .select("*")
         .eq("id", user.id)
         .single();

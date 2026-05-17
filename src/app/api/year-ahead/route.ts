@@ -66,7 +66,7 @@ export async function GET(req: Request) {
 
     let targetProfileId = profileId;
     if (!profileId || profileId === "self") {
-      const { data: fp } = await supabase.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+      const { data: fp } = await supabaseAdmin.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
       if (fp) targetProfileId = fp.id;
     }
     if (!targetProfileId) return NextResponse.json({ found: false });
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
 
     let targetProfileId = profileId;
     if (!profileId || profileId === "self") {
-      const { data: fp } = await supabase.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+      const { data: fp } = await supabaseAdmin.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
       if (fp) targetProfileId = fp.id;
     }
 
@@ -124,10 +124,10 @@ export async function POST(req: Request) {
 
     let dob, tob, pob, tz, pName;
     if (!targetProfileId) {
-      const { data: lead } = await supabase.from("onboarding_leads").select("*").eq("email", user.email).maybeSingle();
+      const { data: lead } = await supabaseAdmin.from("onboarding_leads").select("*").eq("email", user.email).maybeSingle();
       dob = lead?.dob; tob = lead?.tob; pob = lead?.pob; tz = lead?.timezone || "+05:30"; pName = lead?.name || "Seeker";
     } else {
-      const { data: fp } = await supabase.from("family_profiles").select("*").eq("id", targetProfileId).maybeSingle();
+      const { data: fp } = await supabaseAdmin.from("family_profiles").select("*").eq("id", targetProfileId).maybeSingle();
       dob = fp?.dob; tob = fp?.tob; pob = fp?.pob; tz = fp?.timezone || "+05:30"; pName = fp?.name || "Seeker";
     }
 

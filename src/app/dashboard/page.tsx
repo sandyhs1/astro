@@ -924,7 +924,7 @@ export default function DashboardPage() {
                 className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
                   activeFeature === "soul-code" ? "bg-purple-50 text-purple-700" : "text-slate-600 hover:bg-slate-50"
                 }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🔱</span> Soul Code</span>
+                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🔱</span> Your Purpose</span>
               </button>
 
               {/* Year Ahead */}
