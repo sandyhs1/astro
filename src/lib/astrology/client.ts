@@ -100,20 +100,36 @@ export function parseBirthParams(
 }
 
 /**
- * Geocode a place name → lat/lon using Nominatim.
+ * Geocode a place name → lat/lon using AstrologyAPI's geo_details.
+ * This bypasses strict open-source rate limits (Nominatim 429 errors).
  */
 export async function geocodePlace(place: string): Promise<{ lat: number; lon: number; displayName: string }> {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}&limit=1`;
-  const res = await fetch(url, {
-    headers: { "User-Agent": "QuantumKarma/2.0 (contact@quantumkarma.tech)" },
+  const userId = process.env.ASTROLOGY_API_USER_ID;
+  const apiKey = process.env.ASTROLOGY_API_KEY;
+  if (!userId || !apiKey) throw new Error("Missing Astrology API credentials");
+
+  const auth = Buffer.from(`${userId}:${apiKey}`).toString("base64");
+
+  const res = await fetch("https://json.astrologyapi.com/v1/geo_details", {
+    method: "POST",
+    headers: {
+      "Authorization": `Basic ${auth}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ place, maxRows: 1 }),
   });
+
   if (!res.ok) throw new Error(`Geocoding HTTP ${res.status}`);
   const data = await res.json();
-  if (!data?.length) throw new Error(`Could not geocode: "${place}"`);
+  
+  if (!data?.geonames || data.geonames.length === 0) {
+    throw new Error(`Could not geocode: "${place}"`);
+  }
+
   return {
-    lat: parseFloat(data[0].lat),
-    lon: parseFloat(data[0].lon),
-    displayName: data[0].display_name || place,
+    lat: parseFloat(data.geonames[0].latitude),
+    lon: parseFloat(data.geonames[0].longitude),
+    displayName: data.geonames[0].place_name || place,
   };
 }
 
