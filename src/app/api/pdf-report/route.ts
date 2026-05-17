@@ -10,20 +10,28 @@ import { geocodePlace } from "@/lib/astrology/client";
 // ─── Constants ────────────────────────────────────────────────────────────────
 const PDF_BASE = "https://pdf.astrologyapi.com/v1";
 const PRO_CREDIT_COST = 5;
-const LOGO_URL = "https://yrgkctlkhhehkchtxedz.supabase.co/storage/v1/object/public/logo_file/Quantum_Karma_Logo_Original.png";
+
+// ── Logo URL ──────────────────────────────────────────────────────────────────
+// Wordmark PNG hosted in Supabase. Replace with the new wordmark URL once
+// you upload Quantum_Karma_Wordmark.png via the Supabase storage dashboard.
+const LOGO_URL = "https://yrgkctlkhhehkchtxedz.supabase.co/storage/v1/object/public/logo_file/Quantum_Karma_Wordmark.png";
 
 // ─── Gemstone page removal ───────────────────────────────────────────────────
-// We strip pages whose TOP heading is one of these exact titles.
+// AstrologyAPI renders page section headings as VECTOR GRAPHICS (not text),
+// so pdf-parse cannot detect them via text extraction. The only reliable
+// removal strategy is POSITIONAL: the 4 gemstone pages consistently appear
+// at pages 19–22 (1-indexed) = indices 18–21 in a 0-indexed pdf-lib array.
 //
-// WHY headings only (not full-page keyword scan):
-//   The cover page contains a Sanskrit shloka that legitimately includes the
-//   word "ratna" / "navaratna" (meaning jewel/9-gems in Sanskrit). A broad
-//   keyword scan therefore strips the cover page — which is wrong.
-//
-//   Instead we check only the first ~400 characters of each page's extracted
-//   text for an EXACT heading match. These four titles appear verbatim at the
-//   top of every gemstone section in both basic and pro reports.
+// Safety guards:
+//   • Only remove if the PDF has enough pages (≥ 22)
+//   • Always preserve page 0 (Ganesha cover page)
+//   • Text detection runs as a secondary pass to catch any shifted pages
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Primary: fixed 0-indexed positions of gemstone pages (pages 19–22)
+const GEMSTONE_PAGE_INDICES = new Set([18, 19, 20, 21]);
+
+// Secondary: heading text fallback (catches reports with different page counts)
 const GEMSTONE_PAGE_HEADINGS = [
   "gemstone suggestions",
   "life stone",
@@ -31,8 +39,8 @@ const GEMSTONE_PAGE_HEADINGS = [
   "lucky stone",
 ];
 
-// Fallback broad keywords — only applied to pages OTHER than page 0.
-// "ratna" / "navaratna" intentionally excluded (Sanskrit cover page terms).
+// Broad content keywords for secondary pass — 'ratna'/'navaratna' excluded
+// because they appear in Sanskrit shlokas on the cover page
 const GEMSTONE_CONTENT_KEYWORDS = [
   "gemstone", "gem stone",
   "yellow sapphire", "hessonite", "cat's eye", "blue sapphire",
@@ -49,7 +57,7 @@ const QK_BRANDING = {
   // Branding text
   company_name:    "Quantum Karma",
   company_info:    "India's most precise Vedic intelligence platform — powered by 5,000 years of classical Jyotish and cutting-edge computation.",
-  company_email:   "support@quantumkarma.tech",
+  company_email:   "help@quantumkarma.tech",
   company_mobile:  "+91 000 000 0000",
   company_landline:"",
 
@@ -141,89 +149,100 @@ function buildPdfPayload(
 /**
  * Removes gemstone-recommendation pages from a PDF buffer.
  *
- * Strategy:
- *   1. Load the PDF with pdf-lib to get the true page count.
- *   2. Extract the full text with pdf-parse, then split it into per-page
- *      chunks. We handle the common off-by-one: pdf-parse sometimes emits an
- *      empty leading chunk before the first \f, so we align the chunk array
- *      to the pdf-lib page count by trimming or padding.
- *   3. A page is flagged for removal ONLY when its extracted leading text
- *      (first 400 chars) matches one of the known gemstone-section headings.
- *      We additionally check fallback content keywords — but NEVER on page 0
- *      (the Ganesha / cover page with Sanskrit shloka).
- *   4. If the flag set is empty or covers every page, we return the original
- *      buffer unchanged (safe fallback).
+ * Primary strategy  — POSITIONAL:
+ *   The AstrologyAPI renders section headings as vector graphics, not
+ *   searchable text. pdf-parse therefore cannot detect them. Instead we
+ *   remove pages 19–22 (0-indexed: 18–21) which is where gemstone sections
+ *   consistently appear in both basic and pro reports.
+ *
+ * Secondary strategy — TEXT FALLBACK:
+ *   After the positional pass, we also text-scan every page (except page 0)
+ *   for known gemstone headings. This catches edge cases where the page
+ *   count shifts slightly.
+ *
+ * Safety rules:
+ *   • Page 0 (Ganesha cover, Sanskrit shloka, user details) is NEVER removed
+ *   • If all pages end up flagged, original PDF is returned unchanged
+ *   • If the PDF is shorter than 22 pages, positional removal is skipped
  */
 async function removeGemstonePages(pdfBuffer: Buffer): Promise<Buffer> {
   try {
     const pdfParse = (await import("pdf-parse")).default;
 
-    // ── Step 1: load PDF to know the real page count ──
-    const srcDoc    = await PDFDocument.load(pdfBuffer);
+    // ── Step 1: load PDF to know the true page count ──
+    const srcDoc     = await PDFDocument.load(pdfBuffer);
     const totalPages = srcDoc.getPageCount();
+    console.log(`[pdf-scrub] PDF has ${totalPages} pages.`);
 
-    // ── Step 2: extract text and split into per-page chunks ──
-    const parsed   = await pdfParse(pdfBuffer);
-    let   chunks   = parsed.text.split(/\f/);
-
-    // pdf-parse often produces an empty string before the first \f.
-    // Trim leading empty chunks so chunk[0] maps to pdf-lib page 0.
-    while (chunks.length > totalPages && chunks[0].trim() === "") {
-      chunks = chunks.slice(1);
-    }
-    // Pad if we ended up with too few chunks
-    while (chunks.length < totalPages) chunks.push("");
-
-    // ── Step 3: decide which pages to strip ──
     const pagesToRemove = new Set<number>();
 
-    for (let i = 0; i < totalPages; i++) {
-      // NEVER remove the cover page (index 0) — it carries the Ganesha image,
-      // Sanskrit shloka, and user birth details.
-      if (i === 0) continue;
-
-      const lower   = (chunks[i] ?? "").toLowerCase();
-      const heading = lower.slice(0, 400); // only check the top of the page
-
-      // Primary check: heading match (most reliable)
-      const headingMatch = GEMSTONE_PAGE_HEADINGS.some(h => heading.includes(h));
-
-      // Secondary check: broad content keywords anywhere on the page
-      // (catches variants the API may use)
-      const contentMatch = GEMSTONE_CONTENT_KEYWORDS.some(kw => lower.includes(kw));
-
-      if (headingMatch || contentMatch) {
-        pagesToRemove.add(i);
-        console.log(`[pdf-scrub] Stripping page ${i + 1} (heading="${heading.slice(0, 80).replace(/\n/g, " ")}…")`);
+    // ── Step 2: POSITIONAL removal (primary, most reliable) ──
+    // Only run if PDF is long enough that these indices exist
+    if (totalPages >= 22) {
+      for (const idx of GEMSTONE_PAGE_INDICES) {
+        if (idx < totalPages && idx !== 0) {
+          pagesToRemove.add(idx);
+          console.log(`[pdf-scrub] Positional: flagging page ${idx + 1} (index ${idx})`);
+        }
       }
+    } else {
+      console.log(`[pdf-scrub] PDF has <22 pages; skipping positional removal.`);
     }
 
-    // Safety: if nothing to remove, return original
+    // ── Step 3: TEXT FALLBACK (secondary, catches edge-case shifts) ──
+    try {
+      const parsed = await pdfParse(pdfBuffer);
+      let chunks   = parsed.text.split(/\f/);
+
+      // Trim leading empty chunks so chunk[i] aligns with pdf-lib page i
+      while (chunks.length > totalPages && chunks[0].trim() === "") {
+        chunks = chunks.slice(1);
+      }
+      while (chunks.length < totalPages) chunks.push("");
+
+      for (let i = 1; i < totalPages; i++) { // skip i=0 (cover page)
+        if (pagesToRemove.has(i)) continue;  // already flagged positionally
+
+        const lower   = (chunks[i] ?? "").toLowerCase();
+        const heading = lower.slice(0, 400);
+
+        const headingMatch  = GEMSTONE_PAGE_HEADINGS.some(h  => heading.includes(h));
+        const contentMatch  = GEMSTONE_CONTENT_KEYWORDS.some(kw => lower.includes(kw));
+
+        if (headingMatch || contentMatch) {
+          pagesToRemove.add(i);
+          console.log(`[pdf-scrub] Text fallback: flagging page ${i + 1}`);
+        }
+      }
+    } catch (parseErr) {
+      console.warn("[pdf-scrub] pdf-parse failed (non-fatal); relying on positional removal only.", parseErr);
+    }
+
+    // ── Step 4: safety checks ──
     if (pagesToRemove.size === 0) {
-      console.log("[pdf-scrub] No gemstone pages detected — returning original PDF.");
+      console.log("[pdf-scrub] No pages flagged for removal — returning original.");
       return pdfBuffer;
     }
 
-    // Safety: if everything was somehow flagged, return original
     const keepIndices = Array.from({ length: totalPages }, (_, i) => i)
       .filter(i => !pagesToRemove.has(i));
 
     if (keepIndices.length === 0) {
-      console.warn("[pdf-scrub] All pages flagged — returning original PDF to avoid blank output.");
+      console.warn("[pdf-scrub] All pages flagged — returning original to avoid blank output.");
       return pdfBuffer;
     }
 
-    // ── Step 4: rebuild PDF with only the clean pages ──
+    // ── Step 5: rebuild PDF ──
     const destDoc = await PDFDocument.create();
     const copied  = await destDoc.copyPages(srcDoc, keepIndices);
     copied.forEach(p => destDoc.addPage(p));
 
-    console.log(`[pdf-scrub] Removed ${pagesToRemove.size} page(s). Kept ${keepIndices.length}/${totalPages}.`);
+    console.log(`[pdf-scrub] Done. Removed ${pagesToRemove.size} page(s): [${[...pagesToRemove].map(i => i+1).join(", ")}]. Kept ${keepIndices.length}/${totalPages}.`);
     return Buffer.from(await destDoc.save());
 
   } catch (err) {
-    console.error("[pdf-scrub] Page removal failed — serving original PDF:", err);
-    return pdfBuffer; // Fail gracefully
+    console.error("[pdf-scrub] Fatal error — returning original PDF:", err);
+    return pdfBuffer;
   }
 }
 
