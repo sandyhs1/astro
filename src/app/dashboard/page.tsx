@@ -948,7 +948,7 @@ export default function DashboardPage() {
                 className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
                   activeFeature === "gotra" ? "bg-amber-50 text-amber-700" : "text-slate-600 hover:bg-slate-50"
                 }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🕉️</span> Your Gotra</span>
+                <span className="flex items-center gap-2.5 whitespace-nowrap"><span className="text-sm leading-none">🕉️</span> Your Gotra</span>
                 <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
                   activeFeature === "gotra" ? "bg-amber-200/60 text-amber-800" : "bg-amber-100 text-amber-600"
                 }`}>NEW</span>
@@ -959,7 +959,7 @@ export default function DashboardPage() {
                 className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
                   activeFeature === "ishta-devata" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
                 }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🙏</span> Ishta Devata</span>
+                <span className="flex items-center gap-2.5 whitespace-nowrap"><span className="text-sm leading-none">🙏</span> Ishta Devata</span>
                 <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
                   activeFeature === "ishta-devata" ? "bg-indigo-200/60 text-indigo-800" : "bg-indigo-100 text-indigo-600"
                 }`}>NEW</span>
