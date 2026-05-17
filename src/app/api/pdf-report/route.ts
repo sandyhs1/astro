@@ -35,15 +35,19 @@ function generateBirthHash(dob: string, tob: string, pob: string): string {
     .digest("hex");
 }
 
+/**
+ * Calls the AstrologyAPI PDF generation endpoints.
+ * Note: Unlike standard JSON endpoints that use Basic Auth (userId:apiKey), 
+ * the PDF endpoints (/v1/basic_horoscope_pdf and /v1/pro_horoscope_pdf) 
+ * strictly require the 'x-astrologyapi-key' header containing just the API Key.
+ */
 async function callPdfApi(endpoint: string, payload: Record<string, any>): Promise<string> {
-  const userId = process.env.ASTROLOGY_API_USER_ID!;
   const apiKey = process.env.ASTROLOGY_API_KEY!;
-  const auth = Buffer.from(`${userId}:${apiKey}`).toString("base64");
 
   const res = await fetch(`${PDF_BASE}/${endpoint}`, {
     method: "POST",
     headers: {
-      Authorization: `Basic ${auth}`,
+      "x-astrologyapi-key": apiKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
