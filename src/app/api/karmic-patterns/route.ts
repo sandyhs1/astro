@@ -51,13 +51,11 @@ ACTIVE DASHA CONTEXT:
 - Mahadasha: ${mahadasha}
 - Antardasha: ${antardasha}
 
-BANNED WORDS AND PHRASES: "cosmic journey", "universe has plans", "soul's adventure", "divine timing", "vibration", "manifest", "abundance mindset", "resonate", "beautiful soul", "embrace", "energy". Use none of these.
+BANNED WORDS AND PHRASES: "cosmic journey", "universe has plans", "soul's adventure", "divine timing", "vibration", "manifest", "abundance mindset", "resonate", "beautiful soul", "embrace", "energy", "soul", "motivation". Use none of these.
 
 MANDATORY REPORT STRUCTURE — follow exactly, use these exact section headers:
 
----
-
-## SOUL GREETING
+## CURRENT DASHA CONTEXT
 
 Write 2 sentences directly to ${pName}. Reference their active ${antardasha} Antardasha. State plainly what period of life they are in right now and what its primary demand is. No flattery. No spiritual fluff.
 
@@ -148,7 +146,7 @@ For each of the 3 patterns above, provide one specific action. Use this format:
 
 ---
 
-## MOTIVATIONAL CLOSING
+## STRATEGIC SYNTHESIS
 
 2 sentences. Reference the single strongest positive indicator in ${pName}'s chart — name the planet, sign, and chart. State plainly what this means they are capable of. No platitudes.
 
@@ -478,11 +476,11 @@ function parseSections(markdown: string): ReportSection[] {
     match: string; id: string; title: string;
     color: ReportSection["color"]; icon: string;
   }> = [
-    { match: "SOUL GREETING",         id: "greeting",  title: "Soul Greeting",           color: "indigo",  icon: "🙏" },
+    { match: "CURRENT DASHA CONTEXT", id: "greeting",  title: "Current Dasha Context",   color: "indigo",  icon: "📊" },
     { match: "RECURRING PATTERNS",    id: "patterns",  title: "The Recurring Patterns",  color: "amber",   icon: "🔮" },
     { match: "BREAKING THE LOOP",     id: "breaking",  title: "Breaking the Loop",       color: "rose",    icon: "⚡" },
     { match: "DOMAIN INTELLIGENCE",   id: "domains",   title: "Domain Intelligence",     color: "emerald", icon: "🗺️" },
-    { match: "MOTIVATIONAL CLOSING",  id: "closing",   title: "Motivational Closing",    color: "purple",  icon: "✨" },
+    { match: "STRATEGIC SYNTHESIS",   id: "closing",   title: "Strategic Synthesis",     color: "purple",  icon: "🎯" },
   ];
 
   const sections: ReportSection[] = [];
