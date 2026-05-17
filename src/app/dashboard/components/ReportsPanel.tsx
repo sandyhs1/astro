@@ -394,7 +394,7 @@ function PdfSection({ profileId }: { profileId: string }) {
               <h4 className="text-xl font-black text-slate-800">Core Horoscope Report</h4>
               <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">FREE FOREVER</span>
             </div>
-            <p className="text-slate-500 text-sm leading-relaxed">A 9-page deep-dive into your planetary architecture. Lagna, Moon sign, Dasha timing — formatted as a branded Quantum Karma PDF.</p>
+            <p className="text-slate-500 text-sm leading-relaxed">A 20+ page deep-dive into your planetary architecture. Lagna, Moon sign, Dasha timing — formatted as a branded Quantum Karma PDF.</p>
           </div>
         </div>
         {basicStatus === "loading" && (
