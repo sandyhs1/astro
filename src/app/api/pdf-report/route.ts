@@ -19,13 +19,33 @@ const GEMSTONE_KEYWORDS = [
   "ratna", "navaratna", "diamond", "amethyst", "garnet"
 ];
 
+// ─── Quantum Karma Branding ───────────────────────────────────────────────────
+// These fields populate the cover page of every generated PDF.
+// The AstrologyAPI PDF endpoint supports all of these — pass everything for
+// maximum branding. logo_url goes in the header/footer, company_logo on the
+// cover. chart_style MUST be uppercase ("NORTH_INDIAN" / "SOUTH_INDIAN").
+// ─────────────────────────────────────────────────────────────────────────────
 const QK_BRANDING = {
-  company_name: "Quantum Karma",
-  footer_link: "quantumkarma.in",
-  company_logo: LOGO_URL,
-  report_language: "en",
-  chart_style: "north_indian",
+  // Branding text
+  company_name:    "Quantum Karma",
+  company_info:    "India's most precise Vedic intelligence platform — powered by 5,000 years of classical Jyotish and cutting-edge computation.",
+  company_email:   "support@quantumkarma.tech",
+  company_mobile:  "+91 000 000 0000",
+  company_landline:"",
+
+  // URLs
+  domain_url:      "https://quantumkarma.tech",
+  footer_link:     "https://quantumkarma.tech",
+
+  // Logo — full hosted Supabase URL (used in report header & cover)
+  logo_url:        LOGO_URL,
+  company_logo:    LOGO_URL,
+
+  // Report settings
+  language:        "en",
+  chart_style:     "NORTH_INDIAN",  // uppercase required by API
 };
+
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function generateBirthHash(dob: string, tob: string, pob: string): string {
@@ -64,6 +84,38 @@ async function downloadPdf(url: string): Promise<Buffer> {
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to download PDF from AstrologyAPI");
   return Buffer.from(await res.arrayBuffer());
+}
+
+/**
+ * Assembles the complete AstrologyAPI PDF payload.
+ * Centralised here so both Basic (GET) and Pro (POST) use identical
+ * branding fields and date/time parsing logic.
+ * 
+ * The API uses the `name` field to personalise the cover page title,
+ * so we pass the user's full name exactly as stored.
+ */
+function buildPdfPayload(
+  profileData: any,
+  d: number, m: number, y: number,
+  h: number, min: number, tzone: number,
+  lat: number, lon: number
+): Record<string, any> {
+  return {
+    // ── Quantum Karma full branding (cover + header + footer) ──
+    ...QK_BRANDING,
+
+    // ── Personalised user details ──
+    name:   profileData.name ?? "Seeker",
+    gender: (profileData.gender ?? "female").toLowerCase(),
+    place:  profileData.pob ?? "",
+
+    // ── Birth date / time ──
+    day: d, month: m, year: y,
+    hour: h, min,
+
+    // ── Geographic / timezone ──
+    lat, lon, tzone,
+  };
 }
 
 /**
@@ -132,7 +184,8 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const profileId = searchParams.get("profileId");
-    const type = searchParams.get("type"); // "basic" | "pro"
+    const type = searchParams.get("type");       // "basic" | "pro"
+    const force  = searchParams.get("force") === "true"; // bust cache & regenerate
 
     if (!profileId || !type) {
       return NextResponse.json({ error: "Missing params" }, { status: 400 });
@@ -187,7 +240,9 @@ export async function GET(req: NextRequest) {
     const hash = generateBirthHash(profileData.dob, profileData.tob, profileData.pob);
     const reportType = type === "pro" ? "pro_horoscope_pdf" : "basic_horoscope_pdf";
 
-    // 2. Check if already stored (for pro, also check unlock)
+    // 2. Check if already stored — serve from cache unless ?force=true
+    //    force=true deletes the old record so we fall through to regeneration,
+    //    which picks up the latest QK_BRANDING fields (logo, company_info, etc.)
     const { data: existing } = await admin
       .from("pdf_unlocks")
       .select("storage_path")
@@ -195,12 +250,21 @@ export async function GET(req: NextRequest) {
       .eq("report_type", reportType)
       .single();
 
-    if (existing?.storage_path) {
-      // Generate a signed URL (valid 1 hour)
+    if (existing?.storage_path && !force) {
+      // Serve cached signed URL (valid 1 hour)
       const { data: signed } = await admin.storage
         .from("pdf-reports")
         .createSignedUrl(existing.storage_path, 3600);
       return NextResponse.json({ url: signed?.signedUrl, cached: true });
+    }
+
+    if (existing?.storage_path && force) {
+      // Bust the cache: delete the DB record so we regenerate fresh below
+      await admin.from("pdf_unlocks")
+        .delete()
+        .eq("hash", hash)
+        .eq("report_type", reportType);
+      console.log(`[pdf-report] Cache busted for hash=${hash}, type=${reportType}`);
     }
 
     // 3. For PRO — check unlock record (user must have paid)
@@ -255,14 +319,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const payload = {
-      ...QK_BRANDING,
-      day: d, month: m, year: y, hour: h, min,
-      lat, lon, tzone,
-      name: profileData.name,
-      place: profileData.pob,
-      gender: profileData.gender || "female",
-    };
+    // Build fully-branded payload (personalised name, full QK branding fields)
+    const payload = buildPdfPayload(profileData, d, m, y, h, min, tzone, lat, lon);
 
     const pdfUrl = await callPdfApi("basic_horoscope_pdf", payload);
     const rawBuffer = await downloadPdf(pdfUrl);
@@ -411,14 +469,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const payload = {
-      ...QK_BRANDING,
-      day: d, month: m, year: y, hour: h, min,
-      lat, lon, tzone,
-      name: profileData.name,
-      place: profileData.pob,
-      gender: profileData.gender || "female",
-    };
+    // Build fully-branded payload (personalised name, full QK branding fields)
+    const payload = buildPdfPayload(profileData, d, m, y, h, min, tzone, lat, lon);
 
     const pdfUrl = await callPdfApi("pro_horoscope_pdf", payload);
     const rawBuffer = await downloadPdf(pdfUrl);

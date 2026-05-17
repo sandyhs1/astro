@@ -347,11 +347,11 @@ function PdfSection({ profileId }: { profileId: string }) {
     })();
   }, [profileId]);
 
-  async function handleBasic() {
-    if (basicUrl) { window.open(basicUrl, "_blank"); return; }
-    setBasicStatus("loading"); setBasicError(null);
+  async function handleBasic(force = false) {
+    if (basicUrl && !force) { window.open(basicUrl, "_blank"); return; }
+    setBasicStatus("loading"); setBasicError(null); setBasicLine(0);
     try {
-      const res = await fetch(`/api/pdf-report?profileId=${profileId}&type=basic`);
+      const res = await fetch(`/api/pdf-report?profileId=${profileId}&type=basic${force ? "&force=true" : ""}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
       setBasicUrl(data.url); setBasicStatus("ready"); window.open(data.url, "_blank");
@@ -404,14 +404,23 @@ function PdfSection({ profileId }: { profileId: string }) {
           </div>
         )}
         {basicError && <p className="text-red-500 text-sm mb-4">{basicError}</p>}
-        <button onClick={handleBasic} disabled={basicStatus === "loading"}
-          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-all ${
-            basicStatus === "loading" ? "bg-slate-100 text-slate-400 cursor-not-allowed" :
-            basicStatus === "ready" ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-md" :
-            "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:scale-[1.02]"
-          }`}>
-          {basicStatus === "loading" ? "⏳ Generating..." : basicStatus === "ready" ? "⬇️ Download Again" : "⬇️ Download Free Report"}
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={() => handleBasic(false)} disabled={basicStatus === "loading"}
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-all ${
+              basicStatus === "loading" ? "bg-slate-100 text-slate-400 cursor-not-allowed" :
+              basicStatus === "ready" ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-md" :
+              "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:scale-[1.02]"
+            }`}>
+            {basicStatus === "loading" ? "⏳ Generating..." : basicStatus === "ready" ? "⬇️ Download Again" : "⬇️ Download Free Report"}
+          </button>
+          {/* Regenerate forces fresh branding — appears once report has been generated */}
+          {basicStatus === "ready" && (
+            <button onClick={() => handleBasic(true)}
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-xs text-slate-500 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+              🔄 Regenerate
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Pro */}
@@ -446,9 +455,11 @@ function PdfSection({ profileId }: { profileId: string }) {
           </button>
         )}
         {proStatus === "ready" && (
-          <button onClick={() => window.open(proUrl!, "_blank")} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:scale-[1.02] shadow-md transition-all">
-            ⬇️ Download Pro Report (68 Pages)
-          </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button onClick={() => window.open(proUrl!, "_blank")} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:scale-[1.02] shadow-md transition-all">
+              ⬇️ Download Pro Report (68 Pages)
+            </button>
+          </div>
         )}
       </div>
     </div>
