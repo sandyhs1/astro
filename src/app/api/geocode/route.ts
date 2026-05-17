@@ -1,19 +1,50 @@
 /**
- * /api/geocode — Server-side proxy for place-of-birth autocomplete.
+ * /api/geocode — Server-side proxy for Place of Birth autocomplete.
  *
- * WHY THIS EXISTS:
- *   - The previous implementation called photon.komoot.io directly from the browser.
- *   - As of May 2026, photon.komoot.io returns 502 Bad Gateway (service is down).
- *   - This proxy calls Nominatim (OpenStreetMap) which is stable and free.
- *   - Running server-side lets us set a proper User-Agent (required by Nominatim ToS)
- *     and avoids any browser CORS restrictions.
+ * PROVIDER: AstrologyAPI.com /v1/geo_details
+ *   - Already integrated in this project (same credentials as Vedic chart engine)
+ *   - Returns precise lat/lon + timezone_id for every city globally
+ *   - Works perfectly for Indian cities (Kolkata, Mysore, Mangalore etc.)
+ *   - No rate-limiting issues — we're an authenticated paying customer
+ *
+ * PREVIOUS HISTORY:
+ *   - photon.komoot.io → returned 502 Bad Gateway (service down May 2026)
+ *   - nominatim.openstreetmap.org → 429 Too Many Requests (strict 1 req/sec limit)
+ *
+ * RESPONSE FORMAT:
+ *   [{ Name: "Kolkata, IN", lat: 22.56263, lon: 88.36304, timezone_id: "Asia/Kolkata" }, ...]
  *
  * USAGE:
- *   GET /api/geocode?q=Mumbai
- *   Returns: [{ Name: "Mumbai, Maharashtra, India", lat: 19.07, lon: 72.87 }, ...]
+ *   GET /api/geocode?q=Kolkata
  */
 
 import { NextRequest, NextResponse } from "next/server";
+
+// Convert IANA timezone_id (e.g. "Asia/Kolkata") to numeric offset string (e.g. "+05:30")
+// This is what the Supabase family_profiles.timezone column expects
+function timezoneIdToOffset(timezone_id: string): string {
+  try {
+    const now = new Date();
+    const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone_id,
+      timeZoneName: "shortOffset",
+    });
+    const parts = formatter.formatToParts(now);
+    const offsetPart = parts.find((p) => p.type === "timeZoneName")?.value || "GMT+0";
+    // offsetPart is like "GMT+5:30" or "GMT-3"
+    const match = offsetPart.match(/GMT([+-]\d{1,2}):?(\d{2})?/);
+    if (match) {
+      const sign = match[1].startsWith("-") ? "-" : "+";
+      const hours = Math.abs(parseInt(match[1])).toString().padStart(2, "0");
+      const mins = (match[2] || "00").padStart(2, "0");
+      return `${sign}${hours}:${mins}`;
+    }
+    return "+05:30"; // safe default for India
+  } catch {
+    return "+05:30";
+  }
+}
 
 export async function GET(req: NextRequest) {
   const query = req.nextUrl.searchParams.get("q");
@@ -22,44 +53,52 @@ export async function GET(req: NextRequest) {
     return NextResponse.json([]);
   }
 
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`;
+  const userId = process.env.ASTROLOGY_API_USER_ID;
+  const apiKey = process.env.ASTROLOGY_API_KEY;
 
-    const res = await fetch(url, {
+  if (!userId || !apiKey) {
+    console.error("[geocode] Missing ASTROLOGY_API_USER_ID or ASTROLOGY_API_KEY");
+    return NextResponse.json([]);
+  }
+
+  const credentials = Buffer.from(`${userId}:${apiKey}`).toString("base64");
+
+  try {
+    const res = await fetch("https://json.astrologyapi.com/v1/geo_details", {
+      method: "POST",
       headers: {
-        // Nominatim ToS requires a descriptive User-Agent with contact info
-        "User-Agent": "QuantumKarma-App/1.0 (help@soulsync.tech)",
-        "Accept-Language": "en",
+        Authorization: `Basic ${credentials}`,
+        "Content-Type": "application/json",
       },
-      // 5-second timeout — fast enough for typeahead
-      signal: AbortSignal.timeout(5000),
+      body: JSON.stringify({ place: query, maxRows: 8 }),
+      signal: AbortSignal.timeout(6000),
     });
 
     if (!res.ok) {
+      console.error("[geocode] AstrologyAPI geo_details failed:", res.status);
       return NextResponse.json([]);
     }
 
     const data = await res.json();
 
-    // Map Nominatim results → { Name, lat, lon } format expected by the frontend
-    const suggestions = data
-      .map((item: any) => {
-        const addr = item.address || {};
-        // Build a clean "City, State, Country" label
-        const parts = [
-          addr.city || addr.town || addr.village || addr.hamlet || addr.county || item.name,
-          addr.state,
-          addr.country,
-        ].filter(Boolean);
+    if (!data?.geonames || data.geonames.length === 0) {
+      return NextResponse.json([]);
+    }
 
+    // Map to { Name, lat, lon, timezone_id, timezone_offset }
+    const suggestions = data.geonames
+      .map((g: any) => {
+        const tz_id = g.timezone_id || "Asia/Kolkata";
         return {
-          Name: parts.join(", "),
-          lat: parseFloat(item.lat),
-          lon: parseFloat(item.lon),
+          Name: `${g.place_name}${g.country_code ? ", " + g.country_code : ""}`,
+          lat: parseFloat(g.latitude),
+          lon: parseFloat(g.longitude),
+          timezone_id: tz_id,
+          // Pre-compute the numeric offset so the frontend can store it directly
+          timezone: timezoneIdToOffset(tz_id),
         };
       })
-      // Remove entries with no usable name
-      .filter((s: any) => s.Name && s.Name.length > 0);
+      .filter((s: any) => s.Name && !isNaN(s.lat) && !isNaN(s.lon));
 
     // Deduplicate by Name
     const unique = Array.from(
@@ -68,7 +107,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(unique);
   } catch (err) {
-    console.error("[geocode] Nominatim fetch failed:", err);
+    console.error("[geocode] fetch error:", err);
     return NextResponse.json([]);
   }
 }

@@ -48,6 +48,9 @@ export default function DashboardPage() {
   const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  // Stores the lat/lon/timezone from the user's selected autocomplete suggestion
+  // so we can persist them to Supabase on save (avoids a second geocode lookup)
+  const [selectedGeocode, setSelectedGeocode] = useState<{ lat: number; lon: number; timezone: string } | null>(null);
 
   // Geocoding cache: pob → { lat, lon }
   const [geocoordCache, setGeocoordCache] = useState<Record<string, { lat: number; lon: number }>>({});
@@ -303,12 +306,18 @@ export default function DashboardPage() {
       
       let query;
       if (existingProfile) {
-        query = supabase.from("family_profiles").update({
+      query = supabase.from("family_profiles").update({
           dob: formData.dob,
           tob: formData.tob,
           pob: formData.pob,
           gender: formData.gender,
-          timezone: "+05:30"
+          // Persist precise coordinates from AstrologyAPI autocomplete selection.
+          // If user typed a custom string without selecting from dropdown, keep existing coords.
+          ...(selectedGeocode ? {
+            lat: selectedGeocode.lat,
+            lng: selectedGeocode.lon, // Supabase column is 'lng'
+            timezone: selectedGeocode.timezone,
+          } : {}),
         }).eq("id", existingProfile.id).select().single();
       } else {
         query = supabase.from("family_profiles").insert({
@@ -319,7 +328,10 @@ export default function DashboardPage() {
           tob: formData.tob,
           pob: formData.pob,
           gender: formData.gender,
-          timezone: "+05:30"
+          // Use precise coords from autocomplete selection, or fall back to IST default
+          lat: selectedGeocode?.lat ?? null,
+          lng: selectedGeocode?.lon ?? null, // Supabase column is 'lng'
+          timezone: selectedGeocode?.timezone ?? "+05:30",
         }).select().single();
       }
 
@@ -333,6 +345,7 @@ export default function DashboardPage() {
         }
         setShowProfileModal(false);
         setFormData({ name: "", relationship: "Self", dob: "", tob: "", pob: "", gender: "male" });
+        setSelectedGeocode(null); // Reset geocode after save
         if (modalType === "self") {
            setActiveProfileId(data.id);
         }
@@ -577,6 +590,8 @@ export default function DashboardPage() {
                         className="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 border-b border-slate-100 last:border-0"
                         onClick={() => {
                           setFormData(prev => ({ ...prev, pob: loc.Name }));
+                          // Capture precise lat/lon/timezone from AstrologyAPI — stored to Supabase on save
+                          setSelectedGeocode({ lat: loc.lat, lon: loc.lon, timezone: loc.timezone || "+05:30" });
                           setShowSuggestions(false);
                         }}
                       >
