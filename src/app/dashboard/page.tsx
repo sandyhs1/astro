@@ -273,31 +273,22 @@ export default function DashboardPage() {
     
     setIsSearchingLocation(true);
     try {
-      // Use Photon API (Komoot) which is built on Elasticsearch for perfect typeahead
-      const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`);
-      const data = await res.json();
-      if (data && data.features && data.features.length > 0) {
-        // Map Photon GeoJSON results to the expected UI structure
-        const suggestions = data.features.map((feature: any) => {
-          const props = feature.properties;
-          const nameParts = [props.name, props.state, props.country].filter(Boolean);
-          return {
-            Name: nameParts.join(', '),
-            lat: feature.geometry.coordinates[1], // GeoJSON is [lon, lat]
-            lon: feature.geometry.coordinates[0]
-          };
-        });
-        
-        // Deduplicate suggestions by Name
-        const uniqueSuggestions = Array.from(new Map(suggestions.map((item: any) => [item.Name, item])).values());
-        
-        setLocationSuggestions(uniqueSuggestions as any[]);
+      // NOTE: photon.komoot.io was returning 502 Bad Gateway (service down as of May 2026).
+      // We now route through our own /api/geocode proxy which calls Nominatim (OpenStreetMap).
+      // This gives us stable results, proper User-Agent handling, and no CORS issues.
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+      const suggestions = await res.json();
+
+      if (suggestions && suggestions.length > 0) {
+        setLocationSuggestions(suggestions);
         setShowSuggestions(true);
       } else {
         setLocationSuggestions([]);
+        setShowSuggestions(false);
       }
     } catch (err) {
       console.error("Location search failed", err);
+      setLocationSuggestions([]);
     } finally {
       setIsSearchingLocation(false);
     }
