@@ -262,8 +262,7 @@ export async function GET(req: Request) {
 
     if (!targetProfileId) return NextResponse.json({ found: false });
 
-    const { data: saved } = await supabase
-      .from("saved_reports")
+    const { data: saved } = await supabaseAdmin.from("saved_reports")
       .select("content")
       .eq("user_id", user.id)
       .eq("profile_id", targetProfileId)
