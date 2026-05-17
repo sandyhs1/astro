@@ -2235,12 +2235,12 @@ const FinalCTA = () => {
         </Reveal>
         <Reveal delay={1}>
           <h2 className="font-serif-display text-6xl md:text-8xl lg:text-[10rem] leading-[0.88] tracking-[-0.04em] mt-10 max-w-5xl mx-auto">
-            Initiate your <span className="italic-serif text-zinc-500">Life</span> <span className="shimmer-text">Intelligence</span> Report<span className="text-[#FF5E3A]">.</span>
+            Precision<span className="text-[#FF5E3A]">.</span> <span className="italic-serif text-zinc-500">Pattern.</span> <span className="shimmer-text">Purpose.</span>
           </h2>
         </Reveal>
         <Reveal delay={5}>
           <div className="flex items-center justify-center mt-14">
-            <PrimaryCTA testid="final-cta">Initiate your Life Intelligence Report</PrimaryCTA>
+            <PrimaryCTA testid="final-cta">Stop guessing. Start knowing.</PrimaryCTA>
           </div>
         </Reveal>
       </div>
@@ -2435,6 +2435,7 @@ const Footer = () => {
           {/* 12 links */}
           <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
             <a href="/about"         className={linkCls}>About</a>
+            <a href="/compare"       className={linkCls}>Compare</a>
             <a href="/reviews"       className={linkCls}>Reviews</a>
             <a href="/sample-report" className={linkCls}>Sample Report</a>
             <a href="/roadmap"       className={linkCls}>Roadmap</a>
