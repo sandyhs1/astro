@@ -118,9 +118,19 @@ function buildPdfPayload(
   };
 }
 
+// ─── Fixed pages to always remove (1-based page numbers) ─────────────────────
+// Pages 19-22 in every AstrologyAPI PDF contain boilerplate content that
+// Quantum Karma does not want to present to users. They are stripped from
+// every generated report alongside the gemstone keyword filter.
+// Stored as 0-based indices to match pdf-lib's array access.
+const FIXED_REMOVE_PAGES_1BASED = [19, 20, 21, 22];
+const FIXED_REMOVE_INDICES = new Set(FIXED_REMOVE_PAGES_1BASED.map(p => p - 1));
+
 /**
- * Remove pages containing gemstone content from the PDF.
- * Uses pdf-lib to reconstruct PDF without flagged pages.
+ * Cleans the raw AstrologyAPI PDF in a single reconstruction pass:
+ *   1. Unconditionally removes fixed pages 19-22 (0-indexed: 18-21).
+ *   2. Removes any page whose extracted text contains gemstone keywords.
+ * Both filters run in the same loop so the PDF is only rebuilt once.
  */
 async function removeGemstonePages(pdfBuffer: Buffer): Promise<Buffer> {
   try {
@@ -128,7 +138,7 @@ async function removeGemstonePages(pdfBuffer: Buffer): Promise<Buffer> {
     const pdfParse = (await import("pdf-parse")).default;
     const parsed = await pdfParse(pdfBuffer);
 
-    // Get per-page text by splitting on common page markers
+    // Get per-page text by splitting on form-feed characters (\f)
     const pageTexts: string[] = parsed.text
       .split(/\f/)
       .map((t: string) => t.toLowerCase());
@@ -139,15 +149,23 @@ async function removeGemstonePages(pdfBuffer: Buffer): Promise<Buffer> {
 
     const keepIndices: number[] = [];
     for (let i = 0; i < totalPages; i++) {
+      // Filter 1: unconditional fixed-page removal (pages 19-22)
+      if (FIXED_REMOVE_INDICES.has(i)) {
+        console.log(`[pdf-clean] Removed fixed page ${i + 1}`);
+        continue;
+      }
+      // Filter 2: gemstone keyword detection
       const pageText = pageTexts[i] ?? "";
       const hasGemstone = GEMSTONE_KEYWORDS.some((kw) => pageText.includes(kw));
-      if (!hasGemstone) keepIndices.push(i);
+      if (hasGemstone) {
+        console.log(`[pdf-clean] Removed gemstone page ${i + 1}`);
+        continue;
+      }
+      keepIndices.push(i);
     }
 
-    if (keepIndices.length === 0) {
-      // Safety: if all pages were flagged, return original
-      return pdfBuffer;
-    }
+    // Safety: if every page was flagged somehow, return the original
+    if (keepIndices.length === 0) return pdfBuffer;
 
     const copiedPages = await destDoc.copyPages(srcDoc, keepIndices);
     copiedPages.forEach((p) => destDoc.addPage(p));
@@ -155,10 +173,11 @@ async function removeGemstonePages(pdfBuffer: Buffer): Promise<Buffer> {
     const cleanBytes = await destDoc.save();
     return Buffer.from(cleanBytes);
   } catch (err) {
-    console.error("Gemstone removal failed, serving original PDF:", err);
-    return pdfBuffer; // Fail gracefully
+    console.error("PDF page removal failed, serving original PDF:", err);
+    return pdfBuffer; // Fail gracefully — never block the user
   }
 }
+
 
 async function storeInSupabase(
   adminClient: any,
