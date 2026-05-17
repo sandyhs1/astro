@@ -12,9 +12,10 @@ const PDF_BASE = "https://pdf.astrologyapi.com/v1";
 const PRO_CREDIT_COST = 5;
 
 // ── Logo URL ──────────────────────────────────────────────────────────────────
-// Wordmark PNG hosted in Supabase. Replace with the new wordmark URL once
-// you upload Quantum_Karma_Wordmark.png via the Supabase storage dashboard.
-const LOGO_URL = "https://yrgkctlkhhehkchtxedz.supabase.co/storage/v1/object/public/logo_file/Quantum_Karma_Wordmark.png";
+// Wordmark served directly from the Next.js public/ directory.
+// File: public/quantum_karma_wordmark.png — committed to git, deployed to CDN.
+// AstrologyAPI fetches this URL server-side when generating the PDF cover page.
+const LOGO_URL = "https://quantumkarma.tech/quantum_karma_wordmark.png";
 
 // ─── Gemstone page removal ───────────────────────────────────────────────────
 // AstrologyAPI renders page section headings as VECTOR GRAPHICS (not text),
