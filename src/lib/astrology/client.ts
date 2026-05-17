@@ -100,37 +100,71 @@ export function parseBirthParams(
 }
 
 /**
- * Geocode a place name → lat/lon using AstrologyAPI's geo_details.
- * This bypasses strict open-source rate limits (Nominatim 429 errors).
+ * Geocode a place name → lat/lon.
+ * Tier 1: AstrologyAPI geo_details (full string)
+ * Tier 2: AstrologyAPI geo_details (city name only — fixes "Bangalore, IN")
+ * Tier 3: Nominatim (fallback for obscure places)
  */
 export async function geocodePlace(place: string): Promise<{ lat: number; lon: number; displayName: string }> {
   const userId = process.env.ASTROLOGY_API_USER_ID;
   const apiKey = process.env.ASTROLOGY_API_KEY;
-  if (!userId || !apiKey) throw new Error("Missing Astrology API credentials");
-
   const auth = Buffer.from(`${userId}:${apiKey}`).toString("base64");
 
-  const res = await fetch("https://json.astrologyapi.com/v1/geo_details", {
-    method: "POST",
-    headers: {
-      "Authorization": `Basic ${auth}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ place, maxRows: 1 }),
-  });
+  // Helper to call AstrologyAPI
+  const tryAstroApi = async (query: string) => {
+    try {
+      const res = await fetch("https://json.astrologyapi.com/v1/geo_details", {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${auth}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ place: query, maxRows: 1 }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.geonames && data.geonames.length > 0) {
+          return {
+            lat: parseFloat(data.geonames[0].latitude),
+            lon: parseFloat(data.geonames[0].longitude),
+            displayName: data.geonames[0].place_name || query,
+          };
+        }
+      }
+    } catch (e) {
+      // Ignore and fall through
+    }
+    return null;
+  };
 
-  if (!res.ok) throw new Error(`Geocoding HTTP ${res.status}`);
-  const data = await res.json();
-  
-  if (!data?.geonames || data.geonames.length === 0) {
-    throw new Error(`Could not geocode: "${place}"`);
+  // 1. Try full string
+  let result = await tryAstroApi(place);
+  if (result) return result;
+
+  // 2. Try just the city part (fixes "Bangalore, IN" or "Mumbai, Maharashtra")
+  const cityOnly = place.split(",")[0].trim();
+  if (cityOnly !== place) {
+    result = await tryAstroApi(cityOnly);
+    if (result) return result;
   }
 
-  return {
-    lat: parseFloat(data.geonames[0].latitude),
-    lon: parseFloat(data.geonames[0].longitude),
-    displayName: data.geonames[0].place_name || place,
-  };
+  // 3. Fallback to Nominatim
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}&limit=1`;
+  const res = await fetch(url, {
+    headers: { "User-Agent": `QuantumKarma-Fallback-${Date.now()}` },
+  });
+  if (res.ok) {
+    const data = await res.json();
+    if (data?.length) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lon: parseFloat(data[0].lon),
+        displayName: data[0].display_name || place,
+      };
+    }
+  }
+
+  throw new Error(`Could not geocode: "${place}"`);
 }
 
 /**
