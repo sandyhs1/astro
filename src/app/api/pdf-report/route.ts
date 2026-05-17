@@ -14,8 +14,8 @@ const PRO_CREDIT_COST = 5;
 // ── Logo URL ──────────────────────────────────────────────────────────────────
 // Wordmark served directly from the Next.js public/ directory.
 // File: public/quantum_karma_wordmark.png — committed to git, deployed to CDN.
-// AstrologyAPI fetches this URL server-side when generating the PDF cover page.
-const LOGO_URL = "https://quantumkarma.tech/quantum_karma_wordmark.png";
+// AstrologyAPI caches images heavily, so we MUST append a cache-busting parameter.
+const LOGO_URL = `https://quantumkarma.tech/quantum_karma_wordmark.png?v=${Date.now()}`;
 
 // ─── Gemstone page removal ───────────────────────────────────────────────────
 // AstrologyAPI renders page section headings as VECTOR GRAPHICS (not text),
