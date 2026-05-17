@@ -1005,10 +1005,8 @@ export default function DashboardPage() {
         {/* Main Chat Interface - Light Theme Redesign */}
         <section className="flex-1 w-full flex flex-col md:rounded-2xl md:border md:border-slate-200 md:shadow-lg overflow-hidden relative min-h-0">
 
-          {/* Daily Briefing Widget — always visible at top on desktop, hidden on mobile to maximize chat space */}
-          <div className="hidden md:block flex-shrink-0">
-            <DailyBriefingWidget profileId={activeProfileId} />
-          </div>
+          {/* Daily Briefing Widget — always visible at top */}
+          <DailyBriefingWidget profileId={activeProfileId} />
 
           {activeFeature === "explainer"      && <ExplainerPanel profileId={activeProfileId} profileName={activeProfileName} />}
           {activeFeature === "destiny"        && <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />}
@@ -1077,8 +1075,8 @@ export default function DashboardPage() {
           )}
           
           <div className={activeFeature === "chat" ? "flex flex-col flex-1 min-h-0" : "hidden"}>
-          {/* Chat Header (Hidden on mobile to provide a more spacious reading experience) */}
-          <div className="hidden md:flex h-14 px-6 items-center justify-between border-b border-slate-100 bg-white/90 backdrop-blur-md z-10 flex-shrink-0">
+          {/* Chat Header */}
+          <div className="h-14 px-6 flex items-center justify-between border-b border-slate-100 bg-white/90 backdrop-blur-md z-10 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
               <div className="flex flex-col">
@@ -1242,12 +1240,12 @@ export default function DashboardPage() {
               <>
             {/* Dynamic Suggestion Chips */}
             {!isTyping && suggestionChips.length > 0 && (
-              <div className="mb-4 flex flex-wrap gap-2 overflow-x-auto no-scrollbar pb-1 mask-linear-right">
+              <div className="mb-3 flex flex-nowrap gap-2 overflow-x-auto no-scrollbar pb-2 pt-1 px-1">
                 {suggestionChips.map((chip, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleChipClick(chip)}
-                    className="text-xs font-medium px-3.5 py-1.5 rounded-full border border-slate-200 bg-white text-slate-600 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 transition-all whitespace-nowrap shadow-sm flex-shrink-0"
+                    className="text-xs font-medium px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 transition-all whitespace-nowrap shadow-sm flex-shrink-0"
                   >
                     {chip}
                   </button>
@@ -1273,8 +1271,8 @@ export default function DashboardPage() {
                   }
                 }}
                 placeholder={(!selfProfile && activeProfileId === "self") ? "Setup profile to begin..." : "Message Quantum Oracle..."}
-                className="w-full bg-transparent text-slate-900 placeholder-slate-400 pl-4 pr-14 py-3.5 focus:outline-none text-[15px] font-medium resize-none leading-relaxed max-h-[120px] md:max-h-[300px]"
-                style={{ overflowY: "auto" }}
+                className="w-full bg-transparent text-slate-900 placeholder-slate-400 pl-4 pr-14 py-3.5 focus:outline-none text-[15px] font-medium resize-none leading-relaxed"
+                style={{ maxHeight: "300px", overflowY: "auto" }}
                 data-lenis-prevent="true"
                 disabled={isTyping || (!selfProfile && activeProfileId === "self")}
               />
