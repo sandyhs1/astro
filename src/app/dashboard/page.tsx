@@ -179,27 +179,64 @@ export default function DashboardPage() {
   // Tracks "currently fetching new suggestions" so the row can show a skeleton
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
+  // ── Exclusion ledger ─────────────────────────────────────────────────────
+  // Every question already SHOWN as a chip OR already CLICKED OR already
+  // TYPED by the user is added here. The suggester reads this set so it
+  // never recycles a question the user has already seen. We use a ref so
+  // mutations don't trigger re-renders.
+  const askedQuestionsRef = useRef<Set<string>>(new Set());
+  const recordAskedQuestion = useCallback((q: string) => {
+    if (!q) return;
+    askedQuestionsRef.current.add(q.trim());
+    if (askedQuestionsRef.current.size > 80) {
+      // Cap memory — drop oldest entries past the limit
+      const arr = Array.from(askedQuestionsRef.current);
+      askedQuestionsRef.current = new Set(arr.slice(-60));
+    }
+  }, []);
+
+  // When chips render, register them so the next round excludes them
+  useEffect(() => {
+    suggestionChips.forEach(recordAskedQuestion);
+  }, [suggestionChips, recordAskedQuestion]);
+
   /**
    * SMART SUGGESTIONS — async, non-blocking.
    *
    * Called after each AI reply (or after the user sends a topic-shifting
    * message). Hits /api/astro-chat/suggest-prompts which uses Gemini Flash
-   * Lite to compose 4 contextual follow-ups built directly on the latest
-   * exchange. Falls back to keyword-based static chips if anything goes
-   * wrong — the chat UX is never blocked or broken by this.
+   * Lite to compose 4 angle-diverse, chart-aware follow-ups built directly
+   * on the latest exchange. The server pulls the user's chart fingerprint
+   * (Lagna / Moon nakshatra / AK / DK / current Mahadasha + Antardasha)
+   * from cache so suggestions can name the user's actual planets.
+   *
+   * Falls back to keyword-based static chips if anything goes wrong — the
+   * chat UX is never blocked or broken by this.
    */
   const fetchSmartSuggestions = async (
     lastUserMessage: string,
     lastAssistantMessage: string,
+    threadHistory: { role: "user" | "assistant" | "system"; content: string }[] = [],
   ) => {
     setSuggestionsLoading(true);
     try {
+      // Send the last 6 turns (user + assistant only) so the model has full
+      // thread context, not just the most recent pair.
+      const recentHistory = threadHistory
+        .filter(m => m.role === "user" || m.role === "assistant")
+        .slice(-6)
+        .map(m => ({ role: m.role, content: m.content }));
+
+      const excludeQuestions = Array.from(askedQuestionsRef.current);
+
       const res = await fetch("/api/astro-chat/suggest-prompts", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({
           lastUserMessage,
           lastAssistantMessage,
+          recentHistory,
+          excludeQuestions,
           profileName: profile?.full_name || "",
         }),
       });
@@ -321,12 +358,20 @@ export default function DashboardPage() {
             return { role: m.role as "user" | "assistant" | "system", content: text, marker: mkr };
           });
           setMessages([{ role: "assistant", content: welcomeMsg }, ...loaded]);
+
+          // Rebuild the exclusion ledger from prior user messages so we never
+          // re-suggest something the user has already typed in this profile.
+          askedQuestionsRef.current = new Set();
+          for (const m of loaded) {
+            if (m.role === "user" && m.content) recordAskedQuestion(m.content);
+          }
+
           // If we have prior messages, generate smart suggestions from the
-          // last exchange. Otherwise fall back to topic chips.
+          // last exchange — passing the full loaded thread for context.
           const lastUserMsg      = [...loaded].reverse().find(m => m.role === "user");
           const lastAssistantMsg = [...loaded].reverse().find(m => m.role === "assistant");
           if (lastUserMsg && lastAssistantMsg) {
-            fetchSmartSuggestions(lastUserMsg.content, lastAssistantMsg.content);
+            fetchSmartSuggestions(lastUserMsg.content, lastAssistantMsg.content, loaded);
           } else if (lastUserMsg) {
             updateChipsFromContext(lastUserMsg.content);
           }
@@ -334,6 +379,7 @@ export default function DashboardPage() {
           setMessages([{ role: "assistant", content: welcomeMsg }]);
           setSuggestionChips(INITIAL_CHIPS);
           setSmartSuggestions(false);
+          askedQuestionsRef.current = new Set();
         }
       } catch (err) {
         console.error("Failed to load chat history:", err);
@@ -557,7 +603,17 @@ export default function DashboardPage() {
         // Generate hyper-personalized follow-up suggestions based on the
         // latest exchange. Fire-and-forget — UX continues regardless.
         if (data.reply) {
-          fetchSmartSuggestions(userMessage, data.reply);
+          // Build the thread the suggester will see: every message we have so
+          // far PLUS the freshly-sent user message and the freshly-arrived
+          // reply (state batching means `messages` doesn't include them yet).
+          const threadForSuggester = [
+            ...messages.filter(m => m.role !== "system"),
+            { role: "user"      as const, content: userMessage },
+            { role: "assistant" as const, content: data.reply },
+          ];
+          // Mark the user's question as "asked" so it can't be re-suggested
+          recordAskedQuestion(userMessage);
+          fetchSmartSuggestions(userMessage, data.reply, threadForSuggester);
         } else {
           updateChipsFromContext(userMessage);
         }
@@ -572,6 +628,9 @@ export default function DashboardPage() {
   };
 
   const handleChipClick = (chip: string) => {
+    // Mark this chip as "already used" so the next round of smart
+    // suggestions won't recycle it.
+    recordAskedQuestion(chip);
     setInput(chip);
     // Auto-send after a tiny delay for smooth UX
     setTimeout(() => {
@@ -620,6 +679,7 @@ export default function DashboardPage() {
       setMessages([{ role: "assistant", content: welcomeMsg }]);
       setSuggestionChips(INITIAL_CHIPS);
       setSmartSuggestions(false);
+      askedQuestionsRef.current = new Set();
     } catch (err) {
       console.error("Failed to clear chat:", err);
       alert("Failed to clear chat history. Please try again.");
