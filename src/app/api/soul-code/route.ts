@@ -61,8 +61,22 @@ export async function GET(req: Request) {
     let targetProfileId = profileId;
     if (!profileId || profileId === "self") {
       const { data: fp } = await supabaseAdmin.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
-      if (fp) targetProfileId = fp.id;
+      if (fp) {
+        targetProfileId = fp.id;
+      } else {
+        targetProfileId = null;
+        if (req.method === "POST") {
+          const { data: lead } = await supabaseAdmin.from("onboarding_leads").select("*").eq("email", user.email || "").maybeSingle();
+          if (lead) {
+            const { data: newFp } = await supabaseAdmin.from("family_profiles").insert({
+              user_id: user.id, name: lead.name || "Seeker", relationship: "Self", dob: lead.dob, tob: lead.tob, pob: lead.pob, gender: lead.gender || "male", timezone: lead.timezone || "+05:30"
+            }).select("id").maybeSingle();
+            if (newFp) targetProfileId = newFp.id;
+          }
+        }
+      }
     }
+    if (targetProfileId === "self") targetProfileId = null;
     if (!targetProfileId) return NextResponse.json({ found: false });
 
     const { data: saved } = await supabaseAdmin.from("saved_reports")
@@ -96,8 +110,22 @@ export async function POST(req: Request) {
     let targetProfileId = profileId;
     if (!profileId || profileId === "self") {
       const { data: fp } = await supabaseAdmin.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
-      if (fp) targetProfileId = fp.id;
+      if (fp) {
+        targetProfileId = fp.id;
+      } else {
+        targetProfileId = null;
+        if (req.method === "POST") {
+          const { data: lead } = await supabaseAdmin.from("onboarding_leads").select("*").eq("email", user.email || "").maybeSingle();
+          if (lead) {
+            const { data: newFp } = await supabaseAdmin.from("family_profiles").insert({
+              user_id: user.id, name: lead.name || "Seeker", relationship: "Self", dob: lead.dob, tob: lead.tob, pob: lead.pob, gender: lead.gender || "male", timezone: lead.timezone || "+05:30"
+            }).select("id").maybeSingle();
+            if (newFp) targetProfileId = newFp.id;
+          }
+        }
+      }
     }
+    if (targetProfileId === "self") targetProfileId = null;
 
     // Force regenerate by bypassing cache (for now while we test changes)
     // if (targetProfileId) { ... cache code removed ... }

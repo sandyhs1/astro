@@ -4,22 +4,21 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { PAL } from "./destiny-theme";
 
 interface YourGotraProps {
   profileId?: string;
   profileName?: string;
 }
 
-const AMBER = { from: "#92400E", to: "#D97706", accent: "#FDE68A" };
-
 const VEDIC_LOADING_LINES = [
-  "The lineage records are being retrieved from the Akashic archives...",
-  "Your ancestral Rishi is being invoked from the Saptarishi mandala...",
-  "Vedic Samskaras are being decoded from the Puranic texts...",
-  "The Gotra-Sutra is being traced through 108 generations...",
-  "Ancient wisdom is being aligned with your present moment...",
-  "Dharmic lineage data is being cross-referenced with Shruti and Smriti...",
-  "Sacred fire of knowledge is being kindled for your lineage reading...",
+  "The lineage records are being retrieved from the Akashic archives…",
+  "Your ancestral Rishi is being invoked from the Saptarishi mandala…",
+  "Vedic Samskaras are being decoded from the Puranic texts…",
+  "The Gotra-Sutra is being traced through 108 generations…",
+  "Ancient wisdom is being aligned with your present moment…",
+  "Dharmic lineage data is being cross-referenced with Shruti and Smriti…",
+  "Sacred fire of knowledge is being kindled for your lineage reading…",
 ];
 
 export default function YourGotra({ profileId, profileName }: YourGotraProps) {
@@ -41,10 +40,7 @@ export default function YourGotra({ profileId, profileName }: YourGotraProps) {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [status]);
 
-  useEffect(() => {
-    if (isB2B) return;
-    checkForSaved();
-  }, [profileId]);
+  useEffect(() => { if (!isB2B) checkForSaved(); }, [profileId]);
 
   async function checkForSaved() {
     setStatus("loading");
@@ -58,149 +54,125 @@ export default function YourGotra({ profileId, profileName }: YourGotraProps) {
         setReportData(data.reportData);
         setGotraInput(data.reportData.gotra || "");
         setStatus("done");
-      } else {
-        setStatus("idle");
-      }
-    } catch {
-      setStatus("idle");
-    }
+      } else { setStatus("idle"); }
+    } catch { setStatus("idle"); }
   }
 
   async function generateReport() {
     if (!gotraInput.trim()) return;
-    setStatus("loading");
-    setErrorMsg("");
-    setLoadingLine(0);
+    setStatus("loading"); setErrorMsg(""); setLoadingLine(0);
     try {
-      const res  = await fetch("/api/gotra-report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch("/api/gotra-report", {
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ gotra: gotraInput.trim(), profileId: profileId || null, saveReport: !isB2B }),
       });
       const data = await res.json();
       if (!res.ok) { setErrorMsg(data.error || "Something went wrong."); setStatus("error"); return; }
-      setReportData(data);
-      setStatus("done");
-    } catch {
-      setErrorMsg("Network error. Please try again.");
-      setStatus("error");
-    }
+      setReportData(data); setStatus("done");
+    } catch { setErrorMsg("Network error. Please try again."); setStatus("error"); }
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-slate-50">
-
-      {/* ── Header ── */}
-      <div className="flex-shrink-0 px-4 md:px-10 py-3 md:py-4 border-b border-slate-100 bg-white flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-lg"
-            style={{ background: "linear-gradient(135deg, #FEF3C7, #FDE68A)", border: "1px solid rgba(245,158,11,0.25)" }}>
-            🕉️
-          </div>
+    <div className="flex flex-col w-full" style={{ background: PAL.paper, color: PAL.ink }}>
+      {/* Header */}
+      <div
+        className="px-5 md:px-7 lg:px-9 py-4 md:py-5 flex items-center justify-between gap-3 sticky top-0 z-10 backdrop-blur-md"
+        style={{ background: "rgba(250,247,242,0.92)", borderBottom: `1px solid ${PAL.border2}` }}
+      >
+        <div className="flex items-baseline gap-3 min-w-0 flex-1">
+          <span className="serif-display italic text-[18px] md:text-[22px]" style={{ color: PAL.accent }}>🕉</span>
           <div className="min-w-0">
-            <h2 className="font-black text-slate-900 text-sm md:text-base leading-tight">Your Gotra</h2>
-            <p className="text-[10px] md:text-[11px] text-slate-400 font-medium truncate">
-              {reportData
-                ? `${reportData.gotra} Gotra${profileName ? ` · ${profileName}` : ""}`
-                : `Vedic Lineage${profileName ? ` · ${profileName}` : ""}`}
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.accent }}>
+              Your Gotra
             </p>
+            <h2 className="serif-display text-[16px] md:text-[20px] font-semibold leading-none tracking-tight mt-0.5 truncate" style={{ color: PAL.ink }}>
+              {reportData ? `${reportData.gotra} Gotra` : "Vedic lineage"}
+            </h2>
+            {profileName && (
+              <p className="serif-text text-[11.5px] italic mt-1" style={{ color: PAL.ink3 }}>
+                {profileName}
+              </p>
+            )}
           </div>
         </div>
         {status === "done" && isB2B && (
           <button
             onClick={() => { setStatus("idle"); setReportData(null); setGotraInput(""); }}
-            className="flex-shrink-0 text-xs font-bold text-slate-400 hover:text-amber-600 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-amber-50 border border-slate-200 bg-white"
+            className="flex-shrink-0 serif-text text-[12px] font-semibold px-3 py-1.5 rounded-sm transition-colors hover:bg-black/[0.04]"
+            style={{ color: PAL.ink2, border: `1px solid ${PAL.border}` }}
           >
             ↺ New
           </button>
         )}
         {status === "done" && !isB2B && (
-          <div className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="text-[10px] md:text-[11px] font-bold text-emerald-700 whitespace-nowrap">Saved</span>
+          <div className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm"
+            style={{ background: PAL.sageBg, border: `1px solid #C7D6BB` }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: PAL.sage }} />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: PAL.sage }}>Saved</span>
           </div>
         )}
       </div>
 
-      {/* ── IDLE ── */}
+      {/* IDLE */}
       {status === "idle" && (
-        <div data-lenis-prevent className="flex-1 flex flex-col items-center justify-center text-center p-5 md:p-8 gap-6 md:gap-8 overflow-y-auto custom-scrollbar">
-          <div className="relative">
-            <div
-              className="w-28 h-28 rounded-3xl flex items-center justify-center text-5xl shadow-xl"
+        <div data-lenis-prevent className="flex flex-col items-center justify-center text-center px-6 py-12 md:py-16">
+          <div
+            className="w-24 h-24 rounded-sm grid place-items-center serif-display text-[42px] mb-7"
+            style={{ background: PAL.amberBg, color: PAL.gold, border: `1px solid #E1CE9B` }}
+          >
+            🕉
+          </div>
+
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+            Begin · Gotra reading
+          </p>
+          <h3 className="serif-display text-[28px] md:text-[36px] font-semibold tracking-tight leading-tight max-w-xl" style={{ color: PAL.ink }}>
+            Decode your ancestral lineage.
+          </h3>
+          <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed mt-3 max-w-md" style={{ color: PAL.ink2 }}>
+            Your Gotra is not just a name — it is your spiritual DNA, your lineage from one of the founding Rishis of Vedic civilisation.
+          </p>
+
+          <div className="w-full max-w-sm mt-7 space-y-3">
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.22em] text-left" style={{ color: PAL.ink3 }}>
+              Your Gotra name
+            </label>
+            <input
+              type="text"
+              value={gotraInput}
+              onChange={e => setGotraInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && gotraInput.trim()) generateReport(); }}
+              placeholder="e.g. Bharadvaja, Kashyapa, Atreya…"
+              className="w-full serif-text text-[16px] px-4 py-3 rounded-sm focus:outline-none transition-colors text-center"
               style={{
-                background: "linear-gradient(135deg, #FEF3C7 0%, #FDE68A 50%, #F59E0B 100%)",
-                border: "2px solid rgba(245,158,11,0.3)",
-                boxShadow: "0 12px 40px rgba(245,158,11,0.25)",
+                color: PAL.ink, background: PAL.paper,
+                border: `1px solid ${gotraInput.trim() ? PAL.accent : PAL.border}`,
+                boxShadow: gotraInput.trim() ? `0 0 0 3px rgba(123,10,31,0.10)` : "none",
               }}
-            >
-              🕉️
-            </div>
-            <div
-              className="absolute -inset-2 rounded-[28px] opacity-20"
-              style={{ background: "radial-gradient(circle, #F59E0B, transparent 70%)" }}
+              autoFocus
             />
-          </div>
-
-          <div className="max-w-md w-full">
-            <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight mb-2 md:mb-3">
-              Decode Your Ancestral Lineage
-            </h3>
-            <p className="text-slate-500 text-sm leading-relaxed">
-              Your Gotra is not just a name — it is your spiritual DNA, your lineage from one of the
-              founding Rishis of Vedic civilization. Enter your Gotra to receive a deep-dive report
-              on your ancestral inheritance, responsibilities, and strengths.
-            </p>
-          </div>
-
-          <div className="w-full max-w-sm space-y-4">
-            <div className="relative">
-              <label className="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2 text-left">
-                Your Gotra Name
-              </label>
-              <input
-                type="text"
-                value={gotraInput}
-                onChange={e => setGotraInput(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && gotraInput.trim()) generateReport(); }}
-                placeholder="e.g. Bharadvaja, Kashyapa, Atreya..."
-                className="w-full px-5 py-3.5 rounded-xl border text-slate-900 font-semibold placeholder:text-slate-300 focus:outline-none transition-all text-center text-lg tracking-wide"
-                style={{
-                  borderColor: gotraInput.trim() ? "rgba(245,158,11,0.6)" : "rgba(203,213,225,1)",
-                  boxShadow: gotraInput.trim() ? "0 0 0 3px rgba(245,158,11,0.12)" : "none",
-                  background: "#FAFAFA",
-                }}
-                autoFocus
-              />
-            </div>
-
             <button
               onClick={generateReport}
               disabled={!gotraInput.trim()}
-              className="w-full py-4 rounded-xl font-black text-white text-sm shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0"
-              style={{
-                background: gotraInput.trim()
-                  ? "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
-                  : "linear-gradient(135deg, #94A3B8, #64748B)",
-                boxShadow: gotraInput.trim() ? "0 8px 24px rgba(245,158,11,0.35)" : "none",
-              }}
+              className="w-full serif-text text-[13px] font-semibold py-3 rounded-sm text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+              style={{ background: PAL.accent }}
             >
-              🕉️ Decode My Gotra{!isB2B && " — 5 Credits"}
+              🕉 Decode my Gotra{!isB2B && " — 5 credits"}
             </button>
-
-            <p className="text-[11px] text-slate-400 font-medium">
+            <p className="serif-text italic text-[11.5px]" style={{ color: PAL.ink3 }}>
               {!isB2B
-                ? "Saved permanently to your profile · Never expires · Free to re-read anytime"
-                : "Instant lookup · No report saved · Check any Gotra"}
+                ? "Saved permanently · never expires · free to re-read anytime"
+                : "Instant lookup · no report saved · check any Gotra"}
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-2 max-w-md">
-            {["The Progenitor Rishi", "Inherited Samskaras", "Daily Practice", "Rishi Mantra", "Tarpana Ritual", "Modern Strengths 2026"].map(label => (
+          <div className="flex flex-wrap justify-center gap-1.5 max-w-md mt-7">
+            {["The progenitor Rishi", "Inherited Samskaras", "Daily practice", "Rishi mantra", "Tarpana ritual", "Modern strengths"].map(label => (
               <span
                 key={label}
-                className="text-[11px] font-bold px-3 py-1.5 rounded-full"
-                style={{ background: "#FEF3C7", color: "#92400E", border: "1px solid rgba(245,158,11,0.25)" }}
+                className="serif-text text-[11.5px] font-semibold px-2.5 py-1 rounded-sm"
+                style={{ color: PAL.gold, background: PAL.amberBg, border: `1px solid #E1CE9B` }}
               >
                 {label}
               </span>
@@ -209,292 +181,206 @@ export default function YourGotra({ profileId, profileName }: YourGotraProps) {
         </div>
       )}
 
-      {/* ── LOADING ── */}
+      {/* LOADING */}
       {status === "loading" && reportData === null && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
-          <div className="relative">
-            <div
-              className="w-24 h-24 rounded-3xl flex items-center justify-center text-4xl"
-              style={{
-                background: "linear-gradient(135deg, #FEF3C7, #F59E0B)",
-                animation: "pulse 2s ease-in-out infinite",
-                boxShadow: "0 0 40px rgba(245,158,11,0.3)",
-              }}
-            >
-              🕉️
-            </div>
-            <div
-              className="absolute inset-0 rounded-3xl border-2"
-              style={{ borderColor: "transparent", borderTopColor: "#F59E0B", animation: "spin 3s linear infinite" }}
-            />
-          </div>
-
-          <div className="text-center space-y-3 max-w-sm">
-            <div className="font-black text-slate-900 text-lg tracking-tight">The Lineage Speaks...</div>
-            <div className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: "#D97706" }}>
-              ॥ Invoking the Saptarishi Mandala ॥
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={loadingLine}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.4 }}
-                className="text-sm text-slate-500 font-medium leading-relaxed"
-              >
-                {VEDIC_LOADING_LINES[loadingLine]}
-              </motion.p>
-            </AnimatePresence>
-          </div>
-
-          <div className="w-full max-w-xs space-y-2">
-            {[
-              { icon: "📜", label: "Tracing Gotra-Sutra threads" },
-              { icon: "🔥", label: "Invoking Rishi consciousness" },
-              { icon: "⚡", label: "Decoding Samskara matrix" },
-              { icon: "🏛️", label: "Compiling Puranic evidence" },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2.5 text-[12px] text-slate-400 font-medium"
-                style={{ animation: `slideIn 0.5s ease both`, animationDelay: `${i * 0.7}s` }}
-              >
-                <span className="text-sm leading-none">{item.icon}</span>
-                <span>{item.label}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="w-full max-w-xs h-1 rounded-full overflow-hidden bg-slate-100">
-            <div
-              className="h-full rounded-full"
-              style={{
-                background: "linear-gradient(90deg, #F59E0B, #FDE68A, #F59E0B)",
-                backgroundSize: "200% 100%",
-                animation: "shimmerBar 2s linear infinite",
-              }}
-            />
-          </div>
-
-          <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
-            <span>⏳</span>
-            <span>Keep this window open · Deep analysis in progress</span>
+        <div className="flex flex-col items-center justify-center px-6 py-14 md:py-20 text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+            ॥ Karakamsa Vicharah ॥
           </p>
-
-          <style>{`
-            @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
-            @keyframes shimmerBar { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
-            @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
-          `}</style>
+          <h3 className="serif-display text-[24px] md:text-[28px] font-semibold tracking-tight" style={{ color: PAL.ink }}>
+            The lineage speaks…
+          </h3>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={loadingLine}
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+              className="serif-text italic text-[13.5px] mt-3 max-w-sm" style={{ color: PAL.ink2 }}
+            >
+              {VEDIC_LOADING_LINES[loadingLine]}
+            </motion.p>
+          </AnimatePresence>
+          <div className="mt-6 inline-flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.15s" }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.3s" }} />
+          </div>
         </div>
       )}
 
-      {/* ── ERROR ── */}
+      {/* ERROR */}
       {status === "error" && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-8 text-center">
-          <div className="text-5xl">🚫</div>
-          <div>
-            <h3 className="font-black text-slate-900 text-lg">Generation Failed</h3>
-            <p className="text-sm text-slate-500 mt-1 max-w-xs">{errorMsg}</p>
-          </div>
+        <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+          <div className="serif-display text-[42px]" style={{ color: PAL.rose }}>⚠︎</div>
+          <h3 className="serif-display text-[20px] font-semibold mt-3" style={{ color: PAL.ink }}>Generation failed</h3>
+          <p className="serif-text text-[13.5px] italic mt-1 max-w-xs" style={{ color: PAL.ink2 }}>{errorMsg}</p>
           <button
             onClick={() => setStatus("idle")}
-            className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors"
+            className="mt-5 serif-text text-[13px] font-semibold px-5 py-2.5 rounded-sm text-white transition-opacity hover:opacity-90"
+            style={{ background: PAL.ink }}
           >
-            Try Again
+            Try again
           </button>
         </div>
       )}
 
-      {/* ── DONE — Full-Width Premium Report (matches IshtaDevata) ── */}
+      {/* DONE */}
       {status === "done" && reportData && (
-        <div data-lenis-prevent className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="px-4 md:px-8 lg:px-12 py-4 md:py-6">
+        <div data-lenis-prevent className="flex-1 overflow-y-auto custom-scroll-light">
+          <div className="px-4 md:px-7 lg:px-9 py-5 md:py-7">
 
-            {/* Hero Header */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative rounded-2xl overflow-hidden mb-6 md:mb-8 p-4 md:p-6"
-              style={{
-                background: `linear-gradient(135deg, ${AMBER.from} 0%, ${AMBER.to} 100%)`,
-                boxShadow: `0 16px 48px rgba(180,83,9,0.3)`,
-              }}
+            {/* Hero */}
+            <motion.section
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              className="rounded-sm p-5 md:p-7 mb-6"
+              style={{ background: PAL.ink, color: PAL.paper, border: `1px solid ${PAL.ink}` }}
             >
-              <div
-                className="absolute inset-0 opacity-10"
-                style={{ backgroundImage: "radial-gradient(circle at 85% 15%, rgba(255,255,255,0.9) 0%, transparent 55%)" }}
-              />
-              <div className="relative">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-2xl">🕉️</span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-200/80">
-                        Gotra Lineage Report
-                      </span>
-                    </div>
-                    <h2 className="text-xl md:text-2xl font-black text-white tracking-tight leading-tight mb-1">
-                      {reportData.gotra} Gotra
-                    </h2>
-                    <p className="text-amber-200/70 text-xs font-semibold">
-                      Ancestral Intelligence Decoded{profileName ? ` · ${profileName}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    {!isB2B && (
-                      <span className="text-[10px] bg-white/15 text-white/90 px-2.5 py-1 rounded-full font-bold border border-white/20">
-                        ✓ Permanently Saved
-                      </span>
-                    )}
-                    {reportData.generatedAt && (
-                      <span className="text-[10px] text-amber-200/60 font-medium">
-                        {new Date(reportData.generatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
-                    )}
-                  </div>
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] mb-2" style={{ color: "#E1CE9B" }}>
+                    🕉 Gotra lineage report
+                  </p>
+                  <h2 className="serif-display text-[24px] md:text-[32px] font-semibold tracking-tight leading-tight">
+                    {reportData.gotra} Gotra
+                  </h2>
+                  <p className="serif-text italic text-[13px] mt-2" style={{ color: PAL.paper2 }}>
+                    Ancestral intelligence{profileName ? ` · ${profileName}` : ""}
+                  </p>
                 </div>
-
-                <div className="h-px bg-white/15 mt-4 mb-4" />
-
-                <div className="flex flex-wrap gap-1.5">
-                  {["Saptarishi Lineage", "Vedic Samskaras", "Nitya Karma", "Rishi Mantra", "Tarpana"].map(tag => (
-                    <span key={tag} className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/10 text-white/80 border border-white/10">
-                      {tag}
+                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  {!isB2B && (
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-1 rounded-sm"
+                      style={{ background: "rgba(255,255,255,0.10)", color: PAL.paper, border: `1px solid rgba(255,255,255,0.18)` }}
+                    >
+                      ✓ Saved
                     </span>
-                  ))}
+                  )}
+                  {reportData.generatedAt && (
+                    <span className="serif-text italic text-[11px]" style={{ color: PAL.paper2, opacity: 0.8 }}>
+                      {new Date(reportData.generatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  )}
                 </div>
               </div>
-            </motion.div>
-
-            {/* Report Content — Full width, free-flowing, no card wrapper */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
-              <div className="gotra-report">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    h1: ({ children }) => (
-                      <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-4 mt-2">{children}</h1>
-                    ),
-                    h2: ({ children }) => (
-                      <div className="mt-10 mb-5">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div
-                            className="w-1.5 h-8 rounded-full"
-                            style={{ background: `linear-gradient(to bottom, ${AMBER.from}, ${AMBER.to})` }}
-                          />
-                          <h2 className="text-[19px] font-black text-slate-900 tracking-tight uppercase">{children}</h2>
-                        </div>
-                        <div className="h-px" style={{ background: `linear-gradient(to right, ${AMBER.to}50, transparent)` }} />
-                      </div>
-                    ),
-                    h3: ({ children }) => (
-                      <h3
-                        className="text-[15px] font-extrabold mt-7 mb-2.5 flex items-center gap-2"
-                        style={{ color: AMBER.to }}
-                      >
-                        <span
-                          className="w-1 h-1 rounded-full flex-shrink-0"
-                          style={{ background: AMBER.to }}
-                        />
-                        {children}
-                      </h3>
-                    ),
-                    h4: ({ children }) => (
-                      <h4 className="text-sm font-bold text-slate-700 mt-5 mb-2">{children}</h4>
-                    ),
-                    p: ({ children }) => (
-                      <p className="text-[15px] text-slate-700 leading-[1.85] mb-4">{children}</p>
-                    ),
-                    strong: ({ children }) => (
-                      <strong className="font-extrabold text-slate-900">{children}</strong>
-                    ),
-                    em: ({ children }) => (
-                      <em className="font-medium not-italic" style={{ color: AMBER.to }}>{children}</em>
-                    ),
-                    hr: () => (
-                      <div className="my-8 flex items-center gap-3">
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-                        <span className="text-slate-300 text-xs">✦</span>
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-                      </div>
-                    ),
-                    blockquote: ({ children }) => (
-                      <div className="my-5 relative">
-                        <div
-                          className="absolute left-0 top-0 bottom-0 w-1 rounded-full"
-                          style={{ background: `linear-gradient(to bottom, ${AMBER.from}, ${AMBER.to})` }}
-                        />
-                        <div className="pl-5 pr-4 py-3 rounded-r-xl" style={{ background: `${AMBER.to}12` }}>
-                          <div className="text-[14px] text-slate-700 leading-relaxed font-medium italic">{children}</div>
-                        </div>
-                      </div>
-                    ),
-                    ul: ({ children }) => (
-                      <ul className="space-y-2.5 my-4 pl-0 list-none">{children}</ul>
-                    ),
-                    ol: ({ children }) => (
-                      <ol className="space-y-2.5 my-4 pl-0 list-none">{children}</ol>
-                    ),
-                    li: ({ children }) => (
-                      <li className="flex gap-3 text-[15px] text-slate-700 leading-relaxed">
-                        <span
-                          className="flex-shrink-0 w-5 h-5 mt-0.5 rounded-md flex items-center justify-center"
-                          style={{ background: `${AMBER.to}18` }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: AMBER.to }} />
-                        </span>
-                        <span className="flex-1">{children}</span>
-                      </li>
-                    ),
-                    table: ({ children }) => (
-                      <div className="my-6 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                        <table className="w-full text-sm border-collapse">{children}</table>
-                      </div>
-                    ),
-                    thead: ({ children }) => (
-                      <thead style={{ background: `linear-gradient(to right, ${AMBER.from}, ${AMBER.to})` }}>{children}</thead>
-                    ),
-                    th: ({ children }) => (
-                      <th className="text-left px-5 py-3 text-xs font-bold text-white uppercase tracking-wider">{children}</th>
-                    ),
-                    td: ({ children }) => (
-                      <td className="px-5 py-3 text-slate-700 font-medium border-t border-slate-100">{children}</td>
-                    ),
-                    tr: ({ children }) => (
-                      <tr className="even:bg-amber-50/40 hover:bg-amber-50/70 transition-colors">{children}</tr>
-                    ),
-                    code: ({ children }) => (
-                      <span className="bg-amber-50 text-amber-800 text-[13px] font-semibold px-2 py-0.5 rounded-md border border-amber-100">{children}</span>
-                    ),
-                  }}
-                >
-                  {reportData.report}
-                </ReactMarkdown>
+              <div className="h-px mt-4 mb-4" style={{ background: "rgba(255,255,255,0.12)" }} />
+              <div className="flex flex-wrap gap-1.5">
+                {["Saptarishi lineage", "Vedic Samskaras", "Nitya Karma", "Rishi mantra", "Tarpana"].map(tag => (
+                  <span key={tag}
+                    className="text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-0.5 rounded-sm"
+                    style={{ background: "rgba(255,255,255,0.08)", color: PAL.paper, border: `1px solid rgba(255,255,255,0.14)` }}
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
+            </motion.section>
+
+            {/* Report markdown */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+              className="prose-editorial-gotra"
+            >
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ children }) => (
+                    <h1 className="serif-display text-[28px] md:text-[34px] font-semibold tracking-tight mt-2 mb-4" style={{ color: PAL.ink }}>
+                      {children}
+                    </h1>
+                  ),
+                  h2: ({ children }) => (
+                    <div className="mt-10 mb-5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+                        Section
+                      </p>
+                      <h2 className="serif-display text-[22px] md:text-[26px] font-semibold tracking-tight leading-tight" style={{ color: PAL.ink }}>
+                        {children}
+                      </h2>
+                      <div className="h-px mt-3" style={{ background: `linear-gradient(to right, ${PAL.border}, transparent)` }} />
+                    </div>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="serif-display text-[17px] md:text-[19px] font-semibold tracking-tight mt-7 mb-2.5 flex items-center gap-2" style={{ color: PAL.gold }}>
+                      <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: PAL.gold }} />
+                      {children}
+                    </h3>
+                  ),
+                  h4: ({ children }) => (
+                    <h4 className="serif-display text-[15px] font-semibold mt-5 mb-2" style={{ color: PAL.ink2 }}>{children}</h4>
+                  ),
+                  p: ({ children }) => (
+                    <p className="serif-text text-[15px] md:text-[16px] leading-[1.85] mb-4" style={{ color: PAL.ink2 }}>{children}</p>
+                  ),
+                  strong: ({ children }) => (
+                    <strong className="font-semibold" style={{ color: PAL.ink }}>{children}</strong>
+                  ),
+                  em: ({ children }) => (
+                    <em className="not-italic font-medium" style={{ color: PAL.gold }}>{children}</em>
+                  ),
+                  hr: () => (
+                    <div className="my-8 flex items-center gap-3">
+                      <div className="flex-1 h-px" style={{ background: PAL.border }} />
+                      <span className="serif-display italic text-[13px]" style={{ color: PAL.ink3 }}>✦</span>
+                      <div className="flex-1 h-px" style={{ background: PAL.border }} />
+                    </div>
+                  ),
+                  blockquote: ({ children }) => (
+                    <div className="my-5 rounded-sm pl-4 pr-4 py-3"
+                      style={{ background: PAL.amberBg, border: `1px solid #E1CE9B`, borderLeft: `2px solid ${PAL.gold}` }}
+                    >
+                      <div className="serif-display italic text-[14px] md:text-[15px] leading-relaxed" style={{ color: PAL.ink }}>
+                        {children}
+                      </div>
+                    </div>
+                  ),
+                  ul: ({ children }) => <ul className="space-y-2 my-4 list-none pl-0">{children}</ul>,
+                  ol: ({ children }) => <ol className="space-y-2 my-4 list-none pl-0">{children}</ol>,
+                  li: ({ children }) => (
+                    <li className="serif-text text-[15px] leading-relaxed flex gap-3" style={{ color: PAL.ink2 }}>
+                      <span className="flex-shrink-0 mt-2 w-1.5 h-1.5 rounded-full" style={{ background: PAL.gold }} />
+                      <span className="flex-1">{children}</span>
+                    </li>
+                  ),
+                  table: ({ children }) => (
+                    <div className="my-6 overflow-x-auto rounded-sm" style={{ border: `1px solid ${PAL.border}` }}>
+                      <table className="w-full text-[14px] border-collapse">{children}</table>
+                    </div>
+                  ),
+                  thead: ({ children }) => (
+                    <thead style={{ background: PAL.gold, color: PAL.paper }}>{children}</thead>
+                  ),
+                  th: ({ children }) => (
+                    <th className="text-left px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em]">{children}</th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="px-4 py-2.5 serif-text text-[13.5px]" style={{ color: PAL.ink2, borderTop: `1px solid ${PAL.border2}` }}>{children}</td>
+                  ),
+                  tr: ({ children }) => <tr>{children}</tr>,
+                  code: ({ children }) => (
+                    <span className="font-mono text-[13px] px-1.5 py-0.5 rounded-sm"
+                      style={{ background: PAL.amberBg, color: PAL.gold, border: `1px solid #E1CE9B` }}
+                    >
+                      {children}
+                    </span>
+                  ),
+                }}
+              >
+                {reportData.report}
+              </ReactMarkdown>
 
               {/* Footer */}
-              <div className="mt-10 pt-5 border-t border-slate-100 flex items-center justify-between gap-4">
-                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider leading-relaxed">
-                  Based on Vedic Puranic Scriptures · For spiritual reference
+              <div className="mt-10 pt-5 flex items-center justify-between flex-wrap gap-3" style={{ borderTop: `1px solid ${PAL.border}` }}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.ink3 }}>
+                  Based on Vedic Puranic scriptures · for spiritual reference
                 </p>
                 <button
                   onClick={() => window.print()}
-                  className="text-[11px] text-slate-400 hover:text-slate-700 font-bold transition-colors flex items-center gap-1.5 flex-shrink-0"
+                  className="serif-text text-[11.5px] font-semibold transition-opacity hover:opacity-70 flex items-center gap-1"
+                  style={{ color: PAL.ink2 }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" />
-                  </svg>
-                  Print
+                  <span>⎙</span> Print
                 </button>
               </div>
             </motion.div>
-
           </div>
         </div>
       )}

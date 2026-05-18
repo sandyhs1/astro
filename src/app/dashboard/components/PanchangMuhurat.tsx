@@ -1,25 +1,23 @@
 "use client";
 import { useState } from "react";
 import { SectionHeader } from "./PanchangUtils";
+import { PAL, CHOG_TONE } from "./destiny-theme";
 import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-utils";
 
+const EVENT_TYPES = ["Business Launch", "Wedding", "Travel", "House Warming", "Medical Procedure", "Job / Interview", "Finance", "Education", "General"];
 
-const EVENT_TYPES = ["Business Launch","Wedding","Travel","House Warming","Medical Procedure","Job / Interview","Finance","Education","General"];
 const GRADE_CONFIG = {
-  god:     { emoji: "🏆", label: "God Mode",  bg: "#FFFBEB", border: "#FCD34D", text: "#B45309" },
-  diamond: { emoji: "💎", label: "Diamond",   bg: "#EFF6FF", border: "#93C5FD", text: "#1D4ED8" },
-  gold:    { emoji: "🥇", label: "Gold",      bg: "#F0FDF4", border: "#86EFAC", text: "#15803D" },
-};
-const CHOG_COLORS: Record<string, string> = {
-  Amrit:"#059669", Shubh:"#2563EB", Labh:"#7C3AED", Chal:"#6B7280", Kaal:"#DC2626", Rog:"#B91C1C", Udveg:"#D97706",
+  god:     { symbol: "✦", label: "God Mode", bg: PAL.amberBg,  border: "#E1CE9B", ink: PAL.gold },
+  diamond: { symbol: "◆", label: "Diamond",  bg: "#E5EEF6",     border: "#BCD0E1", ink: "#1F4F7A" },
+  gold:    { symbol: "✧", label: "Gold",     bg: PAL.sageBg,    border: "#C7D6BB", ink: PAL.sage },
 };
 
 function fmtISO(iso: string) {
-  try { return new Date(iso).toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit", hour12:true }); }
+  try { return new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }); }
   catch { return ""; }
 }
 
-interface Window { date: string; start: string; end: string; choghadiya: string; score: number; grade: string; reasons: string[]; }
+interface MuhuratWindow { date: string; start: string; end: string; choghadiya: string; score: number; grade: string; reasons: string[]; }
 
 export default function PanchangMuhurat({ profileId }: { profileId: string }) {
   const today = new Date().toISOString().slice(0, 10);
@@ -29,7 +27,7 @@ export default function PanchangMuhurat({ profileId }: { profileId: string }) {
   const [startDate, setStartDate] = useState(today);
   const [endDate,   setEndDate]   = useState(weekLater);
   const [loading,   setLoading]   = useState(false);
-  const [results,   setResults]   = useState<Window[]>([]);
+  const [results,   setResults]   = useState<MuhuratWindow[]>([]);
   const [searched,  setSearched]  = useState(false);
   const [error,     setError]     = useState("");
 
@@ -50,28 +48,45 @@ export default function PanchangMuhurat({ profileId }: { profileId: string }) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Info Banner */}
-      <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
-        <SectionHeader emoji="🔭" title="Muhurat Finder" subtitle="Scan any date range for your ideal auspicious window." />
-        <div className="text-[11px] text-slate-500 space-y-1">
-          <p>🏆 <strong>God Mode</strong> — Amrit/Abhijit overlap. Rare & Perfect.</p>
-          <p>💎 <strong>Diamond</strong> — Amrit or Shubh in prime hours.</p>
-          <p>🥇 <strong>Gold</strong> — Labh/Shubh with no Rahu Kaal.</p>
-        </div>
+    <div className="space-y-5">
+      {/* Intro */}
+      <div className="rounded-sm p-4 md:p-5"
+        style={{ background: PAL.paper2, border: `1px solid ${PAL.border2}` }}
+      >
+        <SectionHeader
+          emoji="❖"
+          title="Muhurat finder"
+          subtitle="Scan any date range for your ideal auspicious window."
+        />
+        <ul className="space-y-1.5 mt-2 serif-text text-[12.5px]" style={{ color: PAL.ink2 }}>
+          <li><span style={{ color: GRADE_CONFIG.god.ink }}>✦</span> <strong>God Mode</strong> — Amrit/Abhijit overlap. Rare and perfect.</li>
+          <li><span style={{ color: GRADE_CONFIG.diamond.ink }}>◆</span> <strong>Diamond</strong> — Amrit or Shubh in prime hours.</li>
+          <li><span style={{ color: GRADE_CONFIG.gold.ink }}>✧</span> <strong>Gold</strong> — Labh/Shubh with no Rahu Kaal.</li>
+        </ul>
       </div>
 
       {/* Form */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 space-y-4">
-        {/* Event type chips */}
+      <div
+        className="rounded-sm p-5 md:p-6 space-y-5"
+        style={{ background: PAL.paper, border: `1px solid ${PAL.border}` }}
+      >
+        {/* Event type */}
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">1. Event Type</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2.5" style={{ color: PAL.accent }}>
+            01 · Event type
+          </p>
           <div className="flex flex-wrap gap-2">
             {EVENT_TYPES.map(t => (
-              <button key={t} onClick={() => setEventType(t)}
-                className={`text-[12px] font-bold px-3 py-1.5 rounded-full border transition-all ${
-                  eventType === t ? "bg-indigo-600 text-white border-indigo-600" : "border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600"
-                }`}>
+              <button
+                key={t}
+                onClick={() => setEventType(t)}
+                className="serif-text text-[12.5px] font-semibold px-3 py-1.5 rounded-sm transition-colors"
+                style={
+                  eventType === t
+                    ? { background: PAL.ink, color: PAL.paper, border: `1px solid ${PAL.ink}` }
+                    : { background: "transparent", color: PAL.ink2, border: `1px solid ${PAL.border}` }
+                }
+              >
                 {t}
               </button>
             ))}
@@ -79,101 +94,174 @@ export default function PanchangMuhurat({ profileId }: { profileId: string }) {
         </div>
 
         {/* Date range */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">2. Start Date</p>
-            <input type="date" value={startDate} min={today}
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+              02 · Start date
+            </p>
+            <input
+              type="date"
+              value={startDate}
+              min={today}
               onChange={e => setStartDate(e.target.value)}
-              className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-400 font-medium" />
+              className="w-full serif-text text-[14px] rounded-sm px-3.5 py-2.5 focus:outline-none transition-colors"
+              style={{ background: PAL.paper2, border: `1px solid ${PAL.border}`, color: PAL.ink }}
+            />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">3. End Date</p>
-            <input type="date" value={endDate} min={startDate}
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+              03 · End date
+            </p>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate}
               onChange={e => setEndDate(e.target.value)}
-              className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-400 font-medium" />
+              className="w-full serif-text text-[14px] rounded-sm px-3.5 py-2.5 focus:outline-none transition-colors"
+              style={{ background: PAL.paper2, border: `1px solid ${PAL.border}`, color: PAL.ink }}
+            />
           </div>
         </div>
 
-        <button onClick={find} disabled={loading}
-          className="w-full py-3.5 rounded-xl font-black text-white text-sm disabled:opacity-60 transition-all hover:-translate-y-0.5 hover:shadow-lg"
-          style={{ background: "linear-gradient(135deg, #4F46E5, #7C3AED)" }}>
-          {loading ? "⏳ Scanning windows..." : "✦ Find Auspicious Windows"}
+        <button
+          onClick={find}
+          disabled={loading}
+          className="w-full py-3.5 rounded-sm serif-text text-[13.5px] font-semibold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
+          style={{ background: PAL.accent }}
+        >
+          {loading ? "Scanning windows…" : "✦ Find auspicious windows"}
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-600 px-4">{error}</p>}
+      {error && (
+        <p className="serif-text text-[13px] rounded-sm px-4 py-2.5"
+          style={{ background: PAL.roseBg, color: PAL.rose, border: `1px solid #E5BFC1` }}
+        >
+          {error}
+        </p>
+      )}
 
       {/* Results */}
       {searched && (
         <div className="space-y-3">
-          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-            {results.length} windows found for {eventType}
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.accent }}>
+            {results.length} {results.length === 1 ? "window" : "windows"} found · {eventType}
           </p>
           {results.length === 0 && (
-            <div className="text-center py-8 text-slate-400 text-sm">No optimal windows in this range. Try extending the date range.</div>
+            <div
+              className="rounded-sm py-8 text-center"
+              style={{ background: PAL.paper2, border: `1px solid ${PAL.border2}` }}
+            >
+              <p className="serif-display italic text-[16px]" style={{ color: PAL.ink2 }}>
+                No optimal windows in this range.
+              </p>
+              <p className="serif-text text-[13px] mt-1" style={{ color: PAL.ink3 }}>
+                Try extending the date range.
+              </p>
+            </div>
           )}
+
           {results.map((w, i) => {
             const g = GRADE_CONFIG[w.grade as keyof typeof GRADE_CONFIG] || GRADE_CONFIG.gold;
-            const chogColor = CHOG_COLORS[w.choghadiya] || "#6B7280";
-            // Build date string from ISO
+            const chog = CHOG_TONE[w.choghadiya] || CHOG_TONE.Chal;
             const startDt = new Date(w.start);
-            const dateStr = `${startDt.getFullYear()}-${String(startDt.getMonth()+1).padStart(2,'0')}-${String(startDt.getDate()).padStart(2,'0')}`;
-            const startHM = `${String(startDt.getHours()).padStart(2,'0')}:${String(startDt.getMinutes()).padStart(2,'0')}`;
             const endDt   = new Date(w.end);
-            const endHM   = `${String(endDt.getHours()).padStart(2,'0')}:${String(endDt.getMinutes()).padStart(2,'0')}`;
-            const gcUrl   = buildGoogleCalendarUrl({ title: `${eventType} — ${w.choghadiya} Choghadiya`, date: dateStr, startTime: startHM, endTime: endHM, description: w.reasons.join('. ') });
+            const dateStr = `${startDt.getFullYear()}-${String(startDt.getMonth() + 1).padStart(2, '0')}-${String(startDt.getDate()).padStart(2, '0')}`;
+            const startHM = `${String(startDt.getHours()).padStart(2, '0')}:${String(startDt.getMinutes()).padStart(2, '0')}`;
+            const endHM   = `${String(endDt.getHours()).padStart(2, '0')}:${String(endDt.getMinutes()).padStart(2, '0')}`;
+            const gcUrl   = buildGoogleCalendarUrl({
+              title: `${eventType} — ${w.choghadiya} Choghadiya`,
+              date: dateStr, startTime: startHM, endTime: endHM,
+              description: w.reasons.join('. '),
+            });
 
             async function saveToCalendar() {
               await fetch("/api/calendar", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title: `${eventType} — ${w.choghadiya}`, event_type: eventType.toLowerCase().replace(/\s+/g,"_"), event_date: dateStr, start_time: startHM, end_time: endHM, choghadiya: w.choghadiya, muhurat_grade: w.grade, notes: w.reasons.join('. '), color: w.grade==="god"?"#F59E0B":w.grade==="diamond"?"#3B82F6":"#10B981" }),
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: `${eventType} — ${w.choghadiya}`,
+                  event_type: eventType.toLowerCase().replace(/\s+/g, "_"),
+                  event_date: dateStr,
+                  start_time: startHM, end_time: endHM,
+                  choghadiya: w.choghadiya,
+                  muhurat_grade: w.grade,
+                  notes: w.reasons.join('. '),
+                  color: w.grade === "god" ? PAL.gold : w.grade === "diamond" ? "#1F4F7A" : "#5A8856",
+                }),
               });
             }
 
             return (
-              <div key={i} className="rounded-2xl border p-4" style={{ background: g.bg, borderColor: g.border }}>
-                <div className="flex items-start justify-between gap-3">
+              <div
+                key={i}
+                className="rounded-sm p-5 md:p-6"
+                style={{ background: g.bg, border: `1px solid ${g.border}` }}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-base">{g.emoji}</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: g.text }}>{g.label}</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">#{i + 1}</span>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span style={{ color: g.ink, fontSize: 16 }}>{g.symbol}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: g.ink }}>
+                        {g.label}
+                      </span>
+                      <span className="serif-display italic text-[12px] tabular-nums" style={{ color: PAL.ink3 }}>
+                        № {String(i + 1).padStart(2, "0")}
+                      </span>
                     </div>
-                    <p className="font-black text-slate-900 text-sm">{w.date}</p>
-                    <p className="font-semibold text-slate-600 text-sm tabular-nums">
+                    <p className="serif-display text-[18px] md:text-[20px] font-semibold leading-tight" style={{ color: PAL.ink }}>
+                      {w.date}
+                    </p>
+                    <p className="serif-text text-[14px] tabular-nums mt-0.5" style={{ color: PAL.ink2 }}>
                       {fmtISO(w.start)} – {fmtISO(w.end)}
                     </p>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <span className="text-[11px] font-black px-2.5 py-1 rounded-full border"
-                      style={{ color: chogColor, borderColor: chogColor + "40", background: chogColor + "12" }}>
+                  <div className="text-left sm:text-right flex-shrink-0">
+                    <span
+                      className="inline-block text-[11px] font-semibold tracking-tight px-2.5 py-1 rounded-sm"
+                      style={{ color: chog.ink, background: chog.bg, border: `1px solid ${chog.border}` }}
+                    >
                       {w.choghadiya}
                     </span>
-                    <p className="text-[10px] text-slate-400 mt-1">Score: {w.score}</p>
+                    <p className="serif-text text-[11px] italic mt-1" style={{ color: PAL.ink3 }}>
+                      Score · {w.score}
+                    </p>
                   </div>
                 </div>
+
                 {w.reasons?.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-black/5 space-y-0.5">
+                  <ul className="mt-3 pt-3 space-y-1" style={{ borderTop: `1px solid rgba(14,26,51,0.08)` }}>
                     {w.reasons.map((r, ri) => (
-                      <p key={ri} className="text-[11px] text-slate-600 flex items-start gap-1.5">
-                        <span className="text-indigo-400 flex-shrink-0 mt-0.5">◆</span>{r}
-                      </p>
+                      <li key={ri} className="serif-text text-[12.5px] flex items-start gap-2" style={{ color: PAL.ink2 }}>
+                        <span className="flex-shrink-0 mt-0.5" style={{ color: PAL.accent }}>◆</span>
+                        <span>{r}</span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
-                {/* Calendar Actions */}
-                <div className="mt-3 pt-2 border-t border-black/5 flex gap-2 flex-wrap">
-                  <a href={gcUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-3 py-1.5 bg-white/80 border border-blue-200 text-blue-700 rounded-lg text-[11px] font-bold hover:bg-blue-50 transition-colors">
-                    📅 Google Calendar
+
+                {/* Actions */}
+                <div className="mt-4 pt-3 flex flex-wrap gap-2" style={{ borderTop: `1px solid rgba(14,26,51,0.08)` }}>
+                  <a
+                    href={gcUrl} target="_blank" rel="noopener noreferrer"
+                    className="serif-text text-[12px] font-semibold px-3 py-1.5 rounded-sm inline-flex items-center gap-1.5 transition-colors"
+                    style={{ background: PAL.paper, color: "#1F4F7A", border: `1px solid #BCD0E1` }}
+                  >
+                    Google Calendar
                   </a>
-                  <button onClick={() => downloadICS([{ title:`${eventType}`, date:dateStr, startTime:startHM, endTime:endHM, description:w.reasons.join('. ') }])}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-white/80 border border-slate-200 text-slate-600 rounded-lg text-[11px] font-bold hover:bg-slate-50 transition-colors">
-                    ⬇ ICS
+                  <button
+                    onClick={() => downloadICS([{ title: eventType, date: dateStr, startTime: startHM, endTime: endHM, description: w.reasons.join('. ') }])}
+                    className="serif-text text-[12px] font-semibold px-3 py-1.5 rounded-sm inline-flex items-center gap-1.5 transition-colors"
+                    style={{ background: PAL.paper, color: PAL.ink2, border: `1px solid ${PAL.border}` }}
+                  >
+                    Download ICS
                   </button>
-                  <button onClick={saveToCalendar}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[11px] font-bold hover:bg-indigo-700 transition-colors">
-                    + Save to My Calendar
+                  <button
+                    onClick={saveToCalendar}
+                    className="serif-text text-[12px] font-semibold px-3 py-1.5 rounded-sm text-white inline-flex items-center gap-1.5 transition-opacity hover:opacity-90"
+                    style={{ background: PAL.accent }}
+                  >
+                    + Save to my calendar
                   </button>
                 </div>
               </div>

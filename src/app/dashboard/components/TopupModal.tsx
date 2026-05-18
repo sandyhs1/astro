@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Zap, Star, CheckCircle2 } from "lucide-react";
+import { PAL } from "./destiny-theme";
 
-// ── Razorpay SDK loader (mirrors PaymentGate pattern) ─────────────────────────
+/* ── Razorpay SDK loader (mirrors PaymentGate pattern) ───────────────────── */
 function loadRazorpay(): Promise<boolean> {
   return new Promise((resolve) => {
     if ((window as any).Razorpay) { resolve(true); return; }
@@ -24,43 +24,43 @@ interface TopupModalProps {
   onSuccess: (newTotal: number) => void;
 }
 
-const PACKS = [
+type PackId = "boost" | "power";
+
+interface PackDef {
+  id: PackId;
+  name: string;
+  credits: number;
+  price: string;
+  symbol: string;
+  tone: { ink: string; bg: string; border: string };
+  tag?: string;
+  perCredit: string;
+}
+
+const PACKS: PackDef[] = [
   {
-    id:        "boost" as const,
+    id:        "boost",
     name:      "Quick Boost",
     credits:   20,
     price:     "₹795",
-    priceNote: "one-time",
-    icon:      <Zap size={20} />,
-    color:     "#6366F1",          // indigo
-    bg:        "rgba(99,102,241,0.08)",
-    border:    "rgba(99,102,241,0.3)",
-    tag:       null,
-    perCredit: "₹39.75/credit",
+    symbol:    "✦",
+    tone:      { ink: "#1F4F7A", bg: "#E5EEF6", border: "#BCD0E1" },
+    perCredit: "₹39.75 / credit",
   },
   {
-    id:        "power" as const,
+    id:        "power",
     name:      "Power Pack",
     credits:   35,
     price:     "₹1,499",
-    priceNote: "one-time",
-    icon:      <Star size={20} />,
-    color:     "#F59E0B",          // amber
-    bg:        "rgba(245,158,11,0.08)",
-    border:    "rgba(245,158,11,0.3)",
-    tag:       "Best Value",
-    perCredit: "₹42.83/credit",
+    symbol:    "◆",
+    tone:      { ink: PAL.gold, bg: PAL.amberBg, border: "#E1CE9B" },
+    tag:       "Best value",
+    perCredit: "₹42.83 / credit",
   },
-] as const;
-
-type PackId = typeof PACKS[number]["id"];
+];
 
 export default function TopupModal({
-  isOpen,
-  onClose,
-  currentCredits,
-  userEmail,
-  onSuccess,
+  isOpen, onClose, currentCredits, userEmail, onSuccess,
 }: TopupModalProps) {
   const [selected, setSelected]   = useState<PackId>("boost");
   const [loading, setLoading]     = useState(false);
@@ -74,13 +74,11 @@ export default function TopupModal({
     setError(null);
     setLoading(true);
     try {
-      // 0. Ensure Razorpay SDK is loaded
       const sdkLoaded = await loadRazorpay();
       if (!sdkLoaded) {
         throw new Error("Could not load payment SDK. Please check your internet connection and try again.");
       }
 
-      // 1. Create order
       const orderRes = await fetch("/api/payments/topup-order", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
@@ -89,7 +87,6 @@ export default function TopupModal({
       const orderData = await orderRes.json();
       if (!orderRes.ok) throw new Error(orderData.error || "Failed to create order.");
 
-      // 2. Open Razorpay checkout
       await new Promise<void>((resolve, reject) => {
         const options = {
           key:         orderData.keyId,
@@ -99,12 +96,10 @@ export default function TopupModal({
           name:        "Quantum Karma",
           description: `${orderData.label} — ${orderData.credits} Credits`,
           prefill:     { email: userEmail },
-          theme:       { color: "#6366F1" },
+          theme:       { color: PAL.accent },
           modal:       { ondismiss: () => reject(new Error("Payment cancelled.")) },
-
           handler: async (response: any) => {
             try {
-              // 3. Verify & credit
               const verifyRes = await fetch("/api/payments/topup-verify", {
                 method:  "POST",
                 headers: { "Content-Type": "application/json" },
@@ -162,164 +157,195 @@ export default function TopupModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleClose}
+          className="fixed inset-0 z-[1200] flex items-end sm:items-center justify-center p-0 sm:p-4"
           style={{
-            position: "fixed", inset: 0, zIndex: 1200,
-            background: "rgba(0,0,0,0.55)",
+            background: "rgba(14,26,51,0.55)",
             backdropFilter: "blur(6px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            padding: "1rem",
+            WebkitBackdropFilter: "blur(6px)",
           }}
         >
+          {/* Inline serif fallback in case the modal renders outside the dashboard shell */}
+          <style dangerouslySetInnerHTML={{ __html: `
+            @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
+            .serif-display { font-family: 'Fraunces', Georgia, 'Times New Roman', serif; font-feature-settings: 'ss01','liga'; letter-spacing: -0.02em; }
+            .serif-text    { font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif; }
+          `}} />
+
           <motion.div
             key="topup-card"
             initial={{ y: 24, scale: 0.96, opacity: 0 }}
             animate={{ y: 0,  scale: 1,    opacity: 1 }}
             exit={{   y: 24, scale: 0.96, opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-md rounded-t-3xl sm:rounded-sm overflow-hidden shadow-2xl"
             style={{
-              width: "100%", maxWidth: 480,
-              background: "#fff",
-              borderRadius: 20,
-              overflow: "hidden",
-              boxShadow: "0 32px 80px -12px rgba(0,0,0,0.25)",
+              background: PAL.paper,
+              border: `1px solid ${PAL.border}`,
             }}
           >
-            {/* Top accent */}
-            <div style={{ height: 4, background: "linear-gradient(90deg, #6366F1, #8B5CF6, #F59E0B)" }} />
-
-            <div style={{ padding: "28px 28px 32px" }}>
-              {/* Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-                <div>
-                  <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.35rem", fontWeight: 700, color: "#111", margin: 0, lineHeight: 1.2 }}>
-                    ⚡ Top Up Credits
-                  </h2>
-                  <p style={{ fontSize: "0.8rem", color: "#666", marginTop: 4 }}>
-                    Current balance: <strong style={{ color: "#6366F1" }}>{currentCredits} credits</strong>
-                  </p>
-                </div>
-                <button
-                  onClick={handleClose}
-                  style={{ width: 32, height: 32, borderRadius: "50%", background: "#F3F3F3", border: "1px solid #E0E0E0", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#666", flexShrink: 0 }}
-                >
-                  <X size={14} />
-                </button>
+            {/* ── Header ─────────────────────────────────────────────── */}
+            <div
+              className="px-5 sm:px-7 pt-6 pb-4 flex items-start justify-between gap-3"
+              style={{ background: PAL.paper2, borderBottom: `1px solid ${PAL.border2}` }}
+            >
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.accent }}>
+                  ⚡ Top up · credits
+                </p>
+                <h2 className="serif-display text-[20px] md:text-[24px] font-semibold tracking-tight leading-none mt-1.5" style={{ color: PAL.ink }}>
+                  Refill your karma engine.
+                </h2>
+                <p className="serif-text italic text-[13px] mt-2" style={{ color: PAL.ink2 }}>
+                  Current balance ·{' '}
+                  <span className="font-semibold tabular-nums not-italic" style={{ color: PAL.ink }}>
+                    {currentCredits} credits
+                  </span>
+                </p>
               </div>
+              <button
+                onClick={handleClose}
+                disabled={loading}
+                className="h-8 w-8 grid place-items-center rounded-sm transition-colors flex-shrink-0 disabled:opacity-40"
+                style={{ background: PAL.paper, color: PAL.ink2, border: `1px solid ${PAL.border}` }}
+                onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "rgba(0,0,0,0.04)"; }}
+                onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = PAL.paper; }}
+                aria-label="Close"
+              >
+                <span className="text-[16px] leading-none">×</span>
+              </button>
+            </div>
 
-              {/* Success state */}
+            <div className="px-5 sm:px-7 py-6">
+              {/* ── Success state ─────────────────────────────────── */}
               {succeeded ? (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  style={{ textAlign: "center", padding: "24px 0" }}
+                  className="text-center py-2"
                 >
-                  <CheckCircle2 size={52} style={{ color: "#10B981", margin: "0 auto 16px" }} />
-                  <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#111", marginBottom: 8 }}>
-                    Credits Added!
+                  <div
+                    className="w-16 h-16 rounded-sm grid place-items-center mx-auto mb-5 serif-display text-[28px]"
+                    style={{ background: PAL.sageBg, color: PAL.sage, border: `1px solid #C7D6BB` }}
+                  >
+                    ✓
                   </div>
-                  <div style={{ fontSize: "0.9rem", color: "#555", marginBottom: 20, lineHeight: 1.6 }}>
-                    <strong style={{ color: "#6366F1", fontSize: "1.1rem" }}>+{addedCredits} credits</strong> have been added to your account.<br />
-                    New balance: <strong>{currentCredits + addedCredits} credits</strong>
-                  </div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1.5" style={{ color: PAL.sage }}>
+                    Credits added
+                  </p>
+                  <h3 className="serif-display text-[24px] md:text-[28px] font-semibold tracking-tight" style={{ color: PAL.ink }}>
+                    +{addedCredits} credits
+                  </h3>
+                  <p className="serif-text text-[14px] mt-3 leading-relaxed" style={{ color: PAL.ink2 }}>
+                    They&apos;ve been added to your account. New balance ·{' '}
+                    <strong style={{ color: PAL.ink }}>{currentCredits + addedCredits} credits</strong>
+                  </p>
                   <button
                     onClick={handleClose}
-                    style={{
-                      padding: "12px 32px", borderRadius: 12,
-                      background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
-                      color: "#fff", fontWeight: 700, border: "none", cursor: "pointer", fontSize: "0.9rem",
-                    }}
+                    className="mt-6 serif-text text-[13px] font-semibold px-6 py-3 rounded-sm text-white transition-opacity hover:opacity-90"
+                    style={{ background: PAL.accent }}
                   >
                     Continue →
                   </button>
                 </motion.div>
               ) : (
                 <>
-                  {/* Pack selector */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-                    {PACKS.map(pack => (
-                      <button
-                        key={pack.id}
-                        onClick={() => setSelected(pack.id)}
-                        style={{
-                          padding: "16px 14px",
-                          borderRadius: 14,
-                          border: `2px solid ${selected === pack.id ? pack.color : "#E5E7EB"}`,
-                          background: selected === pack.id ? pack.bg : "#FAFAFA",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          transition: "all 0.18s",
-                          position: "relative",
-                        }}
-                      >
-                        {pack.tag && (
-                          <span style={{
-                            position: "absolute", top: -10, right: 10,
-                            background: pack.color, color: "#fff",
-                            fontSize: "9px", fontWeight: 800, padding: "2px 8px",
-                            borderRadius: 99, letterSpacing: "0.06em", textTransform: "uppercase",
-                          }}>
-                            {pack.tag}
+                  {/* ── Pack selector ─────────────────────────────── */}
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3" style={{ color: PAL.accent }}>
+                    Pick a pack
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    {PACKS.map(pack => {
+                      const isActive = selected === pack.id;
+                      return (
+                        <button
+                          key={pack.id}
+                          onClick={() => setSelected(pack.id)}
+                          className="relative text-left p-4 rounded-sm transition-all"
+                          style={
+                            isActive
+                              ? { background: pack.tone.bg, border: `1px solid ${pack.tone.ink}`, boxShadow: `0 4px 14px -4px rgba(14,26,51,0.10)` }
+                              : { background: PAL.paper, border: `1px solid ${PAL.border}` }
+                          }
+                          onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.borderColor = PAL.ink3; }}
+                          onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.borderColor = PAL.border; }}
+                        >
+                          {pack.tag && (
+                            <span
+                              className="absolute -top-2 right-3 text-[9px] font-semibold uppercase tracking-[0.22em] px-1.5 py-0.5 rounded-sm"
+                              style={{ background: pack.tone.ink, color: PAL.paper, border: `1px solid ${pack.tone.ink}` }}
+                            >
+                              {pack.tag}
+                            </span>
+                          )}
+
+                          <span className="serif-display text-[18px] block leading-none" style={{ color: pack.tone.ink }}>
+                            {pack.symbol}
                           </span>
-                        )}
-                        <div style={{ color: pack.color, marginBottom: 8 }}>{pack.icon}</div>
-                        <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "#111", marginBottom: 2 }}>{pack.name}</div>
-                        <div style={{ fontSize: "1.3rem", fontWeight: 800, color: pack.color, lineHeight: 1, marginBottom: 4 }}>{pack.credits}</div>
-                        <div style={{ fontSize: "10px", color: "#888", marginBottom: 8 }}>credits</div>
-                        <div style={{ fontWeight: 800, fontSize: "1rem", color: "#111" }}>{pack.price}</div>
-                        <div style={{ fontSize: "9px", color: "#999", marginTop: 2 }}>{pack.perCredit}</div>
-                      </button>
-                    ))}
+
+                          <p className="serif-display text-[14px] font-semibold tracking-tight mt-2.5" style={{ color: PAL.ink }}>
+                            {pack.name}
+                          </p>
+
+                          <div className="mt-2 flex items-baseline gap-1">
+                            <span className="serif-display text-[26px] font-semibold tabular-nums leading-none tracking-tight" style={{ color: pack.tone.ink }}>
+                              {pack.credits}
+                            </span>
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: PAL.ink3 }}>
+                              credits
+                            </span>
+                          </div>
+
+                          <p className="serif-display text-[15px] font-semibold mt-2 tabular-nums" style={{ color: PAL.ink }}>
+                            {pack.price}
+                          </p>
+                          <p className="serif-text italic text-[11px] mt-0.5" style={{ color: PAL.ink3 }}>
+                            {pack.perCredit}
+                          </p>
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  {/* Subscription nudge */}
-                  <div style={{
-                    background: "#F0F9FF", border: "1px solid #BAE6FD",
-                    borderRadius: 10, padding: "10px 14px", marginBottom: 16,
-                    fontSize: "11px", color: "#0369A1", lineHeight: 1.6,
-                  }}>
-                    💡 <strong>Reminder:</strong> Your ₹1,799/month Plan 2 gives 50 credits at ₹36/credit — the best rate. Top-ups are for when you need a little extra this month.
+                  {/* ── Subscription nudge ────────────────────────── */}
+                  <div
+                    className="rounded-sm px-4 py-3 mb-4"
+                    style={{ background: "#E5EEF6", border: `1px solid #BCD0E1` }}
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1" style={{ color: "#1F4F7A" }}>
+                      ◆ Reminder
+                    </p>
+                    <p className="serif-text text-[12.5px] leading-relaxed" style={{ color: "#1F4F7A" }}>
+                      Your <strong>₹1,799/month plan</strong> gives 50 credits at ₹36 / credit — the best rate. Top-ups are for when you need a little extra this cycle.
+                    </p>
                   </div>
 
-                  {/* Error */}
+                  {/* ── Error ─────────────────────────────────────── */}
                   {error && (
-                    <div style={{
-                      background: "#FEF2F2", border: "1px solid #FECACA",
-                      borderRadius: 10, padding: "10px 14px", marginBottom: 12,
-                      fontSize: "12px", color: "#991B1B",
-                    }}>
+                    <div
+                      className="rounded-sm px-4 py-3 mb-4 serif-text text-[12.5px] leading-relaxed"
+                      style={{ background: PAL.roseBg, color: PAL.rose, border: `1px solid #E5BFC1` }}
+                    >
                       {error}
                     </div>
                   )}
 
-                  {/* CTA */}
+                  {/* ── CTA ───────────────────────────────────────── */}
                   <motion.button
                     onClick={handleCheckout}
                     disabled={loading}
-                    whileHover={{ scale: loading ? 1 : 1.01 }}
+                    whileHover={{ scale: loading ? 1 : 1.005 }}
                     whileTap={{ scale: 0.98 }}
-                    style={{
-                      width: "100%",
-                      padding: "15px",
-                      borderRadius: 12,
-                      background: loading
-                        ? "#D1D5DB"
-                        : `linear-gradient(135deg, ${selectedPack.color}, ${selectedPack.color}cc)`,
-                      color: "#fff",
-                      fontWeight: 700,
-                      fontSize: "0.95rem",
-                      border: "none",
-                      cursor: loading ? "not-allowed" : "pointer",
-                      transition: "background 0.2s",
-                    }}
+                    className="w-full serif-text text-[14px] font-semibold py-3.5 rounded-sm text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{ background: PAL.accent }}
                   >
                     {loading
-                      ? "Processing..."
-                      : `Pay ${selectedPack.price} · Get ${selectedPack.credits} Credits`}
+                      ? "Processing…"
+                      : `Pay ${selectedPack.price} · get ${selectedPack.credits} credits`}
                   </motion.button>
 
-                  <p style={{ textAlign: "center", fontSize: "10px", color: "#9CA3AF", marginTop: 10 }}>
-                    Secured by Razorpay · One-time charge · No subscription created
+                  <p className="serif-text italic text-[11px] mt-3 text-center" style={{ color: PAL.ink3 }}>
+                    🔒 Secured by Razorpay · one-time charge · no subscription created
                   </p>
                 </>
               )}

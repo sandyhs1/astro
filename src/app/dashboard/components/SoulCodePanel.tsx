@@ -1,54 +1,41 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PAL, PLANET_TONE } from "./destiny-theme";
 
 const LOADING_LINES = [
-  "Aligning Jaimini astrological algorithms...",
-  "Calculating Atmakaraka and Amatyakaraka coordinates...",
-  "Decoding physical and emotional biorhythms...",
-  "Syncing lunar frequency matrices...",
-  "Formulating your exact Soul Blueprint...",
-  "Writing your brutal, legit Quantum Karma analysis...",
+  "Aligning Jaimini astrological algorithms…",
+  "Calculating Atmakaraka and Amatyakaraka coordinates…",
+  "Decoding physical and emotional biorhythms…",
+  "Syncing lunar frequency matrices…",
+  "Formulating your exact Soul blueprint…",
+  "Writing your Quantum Karma analysis…",
 ];
 
-const KARAKA_LABEL: Record<string, { short: string; emoji: string; desc: string; color: string; text: string; border: string; bg: string }> = {
-  Atmakaraka:    { short: "Soul Planet",       emoji: "✨", desc: "Your soul's mission. The single most powerful planet in your chart.", color: "text-violet-700", text: "text-violet-900", border: "border-violet-200", bg: "bg-violet-50" },
-  Amatyakaraka:  { short: "Career Planet",     emoji: "💼", desc: "Defines your career path, authority, and the mentor who shapes you.", color: "text-blue-700",   text: "text-blue-900",   border: "border-blue-200",   bg: "bg-blue-50" },
-  Bhratrikaraka: { short: "Sibling Planet",    emoji: "🤝", desc: "Your sibling energy, courage, short journeys, and co-workers.", color: "text-rose-700",    text: "text-rose-900",    border: "border-rose-200",    bg: "bg-rose-50" },
-  Matrikaraka:   { short: "Mother Planet",     emoji: "🌙", desc: "Home, emotions, mother figure, and your inner security.", color: "text-indigo-700", text: "text-indigo-900", border: "border-indigo-200", bg: "bg-indigo-50" },
-  Pitrikaraka:   { short: "Father Planet",     emoji: "☀️", desc: "Father figure, dharma, higher learning, and long journeys.", color: "text-amber-700",  text: "text-amber-900",  border: "border-amber-200",  bg: "bg-amber-50" },
-  Putrakaraka:   { short: "Children Planet",   emoji: "🌱", desc: "Children, intelligence, past-life blessings, creative expression.", color: "text-emerald-700", text: "text-emerald-900",  border: "border-emerald-200",  bg: "bg-emerald-50" },
-  Gnatikaraka:   { short: "Obstacle Planet",   emoji: "⚔️", desc: "Competitors, disease, enemies, and karmic blocks to overcome.", color: "text-red-700",   text: "text-red-900",   border: "border-red-200",   bg: "bg-red-50" },
-  Darakaraka:    { short: "Partner Planet",    emoji: "💞", desc: "Spouse, business partner, and the energy of key relationships.", color: "text-pink-700",   text: "text-pink-900",   border: "border-pink-200",   bg: "bg-pink-50" },
+const KARAKA_LABEL: Record<string, { short: string; symbol: string; desc: string; tone: keyof typeof PLANET_TONE }> = {
+  Atmakaraka:    { short: "Soul Planet",     symbol: "✦", desc: "Your soul's mission. The single most powerful planet in your chart.",            tone: "Saturn"  },
+  Amatyakaraka:  { short: "Career Planet",   symbol: "◆", desc: "Defines your career path, authority, and the mentor who shapes you.",            tone: "Jupiter" },
+  Bhratrikaraka: { short: "Sibling Planet",  symbol: "◇", desc: "Your sibling energy, courage, short journeys, and co-workers.",                  tone: "Mars"    },
+  Matrikaraka:   { short: "Mother Planet",   symbol: "☾", desc: "Home, emotions, mother figure, and your inner security.",                       tone: "Moon"    },
+  Pitrikaraka:   { short: "Father Planet",   symbol: "☉", desc: "Father figure, dharma, higher learning, and long journeys.",                    tone: "Sun"     },
+  Putrakaraka:   { short: "Children Planet", symbol: "✧", desc: "Children, intelligence, past-life blessings, creative expression.",              tone: "Mercury" },
+  Gnatikaraka:   { short: "Obstacle Planet", symbol: "⚔", desc: "Competitors, disease, enemies, and karmic blocks to overcome.",                  tone: "Mars"    },
+  Darakaraka:    { short: "Partner Planet",  symbol: "♡", desc: "Spouse, business partner, and the energy of key relationships.",                tone: "Venus"   },
 };
 
-const BIO_COLOR: Record<string, { bar: string; label: string }> = {
-  physical:     { bar: "bg-red-500",    label: "Physical" },
-  emotional:    { bar: "bg-violet-500", label: "Emotional" },
-  intellectual: { bar: "bg-blue-500",   label: "Intellectual" },
-  average:      { bar: "bg-emerald-500",label: "Overall" },
+const BIO_LABEL: Record<string, { label: string; tone: "rose" | "purple" | "blue" | "sage" }> = {
+  physical:     { label: "Physical",     tone: "rose"   },
+  emotional:    { label: "Emotional",    tone: "purple" },
+  intellectual: { label: "Intellectual", tone: "blue"   },
+  average:      { label: "Overall",      tone: "sage"   },
 };
 
-function PercentBar({ pct, colorClass }: { pct: number; colorClass: string }) {
-  const abs = Math.abs(pct);
-  const positive = pct >= 0;
-  return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[13px] font-bold text-slate-700">{pct > 0 ? "+" : ""}{pct}%</span>
-        <span className={`text-[10px] font-black uppercase tracking-widest ${positive ? "text-emerald-600" : "text-rose-600"}`}>
-          {positive ? "Rising ▲" : "Low ▼"}
-        </span>
-      </div>
-      <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200">
-        <div
-          className={`h-full rounded-full transition-all duration-700 ${colorClass} ${!positive ? "opacity-60" : ""}`}
-          style={{ width: `${abs}%` }}
-        />
-      </div>
-    </div>
-  );
-}
+const BIO_BAR: Record<string, string> = {
+  rose:   "#9C2A3F",
+  purple: "#5A3A8F",
+  blue:   "#1F4F7A",
+  sage:   "#4F7A4D",
+};
 
 interface SoulCodeReport {
   parsed: {
@@ -113,159 +100,225 @@ export default function SoulCodePanel({ profileId }: { profileId: string }) {
   const bio = reportData?.rawBiorhythm;
 
   return (
-    <div data-lenis-prevent className="flex flex-col h-full bg-white overflow-y-auto w-full text-slate-800">
-      {/* Header */}
-      <div className="px-5 md:px-10 py-5 md:py-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-10 bg-white/95 backdrop-blur-md shadow-sm">
-        <div className="flex items-center gap-3 md:gap-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-xl shadow-lg shadow-indigo-500/20 text-white">🧬</div>
+    <div data-lenis-prevent className="flex flex-col w-full" style={{ background: PAL.paper, color: PAL.ink }}>
+      {/* ── Header ── */}
+      <div
+        className="px-5 md:px-7 lg:px-9 py-4 md:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-0 z-10 backdrop-blur-md"
+        style={{ background: "rgba(250,247,242,0.92)", borderBottom: `1px solid ${PAL.border2}` }}
+      >
+        <div className="flex items-baseline gap-3">
+          <span className="serif-display italic text-[18px] md:text-[22px]" style={{ color: PAL.accent }}>✦</span>
           <div>
-            <h2 className="text-lg md:text-xl font-black tracking-tight text-slate-900">Soul Code</h2>
-            <p className="text-[11px] md:text-xs text-slate-500 font-bold uppercase tracking-wide">Jaimini Blueprint · Personal Frequencies</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.accent }}>
+              Your purpose
+            </p>
+            <h2 className="serif-display text-[18px] md:text-[22px] font-semibold leading-none tracking-tight mt-0.5" style={{ color: PAL.ink }}>
+              Soul code · Jaimini blueprint
+            </h2>
           </div>
         </div>
         {status === "done" && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 self-start sm:self-auto">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-            <span className="text-[11px] font-black text-emerald-700 uppercase tracking-widest">Live</span>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm self-start sm:self-auto"
+            style={{ background: PAL.sageBg, border: `1px solid #C7D6BB` }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: PAL.sage }} />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: PAL.sage }}>Live</span>
           </div>
         )}
       </div>
 
-      {/* IDLE */}
+      {/* ── IDLE ── */}
       {status === "idle" && (
-        <div className="flex flex-col items-center justify-center flex-1 p-6 md:p-8 text-center min-h-[60vh]">
-          <div className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-xl bg-gradient-to-br from-indigo-100 to-purple-100 border border-indigo-200">🧬</div>
-          <h3 className="text-2xl md:text-3xl font-black text-slate-900 mb-3">Decode Your Soul Blueprint</h3>
-          <p className="text-slate-600 text-sm leading-relaxed mb-8 max-w-md font-medium">
-            Your Jaimini Karakas reveal your exact soul contracts — who you're meant to become, what you're here to build, and what karmic patterns are running your life on autopilot.
+        <div className="flex flex-col items-center justify-center flex-1 px-6 py-14 md:py-20 text-center">
+          <div
+            className="w-24 h-24 rounded-sm grid place-items-center serif-display text-[40px] mb-7"
+            style={{ background: PAL.paper2, color: PAL.accent, border: `1px solid ${PAL.border}` }}
+          >
+            ✦
+          </div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+            Begin · soul blueprint
           </p>
-          <button onClick={generateReport}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl font-black shadow-xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 w-full md:w-auto">
-            Generate Soul Blueprint
+          <h3 className="serif-display text-[28px] md:text-[36px] font-semibold tracking-tight leading-tight" style={{ color: PAL.ink }}>
+            Decode your soul blueprint.
+          </h3>
+          <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed mt-3 max-w-md" style={{ color: PAL.ink2 }}>
+            Your Jaimini Karakas reveal your exact soul contracts — who you're meant to become, what you're here to build, and the karmic patterns running your life on autopilot.
+          </p>
+          <button
+            onClick={generateReport}
+            className="mt-7 serif-text text-[13px] font-semibold px-6 py-3 rounded-sm text-white transition-opacity hover:opacity-90"
+            style={{ background: PAL.accent }}
+          >
+            Generate soul blueprint
           </button>
         </div>
       )}
 
-      {/* LOADING */}
+      {/* ── LOADING ── */}
       {status === "loading" && (
-        <div className="flex flex-col items-center justify-center flex-1 p-6 md:p-8 min-h-[60vh]">
-          <div className="relative w-24 h-24 mb-8">
-            <div className="absolute inset-0 border-4 border-slate-100 rounded-full" />
-            <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin" />
-            <div className="absolute inset-0 flex items-center justify-center text-3xl animate-pulse">🧬</div>
+        <div className="flex flex-col items-center justify-center flex-1 px-6 py-14 md:py-20 text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+            Live cosmic computation
+          </p>
+          <h3 className="serif-display text-[24px] md:text-[28px] font-semibold tracking-tight" style={{ color: PAL.ink }}>
+            Consulting the astro-engine…
+          </h3>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={loadingLine}
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+              className="serif-text italic text-[13.5px] mt-3 max-w-sm"
+              style={{ color: PAL.ink2 }}
+            >
+              {LOADING_LINES[loadingLine]}
+            </motion.p>
+          </AnimatePresence>
+          <div className="mt-6 inline-flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.15s" }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.3s" }} />
           </div>
-          <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-2 text-center">Live Computation Running</h3>
-          <p className="text-indigo-600 text-sm font-black text-center max-w-sm h-10">{LOADING_LINES[loadingLine]}</p>
         </div>
       )}
 
-      {/* ERROR */}
+      {/* ── ERROR ── */}
       {status === "error" && (
-        <div className="flex flex-col items-center justify-center flex-1 p-6 md:p-8 text-center min-h-[60vh]">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h3 className="text-xl font-black text-slate-900 mb-2">Generation Failed</h3>
-          <p className="text-slate-600 text-sm mb-6 font-medium">{errorMsg}</p>
-          <button onClick={generateReport} className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-xl font-bold w-full md:w-auto">Try Again</button>
+        <div className="flex flex-col items-center justify-center flex-1 px-6 py-14 text-center">
+          <div className="serif-display text-[42px]" style={{ color: PAL.rose }}>⚠︎</div>
+          <h3 className="serif-display text-[20px] font-semibold mt-3" style={{ color: PAL.ink }}>
+            Generation failed
+          </h3>
+          <p className="serif-text text-[13.5px] italic mt-1" style={{ color: PAL.ink2 }}>{errorMsg}</p>
+          <button
+            onClick={generateReport}
+            className="mt-5 serif-text text-[13px] font-semibold px-5 py-2.5 rounded-sm text-white transition-opacity hover:opacity-90"
+            style={{ background: PAL.ink }}
+          >
+            Try again
+          </button>
         </div>
       )}
 
-      {/* DONE */}
+      {/* ── DONE ── */}
       {status === "done" && parsed && (
         <div className="flex-1 w-full">
-          {/* Tab Switcher */}
-          <div className="px-4 md:px-10 pt-6 md:pt-8 pb-0 flex gap-2 overflow-x-auto custom-scrollbar">
+          {/* Tab switcher */}
+          <div className="px-5 md:px-7 lg:px-9 pt-5 md:pt-7 pb-0 flex gap-2 overflow-x-auto no-scrollbar">
             <button
               onClick={() => setTab("karakas")}
-              className={`px-5 py-3 rounded-xl font-black text-sm transition-all border whitespace-nowrap flex-1 md:flex-none text-center ${
+              className="serif-text text-[13px] font-semibold px-4 py-2.5 rounded-sm transition-colors whitespace-nowrap flex-shrink-0"
+              style={
                 tab === "karakas"
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-600/20"
-                  : "bg-slate-50 text-slate-500 border-slate-200 hover:border-indigo-300"
-              }`}
+                  ? { background: PAL.ink, color: PAL.paper, border: `1px solid ${PAL.ink}` }
+                  : { background: "transparent", color: PAL.ink2, border: `1px solid ${PAL.border}` }
+              }
             >
-              ✨ Your Karakas
+              ✦ Your karakas
             </button>
             <button
               onClick={() => setTab("biorhythm")}
-              className={`px-5 py-3 rounded-xl font-black text-sm transition-all border whitespace-nowrap flex-1 md:flex-none text-center ${
+              className="serif-text text-[13px] font-semibold px-4 py-2.5 rounded-sm transition-colors whitespace-nowrap flex-shrink-0"
+              style={
                 tab === "biorhythm"
-                  ? "bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-600/20"
-                  : "bg-slate-50 text-slate-500 border-slate-200 hover:border-emerald-300"
-              }`}
+                  ? { background: PAL.ink, color: PAL.paper, border: `1px solid ${PAL.ink}` }
+                  : { background: "transparent", color: PAL.ink2, border: `1px solid ${PAL.border}` }
+              }
             >
-              ⚡ Your Frequency
+              ◐ Your frequency
             </button>
           </div>
 
-          {/* KARAKAS TAB (Accordion Style) */}
+          {/* KARAKAS */}
           {tab === "karakas" && (
-            <div className="px-4 md:px-10 py-6 md:py-8 space-y-6">
-              <div className="mb-6">
-                <p className="text-slate-600 text-[15px] md:text-base leading-relaxed font-medium max-w-3xl">{parsed.karakasIntro}</p>
-              </div>
+            <div className="px-4 md:px-7 lg:px-9 py-5 md:py-7 space-y-5">
+              {parsed.karakasIntro && (
+                <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed max-w-3xl" style={{ color: PAL.ink2 }}>
+                  {parsed.karakasIntro}
+                </p>
+              )}
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {parsed.karakas.map((k, i) => {
-                  const meta = KARAKA_LABEL[k.name] ?? { short: "Soul Indicator", emoji: "🪐", desc: k.meaning, color: "text-slate-700", text: "text-slate-900", border: "border-slate-200", bg: "bg-slate-50" };
+                  const meta = KARAKA_LABEL[k.name] ?? { short: "Soul indicator", symbol: "◯", desc: k.meaning, tone: "Saturn" as const };
+                  const tone = PLANET_TONE[meta.tone];
                   const isExpanded = expandedKaraka === i;
-
                   return (
-                    <div key={i} className={`rounded-2xl border transition-all duration-300 overflow-hidden ${isExpanded ? `${meta.border} shadow-md` : "border-slate-200 hover:border-slate-300 bg-white"}`}>
-                      {/* Accordion Header */}
-                      <button 
+                    <div
+                      key={i}
+                      className="rounded-sm overflow-hidden transition-all"
+                      style={{
+                        background: isExpanded ? tone.bg : PAL.paper,
+                        border: `1px solid ${isExpanded ? tone.border : PAL.border2}`,
+                      }}
+                    >
+                      <button
                         onClick={() => setExpandedKaraka(isExpanded ? null : i)}
-                        className={`w-full flex items-center justify-between p-4 md:p-5 text-left transition-colors ${isExpanded ? meta.bg : "bg-white"}`}
+                        className="w-full flex items-center justify-between p-4 md:p-5 text-left transition-colors"
                       >
-                        <div className="flex items-center gap-3 md:gap-4">
-                          <div className="text-2xl md:text-3xl bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-sm border border-slate-100 flex-shrink-0">
-                            {meta.emoji}
-                          </div>
-                          <div>
-                            <div className={`text-[10px] md:text-xs font-black uppercase tracking-widest ${meta.color} mb-0.5`}>{meta.short}</div>
-                            <div className="flex items-center gap-2">
-                              <h3 className={`text-base md:text-xl font-black ${meta.text}`}>{k.name}</h3>
-                              <span className={`px-2 py-0.5 rounded-full border ${meta.border} bg-white text-[10px] md:text-xs font-black ${meta.color} hidden sm:inline-block`}>
+                        <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
+                          <span
+                            className="w-10 h-10 md:w-11 md:h-11 rounded-sm grid place-items-center serif-display text-[18px] flex-shrink-0"
+                            style={{ background: PAL.paper, color: tone.ink, border: `1px solid ${tone.border}` }}
+                          >
+                            {meta.symbol}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: tone.ink, opacity: 0.85 }}>
+                              {meta.short}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <h3 className="serif-display text-[18px] md:text-[20px] font-semibold tracking-tight leading-none" style={{ color: PAL.ink }}>
+                                {k.name}
+                              </h3>
+                              <span
+                                className="text-[10px] font-semibold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm"
+                                style={{ color: tone.ink, background: PAL.paper, border: `1px solid ${tone.border}` }}
+                              >
                                 {k.planet}
                               </span>
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                           <span className={`px-2 py-0.5 rounded-full border ${meta.border} bg-white text-[10px] font-black ${meta.color} sm:hidden`}>
-                              {k.planet}
-                            </span>
-                           <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-300 ${isExpanded ? "bg-white/50 rotate-180" : "bg-slate-100"}`}>
-                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={meta.color}><polyline points="6 9 12 15 18 9"></polyline></svg>
-                           </div>
-                        </div>
+                        <span className="serif-display italic text-[14px] flex-shrink-0 ml-2 transition-transform"
+                          style={{ color: tone.ink, transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}
+                        >
+                          ›
+                        </span>
                       </button>
 
-                      {/* Accordion Content */}
                       <AnimatePresence>
                         {isExpanded && (
                           <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
+                            initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                           >
-                            <div className={`p-4 md:p-6 pt-0 ${meta.bg} border-t border-white/50`}>
-                              <div className="mt-4 space-y-5">
-                                <div>
-                                  <div className={`text-[10px] font-black uppercase tracking-widest ${meta.color} opacity-80 mb-1.5`}>Cosmic Role</div>
-                                  <p className="text-slate-700 text-sm md:text-[15px] font-medium leading-relaxed">{meta.desc}</p>
-                                </div>
-                                
-                                <div className="bg-white/60 p-4 rounded-xl border border-white/50">
-                                  <div className={`text-[10px] font-black uppercase tracking-widest ${meta.color} mb-2`}>Your Impact</div>
-                                  <p className={`text-sm md:text-[15px] leading-relaxed font-bold ${meta.text}`}>{k.impact}</p>
-                                </div>
-
-                                <div>
-                                  <div className={`text-[10px] font-black uppercase tracking-widest ${meta.color} opacity-80 mb-1.5`}>What You Must Do</div>
-                                  <div className="flex gap-3 items-start">
-                                    <div className={`mt-1 w-1.5 h-1.5 rounded-full ${meta.bg} border border-${meta.color.split('-')[1]}-400 flex-shrink-0`} />
-                                    <p className="text-slate-700 text-sm md:text-[15px] font-medium leading-relaxed">{k.significance}</p>
-                                  </div>
+                            <div className="px-4 md:px-5 pb-5 md:pb-6 pt-4 space-y-5" style={{ borderTop: `1px solid ${tone.border}` }}>
+                              <div>
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1.5" style={{ color: tone.ink, opacity: 0.85 }}>
+                                  Cosmic role
+                                </p>
+                                <p className="serif-text text-[14px] md:text-[15px] leading-relaxed" style={{ color: PAL.ink2 }}>
+                                  {meta.desc}
+                                </p>
+                              </div>
+                              <div className="rounded-sm p-4" style={{ background: PAL.paper, border: `1px solid ${tone.border}` }}>
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1.5" style={{ color: tone.ink }}>
+                                  Your impact
+                                </p>
+                                <p className="serif-display text-[15px] md:text-[16px] font-semibold leading-relaxed" style={{ color: PAL.ink }}>
+                                  {k.impact}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1.5" style={{ color: tone.ink, opacity: 0.85 }}>
+                                  What you must do
+                                </p>
+                                <div className="flex gap-3 items-start">
+                                  <span className="flex-shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full" style={{ background: tone.ink }} />
+                                  <p className="serif-text text-[14px] md:text-[15px] leading-relaxed" style={{ color: PAL.ink2 }}>
+                                    {k.significance}
+                                  </p>
                                 </div>
                               </div>
                             </div>
@@ -279,59 +332,98 @@ export default function SoulCodePanel({ profileId }: { profileId: string }) {
             </div>
           )}
 
-          {/* BIORHYTHM TAB */}
+          {/* BIORHYTHM */}
           {tab === "biorhythm" && bio && (
-            <div className="px-4 md:px-10 py-6 md:py-8 space-y-8 md:space-y-10">
-              {/* Intro */}
-              <div>
-                <p className="text-slate-600 text-[15px] md:text-base leading-relaxed font-medium max-w-3xl">{parsed.biorhythmIntro}</p>
-              </div>
+            <div className="px-4 md:px-7 lg:px-9 py-5 md:py-7 space-y-7">
+              {parsed.biorhythmIntro && (
+                <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed max-w-3xl" style={{ color: PAL.ink2 }}>
+                  {parsed.biorhythmIntro}
+                </p>
+              )}
 
-              {/* Energy Meters */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 md:p-8">
-                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-6">Current Energy Levels</h3>
-                <div className="space-y-6">
+              {/* Energy meters */}
+              <section className="rounded-sm p-5 md:p-6"
+                style={{ background: PAL.paper2, border: `1px solid ${PAL.border2}` }}
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-5" style={{ color: PAL.accent }}>
+                  Current energy levels
+                </p>
+                <div className="space-y-5">
                   {(["physical", "emotional", "intellectual", "average"] as const).map((key) => {
                     const val = bio[key];
-                    const meta = BIO_COLOR[key];
+                    const meta = BIO_LABEL[key];
+                    const positive = val.percent >= 0;
                     return (
-                      <div key={key} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-black text-slate-800">{meta.label}</span>
-                          <span className={`text-[11px] font-black px-2.5 py-1 rounded-full ${val.percent >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
+                      <div key={key}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="serif-display text-[15px] font-semibold" style={{ color: PAL.ink }}>
+                            {meta.label}
+                          </span>
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm tabular-nums"
+                            style={
+                              positive
+                                ? { color: PAL.sage, background: PAL.sageBg, border: `1px solid #C7D6BB` }
+                                : { color: PAL.rose, background: PAL.roseBg, border: `1px solid #E5BFC1` }
+                            }
+                          >
                             {val.percent > 0 ? "+" : ""}{val.percent}%
                           </span>
                         </div>
-                        <PercentBar pct={val.percent} colorClass={meta.bar} />
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: PAL.border2 }}>
+                          <div
+                            className="h-full rounded-full transition-all duration-700"
+                            style={{
+                              width: `${Math.abs(val.percent)}%`,
+                              background: BIO_BAR[meta.tone],
+                              opacity: positive ? 1 : 0.6,
+                            }}
+                          />
+                        </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
+              </section>
 
               {/* Moon Bird */}
               {parsed.moonBird && (
-                <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 md:p-8 shadow-sm">
+                <section className="rounded-sm p-5 md:p-7"
+                  style={{ background: PAL.amberBg, border: `1px solid #E1CE9B` }}
+                >
                   <div className="flex items-center gap-4 mb-3">
-                    <div className="text-4xl bg-white w-14 h-14 rounded-full flex items-center justify-center shadow-sm border border-amber-100 flex-shrink-0">🦅</div>
+                    <span className="w-12 h-12 rounded-sm grid place-items-center serif-display text-[22px] flex-shrink-0"
+                      style={{ background: PAL.paper, color: PAL.gold, border: `1px solid #E1CE9B` }}
+                    >
+                      ◈
+                    </span>
                     <div>
-                      <div className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-1">Pancha Pakshi · Lunar Bird</div>
-                      <div className="text-2xl md:text-3xl font-black text-amber-900">{parsed.moonBird}</div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.gold }}>
+                        Pancha Pakshi · lunar bird
+                      </p>
+                      <p className="serif-display text-[24px] md:text-[28px] font-semibold tracking-tight leading-none mt-1" style={{ color: PAL.ink }}>
+                        {parsed.moonBird}
+                      </p>
                     </div>
                   </div>
-                  <p className="text-amber-800/80 text-sm font-medium leading-relaxed mt-4 max-w-2xl">
-                    Your lunar energy cycles are governed by your birth bird. It defines your peak activity windows and optimal rest cycles throughout each day. Aligning with your bird's frequency minimizes friction in daily life.
+                  <p className="serif-text text-[14px] md:text-[15px] leading-relaxed mt-3 max-w-2xl" style={{ color: PAL.ink2 }}>
+                    Your lunar energy cycles are governed by your birth bird. It defines your peak activity windows and optimal rest cycles throughout each day. Aligning with your bird's frequency minimises friction in daily life.
                   </p>
-                </div>
+                </section>
               )}
 
-              {/* Action Plan */}
-              <div>
-                <h3 className="text-[11px] font-black uppercase tracking-widest text-indigo-600 mb-4">Your Frequency Action Plan</h3>
-                <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-6 md:p-8">
-                  <p className="text-slate-700 text-[15px] md:text-base font-medium leading-[1.8] whitespace-pre-line">{parsed.biorhythmActionPlan}</p>
+              {/* Action plan */}
+              <section>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3" style={{ color: PAL.accent }}>
+                  Your frequency action plan
+                </p>
+                <div className="rounded-sm p-5 md:p-7"
+                  style={{ background: PAL.paper, border: `1px solid ${PAL.border}` }}
+                >
+                  <p className="serif-text text-[14.5px] md:text-[15.5px] leading-[1.85] whitespace-pre-line" style={{ color: PAL.ink }}>
+                    {parsed.biorhythmActionPlan}
+                  </p>
                 </div>
-              </div>
+              </section>
             </div>
           )}
         </div>

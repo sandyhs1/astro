@@ -4,7 +4,13 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { LogOut, Sparkles, Send, Users, AlertTriangle, MessageCircle, BookOpen } from "lucide-react";
+import {
+  LogOut, Sparkles, Send, Users, AlertTriangle, MessageCircle, BookOpen,
+  Calendar, Map, Flame, Sun, Heart, Mic, Crown, Gem, FileText, ListChecks,
+  Compass, Search, Bell, Plus, ArrowRight, ArrowUpRight, ArrowLeft, X, Menu,
+  ChevronRight, Trash2, Pencil,
+  type LucideIcon,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -17,6 +23,7 @@ import Roadmap from "./components/Roadmap";
 import TopupModal from "./components/TopupModal";
 import DetailsPanel from "./components/DetailsPanel";
 import RoyalRoast from "./components/RoyalRoast";
+import Compatibility from "./components/Compatibility";
 import DailyBriefingWidget from "./components/DailyBriefingWidget";
 import YourGotra from "./components/YourGotra";
 import IshtaDevata from "./components/IshtaDevata";
@@ -25,6 +32,79 @@ import ReportsPanel from "./components/ReportsPanel";
 import SoulCodePanel from "./components/SoulCodePanel";
 import YearAheadPanel from "./components/YearAheadPanel";
 import ExplainerPanel from "./components/ExplainerPanel";
+
+/* ── Editorial palette (V6 Stripe Press) ─────────────────────────── */
+const PAL = {
+  paper:    "#FAF7F2",  // warm cream canvas
+  paper2:   "#F1ECE0",  // section tint
+  ink:      "#0E1A33",  // deep navy text
+  ink2:     "#3F4F6F",  // muted ink
+  ink3:     "#6F7B92",  // tertiary
+  border:   "#D4C9B7",  // taupe border
+  border2:  "#E8E0CE",  // soft border
+  accent:   "#7B0A1F",  // oxblood
+  accent2:  "#A02236",
+  gold:     "#A57C2A",
+} as const;
+
+/* ── V3-style bento accents (toned down to harmonise with the paper canvas) ── */
+const BENTO_ACCENT: Record<string, { bg: string; ink: string; ring: string }> = {
+  indigo:  { bg: "linear-gradient(135deg,#EEF2FF 0%,#E0E7FF 60%,#C7D2FE 100%)", ink: "#1E1B4B", ring: "rgba(99,102,241,0.18)" },
+  amber:   { bg: "linear-gradient(135deg,#FEF3C7 0%,#FDE68A 60%,#FCD34D 100%)", ink: "#451A03", ring: "rgba(217,119,6,0.18)"  },
+  rose:    { bg: "linear-gradient(135deg,#FFE4E6 0%,#FECDD3 60%,#FDA4AF 100%)", ink: "#4C0519", ring: "rgba(225,29,72,0.18)"  },
+  emerald: { bg: "linear-gradient(135deg,#D1FAE5 0%,#A7F3D0 60%,#6EE7B7 100%)", ink: "#022C22", ring: "rgba(5,150,105,0.18)"  },
+  purple:  { bg: "linear-gradient(135deg,#F5F3FF 0%,#DDD6FE 60%,#C4B5FD 100%)", ink: "#2E1065", ring: "rgba(124,58,237,0.18)" },
+  orange:  { bg: "linear-gradient(135deg,#FFEDD5 0%,#FED7AA 60%,#FDBA74 100%)", ink: "#431407", ring: "rgba(234,88,12,0.18)"  },
+  sky:     { bg: "linear-gradient(135deg,#E0F2FE 0%,#BAE6FD 60%,#7DD3FC 100%)", ink: "#082F49", ring: "rgba(2,132,199,0.18)"  },
+  slate:   { bg: "linear-gradient(135deg,#F1F5F9 0%,#E2E8F0 60%,#CBD5E1 100%)", ink: "#0F172A", ring: "rgba(71,85,105,0.18)"  },
+};
+
+/* ── Feature catalog: same 15 features the dashboard already exposes ── */
+type FeatureKey =
+  | "home"
+  | "chat" | "explainer" | "destiny" | "karma-dna" | "karmic-patterns"
+  | "remedy" | "roadmap" | "details" | "royal-roast" | "gotra"
+  | "ishta-devata" | "journal" | "reports" | "soul-code" | "year-ahead"
+  | "compatibility";
+
+type FeatureMeta = {
+  key: FeatureKey;
+  label: string;
+  hint: string;
+  badge?: "START" | "NEW";
+  accent: keyof typeof BENTO_ACCENT;
+  Icon: LucideIcon;
+  premium?: boolean;
+};
+
+const FEATURE_META: FeatureMeta[] = [
+  { key: "explainer",       label: "Explainer Masterclass", hint: "Start here · 9-min onboarding masterclass",     badge: "START", accent: "indigo",  Icon: BookOpen },
+  { key: "chat",            label: "Oracle Chat",           hint: "Ask anything about your chart",                                accent: "indigo",  Icon: MessageCircle },
+  { key: "destiny",         label: "Destiny Window",        hint: "Best dates this month",                          accent: "sky",     Icon: Calendar, premium: true },
+  { key: "karma-dna",       label: "Karma DNA",             hint: "Your karmic blueprint",                          accent: "purple",  Icon: Sparkles, premium: true },
+  { key: "karmic-patterns", label: "Karmic Patterns",       hint: "Repeating life themes",                          accent: "purple",  Icon: Compass,  premium: true },
+  { key: "royal-roast",     label: "Royal Roast",           hint: "No-filter chart roast",                          accent: "orange",  Icon: Flame,    premium: true },
+  { key: "gotra",           label: "Your Gotra",            hint: "Your spiritual lineage",       badge: "NEW",     accent: "amber",   Icon: Sun },
+  { key: "ishta-devata",    label: "Ishta Devata",          hint: "Your guiding deity",           badge: "NEW",     accent: "rose",    Icon: Heart },
+  { key: "journal",         label: "Life Journal",          hint: "Voice-log your life events",                     accent: "emerald", Icon: Mic },
+  { key: "year-ahead",      label: "Year Ahead",            hint: "12-month transit forecast",                      accent: "amber",   Icon: Calendar },
+  { key: "soul-code",       label: "Your Purpose",          hint: "Atmakaraka & life path",                         accent: "purple",  Icon: Crown },
+  { key: "roadmap",         label: "Roadmap",               hint: "Your custom action plan",      badge: "NEW",     accent: "indigo",  Icon: Map },
+  { key: "remedy",          label: "Remedy",                hint: "Mantras, gems, rituals",                         accent: "emerald", Icon: Gem,      premium: true },
+  { key: "reports",         label: "Reports",               hint: "Saved PDF reports",                              accent: "slate",   Icon: FileText },
+  { key: "details",         label: "My Details",            hint: "Birth chart raw data",                           accent: "slate",   Icon: ListChecks },
+  { key: "compatibility",   label: "Compatibility",         hint: "Soul alignment with another person", badge: "NEW", accent: "rose",    Icon: Heart },
+];
+
+/* ── Editorial sidebar sections ─────────────────────────────────── */
+const NAV_SECTIONS: { num: string; title: string; keys: FeatureKey[] }[] = [
+  { num: "01", title: "Begin here",  keys: ["explainer", "chat", "destiny"] },
+  { num: "02", title: "Blueprint",   keys: ["karma-dna", "karmic-patterns", "soul-code", "details"] },
+  { num: "03", title: "Forecast",    keys: ["year-ahead", "roadmap", "royal-roast"] },
+  { num: "04", title: "Practice",    keys: ["remedy", "gotra", "ishta-devata", "journal"] },
+  { num: "05", title: "Archive",     keys: ["reports"] },
+  { num: "06", title: "Bonds",       keys: ["compatibility"] },
+];
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -57,7 +137,7 @@ export default function DashboardPage() {
   const [geocodingReady, setGeocodingReady] = useState(false);
 
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
-  const [activeFeature, setActiveFeature] = useState<"chat" | "explainer" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast" | "gotra" | "ishta-devata" | "journal" | "reports" | "soul-code" | "year-ahead">("chat");
+  const [activeFeature, setActiveFeature] = useState<"home" | "chat" | "explainer" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast" | "gotra" | "ishta-devata" | "journal" | "reports" | "soul-code" | "year-ahead" | "compatibility">("home");
   
   const [messages, setMessages] = useState<{role: "user" | "assistant" | "system", content: string, marker?: string}[]>([
     { role: "assistant", content: "Hey there, I am your Quantum Karma Astrologer...", marker: "A" }
@@ -65,6 +145,8 @@ export default function DashboardPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  // Editorial dashboard: mobile sidebar drawer
+  const [navDrawerOpen, setNavDrawerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // ── Curated Suggestion Chips ──
@@ -488,10 +570,13 @@ export default function DashboardPage() {
   // PaymentGate does its own independent Supabase check — this guard doesn't block it.
   if (loading || !profile) {
     return (
-      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
-        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: "0.15em" }}>
-          LOADING...
+      <div className="min-h-screen flex items-center justify-center"
+        style={{ background: PAL.paper, color: PAL.ink }}
+      >
+        <div className="serif-display italic" style={{ fontSize: 18, color: PAL.ink3, letterSpacing: "0.04em" }}>
+          loading…
         </div>
+        <SerifFonts />
       </div>
     );
   }
@@ -510,42 +595,92 @@ export default function DashboardPage() {
 
   return (
     <PaymentGate>
-    <div className="h-[100dvh] bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-indigo-200 selection:text-indigo-900 overflow-hidden">
-      
-      {/* Profile Modal - Light Theme */}
+    <div
+      className="min-h-[100dvh] flex flex-col"
+      style={{
+        color: PAL.ink,
+        background: `linear-gradient(180deg, ${PAL.paper} 0%, ${PAL.paper2} 100%)`,
+        fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Inter', 'Helvetica Neue', sans-serif",
+      }}
+    >
+      {/* Subtle paper grain */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-0 opacity-[0.025]"
+        style={{
+          backgroundImage: "radial-gradient(rgba(14,26,51,1) 1px,transparent 1px)",
+          backgroundSize: "3px 3px",
+        }}
+      />
+
+      <SerifFonts />
+
+      {/* ── Profile / Onboarding Modal — same handlers, restyled to editorial ── */}
       {showProfileModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-md p-8 animate-fade-in">
-            <div className="flex items-center gap-3 mb-2">
-              <Sparkles className="text-indigo-600" size={20} />
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                {modalType === "self" ? "Your Identity" : "Add Bond"}
-              </h2>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(14,26,51,0.55)", backdropFilter: "blur(6px)" }}
+        >
+          <div
+            className="relative w-full max-w-md rounded-sm shadow-2xl p-7 md:p-8"
+            style={{ background: PAL.paper, border: `1px solid ${PAL.border}` }}
+          >
+            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+              {modalType === "self" ? "Begin · Your identity" : "Add a bond"}
             </div>
-            <p className="text-sm text-slate-500 mb-8">
-              {modalType === "self" ? "Provide exact birth coordinates to unlock your timeline." : "Enter their details for accurate synastry mapping."}
+            <h2 className="serif-display text-[28px] md:text-[34px] font-semibold leading-tight" style={{ color: PAL.ink }}>
+              {modalType === "self" ? "Your birth coordinates." : "Their birth coordinates."}
+            </h2>
+            <p className="serif-text text-[14.5px] mt-2" style={{ color: PAL.ink2 }}>
+              {modalType === "self"
+                ? "Provide exact birth coordinates to unlock your timeline."
+                : "Enter their details for accurate synastry mapping."}
             </p>
-            
-            <form onSubmit={handleSaveProfile} className="space-y-5">
-              <div className="grid grid-cols-2 gap-5">
+
+            <form onSubmit={handleSaveProfile} className="space-y-4 mt-6">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Full Name</label>
-                  <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400" placeholder="e.g. John Doe" />
+                  <label className="block text-[10px] font-semibold uppercase tracking-[0.18em] mb-1.5" style={{ color: PAL.ink3 }}>
+                    Full name
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full rounded-sm px-3.5 py-2.5 focus:outline-none transition-shadow serif-text text-[15px]"
+                    style={{ background: PAL.paper2, border: `1px solid ${PAL.border}`, color: PAL.ink }}
+                    placeholder="e.g. John Doe"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Gender</label>
-                  <select required value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 transition-all">
+                  <label className="block text-[10px] font-semibold uppercase tracking-[0.18em] mb-1.5" style={{ color: PAL.ink3 }}>
+                    Gender
+                  </label>
+                  <select
+                    required
+                    value={formData.gender}
+                    onChange={e => setFormData({ ...formData, gender: e.target.value })}
+                    className="w-full rounded-sm px-3.5 py-2.5 focus:outline-none serif-text text-[15px]"
+                    style={{ background: PAL.paper2, border: `1px solid ${PAL.border}`, color: PAL.ink }}
+                  >
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
               </div>
-              
+
               {modalType === "family" && (
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Relationship</label>
-                  <select value={formData.relationship} onChange={e => setFormData({...formData, relationship: e.target.value})} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 transition-all">
+                  <label className="block text-[10px] font-semibold uppercase tracking-[0.18em] mb-1.5" style={{ color: PAL.ink3 }}>
+                    Relationship
+                  </label>
+                  <select
+                    value={formData.relationship}
+                    onChange={e => setFormData({ ...formData, relationship: e.target.value })}
+                    className="w-full rounded-sm px-3.5 py-2.5 focus:outline-none serif-text text-[15px]"
+                    style={{ background: PAL.paper2, border: `1px solid ${PAL.border}`, color: PAL.ink }}
+                  >
                     <option value="Spouse">Spouse</option>
                     <option value="Child">Child</option>
                     <option value="Parent">Parent</option>
@@ -555,42 +690,67 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Date of Birth</label>
-                  <input required type="date" value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value})} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 transition-all" />
+                  <label className="block text-[10px] font-semibold uppercase tracking-[0.18em] mb-1.5" style={{ color: PAL.ink3 }}>
+                    Date of birth
+                  </label>
+                  <input
+                    required
+                    type="date"
+                    value={formData.dob}
+                    onChange={e => setFormData({ ...formData, dob: e.target.value })}
+                    className="w-full rounded-sm px-3.5 py-2.5 focus:outline-none serif-text text-[15px]"
+                    style={{ background: PAL.paper2, border: `1px solid ${PAL.border}`, color: PAL.ink }}
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Time of Birth</label>
-                  <input required type="time" value={formData.tob} onChange={e => setFormData({...formData, tob: e.target.value})} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 transition-all" />
+                  <label className="block text-[10px] font-semibold uppercase tracking-[0.18em] mb-1.5" style={{ color: PAL.ink3 }}>
+                    Time of birth
+                  </label>
+                  <input
+                    required
+                    type="time"
+                    value={formData.tob}
+                    onChange={e => setFormData({ ...formData, tob: e.target.value })}
+                    className="w-full rounded-sm px-3.5 py-2.5 focus:outline-none serif-text text-[15px]"
+                    style={{ background: PAL.paper2, border: `1px solid ${PAL.border}`, color: PAL.ink }}
+                  />
                 </div>
               </div>
 
               <div className="relative">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Place of Birth</label>
-                <input 
-                  required 
-                  type="text" 
-                  value={formData.pob} 
-                  onChange={e => handleLocationSearch(e.target.value)} 
+                <label className="block text-[10px] font-semibold uppercase tracking-[0.18em] mb-1.5" style={{ color: PAL.ink3 }}>
+                  Place of birth
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={formData.pob}
+                  onChange={e => handleLocationSearch(e.target.value)}
                   onFocus={() => setShowSuggestions(true)}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400" 
-                  placeholder="e.g. Mumbai, India" 
+                  className="w-full rounded-sm px-3.5 py-2.5 focus:outline-none serif-text text-[15px]"
+                  style={{ background: PAL.paper2, border: `1px solid ${PAL.border}`, color: PAL.ink }}
+                  placeholder="e.g. Mumbai, India"
                 />
                 {isSearchingLocation && (
-                  <div className="absolute right-4 top-[38px]">
-                    <div className="w-4 h-4 border-2 border-slate-300 border-t-indigo-600 rounded-full animate-spin" />
+                  <div className="absolute right-3 top-[34px]">
+                    <div className="w-4 h-4 rounded-full animate-spin"
+                      style={{ border: `2px solid ${PAL.border}`, borderTopColor: PAL.accent }}
+                    />
                   </div>
                 )}
                 {showSuggestions && locationSuggestions.length > 0 && (
-                  <ul className="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+                  <ul className="absolute z-10 w-full mt-1 rounded-sm shadow-xl max-h-48 overflow-y-auto"
+                    style={{ background: PAL.paper, border: `1px solid ${PAL.border}` }}
+                  >
                     {locationSuggestions.map((loc, idx) => (
-                      <li 
-                        key={idx} 
-                        className="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 border-b border-slate-100 last:border-0"
+                      <li
+                        key={idx}
+                        className="px-3.5 py-2.5 cursor-pointer text-[14px] serif-text transition-colors hover:bg-black/[0.04]"
+                        style={{ color: PAL.ink, borderBottom: idx < locationSuggestions.length - 1 ? `1px solid ${PAL.border2}` : "none" }}
                         onClick={() => {
                           setFormData(prev => ({ ...prev, pob: loc.Name }));
-                          // Capture precise lat/lon/timezone from AstrologyAPI — stored to Supabase on save
                           setSelectedGeocode({ lat: loc.lat, lon: loc.lon, timezone: loc.timezone || "+05:30" });
                           setShowSuggestions(false);
                         }}
@@ -602,745 +762,599 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
-                <p className="text-[11px] font-semibold text-amber-800 uppercase tracking-wide mb-1 flex items-center gap-1.5">
-                  <span className="text-sm">⚠️</span> Caution
+              <div className="rounded-sm p-3 mt-3"
+                style={{ background: "rgba(165,124,42,0.08)", border: `1px solid rgba(165,124,42,0.25)` }}
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] mb-1 flex items-center gap-1.5" style={{ color: PAL.gold }}>
+                  <AlertTriangle size={11} /> Caution
                 </p>
-                <p className="text-xs text-amber-700 leading-relaxed">
-                  Please verify and double-check all details before saving. Vedic astrology requires absolute precision—even a 5-minute error in your time of birth can completely alter your chart and predictions.
+                <p className="serif-text text-[12.5px] leading-snug" style={{ color: PAL.ink2 }}>
+                  Please verify and double-check all details before saving. Vedic astrology requires absolute precision — even a 5-minute error in your time of birth can completely alter your chart and predictions.
                 </p>
               </div>
 
-              <div className="flex gap-4 pt-6">
+              <div className="flex gap-3 pt-4">
                 {modalType === "family" && (
-                  <button type="button" onClick={() => setShowProfileModal(false)} className="flex-1 py-3 px-4 rounded-lg font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 transition-all">Cancel</button>
+                  <button
+                    type="button"
+                    onClick={() => setShowProfileModal(false)}
+                    className="flex-1 py-2.5 rounded-sm text-[13px] font-semibold transition-colors hover:bg-black/[0.04]"
+                    style={{ color: PAL.ink2, border: `1px solid ${PAL.border}` }}
+                  >
+                    Cancel
+                  </button>
                 )}
-                <button type="submit" className="flex-1 py-3 px-4 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-indigo-600/30 transition-all">Save Blueprint</button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-sm text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+                  style={{ background: PAL.ink }}
+                >
+                  Save blueprint
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Header - Light & Clean */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-               <Sparkles size={16} className="text-indigo-600" />
-            </div>
-            <span className="hidden sm:inline font-bold text-lg tracking-tight text-slate-900">Quantum <span className="text-indigo-600">Karma</span></span>
-          </div>
-          
-          <div className="flex items-center gap-1.5 sm:gap-6">
-            {/* Edit Profile — mobile only, opens the profile edit modal for the active profile */}
-            <button
-              onClick={() => {
-                if (activeProfileId === "self" && selfProfile) {
-                  setModalType("self");
-                  setFormData({ name: selfProfile.name, relationship: "Self", dob: selfProfile.dob, tob: selfProfile.tob, pob: selfProfile.pob, gender: selfProfile.gender || 'male' });
-                } else {
-                  const fp = familyProfiles.find(p => p.id === activeProfileId);
-                  if (fp) { setModalType("family"); setFormData({ name: fp.name, relationship: fp.relationship, dob: fp.dob, tob: fp.tob, pob: fp.pob, gender: fp.gender || 'male' }); }
-                }
-                setShowProfileModal(true);
-              }}
-              className="md:hidden flex items-center gap-1 px-2 py-1.5 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-[10px] font-bold transition-colors border border-indigo-200 shadow-sm"
-              title="Edit birth details"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-              Edit
-            </button>
+      {/* ── Masthead (top bar) ─────────────────────────────────── */}
+      <header
+        className="sticky top-0 z-30 backdrop-blur-md"
+        style={{ background: "rgba(250,247,242,0.92)", borderBottom: `1px solid ${PAL.border2}` }}
+      >
+        <div className="flex items-center gap-3 px-4 md:px-7 lg:px-10 h-14 md:h-16 max-w-[1400px] w-full mx-auto">
+          <button
+            onClick={() => setNavDrawerOpen(true)}
+            className="md:hidden h-9 w-9 grid place-items-center rounded transition-colors hover:bg-black/5"
+            aria-label="Menu"
+          >
+            <Menu size={18} style={{ color: PAL.ink }} />
+          </button>
 
-            {/* Account & Billing Button */}
-            <button onClick={() => router.push('/subscription')} className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 text-[10px] sm:text-xs font-bold transition-colors shadow-sm">
-              <span className="hidden sm:inline">Subscription</span>
-              <span className="sm:hidden">Sub</span>
-            </button>
-
-            {/* Credits badge + Topup button */}
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-md border border-slate-200">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse flex-shrink-0" />
-                <span className="hidden sm:inline text-xs font-semibold text-slate-500 uppercase tracking-wider">Credits</span>
-                <span className="text-[11px] sm:text-sm font-bold text-slate-900">{Math.floor(profile.credits ?? 50)}</span>
-              </div>
-              {/* Topup button — only for plan2 and promo users */}
-              {(profile.plan_type === "plan2" || profile.plan_type === "promo") && (
-                <button
-                  onClick={() => setShowTopup(true)}
-                  className="flex items-center gap-1 px-2 py-1.5 sm:px-2.5 rounded-md text-[10px] sm:text-xs font-bold border transition-all"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.12))",
-                    borderColor: "rgba(99,102,241,0.35)",
-                    color: "#6366F1",
-                  }}
-                >
-                  <span style={{ fontSize: 10 }}>⚡</span> <span className="hidden sm:inline">Top Up</span>
-                </button>
-              )}
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-sm grid place-items-center" style={{ background: PAL.ink }}>
+              <Sparkles size={13} className="text-white" />
             </div>
-
-            <div className="flex items-center gap-1.5 sm:gap-4 border-l border-slate-200 pl-1.5 sm:pl-6">
-              <div className="hidden sm:flex items-center gap-2 sm:gap-3">
-                <div className="text-right hidden md:block">
-                  <div className="text-sm font-semibold text-slate-900">{displayName}</div>
-                  <div className="text-xs text-indigo-600 font-medium">Seeker</div>
-                </div>
-                <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center font-bold text-indigo-700 border border-indigo-100">
-                  {displayName.charAt(0).toUpperCase()}
-                </div>
-              </div>
-              <button 
-                onClick={handleSignOut} 
-                className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-md bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white border border-red-500/20 text-[10px] sm:text-xs font-bold transition-all shadow-sm flex items-center justify-center"
-                title="Sign Out"
-              >
-                <span className="hidden sm:inline">Sign Out</span>
-                <LogOut size={12} className="sm:hidden" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Layout - Light Theme */}
-      {/* ── Mobile Bottom Tab Bar (hidden on md+) ── */}
-      {/* pr-[70px] reserves right-side space so Intercom widget doesn't block the Remedy button */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 flex items-stretch h-16 safe-area-bottom pr-[70px] overflow-x-auto custom-scrollbar flex-nowrap">
-        <button onClick={() => { setActiveFeature("explainer"); }} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "explainer" ? "text-indigo-600" : "text-slate-400"}`}>
-          <BookOpen size={20} /><span>Explainer</span>
-        </button>
-        <button onClick={() => { setActiveFeature("chat"); }} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "chat" ? "text-indigo-600" : "text-slate-400"}`}>
-          <MessageCircle size={20} /><span>Oracle</span>
-        </button>
-        <button onClick={() => setActiveFeature("destiny")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "destiny" ? "text-indigo-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">🗓️</span><span>Destiny</span>
-        </button>
-        <button onClick={() => setActiveFeature("karma-dna")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "karma-dna" ? "text-indigo-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">🧬</span><span>DNA</span>
-        </button>
-        <button onClick={() => setActiveFeature("karmic-patterns")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "karmic-patterns" ? "text-indigo-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">🔮</span><span>Karmic</span>
-        </button>
-        <button onClick={() => setActiveFeature("royal-roast")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "royal-roast" ? "text-orange-500" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">🔥</span><span>Roast</span>
-        </button>
-        <button onClick={() => setActiveFeature("gotra")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "gotra" ? "text-amber-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">🕉️</span><span>Gotra</span>
-        </button>
-        <button onClick={() => setActiveFeature("ishta-devata")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "ishta-devata" ? "text-indigo-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">🙏</span><span>Devata</span>
-        </button>
-        <button onClick={() => setActiveFeature("journal")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "journal" ? "text-indigo-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">🎙️</span><span>Journal</span>
-        </button>
-        <button onClick={() => setActiveFeature("year-ahead")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "year-ahead" ? "text-amber-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">📅</span><span>Year</span>
-        </button>
-        <button onClick={() => setActiveFeature("soul-code")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "soul-code" ? "text-purple-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">🔱</span><span>Soul</span>
-        </button>
-        <button onClick={() => setActiveFeature("roadmap")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "roadmap" ? "text-indigo-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">🗺️</span><span>Roadmap</span>
-        </button>
-        <button onClick={() => setActiveFeature("remedy")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "remedy" ? "text-indigo-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">📿</span><span>Remedy</span>
-        </button>
-        <button onClick={() => setActiveFeature("reports")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "reports" ? "text-indigo-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">📜</span><span>Reports</span>
-        </button>
-        <button onClick={() => setActiveFeature("details")} className={`flex-none w-[72px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${activeFeature === "details" ? "text-indigo-600" : "text-slate-400"}`}>
-          <span className="text-xl leading-none">📋</span><span>Details</span>
-        </button>
-      </nav>
-
-      {/* Main Layout */}
-      <main className="flex-1 w-full mx-auto px-0 md:pl-0 md:pr-6 pt-0 md:pt-6 pb-16 md:pb-6 flex flex-col md:flex-row gap-0 md:gap-5 min-h-0 bg-slate-50 md:bg-transparent overflow-hidden">
-        
-        {/* Sidebar — flush to left edge, narrow, clean; min-h-0 lets it scroll within the locked viewport */}
-        <aside data-lenis-prevent className="hidden md:flex md:w-52 flex-shrink-0 flex-col gap-3 overflow-y-auto pl-3 md:pl-5 min-h-0 pb-4">
-          
-          {/* ── Active Profile Selector ── */}
-          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50">
-              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                <Users size={11} className="text-indigo-500" /> Reading For
-              </h2>
-            </div>
-            <div className="p-1.5 space-y-0.5">
-              {/* Self */}
-              <div className="relative group">
-                <button
-                  onClick={() => setActiveProfileId("self")}
-                  className={`w-full text-left px-3 py-2 pr-8 rounded-lg text-[13px] font-semibold transition-all ${activeProfileId === "self" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}
-                >
-                  ✦ My Blueprint
-                </button>
-                {selfProfile && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setModalType("self"); setFormData({ name: selfProfile.name, relationship: "Self", dob: selfProfile.dob, tob: selfProfile.tob, pob: selfProfile.pob, gender: selfProfile.gender || 'male' }); setShowProfileModal(true); }}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-all z-10"
-                    title="Edit birth details"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                    Edit
-                  </button>
-                )}
-              </div>
-              {/* Family profiles */}
-              {familyProfiles.filter(p => p.relationship !== "Self").map(fp => (
-                <div key={fp.id} className="relative group">
-                  <button
-                    onClick={() => setActiveProfileId(fp.id)}
-                    className={`w-full text-left px-3 py-2 pr-8 rounded-lg text-[13px] font-semibold transition-all ${activeProfileId === fp.id ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"}`}
-                  >
-                    <span className="text-slate-400 text-[10px] font-bold block leading-none mb-0.5 uppercase tracking-wide">{fp.relationship}</span>
-                    {fp.name}
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setModalType("family"); setFormData({ name: fp.name, relationship: fp.relationship, dob: fp.dob, tob: fp.tob, pob: fp.pob, gender: fp.gender || 'male' }); setShowProfileModal(true); }}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-all z-10"
-                    title="Edit birth details"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                    Edit
-                  </button>
-                </div>
-              ))}
-              {/* Add Bond */}
-              <button
-                onClick={() => { setModalType("family"); setFormData({ name: "", relationship: "Spouse", dob: "", tob: "", pob: "", gender: "male" }); setShowProfileModal(true); }}
-                className="w-full text-[11px] font-bold text-slate-400 hover:text-indigo-600 py-2 rounded-lg border border-dashed border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all flex items-center justify-center gap-1.5 mt-1"
-              >
-                + Add Bond
-              </button>
-            </div>
+            <span className="serif-display text-[16px] md:text-[18px] font-semibold leading-none truncate" style={{ color: PAL.ink }}>
+              Quantum Karma
+            </span>
           </div>
 
-          {/* ── Edit Birth Details — always visible on desktop sidebar ── */}
-          {/* Opens the profile modal for the currently active profile (self or family member) */}
+          <span className="hidden md:inline-block text-[10px] font-semibold uppercase tracking-[0.2em] ml-3 pl-3" style={{ color: PAL.ink3, borderLeft: `1px solid ${PAL.border2}` }}>
+            Vol. III · {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+          </span>
+
+          <div className="flex-1" />
+
           <button
             onClick={() => {
               if (activeProfileId === "self" && selfProfile) {
                 setModalType("self");
-                setFormData({ name: selfProfile.name, relationship: "Self", dob: selfProfile.dob, tob: selfProfile.tob, pob: selfProfile.pob, gender: selfProfile.gender || 'male' });
+                setFormData({ name: selfProfile.name, relationship: "Self", dob: selfProfile.dob, tob: selfProfile.tob, pob: selfProfile.pob, gender: selfProfile.gender || "male" });
               } else {
                 const fp = familyProfiles.find(p => p.id === activeProfileId);
-                if (fp) { setModalType("family"); setFormData({ name: fp.name, relationship: fp.relationship, dob: fp.dob, tob: fp.tob, pob: fp.pob, gender: fp.gender || 'male' }); }
+                if (fp) { setModalType("family"); setFormData({ name: fp.name, relationship: fp.relationship, dob: fp.dob, tob: fp.tob, pob: fp.pob, gender: fp.gender || "male" }); }
               }
               setShowProfileModal(true);
             }}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-bold transition-all shadow-sm shadow-indigo-600/20"
+            className="md:hidden h-9 w-9 grid place-items-center rounded transition-colors hover:bg-black/5"
+            title="Edit birth details"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            ✏️ Edit Birth Details
+            <Pencil size={15} style={{ color: PAL.ink2 }} />
           </button>
 
-          {/* ── Navigation — scrollable if viewport is short ── */}
-          <div className="bg-white rounded-xl border border-slate-100 shadow-sm">
-            <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50">
-              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Features</h2>
-            </div>
-            <div className="p-1.5 space-y-0.5">
+          <button
+            onClick={() => router.push("/subscription")}
+            className="hidden sm:inline-flex items-center h-9 px-3 rounded-sm text-[12px] font-semibold transition-colors hover:bg-black/[0.04]"
+            style={{ color: PAL.ink, border: `1px solid ${PAL.border}` }}
+          >
+            Subscription
+          </button>
 
-              {/* Explainer Masterclass */}
-              <button onClick={() => setActiveFeature("explainer")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "explainer" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20" : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
-                }`}>
-                <span className="flex items-center gap-2.5">
-                  <BookOpen size={16} className={activeFeature === "explainer" ? "text-white" : "text-indigo-600"} /> 
-                  Explainer
-                </span>
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                  activeFeature === "explainer" ? "bg-white/20 text-white" : "bg-indigo-200 text-indigo-700"
-                }`}>START HERE</span>
-              </button>
-
-              {/* Oracle Chat */}
-              <button onClick={() => setActiveFeature("chat")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "chat" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <MessageCircle size={14} className="flex-shrink-0" />
-                Oracle Chat
-              </button>
-
-              {/* Destiny Window */}
-              <button onClick={() => setActiveFeature("destiny")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "destiny" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🗓️</span> Destiny Window</span>
-                {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
-              </button>
-
-              {/* Karma DNA */}
-              <button onClick={() => setActiveFeature("karma-dna")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "karma-dna" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🧬</span> Karma DNA</span>
-                {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
-              </button>
-
-              {/* Karmic Patterns */}
-              <button onClick={() => setActiveFeature("karmic-patterns")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "karmic-patterns" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🔮</span> Karmic Patterns</span>
-                {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
-              </button>
-
-              {/* Remedy */}
-              <button onClick={() => setActiveFeature("remedy")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "remedy" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">📿</span> Remedy</span>
-                {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
-              </button>
-
-              {/* My Details */}
-              <button onClick={() => setActiveFeature("details")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "details" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="text-sm leading-none">📋</span> My Details
-              </button>
-
-              {/* Reports */}
-              <button onClick={() => setActiveFeature("reports")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "reports" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="text-sm leading-none">📜</span> Reports
-              </button>
-
-              {/* Soul Code */}
-              <button onClick={() => setActiveFeature("soul-code")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "soul-code" ? "bg-purple-50 text-purple-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🔱</span> Your Purpose</span>
-              </button>
-
-              {/* Year Ahead */}
-              <button onClick={() => setActiveFeature("year-ahead")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "year-ahead" ? "bg-amber-50 text-amber-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">📅</span> Year Ahead</span>
-              </button>
-
-              {/* Royal Roast */}
-              <button onClick={() => setActiveFeature("royal-roast")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "royal-roast" ? "bg-orange-50 text-orange-600" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🔥</span> Royal Roast</span>
-                {isOutOfCredits && <span className="text-amber-400 text-[10px] font-black">🔒</span>}
-              </button>
-
-              {/* Your Gotra */}
-              <button onClick={() => setActiveFeature("gotra")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "gotra" ? "bg-amber-50 text-amber-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="flex items-center gap-2.5 whitespace-nowrap"><span className="text-sm leading-none">🕉️</span> Your Gotra</span>
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                  activeFeature === "gotra" ? "bg-amber-200/60 text-amber-800" : "bg-amber-100 text-amber-600"
-                }`}>NEW</span>
-              </button>
-
-              {/* Ishta Devata */}
-              <button onClick={() => setActiveFeature("ishta-devata")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "ishta-devata" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="flex items-center gap-2.5 whitespace-nowrap"><span className="text-sm leading-none">🙏</span> Ishta Devata</span>
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                  activeFeature === "ishta-devata" ? "bg-indigo-200/60 text-indigo-800" : "bg-indigo-100 text-indigo-600"
-                }`}>NEW</span>
-              </button>
-
-              {/* Life Journal */}
-              <button onClick={() => setActiveFeature("journal")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "journal" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🎙️</span> Life Journal</span>
-              </button>
-
-              {/* Separator */}
-              <div className="h-px bg-slate-100 my-1" />
-
-              {/* Intelligence Roadmap */}
-              <button onClick={() => setActiveFeature("roadmap")}
-                className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all ${
-                  activeFeature === "roadmap"
-                    ? "bg-indigo-600 text-white"
-                    : "text-indigo-600 hover:bg-indigo-50"
-                }`}>
-                <span className="flex items-center gap-2.5"><span className="text-sm leading-none">🗺️</span> Roadmap</span>
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                  activeFeature === "roadmap" ? "bg-white/20 text-white" : "bg-indigo-100 text-indigo-600"
-                }`}>NEW</span>
-              </button>
-
-            </div>
+          <div className="inline-flex items-center gap-2 h-9 px-2.5 rounded-sm"
+            style={{ background: PAL.paper, border: `1px solid ${PAL.border}` }}
+          >
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: PAL.ink3 }}>Cr</span>
+            <span className="serif-display text-[15px] font-semibold tabular-nums leading-none" style={{ color: PAL.ink }}>
+              {Math.floor(profile.credits ?? 50)}
+            </span>
           </div>
 
-          {/* System note */}
-          <div className="bg-amber-50 rounded-xl border border-amber-100 p-3">
-            <div className="flex items-start gap-2">
-              <AlertTriangle size={13} className="text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-[11px] text-amber-700 leading-relaxed font-medium">Complex queries consume multiple credits. Stay focused.</p>
-            </div>
-          </div>
-
-        </aside>
-
-        {/* Main Chat Interface - Light Theme Redesign */}
-        <section className="flex-1 w-full flex flex-col md:rounded-2xl md:border md:border-slate-200 md:shadow-lg overflow-hidden relative min-h-0">
-
-          {/* Daily Briefing Widget — always visible at top */}
-          <DailyBriefingWidget profileId={activeProfileId} />
-
-          {activeFeature === "explainer"      && <ExplainerPanel profileId={activeProfileId} profileName={activeProfileName} />}
-          {activeFeature === "destiny"        && <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />}
-          {activeFeature === "karma-dna"      && <KarmaDNA        profileId={activeProfileId} profileName={activeProfileName} />}
-          {activeFeature === "karmic-patterns"&& <KarmicPatterns  profileId={activeProfileId} profileName={activeProfileName} />}
-          {activeFeature === "remedy"         && <RemedyPanel     profileId={activeProfileId} profileName={activeProfileName} />}
-          {activeFeature === "roadmap"        && <Roadmap onClose={() => setActiveFeature("chat")} />}
-          {/* Details Panel — free, always accessible, re-fetches on profile change */}
-          {activeFeature === "details" && (
-            <DetailsPanel
-              activeProfileId={activeProfileId}
-              familyProfiles={familyProfiles}
-              userEmail={user?.email ?? ""}
-            />
-          )}
-          {/* Royal Roast Panel */}
-          {activeFeature === "royal-roast" && (
-            <RoyalRoast
-              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
-              profileName={activeProfileName}
-            />
-          )}
-
-          {/* Your Gotra Panel */}
-          {activeFeature === "gotra" && (
-            <YourGotra
-              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
-              profileName={activeProfileName}
-            />
-          )}
-
-          {/* Ishta Devata Panel */}
-          {activeFeature === "ishta-devata" && (
-            <IshtaDevata
-              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
-              profileName={activeProfileName}
-            />
-          )}
-
-          {/* Life Journal Panel */}
-          {activeFeature === "journal" && (
-            <LifeJournal
-              activeProfileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
-            />
-          )}
-
-          {/* Reports Panel */}
-          {activeFeature === "reports" && (
-            <ReportsPanel
-              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
-            />
-          )}
-
-          {/* Soul Code Panel */}
-          {activeFeature === "soul-code" && (
-            <SoulCodePanel
-              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
-            />
-          )}
-
-          {/* Year Ahead Panel */}
-          {activeFeature === "year-ahead" && (
-            <YearAheadPanel
-              profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
-            />
-          )}
-          
-          <div className={activeFeature === "chat" ? "flex flex-col flex-1 min-h-0" : "hidden"}>
-          {/* Chat Header */}
-          <div className="h-10 md:h-14 px-4 md:px-6 flex items-center justify-between border-b border-slate-100 bg-white/90 backdrop-blur-md z-10 flex-shrink-0">
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2">
-                  <h1 className="font-semibold text-xs md:text-sm text-slate-800">Reading: {activeProfileName}</h1>
-                </div>
-              </div>
-            </div>
-            
-            <button 
-              onClick={handleClearChat}
-              className="text-[10px] md:text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1 md:gap-1.5 px-2 py-1 md:px-3 md:py-1.5 rounded-md hover:bg-red-50"
-              title="Clear session memory"
+          {(profile.plan_type === "plan2" || profile.plan_type === "promo") && (
+            <button
+              onClick={() => setShowTopup(true)}
+              className="hidden sm:inline-flex items-center gap-1 h-9 px-3 rounded-sm text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: PAL.accent }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" className="md:w-3.5 md:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-              Clear Chat
+              <Plus size={12} /> Top up
             </button>
-          </div>
+          )}
 
-          {/* Messages Area */}
-          <div data-lenis-prevent ref={chatContainerRef} className="flex-1 overflow-y-auto px-3 md:px-6 lg:px-8 py-3 md:py-6 space-y-4 md:space-y-8 custom-scrollbar">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex flex-col animate-fade-in ${msg.role === "system" ? "items-center" : msg.role === "user" ? "items-end" : "items-start"}`}>
-                
-                {msg.role === "system" ? (
-                  <div className="bg-slate-100 border border-slate-200 text-slate-600 text-xs py-1.5 px-4 rounded-full font-medium">
-                    {msg.content}
-                  </div>
-                ) : msg.role === "user" ? (
-                  <div className="max-w-[90%] md:max-w-[85%] lg:max-w-[75%] bg-indigo-600 text-white px-4 md:px-5 py-3 rounded-2xl rounded-tr-sm shadow-md">
-                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
-                  </div>
-                ) : (
-                  <div className="max-w-full lg:max-w-[85%] w-full flex gap-4">
-                    {/* AI Avatar */}
-                    <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0 mt-1">
-                       <MessageCircle size={20} className="text-indigo-600" />
-                    </div>
-                    
-                    {/* AI Message Content */}
-                    <div className="flex-1 space-y-1 relative pt-1">
-                      <div className="text-xs font-bold text-slate-800 flex items-center gap-2 mb-2">
-                        Quantum Oracle
-                        {msg.marker && (
-                          <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide">
-                            ✦ Verified
-                          </span>
-                        )}
-                      </div>
-                      <div className="prose-chat-light text-slate-700 text-[15px] leading-relaxed">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {msg.content}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {isTyping && (
-              <div className="flex gap-3 animate-fade-in w-full">
-                <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-shrink-0 mt-1 shrink-0">
-                  <MessageCircle size={20} className="text-indigo-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-slate-800 mb-2">Quantum Oracle</div>
-                  <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50/70 border border-indigo-100 rounded-2xl rounded-tl-sm p-4 md:p-5 shadow-sm">
-
-                    {/* Live pulse header */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="relative flex h-2.5 w-2.5 shrink-0">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-70" />
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500" />
-                      </span>
-                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.18em]">Live Cosmic Computation</span>
-                    </div>
-
-                    {/* Personalised headline */}
-                    <p className="text-sm font-bold text-slate-800 mb-1">
-                      Unlocking your blueprint, {displayName.split(' ')[0]}...
-                    </p>
-                    <p className="text-[11px] text-slate-500 leading-relaxed mb-4">
-                      Your question is being cross-referenced across 16 divisional charts,
-                      all active Dasha layers, karmic echoes &amp; live planetary transits.
-                    </p>
-
-                    {/* Computation phases — stagger-reveal via CSS */}
-                    <div className="space-y-2 mb-4">
-                      {[
-                        { icon: '📐', text: 'Scanning all 16 divisional charts (D1 → D60)' },
-                        { icon: '⚡', text: 'Computing Vimshottari · Yogini · Char Dasha layers' },
-                        { icon: '🔮', text: 'Cross-referencing D60 soul blueprint & karmic echoes' },
-                        { icon: '🌍', text: 'Injecting live Gochar transit triggers' },
-                        { icon: '✨', text: 'Applying grandmaster-level synthesis & proof citations' },
-                      ].map((item, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-2 text-[11px] text-slate-600 font-medium"
-                          style={{ animation: `qk-phase-in 0.45s cubic-bezier(0.16,1,0.3,1) both`, animationDelay: `${i * 0.65}s` }}
-                        >
-                          <span className="text-sm leading-none shrink-0">{item.icon}</span>
-                          <span>{item.text}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Animated progress bar */}
-                    <div className="h-1 bg-indigo-100 rounded-full overflow-hidden mb-3">
-                      <div className="h-full rounded-full qk-progress-bar" style={{ background: 'linear-gradient(90deg, #6366f1, #a855f7, #6366f1)' }} />
-                    </div>
-
-                    {/* Footer notice */}
-                    <p className="text-[10px] text-slate-400 flex items-center gap-1.5">
-                      <span>⏱️</span>
-                      <span>Please keep this window open &middot; Precision analysis may take up to 60 seconds</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} className="h-2" />
-          </div>
-
-          {/* Floating Input Area */}
-          <div className="p-3 md:p-4 lg:p-6 bg-white border-t border-slate-100 relative">
-
-            {/* Zero-credits banner — replaces input when out of credits */}
-            {isOutOfCredits ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex flex-col sm:flex-row items-center gap-4">
-                <div className="flex-1 text-center sm:text-left">
-                  <div className="text-sm font-bold text-amber-800">⚡ You've used all your credits</div>
-                  <div className="text-xs text-amber-700 mt-1 leading-relaxed">
-                    Your chat history and saved reports are still accessible below. Top up now or wait for your next billing cycle to generate new readings.
-                  </div>
-                </div>
-                {(profile?.plan_type === "plan2" || profile?.plan_type === "promo") && (
-                  <button
-                    onClick={() => setShowTopup(true)}
-                    className="flex-shrink-0 px-4 py-2 rounded-lg font-bold text-sm text-white transition-all"
-                    style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
-                  >
-                    ⚡ Top Up Now
-                  </button>
-                )}
-              </div>
-            ) : (
-              <>
-            {/* Dynamic Suggestion Chips */}
-            {!isTyping && suggestionChips.length > 0 && (
-              <div className="mb-3 flex flex-nowrap gap-2 overflow-x-auto no-scrollbar pb-2 pt-1 px-1">
-                {suggestionChips.map((chip, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleChipClick(chip)}
-                    className="text-xs font-medium px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 transition-all whitespace-nowrap shadow-sm flex-shrink-0"
-                  >
-                    {chip}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Input Bar — auto-growing textarea (WhatsApp / ChatGPT style) */}
-            <form
-              onSubmit={handleSendMessage}
-              className="relative flex items-end bg-slate-50 rounded-xl border border-slate-200 shadow-sm focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all overflow-hidden"
+          <div className="hidden md:flex items-center gap-2 pl-3 ml-1.5" style={{ borderLeft: `1px solid ${PAL.border2}` }}>
+            <span className="w-8 h-8 rounded-sm grid place-items-center font-semibold text-[12px]"
+              style={{ background: PAL.ink, color: PAL.paper }}
             >
-              <textarea
-                ref={textareaRef}
-                rows={1}
-                value={input}
-                onChange={e => { setInput(e.target.value); autoResize(); }}
-                onKeyDown={e => {
-                  // Cmd/Ctrl+Enter sends, Enter inserts newline
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    e.preventDefault();
-                    handleSendMessage();
+              {displayName.charAt(0).toUpperCase()}
+            </span>
+            <div className="hidden lg:block leading-tight">
+              <div className="text-[12.5px] font-semibold" style={{ color: PAL.ink }}>{displayName}</div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: PAL.accent }}>Seeker</div>
+            </div>
+          </div>
+          <button
+            onClick={handleSignOut}
+            className="h-9 w-9 grid place-items-center rounded transition-colors hover:bg-black/5"
+            title="Sign out"
+          >
+            <LogOut size={15} style={{ color: PAL.ink2 }} />
+          </button>
+        </div>
+      </header>
+
+      {/* ── Body: sidebar + main ─────────────────────────────── */}
+      <div className="flex-1 flex max-w-[1400px] w-full mx-auto min-h-0 relative z-10">
+        <EditorialSidebar
+          activeFeature={activeFeature}
+          setActiveFeature={setActiveFeature}
+          activeProfileId={activeProfileId}
+          setActiveProfileId={setActiveProfileId}
+          selfProfile={selfProfile}
+          familyProfiles={familyProfiles}
+          openSelfEdit={() => {
+            if (selfProfile) {
+              setModalType("self");
+              setFormData({ name: selfProfile.name, relationship: "Self", dob: selfProfile.dob, tob: selfProfile.tob, pob: selfProfile.pob, gender: selfProfile.gender || "male" });
+              setShowProfileModal(true);
+            }
+          }}
+          openFamilyEdit={(fp: any) => {
+            setModalType("family");
+            setFormData({ name: fp.name, relationship: fp.relationship, dob: fp.dob, tob: fp.tob, pob: fp.pob, gender: fp.gender || "male" });
+            setShowProfileModal(true);
+          }}
+          openAddBond={() => {
+            setModalType("family");
+            setFormData({ name: "", relationship: "Spouse", dob: "", tob: "", pob: "", gender: "male" });
+            setShowProfileModal(true);
+          }}
+          credits={Math.floor(profile.credits ?? 0)}
+          isOutOfCredits={isOutOfCredits}
+          className="hidden md:flex"
+        />
+
+        {navDrawerOpen && (
+          <div className="fixed inset-0 z-40 md:hidden" onClick={() => setNavDrawerOpen(false)}>
+            <div className="absolute inset-0" style={{ background: "rgba(14,26,51,0.55)" }} />
+            <div onClick={(e) => e.stopPropagation()} className="relative z-10">
+              <EditorialSidebar
+                activeFeature={activeFeature}
+                setActiveFeature={(k) => { setActiveFeature(k); setNavDrawerOpen(false); }}
+                activeProfileId={activeProfileId}
+                setActiveProfileId={(id) => { setActiveProfileId(id); setNavDrawerOpen(false); }}
+                selfProfile={selfProfile}
+                familyProfiles={familyProfiles}
+                openSelfEdit={() => {
+                  if (selfProfile) {
+                    setModalType("self");
+                    setFormData({ name: selfProfile.name, relationship: "Self", dob: selfProfile.dob, tob: selfProfile.tob, pob: selfProfile.pob, gender: selfProfile.gender || "male" });
+                    setShowProfileModal(true);
+                    setNavDrawerOpen(false);
                   }
                 }}
-                placeholder={(!selfProfile && activeProfileId === "self") ? "Setup profile to begin..." : "Message Quantum Oracle..."}
-                className="w-full bg-transparent text-slate-900 placeholder-slate-400 pl-4 pr-14 py-3.5 focus:outline-none text-[15px] font-medium resize-none leading-relaxed"
-                style={{ maxHeight: "300px", overflowY: "auto" }}
-                data-lenis-prevent="true"
-                disabled={isTyping || (!selfProfile && activeProfileId === "self")}
+                openFamilyEdit={(fp: any) => {
+                  setModalType("family");
+                  setFormData({ name: fp.name, relationship: fp.relationship, dob: fp.dob, tob: fp.tob, pob: fp.pob, gender: fp.gender || "male" });
+                  setShowProfileModal(true);
+                  setNavDrawerOpen(false);
+                }}
+                openAddBond={() => {
+                  setModalType("family");
+                  setFormData({ name: "", relationship: "Spouse", dob: "", tob: "", pob: "", gender: "male" });
+                  setShowProfileModal(true);
+                  setNavDrawerOpen(false);
+                }}
+                credits={Math.floor(profile.credits ?? 0)}
+                isOutOfCredits={isOutOfCredits}
+                className="flex h-[100dvh] w-[284px]"
+                onClose={() => setNavDrawerOpen(false)}
               />
-              <button
-                type="submit"
-                disabled={!input.trim() || isTyping || (!selfProfile && activeProfileId === "self")}
-                className="absolute right-2 bottom-2 p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:pointer-events-none flex-shrink-0"
-              >
-                <Send size={18} className="ml-0.5" />
-              </button>
-            </form>
-            </>
-            )}
-            <div className="text-center mt-2.5">
-               <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">AI-generated astrological insights. Not medical advice.</span>
             </div>
           </div>
-          </div>
-        </section>
-      </main>
+        )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-        .mask-linear-right {
-          mask-image: linear-gradient(to right, black 85%, transparent 100%);
-        }
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        /* Custom markdown styling for light theme */
-        .prose-chat-light p { margin-bottom: 0.75em; }
-        .prose-chat-light p:last-child { margin-bottom: 0; }
-        .prose-chat-light strong { color: #1e293b; font-weight: 700; }
-        .prose-chat-light ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
-        .prose-chat-light li { margin-bottom: 0.25em; }
-        .prose-chat-light h1, .prose-chat-light h2, .prose-chat-light h3 { color: #0f172a; font-weight: 700; margin-top: 1.25em; margin-bottom: 0.5em; }
-        .prose-chat-light h3 { font-size: 1.1em; }
-        /* Mobile: safe area for bottom nav bar on iPhone */
-        .safe-area-bottom {
-          padding-bottom: env(safe-area-inset-bottom, 0px);
-        }
-        /* Mobile: prevent rubber-band scroll fighting with chat container */
-        @media (max-width: 767px) {
-          .custom-scrollbar {
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior: contain;
+        <main
+          className={
+            activeFeature === "chat"
+              ? "flex-1 min-w-0 flex flex-col overflow-hidden"
+              : "flex-1 min-w-0 px-4 md:px-7 lg:px-10 py-6 md:py-8 pb-24 md:pb-10 overflow-y-auto"
           }
-        }
-        /* ── Quantum Karma computation loader animations ─────────────────────── */
-        @keyframes qk-phase-in {
-          from { opacity: 0; transform: translateX(-10px); }
-          to   { opacity: 1; transform: translateX(0);     }
-        }
-        @keyframes qk-progress {
-          0%   { width: 12%; margin-left: 0%;  }
-          50%  { width: 55%; margin-left: 22%; }
-          100% { width: 12%; margin-left: 0%;  }
-        }
-        .qk-progress-bar {
-          animation: qk-progress 2.8s ease-in-out infinite;
-        }
-      `}} />
+        >
+          {activeFeature !== "chat" && (
+            <div className="mb-6 md:mb-8">
+              <DailyBriefingWidget profileId={activeProfileId} />
+            </div>
+          )}
 
-      {/* Top-Up Credits Modal */}
+          {activeFeature !== "home" && activeFeature !== "chat" && (
+            <div className="hidden md:block mb-4 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: PAL.ink3 }}>
+              <button onClick={() => setActiveFeature("home")} className="hover:underline" style={{ color: PAL.accent }}>
+                Home
+              </button>
+              <span className="mx-2" style={{ color: PAL.border }}>/</span>
+              {labelOf(activeFeature)}
+            </div>
+          )}
+
+          {activeFeature === "explainer" && (
+            <FeatureFrame title="Explainer Masterclass" eyebrow="Section 01 · Begin">
+              <ExplainerPanel profileId={activeProfileId} profileName={activeProfileName} />
+            </FeatureFrame>
+          )}
+          {activeFeature === "destiny" && (
+            <FeatureFrame title="Destiny Window" eyebrow="Section 01 · Begin">
+              <DestinyCalendar profileId={activeProfileId} profileName={activeProfileName} />
+            </FeatureFrame>
+          )}
+          {activeFeature === "karma-dna" && (
+            <FeatureFrame title="Karma DNA" eyebrow="Section 02 · Blueprint">
+              <KarmaDNA profileId={activeProfileId} profileName={activeProfileName} />
+            </FeatureFrame>
+          )}
+          {activeFeature === "karmic-patterns" && (
+            <FeatureFrame title="Karmic Patterns" eyebrow="Section 02 · Blueprint">
+              <KarmicPatterns profileId={activeProfileId} profileName={activeProfileName} />
+            </FeatureFrame>
+          )}
+          {activeFeature === "remedy" && (
+            <FeatureFrame title="Remedy" eyebrow="Section 04 · Practice">
+              <RemedyPanel profileId={activeProfileId} profileName={activeProfileName} />
+            </FeatureFrame>
+          )}
+          {activeFeature === "roadmap" && (
+            <FeatureFrame title="Roadmap" eyebrow="Section 03 · Forecast">
+              <Roadmap onClose={() => setActiveFeature("home")} />
+            </FeatureFrame>
+          )}
+          {activeFeature === "details" && (
+            <FeatureFrame title="My Details" eyebrow="Section 02 · Blueprint">
+              <DetailsPanel
+                activeProfileId={activeProfileId}
+                familyProfiles={familyProfiles}
+                userEmail={user?.email ?? ""}
+              />
+            </FeatureFrame>
+          )}
+          {activeFeature === "royal-roast" && (
+            <FeatureFrame title="Royal Roast" eyebrow="Section 03 · Forecast">
+              <RoyalRoast
+                profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+                profileName={activeProfileName}
+              />
+            </FeatureFrame>
+          )}
+          {activeFeature === "gotra" && (
+            <FeatureFrame title="Your Gotra" eyebrow="Section 04 · Practice">
+              <YourGotra
+                profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+                profileName={activeProfileName}
+              />
+            </FeatureFrame>
+          )}
+          {activeFeature === "ishta-devata" && (
+            <FeatureFrame title="Ishta Devata" eyebrow="Section 04 · Practice">
+              <IshtaDevata
+                profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+                profileName={activeProfileName}
+              />
+            </FeatureFrame>
+          )}
+          {activeFeature === "journal" && (
+            <FeatureFrame title="Life Journal" eyebrow="Section 04 · Practice">
+              <LifeJournal
+                activeProfileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+              />
+            </FeatureFrame>
+          )}
+          {activeFeature === "reports" && (
+            <FeatureFrame title="Reports" eyebrow="Section 05 · Archive">
+              <ReportsPanel
+                profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+              />
+            </FeatureFrame>
+          )}
+          {activeFeature === "soul-code" && (
+            <FeatureFrame title="Your Purpose" eyebrow="Section 02 · Blueprint">
+              <SoulCodePanel
+                profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+              />
+            </FeatureFrame>
+          )}
+          {activeFeature === "year-ahead" && (
+            <FeatureFrame title="Year Ahead" eyebrow="Section 03 · Forecast">
+              <YearAheadPanel
+                profileId={activeProfileId === "self" ? (familyProfiles.find(p => p.relationship === "Self")?.id || "self") : activeProfileId}
+              />
+            </FeatureFrame>
+          )}
+          {activeFeature === "compatibility" && (
+            <FeatureFrame title="Compatibility" eyebrow="Section 06 · Bonds">
+              <Compatibility selfProfile={selfProfile} />
+            </FeatureFrame>
+          )}
+
+          {activeFeature === "chat" && (
+            <OracleChatPanel
+              messages={messages}
+              isTyping={isTyping}
+              input={input}
+              setInput={setInput}
+              autoResize={autoResize}
+              handleSendMessage={handleSendMessage}
+              handleClearChat={handleClearChat}
+              handleChipClick={handleChipClick}
+              suggestionChips={suggestionChips}
+              chatContainerRef={chatContainerRef}
+              messagesEndRef={messagesEndRef}
+              textareaRef={textareaRef}
+              displayName={displayName}
+              activeProfileName={activeProfileName}
+              selfProfile={selfProfile}
+              activeProfileId={activeProfileId}
+              isOutOfCredits={isOutOfCredits}
+              profile={profile}
+              setShowTopup={setShowTopup}
+              onBackToHome={() => setActiveFeature("home")}
+              onOpenMenu={() => setNavDrawerOpen(true)}
+            />
+          )}
+
+          {activeFeature === "home" && (
+            <div className="space-y-7 md:space-y-9">
+              <section className="pt-2 pb-6 md:pb-8" style={{ borderBottom: `1px solid ${PAL.border}` }}>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3" style={{ color: PAL.accent }}>
+                  Welcome back
+                </div>
+                <h1 className="serif-display text-[36px] md:text-[58px] lg:text-[72px] font-semibold leading-[0.98] tracking-tight" style={{ color: PAL.ink }}>
+                  Hello, <span style={{ color: PAL.accent }}>{displayName.split(" ")[0]}</span>.
+                </h1>
+                <p className="serif-text text-[16px] md:text-[18px] mt-3 max-w-2xl leading-snug" style={{ color: PAL.ink2 }}>
+                  Your blueprint is below. The Oracle is ready to read it with you.
+                  Pick a section to begin or scroll for the full table of contents.
+                </p>
+              </section>
+
+              <section>
+                <SectionHeading num="—" title="Featured for you" hint="Hand-picked from your chart" />
+                <div className="md:hidden -mx-4 px-4">
+                  <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-3 -mb-3">
+                    {(["explainer", "destiny", "karma-dna", "year-ahead", "royal-roast", "soul-code"] as FeatureKey[])
+                      .map((k) => {
+                        const f = FEATURE_META.find(x => x.key === k); if (!f) return null;
+                        return <BentoCard key={k} f={f} onOpen={setActiveFeature} className="snap-start min-w-[78%]" locked={isOutOfCredits && f.premium} />;
+                      })}
+                  </div>
+                </div>
+                <div className="hidden md:grid grid-cols-12 gap-4">
+                  {[
+                    { k: "explainer",   span: "col-span-7 row-span-2", tall: true },
+                    { k: "destiny",     span: "col-span-5",            tall: false },
+                    { k: "karma-dna",   span: "col-span-5",            tall: false },
+                    { k: "year-ahead",  span: "col-span-4",            tall: false },
+                    { k: "royal-roast", span: "col-span-4",            tall: false },
+                    { k: "soul-code",   span: "col-span-4",            tall: false },
+                  ].map(({ k, span, tall }) => {
+                    const f = FEATURE_META.find(x => x.key === k as FeatureKey); if (!f) return null;
+                    return <BentoCard key={k} f={f} onOpen={setActiveFeature} className={span} tall={tall} locked={isOutOfCredits && f.premium} />;
+                  })}
+                </div>
+              </section>
+
+              <section>
+                <SectionHeading num="—" title="Ask the Oracle" hint="Quick prompts you can run now" />
+                {!isOutOfCredits && suggestionChips.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pb-1">
+                    {suggestionChips.map((chip, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleChipClick(chip)}
+                        className="serif-text text-[13.5px] px-4 py-2 rounded-sm transition-colors hover:bg-black/[0.04]"
+                        style={{ background: PAL.paper2, color: PAL.ink, border: `1px solid ${PAL.border2}` }}
+                      >
+                        "{chip}"
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {isOutOfCredits && (
+                  <div className="rounded-sm p-5"
+                    style={{ background: "rgba(165,124,42,0.08)", border: `1px solid ${PAL.border}` }}
+                  >
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.gold }}>
+                      Out of credits
+                    </div>
+                    <p className="serif-text text-[15px] leading-snug" style={{ color: PAL.ink }}>
+                      You've used all your readings for this cycle. Past chats and saved reports remain accessible. Top up to continue.
+                    </p>
+                    {(profile?.plan_type === "plan2" || profile?.plan_type === "promo") && (
+                      <button
+                        onClick={() => setShowTopup(true)}
+                        className="mt-4 inline-flex items-center gap-1.5 h-10 px-4 rounded-sm text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+                        style={{ background: PAL.accent }}
+                      >
+                        <Plus size={13} /> Top up now
+                      </button>
+                    )}
+                  </div>
+                )}
+              </section>
+
+              <section>
+                <SectionHeading num="—" title="Open Oracle Chat" hint="Your full conversation space" />
+                <button
+                  onClick={() => setActiveFeature("chat")}
+                  className="group w-full text-left rounded-sm p-6 md:p-8 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                  style={{
+                    background: `linear-gradient(135deg, ${PAL.paper} 0%, ${PAL.paper2} 100%)`,
+                    border: `1px solid ${PAL.border}`,
+                  }}
+                >
+                  <div className="flex items-start gap-5">
+                    <span className="w-14 h-14 md:w-16 md:h-16 rounded-sm grid place-items-center flex-shrink-0 shadow-md"
+                      style={{ background: PAL.ink }}
+                    >
+                      <Sparkles size={22} className="text-white" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                        </span>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: PAL.ink2 }}>
+                          Live · cites D1 – D60 · Reading {activeProfileName}
+                        </span>
+                      </div>
+                      <h3 className="serif-display text-[26px] md:text-[34px] font-semibold leading-tight tracking-tight" style={{ color: PAL.ink }}>
+                        Talk to your <span style={{ color: PAL.accent }}>Quantum Oracle</span>.
+                      </h3>
+                      <p className="serif-text text-[14.5px] md:text-[16px] mt-2 max-w-2xl leading-snug" style={{ color: PAL.ink2 }}>
+                        Open a full-height conversation. Ask anything about your chart, timing windows, karmic patterns. The Oracle reads your blueprint live.
+                      </p>
+                      <span
+                        className="mt-5 inline-flex items-center gap-2 h-11 md:h-12 px-5 rounded-sm text-white text-[13px] md:text-[14px] font-semibold transition-transform group-hover:translate-x-0.5"
+                        style={{ background: PAL.accent }}
+                      >
+                        <MessageCircle size={15} /> Open Oracle Chat
+                        <ArrowRight size={14} />
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              </section>
+
+              <section>
+                <SectionHeading num="—" title="In this issue" hint={`${FEATURE_META.length} readings · ordered by section`} />
+                <div className="space-y-10 md:space-y-12">
+                  {NAV_SECTIONS.map((sec) => {
+                    const items = sec.keys.map(k => FEATURE_META.find(f => f.key === k)).filter(Boolean) as FeatureMeta[];
+                    if (items.length === 0) return null;
+                    return (
+                      <article key={sec.num} className="grid md:grid-cols-12 gap-5 md:gap-10">
+                        <header className="md:col-span-3">
+                          <div className="serif-display italic text-[24px] md:text-[32px] font-medium leading-none" style={{ color: PAL.accent }}>
+                            {sec.num}
+                          </div>
+                          <h3 className="serif-display text-[22px] md:text-[26px] font-semibold leading-tight mt-2" style={{ color: PAL.ink }}>
+                            {sec.title}
+                          </h3>
+                        </header>
+                        <ul className="md:col-span-9 md:border-l md:pl-10 divide-y" style={{ borderColor: PAL.border }}>
+                          {items.map((f, i) => {
+                            const Icon = f.Icon;
+                            const locked = isOutOfCredits && f.premium;
+                            return (
+                              <li key={f.key} style={{ borderColor: PAL.border2 }}>
+                                <button
+                                  onClick={() => setActiveFeature(f.key)}
+                                  className="group w-full grid grid-cols-[auto_1fr_auto] items-baseline gap-4 md:gap-6 py-4 md:py-5 text-left transition-colors hover:bg-black/[0.015]"
+                                >
+                                  <span className="serif-display italic text-[14px] md:text-[16px] tabular-nums" style={{ color: PAL.accent }}>
+                                    {sec.num}.{String(i + 1).padStart(2, "0")}
+                                  </span>
+                                  <div>
+                                    <div className="flex items-center gap-2.5 flex-wrap">
+                                      <Icon size={14} className="flex-shrink-0" style={{ color: PAL.ink3 }} />
+                                      <h4 className="serif-display text-[19px] md:text-[22px] font-semibold leading-tight tracking-tight" style={{ color: PAL.ink }}>
+                                        {f.label}
+                                      </h4>
+                                      {f.badge && (
+                                        <span className="text-[9px] font-semibold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm"
+                                          style={{ color: PAL.accent, border: `1px solid ${PAL.border}` }}
+                                        >
+                                          {f.badge}
+                                        </span>
+                                      )}
+                                      {locked && (
+                                        <span className="text-[9px] font-semibold uppercase tracking-[0.18em]" style={{ color: PAL.gold }}>
+                                          🔒 Top up
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="serif-text text-[13.5px] md:text-[14.5px] mt-1 leading-snug max-w-2xl" style={{ color: PAL.ink2 }}>
+                                      {f.hint}
+                                    </p>
+                                  </div>
+                                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] flex items-center gap-1 transition-transform group-hover:translate-x-0.5"
+                                    style={{ color: PAL.accent }}
+                                  >
+                                    Read <ArrowRight size={12} />
+                                  </span>
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section className="py-8 md:py-12 my-2"
+                style={{ borderTop: `1px solid ${PAL.border}`, borderBottom: `1px solid ${PAL.border}` }}
+              >
+                <blockquote className="max-w-3xl mx-auto text-center px-2">
+                  <p className="serif-display italic text-[24px] md:text-[34px] font-medium leading-[1.15]" style={{ color: PAL.ink }}>
+                    "The chart is not your fate.
+                    It is the timing of your <span style={{ color: PAL.accent }}>arrivals</span>."
+                  </p>
+                  <footer className="mt-3 text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.ink3 }}>
+                    A line from your karmic blueprint
+                  </footer>
+                </blockquote>
+              </section>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Mobile bottom tab bar — hidden when Oracle Chat is open (chat owns the screen) */}
+      {activeFeature !== "chat" && (
+      <nav
+        className="md:hidden fixed inset-x-0 bottom-0 z-30 pb-[env(safe-area-inset-bottom)]"
+        style={{ background: PAL.paper, borderTop: `1px solid ${PAL.border}` }}
+      >
+        <div className="grid grid-cols-5">
+          {[
+            { key: "home" as FeatureKey,       label: "Home",    Icon: Sparkles },
+            { key: "chat" as FeatureKey,       label: "Oracle",  Icon: MessageCircle },
+            { key: "destiny" as FeatureKey,    label: "Destiny", Icon: Calendar },
+            { key: "year-ahead" as FeatureKey, label: "Year",    Icon: Compass  },
+            { key: "menu",                     label: "Index",   Icon: Menu, onClick: () => setNavDrawerOpen(true) },
+          ].map((it: any) => {
+            const isActive = activeFeature === it.key;
+            return (
+              <button
+                key={it.label}
+                onClick={() => (it.onClick ? it.onClick() : setActiveFeature(it.key))}
+                className="relative flex flex-col items-center justify-center py-2.5 transition-colors"
+                style={{
+                  color: isActive ? PAL.ink : PAL.ink3,
+                  background: isActive ? "rgba(123,10,31,0.04)" : "transparent",
+                }}
+              >
+                {isActive && (
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[2px] w-8" style={{ background: PAL.accent }} />
+                )}
+                <it.Icon size={17} />
+                <span className="serif-display text-[11px] font-semibold tracking-tight mt-0.5">{it.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+      )}
+
       {profile && showTopup && (
         <TopupModal
           isOpen={showTopup}
@@ -1353,7 +1367,769 @@ export default function DashboardPage() {
           }}
         />
       )}
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scroll-light::-webkit-scrollbar { width: 6px; }
+        .custom-scroll-light::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll-light::-webkit-scrollbar-thumb { background: ${PAL.border2}; border-radius: 999px; }
+        .custom-scroll-light::-webkit-scrollbar-thumb:hover { background: ${PAL.border}; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .prose-editorial { font-family: 'Source Serif 4', Georgia, serif; font-size: 15.5px; line-height: 1.6; color: ${PAL.ink}; }
+        .prose-editorial p { margin-bottom: 0.75em; }
+        .prose-editorial p:last-child { margin-bottom: 0; }
+        .prose-editorial strong { color: ${PAL.ink}; font-weight: 600; }
+        .prose-editorial em { color: ${PAL.accent}; font-style: italic; }
+        .prose-editorial ul { list-style-type: disc; padding-left: 1.4em; margin-bottom: 0.75em; }
+        .prose-editorial ol { list-style-type: decimal; padding-left: 1.4em; margin-bottom: 0.75em; }
+        .prose-editorial li { margin-bottom: 0.25em; }
+        .prose-editorial h1, .prose-editorial h2, .prose-editorial h3 {
+          font-family: 'Fraunces', Georgia, serif;
+          color: ${PAL.ink};
+          font-weight: 600;
+          letter-spacing: -0.01em;
+          margin-top: 1.25em;
+          margin-bottom: 0.5em;
+        }
+        .prose-editorial h3 { font-size: 1.18em; }
+        .prose-editorial blockquote {
+          border-left: 2px solid ${PAL.accent};
+          padding-left: 1em;
+          font-family: 'Fraunces', Georgia, serif;
+          font-style: italic;
+          color: ${PAL.ink};
+          margin: 0.75em 0;
+        }
+        .prose-editorial code {
+          font-family: ui-monospace, 'SF Mono', monospace;
+          font-size: 0.92em;
+          background: ${PAL.paper2};
+          color: ${PAL.ink};
+          padding: 1px 6px;
+          border: 1px solid ${PAL.border2};
+          border-radius: 3px;
+        }
+        @keyframes qk-progress {
+          0%   { width: 12%; margin-left: 0%;  }
+          50%  { width: 55%; margin-left: 22%; }
+          100% { width: 12%; margin-left: 0%;  }
+        }
+        .qk-progress-bar { animation: qk-progress 2.8s ease-in-out infinite; }
+        @media (max-width: 767px) {
+          .custom-scroll-light {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+          }
+        }
+      `}} />
     </div>
     </PaymentGate>
+  );
+}
+
+/* ───────────────────────────────────────────────────────────────── */
+/* ── Helpers (kept inside the file so we don't introduce new modules) ── */
+/* ───────────────────────────────────────────────────────────────── */
+
+function labelOf(key: string): string {
+  return FEATURE_META.find(f => f.key === (key as FeatureKey))?.label ?? "Reading";
+}
+
+function SerifFonts() {
+  return (
+    <style dangerouslySetInnerHTML={{ __html: `
+      @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
+      .serif-display { font-family: 'Fraunces', Georgia, 'Times New Roman', serif; font-feature-settings: 'ss01','liga'; letter-spacing: -0.02em; }
+      .serif-text    { font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif; }
+    `}} />
+  );
+}
+
+function SectionHeading({ num, title, hint }: { num: string; title: string; hint?: string }) {
+  return (
+    <div className="flex items-end justify-between mb-4 md:mb-5 px-1">
+      <div>
+        <div className="serif-display italic text-[14px] md:text-[16px]" style={{ color: PAL.accent }}>
+          {num}
+        </div>
+        <h3 className="serif-display text-[22px] md:text-[28px] font-semibold tracking-tight leading-none mt-1" style={{ color: PAL.ink }}>
+          {title}
+        </h3>
+        {hint && <p className="serif-text text-[13px] mt-1" style={{ color: PAL.ink2 }}>{hint}</p>}
+      </div>
+    </div>
+  );
+}
+
+function BentoCard({
+  f, onOpen, className = "", tall = false, locked = false,
+}: {
+  f: FeatureMeta;
+  onOpen: (k: FeatureKey) => void;
+  className?: string;
+  tall?: boolean;
+  locked?: boolean;
+}) {
+  const a = BENTO_ACCENT[f.accent];
+  const Icon = f.Icon;
+  return (
+    <button
+      onClick={() => onOpen(f.key)}
+      className={`group relative overflow-hidden rounded-sm text-left transition-all hover:-translate-y-0.5 hover:shadow-lg ${className}`}
+      style={{ background: a.bg, border: `1px solid ${PAL.border}` }}
+    >
+      <div className="absolute inset-0 opacity-[0.05] pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(circle at 20% 20%,rgba(0,0,0,0.4) 1px,transparent 1px)",
+          backgroundSize: "16px 16px",
+        }}
+      />
+      <div className={`relative flex flex-col justify-between p-5 md:p-6 ${tall ? "min-h-[280px] md:min-h-[300px]" : "min-h-[180px] md:min-h-[200px]"}`}>
+        <div>
+          <div className="flex items-center justify-between">
+            <span className="inline-grid place-items-center w-12 h-12 rounded-sm bg-white/70 backdrop-blur-sm shadow-sm">
+              <Icon size={18} style={{ color: a.ink }} />
+            </span>
+            <div className="flex items-center gap-1.5">
+              {f.badge && (
+                <span className="text-[9px] font-semibold uppercase tracking-[0.18em] px-2 py-1 rounded-sm bg-white/80"
+                  style={{ color: a.ink }}
+                >
+                  {f.badge}
+                </span>
+              )}
+              {locked && (
+                <span className="text-[9px] font-semibold uppercase tracking-[0.18em] px-2 py-1 rounded-sm bg-white/80"
+                  style={{ color: PAL.gold }}
+                >
+                  Top up
+                </span>
+              )}
+            </div>
+          </div>
+          <div className={`mt-4 serif-display ${tall ? "text-[26px] md:text-[34px]" : "text-[20px] md:text-[22px]"} font-semibold tracking-tight leading-tight`}
+            style={{ color: a.ink }}
+          >
+            {f.label}
+          </div>
+          <p className={`mt-1.5 serif-text ${tall ? "text-[14px] md:text-[15px]" : "text-[12.5px]"} leading-snug max-w-md`}
+            style={{ color: a.ink, opacity: 0.85 }}
+          >
+            {f.hint}
+          </p>
+        </div>
+        <div className="mt-5 flex items-center justify-between">
+          <span className="inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-sm bg-white/80"
+            style={{ color: a.ink }}
+          >
+            Open <ArrowRight size={12} />
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+            style={{ color: a.ink, opacity: 0.7 }}
+          >
+            ~5 credits
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function FeatureFrame({ title, eyebrow, children }: { title: string; eyebrow: string; children: React.ReactNode }) {
+  return (
+    <article>
+      <header className="pb-5 md:pb-7 mb-5 md:mb-7" style={{ borderBottom: `1px solid ${PAL.border}` }}>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+          {eyebrow}
+        </div>
+        <h1 className="serif-display text-[34px] md:text-[48px] lg:text-[56px] font-semibold leading-[0.98] tracking-tight" style={{ color: PAL.ink }}>
+          {title}.
+        </h1>
+      </header>
+      <div className="rounded-sm" style={{ background: PAL.paper, border: `1px solid ${PAL.border2}` }}>
+        {children}
+      </div>
+    </article>
+  );
+}
+
+function EditorialSidebar({
+  activeFeature, setActiveFeature,
+  activeProfileId, setActiveProfileId,
+  selfProfile, familyProfiles,
+  openSelfEdit, openFamilyEdit, openAddBond,
+  credits, isOutOfCredits,
+  className = "", onClose,
+}: {
+  activeFeature: string;
+  setActiveFeature: (k: FeatureKey) => void;
+  activeProfileId: string;
+  setActiveProfileId: (id: string) => void;
+  selfProfile: any;
+  familyProfiles: any[];
+  openSelfEdit: () => void;
+  openFamilyEdit: (fp: any) => void;
+  openAddBond: () => void;
+  credits: number;
+  isOutOfCredits: boolean;
+  className?: string;
+  onClose?: () => void;
+}) {
+  return (
+    <aside
+      className={`flex-shrink-0 w-[284px] flex-col ${onClose ? "" : "self-start sticky top-16 h-[calc(100dvh-4rem)]"} ${className}`}
+      style={{ background: PAL.paper, borderRight: `1px solid ${PAL.border2}` }}
+      data-lenis-prevent
+    >
+      {onClose && (
+        <div className="flex items-center justify-between px-5 pt-4 md:hidden">
+          <span className="serif-display text-[14px] font-semibold" style={{ color: PAL.ink }}>Index</span>
+          <button onClick={onClose} className="h-8 w-8 grid place-items-center rounded hover:bg-black/5">
+            <X size={16} style={{ color: PAL.ink }} />
+          </button>
+        </div>
+      )}
+
+      <div className="px-5 pt-5 pb-4" style={{ borderBottom: `1px solid ${PAL.border2}` }}>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] mb-2.5" style={{ color: PAL.ink3 }}>
+          Reading for
+        </div>
+        <div className="space-y-1">
+          <div className="relative group">
+            <button
+              onClick={() => setActiveProfileId("self")}
+              className="w-full flex items-center gap-3 py-2 pr-9 transition-opacity hover:opacity-80 text-left"
+            >
+              <span className="w-8 h-8 rounded-sm grid place-items-center font-semibold text-[13px] flex-shrink-0"
+                style={{
+                  background: activeProfileId === "self" ? PAL.ink : PAL.border2,
+                  color: activeProfileId === "self" ? PAL.paper : PAL.ink,
+                }}
+              >
+                {(selfProfile?.name || "Y").charAt(0).toUpperCase()}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13.5px] font-semibold serif-text truncate" style={{ color: PAL.ink }}>
+                  My Blueprint
+                </div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: PAL.ink3 }}>
+                  Self
+                </div>
+              </div>
+              {activeProfileId === "self" && (
+                <span className="text-[10px] uppercase tracking-[0.14em] font-semibold absolute right-9 top-1/2 -translate-y-1/2" style={{ color: PAL.accent }}>
+                  Active
+                </span>
+              )}
+            </button>
+            {selfProfile && (
+              <button
+                onClick={openSelfEdit}
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 grid place-items-center rounded transition-colors hover:bg-black/5"
+                title="Edit birth details"
+              >
+                <Pencil size={11} style={{ color: PAL.ink3 }} />
+              </button>
+            )}
+          </div>
+
+          {familyProfiles.filter(p => p.relationship !== "Self").map(fp => (
+            <div key={fp.id} className="relative group">
+              <button
+                onClick={() => setActiveProfileId(fp.id)}
+                className="w-full flex items-center gap-3 py-2 pr-9 transition-opacity hover:opacity-80 text-left"
+              >
+                <span className="w-8 h-8 rounded-sm grid place-items-center font-semibold text-[13px] flex-shrink-0"
+                  style={{
+                    background: activeProfileId === fp.id ? PAL.ink : PAL.border2,
+                    color: activeProfileId === fp.id ? PAL.paper : PAL.ink,
+                  }}
+                >
+                  {fp.name.charAt(0).toUpperCase()}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13.5px] font-semibold serif-text truncate" style={{ color: PAL.ink }}>
+                    {fp.name}
+                  </div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: PAL.ink3 }}>
+                    {fp.relationship}
+                  </div>
+                </div>
+                {activeProfileId === fp.id && (
+                  <span className="text-[10px] uppercase tracking-[0.14em] font-semibold absolute right-9 top-1/2 -translate-y-1/2" style={{ color: PAL.accent }}>
+                    Active
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => openFamilyEdit(fp)}
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 grid place-items-center rounded transition-colors hover:bg-black/5"
+                title="Edit birth details"
+              >
+                <Pencil size={11} style={{ color: PAL.ink3 }} />
+              </button>
+            </div>
+          ))}
+
+          <button
+            onClick={openAddBond}
+            className="w-full flex items-center gap-3 py-2 hover:opacity-80 transition-opacity"
+          >
+            <span className="w-8 h-8 rounded-sm grid place-items-center" style={{ background: PAL.border2, color: PAL.ink2 }}>
+              <Plus size={14} />
+            </span>
+            <span className="text-[13.5px] font-semibold serif-text" style={{ color: PAL.ink2 }}>
+              Add a bond
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto px-5 pt-5 pb-3 custom-scroll-light">
+        <SidebarBtn
+          label="Home"
+          mono="—"
+          active={activeFeature === "home"}
+          onClick={() => setActiveFeature("home")}
+        />
+        {NAV_SECTIONS.map((sec) => (
+          <div key={sec.num} className="mt-6">
+            <div className="flex items-baseline gap-2 mb-2">
+              <span className="serif-display text-[11px] tabular-nums italic" style={{ color: PAL.accent }}>
+                {sec.num}
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: PAL.ink3 }}>
+                {sec.title}
+              </span>
+            </div>
+            <div>
+              {sec.keys.map((k) => {
+                const f = FEATURE_META.find(x => x.key === k);
+                if (!f) return null;
+                const Icon = f.Icon;
+                return (
+                  <SidebarBtn
+                    key={f.key}
+                    icon={<Icon size={13} />}
+                    label={f.label}
+                    badge={f.badge}
+                    locked={isOutOfCredits && f.premium}
+                    active={activeFeature === f.key}
+                    onClick={() => setActiveFeature(f.key)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      <div className="px-5 py-4 space-y-3" style={{ borderTop: `1px solid ${PAL.border2}` }}>
+        <div className="rounded-sm p-3" style={{ background: PAL.paper2, border: `1px solid ${PAL.border2}` }}>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: PAL.ink3 }}>Credits</span>
+            <span className="text-[12px] font-semibold tabular-nums" style={{ color: PAL.ink }}>{credits}</span>
+          </div>
+          <div className="h-[3px] rounded-full overflow-hidden" style={{ background: PAL.border2 }}>
+            <div className="h-full rounded-full" style={{ width: `${Math.min(100, (credits / 50) * 100)}%`, background: PAL.accent }} />
+          </div>
+        </div>
+        <div className="rounded-sm px-3 py-2.5" style={{ background: "rgba(165,124,42,0.08)", border: `1px solid rgba(165,124,42,0.18)` }}>
+          <div className="flex items-start gap-2">
+            <AlertTriangle size={11} className="flex-shrink-0 mt-0.5" style={{ color: PAL.gold }} />
+            <p className="serif-text text-[11.5px] leading-snug" style={{ color: PAL.ink2 }}>
+              Complex queries consume multiple credits. Stay focused.
+            </p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function SidebarBtn({
+  icon, label, active, onClick, badge, mono, locked,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  badge?: string;
+  mono?: string;
+  locked?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="group w-full flex items-center gap-2.5 py-1.5 text-left transition-colors"
+      style={{ color: active ? PAL.ink : PAL.ink2 }}
+    >
+      {mono ? (
+        <span className="serif-display text-[12px] w-5 text-center italic" style={{ color: active ? PAL.accent : PAL.ink3 }}>
+          {mono}
+        </span>
+      ) : icon ? (
+        <span className="w-5 grid place-items-center" style={{ color: active ? PAL.accent : PAL.ink3 }}>
+          {icon}
+        </span>
+      ) : (
+        <span className="w-5" />
+      )}
+      <span
+        className="flex-1 truncate font-semibold serif-text text-[13.5px]"
+        style={{
+          textDecoration: active ? "underline" : "none",
+          textDecorationThickness: "1px",
+          textUnderlineOffset: "4px",
+          textDecorationColor: PAL.accent,
+        }}
+      >
+        {label}
+      </span>
+      {locked && (
+        <span className="text-[9px] font-semibold uppercase tracking-[0.16em]" style={{ color: PAL.gold }}>🔒</span>
+      )}
+      {badge && (
+        <span className="text-[9px] font-semibold uppercase tracking-[0.16em]" style={{ color: PAL.accent }}>
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+}
+
+/* ───────────────────────────────────────────────────────────────── */
+/* ── Oracle Chat — dedicated full-height conversation panel ────── */
+/* ───────────────────────────────────────────────────────────────── */
+function OracleChatPanel({
+  messages, isTyping, input, setInput, autoResize,
+  handleSendMessage, handleClearChat, handleChipClick, suggestionChips,
+  chatContainerRef, messagesEndRef, textareaRef,
+  displayName, activeProfileName, selfProfile, activeProfileId,
+  isOutOfCredits, profile, setShowTopup, onBackToHome, onOpenMenu,
+}: {
+  messages: { role: "user" | "assistant" | "system"; content: string; marker?: string }[];
+  isTyping: boolean;
+  input: string;
+  setInput: (s: string) => void;
+  autoResize: () => void;
+  handleSendMessage: (e?: React.FormEvent) => Promise<void> | void;
+  handleClearChat: () => void;
+  handleChipClick: (s: string) => void;
+  suggestionChips: string[];
+  chatContainerRef: React.RefObject<HTMLDivElement | null>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  displayName: string;
+  activeProfileName: string;
+  selfProfile: any;
+  activeProfileId: string;
+  isOutOfCredits: boolean;
+  profile: any;
+  setShowTopup: (b: boolean) => void;
+  onBackToHome: () => void;
+  onOpenMenu: () => void;
+}) {
+  const composerDisabled = isTyping || (!selfProfile && activeProfileId === "self");
+  const placeholder = (!selfProfile && activeProfileId === "self")
+    ? "Setup your profile to begin…"
+    : "Ask the Oracle anything about your chart…";
+
+  return (
+    <div
+      className="
+        flex flex-col flex-1 min-h-0
+        fixed inset-0 z-40
+        md:static md:z-auto
+        md:rounded-sm md:m-6 lg:m-8 md:overflow-hidden md:shadow-[0_2px_24px_-8px_rgba(15,23,42,0.10)]
+      "
+      style={{ background: PAL.paper, border: undefined }}
+    >
+      {/* Desktop: bordered card */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (min-width: 768px) {
+          .oracle-card-frame { border: 1px solid ${PAL.border2}; }
+        }
+      `}} />
+
+      {/* ── Header ─────────────────────────────────────────── */}
+      <header
+        className="oracle-card-frame flex items-center gap-3 px-4 md:px-7 lg:px-9 h-14 md:h-16 flex-shrink-0 sticky top-0 z-10"
+        style={{ background: PAL.paper, borderBottom: `1px solid ${PAL.border2}` }}
+      >
+        {/* Mobile back */}
+        <button
+          onClick={onBackToHome}
+          className="md:hidden h-9 w-9 grid place-items-center rounded transition-colors hover:bg-black/5"
+          aria-label="Back to home"
+        >
+          <ArrowLeft size={18} style={{ color: PAL.ink }} />
+        </button>
+
+        {/* Avatar + title */}
+        <div className="flex items-center gap-3 min-w-0">
+          <span
+            className="w-10 h-10 md:w-11 md:h-11 rounded-sm grid place-items-center flex-shrink-0 shadow-md"
+            style={{ background: PAL.ink }}
+          >
+            <Sparkles size={16} className="text-white" />
+          </span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="serif-display text-[18px] md:text-[22px] font-semibold leading-none tracking-tight truncate" style={{ color: PAL.ink }}>
+                Quantum Oracle
+              </h1>
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] truncate" style={{ color: PAL.ink2 }}>
+                Live · Reading {activeProfileName}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1" />
+
+        {/* Clear */}
+        <button
+          onClick={handleClearChat}
+          className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-sm text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors hover:bg-black/[0.04]"
+          style={{ color: PAL.ink2, border: `1px solid ${PAL.border}` }}
+          title="Clear chat history"
+        >
+          <Trash2 size={12} /> Clear
+        </button>
+        <button
+          onClick={handleClearChat}
+          className="sm:hidden h-9 w-9 grid place-items-center rounded transition-colors hover:bg-black/5"
+          aria-label="Clear chat history"
+        >
+          <Trash2 size={15} style={{ color: PAL.ink2 }} />
+        </button>
+
+        {/* Mobile menu */}
+        <button
+          onClick={onOpenMenu}
+          className="md:hidden h-9 w-9 grid place-items-center rounded transition-colors hover:bg-black/5"
+          aria-label="Open menu"
+        >
+          <Menu size={17} style={{ color: PAL.ink }} />
+        </button>
+      </header>
+
+      {/* ── Messages area ──────────────────────────────────── */}
+      <div
+        data-lenis-prevent
+        ref={chatContainerRef}
+        className="oracle-card-frame flex-1 overflow-y-auto custom-scroll-light"
+        style={{ borderLeft: undefined, borderRight: undefined }}
+      >
+        <div className="max-w-[760px] mx-auto px-5 md:px-8 py-7 md:py-10 space-y-7 md:space-y-9">
+          {messages.length <= 1 && !isTyping && (
+            <div className="pb-2">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+                Begin a reading
+              </div>
+              <h2 className="serif-display text-[28px] md:text-[40px] font-semibold leading-[1.05] tracking-tight" style={{ color: PAL.ink }}>
+                Hello, <span style={{ color: PAL.accent }}>{displayName.split(" ")[0]}</span>.
+                <br className="hidden md:block" />
+                What would you like the Oracle to read?
+              </h2>
+              <p className="serif-text text-[15px] md:text-[16.5px] mt-3 leading-snug" style={{ color: PAL.ink2 }}>
+                Ask anything about your chart, timing windows, karmic patterns, relationships, or career. The Oracle cites D1 through D60 with every answer.
+              </p>
+            </div>
+          )}
+
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`flex animate-fade-in ${msg.role === "system" ? "justify-center" : msg.role === "user" ? "justify-end" : "items-start gap-3 md:gap-4"}`}
+            >
+              {msg.role === "system" ? (
+                <div className="rounded-sm py-1.5 px-4 text-[12.5px] serif-text"
+                  style={{ background: PAL.paper2, color: PAL.ink2, border: `1px solid ${PAL.border2}` }}
+                >
+                  {msg.content}
+                </div>
+              ) : msg.role === "user" ? (
+                <div
+                  className="max-w-[88%] md:max-w-[80%] rounded-sm rounded-tr-none px-5 py-3.5 md:px-6 md:py-4 text-white shadow-sm"
+                  style={{ background: PAL.ink }}
+                >
+                  <p className="text-[15.5px] md:text-[16px] leading-relaxed font-medium whitespace-pre-wrap">{msg.content}</p>
+                </div>
+              ) : (
+                <>
+                  <span
+                    className="w-10 h-10 md:w-11 md:h-11 rounded-sm grid place-items-center flex-shrink-0 mt-0.5 shadow-sm"
+                    style={{ background: PAL.ink }}
+                  >
+                    <Sparkles size={16} className="text-white" />
+                  </span>
+                  <div className="flex-1 min-w-0 max-w-full">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: PAL.accent }}>
+                        Oracle
+                      </span>
+                      {msg.marker && (
+                        <span
+                          className="text-[9px] font-semibold tracking-[0.18em] px-1.5 py-0.5 rounded-sm"
+                          style={{ color: PAL.ink, border: `1px solid ${PAL.border}`, background: PAL.paper2 }}
+                        >
+                          ✦ Verified
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className="prose-editorial rounded-sm px-5 py-4 md:px-6 md:py-5"
+                      style={{
+                        background: PAL.paper2,
+                        border: `1px solid ${PAL.border2}`,
+                      }}
+                    >
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+
+          {isTyping && (
+            <div className="flex gap-3 md:gap-4 items-start animate-fade-in">
+              <span
+                className="w-10 h-10 md:w-11 md:h-11 rounded-sm grid place-items-center flex-shrink-0 mt-0.5 shadow-sm"
+                style={{ background: PAL.ink }}
+              >
+                <Sparkles size={16} className="text-white" />
+              </span>
+              <div
+                className="flex-1 min-w-0 rounded-sm p-5 md:p-6"
+                style={{ background: PAL.paper2, border: `1px solid ${PAL.border2}` }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping" style={{ background: PAL.accent }} />
+                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: PAL.accent }} />
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: PAL.accent }}>
+                    Live cosmic computation
+                  </span>
+                </div>
+                <p className="serif-text text-[16px] font-semibold mb-1" style={{ color: PAL.ink }}>
+                  Unlocking your blueprint, {displayName.split(" ")[0]}…
+                </p>
+                <p className="serif-text text-[13px] leading-snug" style={{ color: PAL.ink2 }}>
+                  Cross-referencing all 16 divisional charts, active Dasha layers, karmic echoes &amp; live transits.
+                </p>
+                <div className="mt-4 h-[2px] rounded-full overflow-hidden" style={{ background: PAL.border2 }}>
+                  <div
+                    className="h-full rounded-full qk-progress-bar"
+                    style={{ background: `linear-gradient(90deg, ${PAL.accent}, ${PAL.gold}, ${PAL.accent})` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} className="h-2" />
+        </div>
+      </div>
+
+      {/* ── Composer ───────────────────────────────────────── */}
+      <div
+        className="oracle-card-frame flex-shrink-0 px-3 md:px-6 lg:px-8 pt-3 md:pt-4 pb-[max(env(safe-area-inset-bottom),12px)] md:pb-5"
+        style={{ background: PAL.paper, borderTop: `1px solid ${PAL.border2}` }}
+      >
+        <div className="max-w-[760px] mx-auto">
+          {/* Suggestion chips — hidden once user starts typing on mobile */}
+          {!isOutOfCredits && suggestionChips.length > 0 && (
+            <div className="mb-2.5 md:mb-3 flex gap-2 overflow-x-auto no-scrollbar pb-1">
+              {suggestionChips.map((chip, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleChipClick(chip)}
+                  className="flex-shrink-0 serif-text text-[12.5px] md:text-[13px] px-3.5 py-1.5 rounded-sm transition-colors hover:bg-black/[0.04] whitespace-nowrap"
+                  style={{ background: PAL.paper2, color: PAL.ink, border: `1px solid ${PAL.border2}` }}
+                >
+                  "{chip}"
+                </button>
+              ))}
+            </div>
+          )}
+
+          {isOutOfCredits ? (
+            <div
+              className="rounded-sm p-4 md:p-5 flex flex-col sm:flex-row items-center gap-3"
+              style={{ background: "rgba(165,124,42,0.08)", border: `1px solid ${PAL.border}` }}
+            >
+              <div className="flex-1 text-center sm:text-left">
+                <div className="text-[13px] font-semibold" style={{ color: PAL.ink }}>You've used all your credits</div>
+                <div className="serif-text text-[12.5px] mt-0.5" style={{ color: PAL.ink2 }}>
+                  Past chats remain accessible. Top up to generate new readings.
+                </div>
+              </div>
+              {(profile?.plan_type === "plan2" || profile?.plan_type === "promo") && (
+                <button
+                  onClick={() => setShowTopup(true)}
+                  className="flex-shrink-0 h-10 px-5 rounded-sm text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+                  style={{ background: PAL.accent }}
+                >
+                  Top up now
+                </button>
+              )}
+            </div>
+          ) : (
+            <form onSubmit={handleSendMessage} className="flex items-end gap-2 md:gap-3">
+              <div
+                className="flex-1 flex items-end rounded-sm overflow-hidden focus-within:ring-2 focus-within:ring-black/10 transition-all shadow-sm"
+                style={{ background: PAL.paper2, border: `1px solid ${PAL.border}` }}
+              >
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
+                  value={input}
+                  onChange={e => { setInput(e.target.value); autoResize(); }}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder={placeholder}
+                  className="w-full bg-transparent px-4 md:px-5 py-3.5 md:py-4 focus:outline-none text-[15.5px] md:text-[16px] serif-text resize-none leading-relaxed"
+                  style={{ maxHeight: "200px", overflowY: "auto", color: PAL.ink }}
+                  data-lenis-prevent="true"
+                  disabled={composerDisabled}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!input.trim() || composerDisabled}
+                className="h-12 md:h-[52px] w-12 md:w-auto md:px-5 rounded-sm text-white inline-flex items-center justify-center gap-1.5 transition-opacity hover:opacity-90 disabled:opacity-40 flex-shrink-0 shadow-sm"
+                style={{ background: PAL.accent }}
+                aria-label="Send"
+              >
+                <Send size={16} />
+                <span className="hidden md:inline text-[13px] font-semibold">Send</span>
+              </button>
+            </form>
+          )}
+          <div className="text-center mt-2 md:mt-3">
+            <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: PAL.ink3 }}>
+              <span className="hidden sm:inline">⌘ + Return to send · </span>
+              AI-generated insights · Not medical advice
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

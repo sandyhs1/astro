@@ -1,29 +1,30 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PAL } from "./destiny-theme";
 
 const LOADING_LINES = [
-  "Reading your exact Nakshatra from planetary positions...",
-  "Calculating your Moon's precise degree and Pada...",
-  "Decoding your Rising sign from your birth time...",
-  "Synthesizing your personalized intelligence...",
-  "Writing your brutal, legit Quantum Karma analysis...",
+  "Reading your exact Nakshatra from planetary positions…",
+  "Calculating your Moon's precise degree and Pada…",
+  "Decoding your Rising sign from your birth time…",
+  "Synthesising your personalised intelligence…",
+  "Writing your Quantum Karma analysis…",
 ];
 
 const PDF_BASIC_LINES = [
-  "Mapping your planetary positions across all 12 houses...",
-  "Computing your Vimshottari Dasha timeline...",
-  "Encoding your Ascendant and Moon Sign data...",
-  "Applying Quantum Karma formatting...",
-  "Removing gemstone content...",
+  "Mapping your planetary positions across all 12 houses…",
+  "Computing your Vimshottari Dasha timeline…",
+  "Encoding your Ascendant and Moon Sign data…",
+  "Applying Quantum Karma formatting…",
+  "Removing gemstone content…",
 ];
 
 const PDF_PRO_LINES = [
-  "Pulling all 12 divisional charts (D1 through D12)...",
-  "Computing Char Dasha and Vimshottari layers...",
-  "Analyzing Ashtakavarga matrices...",
-  "Encoding 68 pages of hyper-personalized intelligence...",
-  "Quantum Karma branding applied. Finalizing...",
+  "Pulling all 12 divisional charts (D1 through D12)…",
+  "Computing Char Dasha and Vimshottari layers…",
+  "Analyzing Ashtakavarga matrices…",
+  "Encoding 68 pages of hyper-personalised intelligence…",
+  "Quantum Karma branding applied. Finalising…",
 ];
 
 interface NakReport {
@@ -51,10 +52,7 @@ export default function ReportsPanel({ profileId }: { profileId: string }) {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [status]);
 
-  useEffect(() => {
-    if (!profileId) return;
-    checkSaved();
-  }, [profileId]);
+  useEffect(() => { if (profileId) checkSaved(); }, [profileId]);
 
   async function checkSaved() {
     setStatus("loading");
@@ -70,8 +68,7 @@ export default function ReportsPanel({ profileId }: { profileId: string }) {
     setStatus("loading"); setErrorMsg(""); setLoadingLine(0);
     try {
       const res = await fetch("/api/nakshatra-ascendant", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileId }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profileId }),
       });
       const data = await res.json();
       if (!res.ok) { setErrorMsg(data.error || "Failed"); setStatus("error"); return; }
@@ -80,40 +77,56 @@ export default function ReportsPanel({ profileId }: { profileId: string }) {
   }
 
   const tabs = [
-    { id: "pdf",       label: "Horoscope PDFs",   icon: "📄" },
-    { id: "nakshatra", label: "Nakshatra",         icon: "🌟" },
-    { id: "ascendant", label: "Ascendant",         icon: "⬆️" },
+    { id: "pdf",       label: "Horoscope PDFs", symbol: "❑" },
+    { id: "nakshatra", label: "Nakshatra",      symbol: "✦" },
+    { id: "ascendant", label: "Ascendant",      symbol: "↑" },
   ] as const;
 
   return (
-    <div data-lenis-prevent className="flex flex-col h-full bg-white overflow-y-auto w-full">
+    <div data-lenis-prevent className="flex flex-col w-full" style={{ background: PAL.paper, color: PAL.ink }}>
       {/* Header */}
-      <div className="bg-white border-b border-slate-100 px-6 md:px-10 py-5 sticky top-0 z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xl shadow-lg shadow-indigo-500/20">📋</div>
+      <div
+        className="px-5 md:px-7 lg:px-9 py-4 md:py-5 sticky top-0 z-10 backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        style={{ background: "rgba(250,247,242,0.92)", borderBottom: `1px solid ${PAL.border2}` }}
+      >
+        <div className="flex items-baseline gap-3">
+          <span className="serif-display italic text-[18px] md:text-[22px]" style={{ color: PAL.accent }}>📜</span>
           <div>
-            <h2 className="text-lg font-black text-slate-800 tracking-tight">Intelligence Reports</h2>
-            <p className="text-xs text-slate-400 font-medium">Birth chart · Nakshatra · Rising sign</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.accent }}>
+              Reports
+            </p>
+            <h2 className="serif-display text-[18px] md:text-[22px] font-semibold leading-none tracking-tight mt-0.5" style={{ color: PAL.ink }}>
+              Intelligence reports
+            </h2>
+            <p className="serif-text italic text-[11.5px] mt-1" style={{ color: PAL.ink3 }}>
+              Birth chart · Nakshatra · Rising sign
+            </p>
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
           {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-bold transition-all border ${
-                tab === t.id ? "bg-indigo-600 text-white border-indigo-600" : "bg-slate-50 text-slate-500 border-slate-200 hover:border-indigo-300"
-              }`}>
-              <span>{t.icon}</span> {t.label}
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className="serif-text text-[12.5px] font-semibold inline-flex items-center gap-1.5 px-3.5 py-2 rounded-sm transition-colors"
+              style={
+                tab === t.id
+                  ? { background: PAL.ink, color: PAL.paper, border: `1px solid ${PAL.ink}` }
+                  : { background: "transparent", color: PAL.ink2, border: `1px solid ${PAL.border}` }
+              }
+            >
+              <span>{t.symbol}</span> {t.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 w-full">
         <AnimatePresence mode="wait">
           {tab === "pdf" && (
             <motion.div key="pdf" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="px-6 md:px-10 lg:px-16 py-10">
+              className="px-4 md:px-7 lg:px-9 py-6 md:py-8"
+            >
               <PdfSection profileId={profileId} />
             </motion.div>
           )}
@@ -121,41 +134,71 @@ export default function ReportsPanel({ profileId }: { profileId: string }) {
           {(tab === "nakshatra" || tab === "ascendant") && (
             <motion.div key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               {status === "idle" && (
-                <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
-                  <div className="text-6xl mb-6">{tab === "nakshatra" ? "🌟" : "⬆️"}</div>
-                  <h3 className="text-2xl font-black text-slate-800 mb-3">
-                    {tab === "nakshatra" ? "Decode Your Nakshatra" : "Decode Your Rising Sign"}
+                <div className="flex flex-col items-center justify-center px-6 py-14 md:py-20 text-center">
+                  <div
+                    className="w-24 h-24 rounded-sm grid place-items-center serif-display text-[42px] mb-7"
+                    style={{ background: PAL.paper2, color: PAL.accent, border: `1px solid ${PAL.border}` }}
+                  >
+                    {tab === "nakshatra" ? "✦" : "↑"}
+                  </div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+                    Begin · {tab === "nakshatra" ? "nakshatra" : "ascendant"}
+                  </p>
+                  <h3 className="serif-display text-[26px] md:text-[34px] font-semibold tracking-tight leading-tight" style={{ color: PAL.ink }}>
+                    {tab === "nakshatra" ? "Decode your nakshatra." : "Decode your rising sign."}
                   </h3>
-                  <p className="text-slate-500 text-sm leading-relaxed mb-8 max-w-md">
+                  <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed mt-3 max-w-md" style={{ color: PAL.ink2 }}>
                     {tab === "nakshatra"
-                      ? "We extract your exact Moon Nakshatra from the planetary engine and synthesize a brutal, personalized reading — career, relationships, shadow side, and actionable plan."
+                      ? "We extract your exact Moon Nakshatra and synthesise a brutal, personalised reading — career, relationships, shadow side, and an actionable plan."
                       : "Your Ascendant is the mask the world sees and the soul path you're walking. We decode it from your exact birth time and rewrite the generic text into something real."}
                   </p>
-                  <button onClick={generate} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 transition-all hover:scale-105">
-                    Generate Report
+                  <button
+                    onClick={generate}
+                    className="mt-7 serif-text text-[13px] font-semibold px-6 py-3 rounded-sm text-white transition-opacity hover:opacity-90"
+                    style={{ background: PAL.accent }}
+                  >
+                    Generate report
                   </button>
                 </div>
               )}
 
               {status === "loading" && (
-                <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
-                  <div className="relative w-20 h-20 mb-8">
-                    <div className="absolute inset-0 border-4 border-slate-100 rounded-full" />
-                    <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin" />
-                    <div className="absolute inset-0 flex items-center justify-center text-2xl animate-pulse">
-                      {tab === "nakshatra" ? "🌟" : "⬆️"}
-                    </div>
+                <div className="flex flex-col items-center justify-center px-6 py-14 md:py-20 text-center">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+                    Live computation
+                  </p>
+                  <h3 className="serif-display text-[24px] md:text-[28px] font-semibold tracking-tight" style={{ color: PAL.ink }}>
+                    Reading your exact configuration…
+                  </h3>
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={loadingLine}
+                      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                      className="serif-text italic text-[13.5px] mt-3 max-w-sm" style={{ color: PAL.ink2 }}
+                    >
+                      {LOADING_LINES[loadingLine]}
+                    </motion.p>
+                  </AnimatePresence>
+                  <div className="mt-6 inline-flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent }} />
+                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.15s" }} />
+                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.3s" }} />
                   </div>
-                  <h3 className="text-xl font-black text-slate-800 mb-2">Live Computation Running</h3>
-                  <p className="text-indigo-600 text-sm font-bold text-center max-w-sm">{LOADING_LINES[loadingLine]}</p>
                 </div>
               )}
 
               {status === "error" && (
-                <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
-                  <div className="text-5xl mb-4">⚠️</div>
-                  <p className="text-slate-600 text-sm mb-6">{errorMsg}</p>
-                  <button onClick={generate} className="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold">Try Again</button>
+                <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+                  <div className="serif-display text-[42px]" style={{ color: PAL.rose }}>⚠︎</div>
+                  <h3 className="serif-display text-[20px] font-semibold mt-3" style={{ color: PAL.ink }}>Generation failed</h3>
+                  <p className="serif-text text-[13.5px] italic mt-1" style={{ color: PAL.ink2 }}>{errorMsg}</p>
+                  <button
+                    onClick={generate}
+                    className="mt-5 serif-text text-[13px] font-semibold px-5 py-2.5 rounded-sm text-white transition-opacity hover:opacity-90"
+                    style={{ background: PAL.ink }}
+                  >
+                    Try again
+                  </button>
                 </div>
               )}
 
@@ -173,146 +216,199 @@ export default function ReportsPanel({ profileId }: { profileId: string }) {
   );
 }
 
-// ─── Nakshatra View ────────────────────────────────────────────────────────────
+/* ── Nakshatra ───────────────────────────────────────────────────── */
 function NakshatraView({ data }: { data: NakReport }) {
   return (
     <div className="w-full">
       {/* Hero */}
-      <div className="px-6 md:px-10 lg:px-16 pt-10 pb-8 border-b border-slate-100">
-        <div className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-2">Moon Nakshatra Blueprint</div>
+      <header className="px-4 md:px-7 lg:px-9 py-7 md:py-9" style={{ borderBottom: `1px solid ${PAL.border}` }}>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+          Moon nakshatra blueprint
+        </p>
         <div className="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4 mb-2">
-          <h3 className="text-4xl md:text-5xl font-black text-slate-900">{data.name}</h3>
-          {data.pada && <span className="text-xl md:text-2xl font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg w-fit">Pada {data.pada}</span>}
+          <h3 className="serif-display text-[42px] md:text-[56px] font-semibold tracking-tight leading-[0.95]" style={{ color: PAL.ink }}>
+            {data.name}
+          </h3>
+          {data.pada && (
+            <span
+              className="serif-display text-[18px] md:text-[20px] font-semibold w-fit px-3 py-1 rounded-sm"
+              style={{ color: PAL.accent, background: PAL.paper2, border: `1px solid ${PAL.border}` }}
+            >
+              Pada {data.pada}
+            </span>
+          )}
         </div>
         {data.rulingPlanet && (
-          <p className="text-slate-400 text-sm font-medium mb-4">Ruled by <span className="font-black text-slate-700">{data.rulingPlanet}</span></p>
+          <p className="serif-text text-[14px] mt-2" style={{ color: PAL.ink3 }}>
+            Ruled by <strong style={{ color: PAL.ink }}>{data.rulingPlanet}</strong>
+          </p>
         )}
-        <p className="text-xl font-bold text-indigo-600 italic max-w-2xl">"{data.tagline}"</p>
-      </div>
+        <p className="serif-display italic text-[18px] md:text-[22px] mt-4 max-w-2xl" style={{ color: PAL.accent }}>
+          &ldquo;{data.tagline}&rdquo;
+        </p>
+      </header>
 
-      {/* Shadow Side */}
-      <div className="px-6 md:px-10 lg:px-16 py-8 border-b border-slate-100 bg-red-50/50">
-        <div className="text-xs font-black text-red-500 uppercase tracking-widest mb-3">⚠️ Shadow Side</div>
-        <p className="text-slate-700 text-base leading-relaxed font-medium max-w-4xl">{data.shadowSide}</p>
-      </div>
+      <Section eyebrow="Shadow side" toneBg={PAL.roseBg} toneInk={PAL.rose}>
+        <p className="serif-text text-[15px] md:text-[16px] leading-relaxed max-w-3xl" style={{ color: PAL.ink }}>
+          {data.shadowSide}
+        </p>
+      </Section>
 
-      {/* Gender Manifestations */}
-      <div className="px-6 md:px-10 lg:px-16 py-8 border-b border-slate-100 bg-slate-50">
-        <div className="text-xs font-black text-indigo-600 uppercase tracking-widest mb-6">🧬 Energy Manifestation by Gender</div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">♂</span>
-              <h4 className="font-black text-slate-800">Male Manifestation</h4>
-            </div>
-            <p className="text-slate-600 text-sm leading-relaxed">{data.maleTraits}</p>
+      <Section eyebrow="Energy manifestation by gender" toneBg={PAL.paper2} toneInk={PAL.accent}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl">
+          <div className="rounded-sm p-5 md:p-6"
+            style={{ background: PAL.paper, border: `1px solid ${PAL.border}` }}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+              ♂ Male manifestation
+            </p>
+            <p className="serif-text text-[14px] md:text-[15px] leading-relaxed" style={{ color: PAL.ink2 }}>
+              {data.maleTraits}
+            </p>
           </div>
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">♀</span>
-              <h4 className="font-black text-slate-800">Female Manifestation</h4>
-            </div>
-            <p className="text-slate-600 text-sm leading-relaxed">{data.femaleTraits}</p>
+          <div className="rounded-sm p-5 md:p-6"
+            style={{ background: PAL.paper, border: `1px solid ${PAL.border}` }}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+              ♀ Female manifestation
+            </p>
+            <p className="serif-text text-[14px] md:text-[15px] leading-relaxed" style={{ color: PAL.ink2 }}>
+              {data.femaleTraits}
+            </p>
           </div>
         </div>
-      </div>
+      </Section>
 
-      {/* Strengths */}
-      <div className="px-6 md:px-10 lg:px-16 py-8 border-b border-slate-100">
-        <div className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-5">✦ Core Strengths</div>
-        <div className="space-y-3 max-w-4xl">
+      <Section eyebrow="Core strengths">
+        <ul className="space-y-3 max-w-3xl">
           {data.strengths?.map((s, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-black flex-shrink-0 mt-0.5">{i + 1}</div>
-              <p className="text-slate-700 text-[15px] leading-relaxed">{s}</p>
-            </div>
+            <li key={i} className="flex items-start gap-4">
+              <span className="serif-display italic text-[14px] tabular-nums w-7 flex-shrink-0 mt-1" style={{ color: PAL.sage }}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed" style={{ color: PAL.ink2 }}>
+                {s}
+              </p>
+            </li>
           ))}
-        </div>
-      </div>
+        </ul>
+      </Section>
 
-      {/* Career */}
-      <div className="px-6 md:px-10 lg:px-16 py-8 border-b border-slate-100">
-        <div className="text-xs font-black text-amber-600 uppercase tracking-widest mb-3">💼 Career & Path</div>
-        <p className="text-slate-700 text-base leading-relaxed max-w-4xl">{data.career}</p>
-      </div>
+      <Section eyebrow="Career & path">
+        <p className="serif-text text-[15px] md:text-[16px] leading-relaxed max-w-3xl" style={{ color: PAL.ink }}>
+          {data.career}
+        </p>
+      </Section>
 
-      {/* Relationships */}
-      <div className="px-6 md:px-10 lg:px-16 py-8 border-b border-slate-100">
-        <div className="text-xs font-black text-pink-600 uppercase tracking-widest mb-3">💞 Love & Relationships</div>
-        <p className="text-slate-700 text-base leading-relaxed max-w-4xl">{data.relationships}</p>
-      </div>
+      <Section eyebrow="Love & relationships">
+        <p className="serif-text text-[15px] md:text-[16px] leading-relaxed max-w-3xl" style={{ color: PAL.ink }}>
+          {data.relationships}
+        </p>
+      </Section>
 
-      {/* Action Plan */}
-      <div className="px-6 md:px-10 lg:px-16 py-10">
-        <div className="text-xs font-black text-violet-600 uppercase tracking-widest mb-5">🎯 Your Action Plan</div>
-        <div className="space-y-4 max-w-4xl">
+      <Section eyebrow="Your action plan" last>
+        <ol className="space-y-4 max-w-3xl">
           {data.actionPlan?.map((a, i) => (
-            <div key={i} className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-sm font-black flex-shrink-0">{i + 1}</div>
-              <p className="text-slate-700 text-[15px] leading-relaxed pt-1">{a}</p>
-            </div>
+            <li key={i} className="flex items-start gap-4">
+              <span
+                className="w-8 h-8 rounded-sm grid place-items-center serif-display text-[13px] font-semibold flex-shrink-0"
+                style={{ background: PAL.accent, color: PAL.paper, border: `1px solid ${PAL.accent}` }}
+              >
+                {i + 1}
+              </span>
+              <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed pt-1" style={{ color: PAL.ink2 }}>
+                {a}
+              </p>
+            </li>
           ))}
-        </div>
-      </div>
+        </ol>
+      </Section>
     </div>
   );
 }
 
-// ─── Ascendant View ────────────────────────────────────────────────────────────
+/* ── Ascendant ───────────────────────────────────────────────────── */
 function AscendantView({ data }: { data: AscReport }) {
   return (
     <div className="w-full">
-      {/* Hero */}
-      <div className="px-6 md:px-10 lg:px-16 pt-10 pb-8 border-b border-slate-100">
-        <div className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-2">Your Rising Sign</div>
-        <h3 className="text-4xl md:text-5xl font-black text-slate-900 mb-2">
-          You Rise as{" "}
-          <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">{data.sign}</span>
+      <header className="px-4 md:px-7 lg:px-9 py-7 md:py-9" style={{ borderBottom: `1px solid ${PAL.border}` }}>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+          Your rising sign
+        </p>
+        <h3 className="serif-display text-[36px] md:text-[52px] font-semibold tracking-tight leading-[0.95]" style={{ color: PAL.ink }}>
+          You rise as <span style={{ color: PAL.accent }}>{data.sign}</span>.
         </h3>
-        <p className="text-xl font-bold text-indigo-600 italic max-w-2xl">"{data.tagline}"</p>
-      </div>
+        <p className="serif-display italic text-[18px] md:text-[22px] mt-4 max-w-2xl" style={{ color: PAL.accent }}>
+          &ldquo;{data.tagline}&rdquo;
+        </p>
+      </header>
 
-      {/* First Impression */}
-      <div className="px-6 md:px-10 lg:px-16 py-8 border-b border-slate-100">
-        <div className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">👁️ How Others See You</div>
-        <p className="text-slate-700 text-base leading-relaxed max-w-4xl">{data.firstImpression}</p>
-      </div>
+      <Section eyebrow="How others see you">
+        <p className="serif-text text-[15px] md:text-[16px] leading-relaxed max-w-3xl" style={{ color: PAL.ink }}>
+          {data.firstImpression}
+        </p>
+      </Section>
 
-      {/* Body */}
-      <div className="px-6 md:px-10 lg:px-16 py-8 border-b border-slate-100">
-        <div className="text-xs font-black text-amber-600 uppercase tracking-widest mb-3">⚡ Physical Energy</div>
-        <p className="text-slate-700 text-base leading-relaxed max-w-4xl">{data.body}</p>
-      </div>
+      <Section eyebrow="Physical energy">
+        <p className="serif-text text-[15px] md:text-[16px] leading-relaxed max-w-3xl" style={{ color: PAL.ink }}>
+          {data.body}
+        </p>
+      </Section>
 
-      {/* Life Theme */}
-      <div className="px-6 md:px-10 lg:px-16 py-8 border-b border-slate-100">
-        <div className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-3">🌱 Your Life Theme</div>
-        <p className="text-slate-700 text-base leading-relaxed max-w-4xl">{data.lifeTheme}</p>
-      </div>
+      <Section eyebrow="Your life theme">
+        <p className="serif-text text-[15px] md:text-[16px] leading-relaxed max-w-3xl" style={{ color: PAL.ink }}>
+          {data.lifeTheme}
+        </p>
+      </Section>
 
-      {/* Shadow */}
-      <div className="px-6 md:px-10 lg:px-16 py-8 border-b border-slate-100 bg-red-50/50">
-        <div className="text-xs font-black text-red-500 uppercase tracking-widest mb-3">⚠️ Shadow Side & Ego Trap</div>
-        <p className="text-slate-700 text-base leading-relaxed max-w-4xl">{data.shadowSide}</p>
-      </div>
+      <Section eyebrow="Shadow side & ego trap" toneBg={PAL.roseBg} toneInk={PAL.rose}>
+        <p className="serif-text text-[15px] md:text-[16px] leading-relaxed max-w-3xl" style={{ color: PAL.ink }}>
+          {data.shadowSide}
+        </p>
+      </Section>
 
-      {/* Action Plan */}
-      <div className="px-6 md:px-10 lg:px-16 py-10">
-        <div className="text-xs font-black text-violet-600 uppercase tracking-widest mb-5">🎯 Your Action Plan</div>
-        <div className="space-y-4 max-w-4xl">
+      <Section eyebrow="Your action plan" last>
+        <ol className="space-y-4 max-w-3xl">
           {data.actionPlan?.map((a, i) => (
-            <div key={i} className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-sm font-black flex-shrink-0">{i + 1}</div>
-              <p className="text-slate-700 text-[15px] leading-relaxed pt-1">{a}</p>
-            </div>
+            <li key={i} className="flex items-start gap-4">
+              <span
+                className="w-8 h-8 rounded-sm grid place-items-center serif-display text-[13px] font-semibold flex-shrink-0"
+                style={{ background: PAL.accent, color: PAL.paper, border: `1px solid ${PAL.accent}` }}
+              >
+                {i + 1}
+              </span>
+              <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed pt-1" style={{ color: PAL.ink2 }}>
+                {a}
+              </p>
+            </li>
           ))}
-        </div>
-      </div>
+        </ol>
+      </Section>
     </div>
   );
 }
 
-// ─── PDF Section ──────────────────────────────────────────────────────────────
+function Section({ eyebrow, children, toneBg, toneInk, last = false }: {
+  eyebrow: string; children: React.ReactNode;
+  toneBg?: string; toneInk?: string; last?: boolean;
+}) {
+  return (
+    <section
+      className="px-4 md:px-7 lg:px-9 py-7 md:py-9"
+      style={{
+        background: toneBg ?? "transparent",
+        borderBottom: last ? "none" : `1px solid ${PAL.border}`,
+      }}
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3" style={{ color: toneInk ?? PAL.accent }}>
+        {eyebrow}
+      </p>
+      {children}
+    </section>
+  );
+}
+
+/* ── PDF section ─────────────────────────────────────────────────── */
 function PdfSection({ profileId }: { profileId: string }) {
   const [basicStatus, setBasicStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [proStatus, setProStatus] = useState<"idle" | "checking" | "locked" | "unlocking" | "ready" | "error">("checking");
@@ -373,95 +469,175 @@ function PdfSection({ profileId }: { profileId: string }) {
   }
 
   return (
-    <div className="space-y-16 max-w-3xl">
-      <div>
-        <div className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-3">Your Reports</div>
-        <h3 className="text-3xl font-black text-slate-900 mb-2">Full Vedic diagnosis.<br /><span className="text-indigo-600">Packaged and permanent.</span></h3>
-        <p className="text-slate-500 text-sm leading-relaxed">Generated once, stored securely, downloadable forever. No repeat charges. Zero gemstone recommendations — ever.</p>
-      </div>
+    <div className="space-y-10 max-w-3xl">
+      <header>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3" style={{ color: PAL.accent }}>
+          Your reports
+        </p>
+        <h3 className="serif-display text-[28px] md:text-[36px] font-semibold tracking-tight leading-tight" style={{ color: PAL.ink }}>
+          Full Vedic diagnosis.
+          <br />
+          <span style={{ color: PAL.accent }}>Packaged and permanent.</span>
+        </h3>
+        <p className="serif-text text-[14.5px] md:text-[15px] leading-relaxed mt-3 max-w-2xl" style={{ color: PAL.ink2 }}>
+          Generated once, stored securely, downloadable forever. No repeat charges. Zero gemstone recommendations — ever.
+        </p>
+      </header>
 
       {/* Basic */}
-      <div>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-px flex-1 bg-slate-100" />
-          <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Free Report</span>
-          <div className="h-px flex-1 bg-slate-100" />
-        </div>
-        <div className="flex items-start gap-4 mb-5">
-          <div className="text-4xl">📘</div>
+      <section>
+        <Divider label="Free report" />
+        <div className="flex items-start gap-4 mb-4">
+          <span
+            className="w-12 h-12 rounded-sm grid place-items-center serif-display text-[20px] flex-shrink-0"
+            style={{ background: PAL.sageBg, color: PAL.sage, border: `1px solid #C7D6BB` }}
+          >
+            ❑
+          </span>
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h4 className="text-xl font-black text-slate-800">Core Horoscope Report</h4>
-              <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">FREE FOREVER</span>
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <h4 className="serif-display text-[18px] md:text-[20px] font-semibold tracking-tight" style={{ color: PAL.ink }}>
+                Core horoscope report
+              </h4>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm"
+                style={{ color: PAL.sage, background: PAL.sageBg, border: `1px solid #C7D6BB` }}
+              >
+                Free forever
+              </span>
             </div>
-            <p className="text-slate-500 text-sm leading-relaxed">A 20+ page deep-dive into your planetary architecture. Lagna, Moon sign, Dasha timing — formatted as a branded Quantum Karma PDF.</p>
+            <p className="serif-text text-[14px] leading-relaxed" style={{ color: PAL.ink2 }}>
+              A 20+ page deep-dive into your planetary architecture. Lagna, Moon sign, Dasha timing — formatted as a branded Quantum Karma PDF.
+            </p>
           </div>
         </div>
+
         {basicStatus === "loading" && (
-          <div className="flex items-center gap-2 text-indigo-600 text-xs font-bold mb-4">
-            <div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+          <p className="serif-text italic text-[12.5px] mt-2 mb-3 inline-flex items-center gap-2" style={{ color: PAL.accent }}>
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent }} />
             {PDF_BASIC_LINES[basicLine]}
-          </div>
+          </p>
         )}
-        {basicError && <p className="text-red-500 text-sm mb-4">{basicError}</p>}
-        <div className="flex items-center gap-3 flex-wrap">
-          <button onClick={() => handleBasic(false)} disabled={basicStatus === "loading"}
-            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-all ${
-              basicStatus === "loading" ? "bg-slate-100 text-slate-400 cursor-not-allowed" :
-              basicStatus === "ready" ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-md" :
-              "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:scale-[1.02]"
-            }`}>
-            {basicStatus === "loading" ? "⏳ Generating..." : basicStatus === "ready" ? "⬇️ Download Again" : "⬇️ Download Free Report"}
+        {basicError && (
+          <p className="serif-text text-[13px] mt-2 mb-3 px-3 py-2 rounded-sm"
+            style={{ background: PAL.roseBg, color: PAL.rose, border: `1px solid #E5BFC1` }}
+          >
+            {basicError}
+          </p>
+        )}
+
+        <div className="flex items-center gap-2.5 flex-wrap mt-3">
+          <button
+            onClick={() => handleBasic(false)}
+            disabled={basicStatus === "loading"}
+            className="serif-text text-[13px] font-semibold px-5 py-2.5 rounded-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={
+              basicStatus === "ready"
+                ? { background: PAL.sage, color: PAL.paper, border: `1px solid ${PAL.sage}` }
+                : { background: PAL.accent, color: PAL.paper, border: `1px solid ${PAL.accent}` }
+            }
+          >
+            {basicStatus === "loading" ? "Generating…" : basicStatus === "ready" ? "⬇ Download again" : "⬇ Download free report"}
           </button>
-          {/* Regenerate forces fresh branding — appears once report has been generated */}
           {basicStatus === "ready" && (
-            <button onClick={() => handleBasic(true)}
-              className="inline-flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-xs text-slate-500 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 transition-all">
-              🔄 Regenerate
+            <button
+              onClick={() => handleBasic(true)}
+              className="serif-text text-[12px] font-semibold px-4 py-2.5 rounded-sm transition-colors hover:bg-black/[0.04]"
+              style={{ color: PAL.ink2, border: `1px solid ${PAL.border}` }}
+            >
+              ↻ Regenerate
             </button>
           )}
         </div>
-      </div>
+      </section>
 
       {/* Pro */}
-      <div>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-px flex-1 bg-slate-100" />
-          <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Pro — 5 Credits</span>
-          <div className="h-px flex-1 bg-slate-100" />
-        </div>
-        <div className="flex items-start gap-4 mb-5">
-          <div className="text-4xl">📗</div>
+      <section>
+        <Divider label="Pro · 5 credits" tone="gold" />
+        <div className="flex items-start gap-4 mb-4">
+          <span
+            className="w-12 h-12 rounded-sm grid place-items-center serif-display text-[20px] flex-shrink-0"
+            style={{ background: PAL.amberBg, color: PAL.gold, border: `1px solid #E1CE9B` }}
+          >
+            ◆
+          </span>
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h4 className="text-xl font-black text-slate-800">Professional Horoscope Report</h4>
-              {proStatus === "ready" && <span className="text-[10px] font-black bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">✦ UNLOCKED</span>}
-              {proStatus === "locked" && <span className="text-[10px] font-black bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">5 Credits</span>}
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <h4 className="serif-display text-[18px] md:text-[20px] font-semibold tracking-tight" style={{ color: PAL.ink }}>
+                Professional horoscope report
+              </h4>
+              {proStatus === "ready" && (
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm"
+                  style={{ color: "#5A3A8F", background: "#ECE6F4", border: `1px solid #D2C4E5` }}
+                >
+                  ✦ Unlocked
+                </span>
+              )}
+              {proStatus === "locked" && (
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm"
+                  style={{ color: PAL.gold, background: PAL.amberBg, border: `1px solid #E1CE9B` }}
+                >
+                  5 credits
+                </span>
+              )}
             </div>
-            <p className="text-slate-500 text-sm leading-relaxed">The full 68-page diagnostic. All divisional charts, Vimshottari + Char Dasha, 5-year transits, activated yogas. Unlocked once — yours forever.</p>
+            <p className="serif-text text-[14px] leading-relaxed" style={{ color: PAL.ink2 }}>
+              The full 68-page diagnostic. All divisional charts, Vimshottari + Char Dasha, 5-year transits, activated yogas. Unlocked once — yours forever.
+            </p>
           </div>
         </div>
-        {proStatus === "checking" && <div className="flex items-center gap-2 text-slate-400 text-sm mb-4"><div className="w-4 h-4 border-2 border-slate-300 border-t-indigo-500 rounded-full animate-spin" /> Checking access...</div>}
-        {proStatus === "unlocking" && (
-          <div className="flex items-center gap-2 text-purple-600 text-xs font-bold mb-4">
-            <div className="w-4 h-4 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
-            {PDF_PRO_LINES[proLine]}
-          </div>
+
+        {proStatus === "checking" && (
+          <p className="serif-text italic text-[12.5px] inline-flex items-center gap-2" style={{ color: PAL.ink3 }}>
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent }} />
+            Checking access…
+          </p>
         )}
-        {proError && <p className="text-red-500 text-sm mb-4">{proError}</p>}
+        {proStatus === "unlocking" && (
+          <p className="serif-text italic text-[12.5px] mt-2 mb-3 inline-flex items-center gap-2" style={{ color: "#5A3A8F" }}>
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#5A3A8F" }} />
+            {PDF_PRO_LINES[proLine]}
+          </p>
+        )}
+        {proError && (
+          <p className="serif-text text-[13px] mt-2 mb-3 px-3 py-2 rounded-sm"
+            style={{ background: PAL.roseBg, color: PAL.rose, border: `1px solid #E5BFC1` }}
+          >
+            {proError}
+          </p>
+        )}
+
         {proStatus === "locked" && (
-          <button onClick={handleProUnlock} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:scale-[1.02] shadow-md transition-all">
-            ✦ Unlock for 5 Credits
+          <button
+            onClick={handleProUnlock}
+            className="serif-text text-[13px] font-semibold px-5 py-2.5 rounded-sm text-white transition-opacity hover:opacity-90"
+            style={{ background: PAL.ink }}
+          >
+            ✦ Unlock for 5 credits
           </button>
         )}
         {proStatus === "ready" && (
-          <div className="flex items-center gap-3 flex-wrap">
-            <button onClick={() => window.open(proUrl!, "_blank")} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:scale-[1.02] shadow-md transition-all">
-              ⬇️ Download Pro Report (68 Pages)
-            </button>
-          </div>
+          <button
+            onClick={() => window.open(proUrl!, "_blank")}
+            className="serif-text text-[13px] font-semibold px-5 py-2.5 rounded-sm text-white transition-opacity hover:opacity-90"
+            style={{ background: PAL.ink }}
+          >
+            ⬇ Download pro report (68 pages)
+          </button>
         )}
-      </div>
+      </section>
+    </div>
+  );
+}
+
+function Divider({ label, tone = "default" }: { label: string; tone?: "default" | "gold" }) {
+  const ink = tone === "gold" ? PAL.gold : PAL.accent;
+  return (
+    <div className="flex items-center gap-3 mb-5">
+      <div className="flex-1 h-px" style={{ background: PAL.border }} />
+      <span className="text-[10px] font-semibold uppercase tracking-[0.22em] whitespace-nowrap" style={{ color: ink }}>
+        {label}
+      </span>
+      <div className="flex-1 h-px" style={{ background: PAL.border }} />
     </div>
   );
 }

@@ -160,3 +160,32 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+
+/* ── Mobile-test design variations ────────────────────────────────────────── */
+/* Slim subtle scrollbar used by the redesigned dashboard sidebars (V1/V2/V3). */
+.custom-scroll-light::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scroll-light::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scroll-light::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+.custom-scroll-light::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+.custom-scroll-light {
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
+}
+
+
+/* Dark sidebar scrollbar (V4 Operator Grade) */
+.custom-scroll-dark::-webkit-scrollbar { width: 6px; }
+.custom-scroll-dark::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll-dark::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+.custom-scroll-dark::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
+.custom-scroll-dark { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }

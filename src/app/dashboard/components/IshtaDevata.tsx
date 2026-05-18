@@ -4,47 +4,22 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { PAL, PLANET_TONE } from "./destiny-theme";
 
 interface IshtaDevataProps {
   profileId: string;
   profileName: string;
 }
 
-const DEITY_EMOJI: Record<string, string> = {
-  "Sun":     "☀️",
-  "Moon":    "🌙",
-  "Mars":    "🔴",
-  "Mercury": "💚",
-  "Jupiter": "🟡",
-  "Venus":   "🪷",
-  "Saturn":  "🔵",
-  "Rahu":    "🐍",
-  "Ketu":    "🔥",
-};
-
-const DEITY_COLOR: Record<string, { from: string; to: string; accent: string }> = {
-  "Sun":     { from: "#7C2D12", to: "#DC2626", accent: "#FCA5A5" },
-  "Moon":    { from: "#1E3A5F", to: "#3B82F6", accent: "#93C5FD" },
-  "Mars":    { from: "#7C1D1D", to: "#EF4444", accent: "#FCA5A5" },
-  "Mercury": { from: "#064E3B", to: "#10B981", accent: "#6EE7B7" },
-  "Jupiter": { from: "#713F12", to: "#D97706", accent: "#FDE68A" },
-  "Venus":   { from: "#701A75", to: "#C026D3", accent: "#F5D0FE" },
-  "Saturn":  { from: "#1E1B4B", to: "#6366F1", accent: "#C7D2FE" },
-  "Rahu":    { from: "#1C1917", to: "#57534E", accent: "#D6D3D1" },
-  "Ketu":    { from: "#422006", to: "#F97316", accent: "#FED7AA" },
-};
-
-const DEFAULT_COLOR = { from: "#1E1B4B", to: "#6366F1", accent: "#C7D2FE" };
-
 const LOADING_LINES = [
-  "Scanning the Navamsa chart for your Atmakaraka...",
-  "The 12th from Karakamsa is being revealed by the Jaimini Sutram...",
-  "Your soul's chosen deity is being identified with mathematical precision...",
-  "Cross-referencing with Agama Shastra and Puranic sources...",
-  "The Devata's sacred forms are being drawn from scripture...",
-  "Your personal Sadhana prescription is being formulated...",
-  "The soul's liberation path is being decoded from your D-9 chart...",
-  "Ancient Jaimini logic is being applied to your birth matrix...",
+  "Scanning the Navamsa chart for your Atmakaraka…",
+  "The 12th from Karakamsa is being revealed by the Jaimini Sutram…",
+  "Your soul's chosen deity is being identified with mathematical precision…",
+  "Cross-referencing with Agama Shastra and Puranic sources…",
+  "The Devata's sacred forms are being drawn from scripture…",
+  "Your personal Sadhana prescription is being formulated…",
+  "The soul's liberation path is being decoded from your D-9 chart…",
+  "Ancient Jaimini logic is being applied to your birth matrix…",
 ];
 
 export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps) {
@@ -63,452 +38,353 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [status]);
 
-  useEffect(() => {
-    if (!profileId) return;
-    checkForSaved();
-  }, [profileId]);
+  useEffect(() => { if (profileId) checkForSaved(); }, [profileId]);
 
   async function checkForSaved() {
     setStatus("loading");
     try {
       const res = await fetch(`/api/ishta-devata?profileId=${profileId}`);
       const data = await res.json();
-      if (data.found && data.reportData) {
-        setReportData(data.reportData);
-        setStatus("done");
-      } else {
-        setStatus("idle");
-      }
-    } catch {
-      setStatus("idle");
-    }
+      if (data.found && data.reportData) { setReportData(data.reportData); setStatus("done"); }
+      else setStatus("idle");
+    } catch { setStatus("idle"); }
   }
 
   async function generateReport() {
-    setStatus("loading");
-    setErrorMsg("");
-    setLoadingLine(0);
+    setStatus("loading"); setErrorMsg(""); setLoadingLine(0);
     try {
       const res = await fetch("/api/ishta-devata", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileId }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profileId }),
       });
       const data = await res.json();
       if (!res.ok) { setErrorMsg(data.error || "Something went wrong."); setStatus("error"); return; }
-      setReportData(data);
-      setStatus("done");
-    } catch {
-      setErrorMsg("Network error. Please try again.");
-      setStatus("error");
-    }
+      setReportData(data); setStatus("done");
+    } catch { setErrorMsg("Network error. Please try again."); setStatus("error"); }
   }
 
-  const colors = reportData?.twelfthLord ? (DEITY_COLOR[reportData.twelfthLord] ?? DEFAULT_COLOR) : DEFAULT_COLOR;
-  const deityEmoji = reportData?.twelfthLord ? (DEITY_EMOJI[reportData.twelfthLord] ?? "🙏") : "🙏";
+  const planetTone = reportData?.twelfthLord ? (PLANET_TONE[reportData.twelfthLord] || PLANET_TONE.Saturn) : PLANET_TONE.Saturn;
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-slate-50">
-
-      {/* ── Header ── */}
-      <div className="flex-shrink-0 px-4 md:px-10 py-3 md:py-4 border-b border-slate-100 bg-white flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <div
-            className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-lg"
-            style={{ background: `linear-gradient(135deg, ${colors.from}22, ${colors.to}33)`, border: `1px solid ${colors.to}30` }}
-          >
-            🙏
-          </div>
+    <div className="flex flex-col w-full" style={{ background: PAL.paper, color: PAL.ink }}>
+      {/* Header */}
+      <div
+        className="px-5 md:px-7 lg:px-9 py-4 md:py-5 flex items-center justify-between gap-3 sticky top-0 z-10 backdrop-blur-md"
+        style={{ background: "rgba(250,247,242,0.92)", borderBottom: `1px solid ${PAL.border2}` }}
+      >
+        <div className="flex items-baseline gap-3 min-w-0 flex-1">
+          <span className="serif-display italic text-[18px] md:text-[22px]" style={{ color: PAL.accent }}>🙏</span>
           <div className="min-w-0">
-            <h2 className="font-black text-slate-900 text-sm md:text-base leading-tight">Your Ishta Devata</h2>
-            <p className="text-[10px] md:text-[11px] text-slate-400 font-medium truncate">
-              {reportData
-                ? `${reportData.ishtaDevata} · ${profileName}`
-                : `Jaimini Navamsa · ${profileName}`}
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.accent }}>
+              Ishta Devata
             </p>
+            <h2 className="serif-display text-[16px] md:text-[20px] font-semibold leading-none tracking-tight mt-0.5 truncate" style={{ color: PAL.ink }}>
+              {reportData ? reportData.ishtaDevata : "Jaimini Navamsa"}
+            </h2>
+            <p className="serif-text italic text-[11.5px] mt-1" style={{ color: PAL.ink3 }}>{profileName}</p>
           </div>
         </div>
         {status === "done" && (
-          <div className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="text-[10px] md:text-[11px] font-bold text-emerald-700 whitespace-nowrap">Saved</span>
+          <div className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm"
+            style={{ background: PAL.sageBg, border: `1px solid #C7D6BB` }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: PAL.sage }} />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: PAL.sage }}>Saved</span>
           </div>
         )}
       </div>
 
-      {/* ── IDLE ── */}
+      {/* IDLE */}
       {status === "idle" && (
-        <div data-lenis-prevent className="flex-1 flex flex-col items-center justify-center text-center p-5 md:p-8 gap-6 md:gap-8 overflow-y-auto custom-scrollbar">
-          <div className="relative">
-            <div
-              className="w-28 h-28 rounded-3xl flex items-center justify-center text-5xl shadow-xl"
-              style={{
-                background: "linear-gradient(135deg, #1E1B4B 0%, #4338CA 50%, #6366F1 100%)",
-                boxShadow: "0 12px 40px rgba(99,102,241,0.3)",
-              }}
-            >
-              🙏
-            </div>
-            <div
-              className="absolute -top-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black"
-              style={{ background: "linear-gradient(135deg, #D97706, #F59E0B)", boxShadow: "0 4px 12px rgba(217,119,6,0.4)" }}
+        <div data-lenis-prevent className="flex flex-col items-center text-center px-6 py-12 md:py-16">
+          <div
+            className="relative w-24 h-24 rounded-sm grid place-items-center serif-display text-[42px] mb-7"
+            style={{ background: PAL.ink, color: "#E1CE9B", border: `1px solid ${PAL.ink}` }}
+          >
+            🙏
+            <span
+              className="absolute -top-2 -right-2 px-2 py-0.5 rounded-sm text-[10px] font-semibold uppercase tracking-[0.18em]"
+              style={{ background: PAL.gold, color: PAL.paper, border: `1px solid ${PAL.gold}` }}
             >
               D9
-            </div>
+            </span>
           </div>
 
-          <div className="max-w-lg space-y-3 md:space-y-4 w-full">
-            <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-tight">
-              Your Soul's Deity is Hidden in Your D-9 Chart
-            </h3>
-            <p className="text-slate-500 text-sm leading-relaxed">
-              Your Sun sign deity is for your ego. Your{" "}
-              <span className="font-bold text-indigo-700">Ishta Devata</span> is for your soul's
-              liberation — Moksha. Unlike your Kula Devata (inherited from family), the Ishta Devata
-              is mathematically derived from your birth chart via pure Jaimini Sutra logic. It is
-              unique to you alone.
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+            Begin · soul deity
+          </p>
+          <h3 className="serif-display text-[24px] md:text-[32px] font-semibold tracking-tight leading-tight max-w-2xl" style={{ color: PAL.ink }}>
+            Your soul's deity is hidden in your D-9 chart.
+          </h3>
+          <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed mt-3 max-w-lg" style={{ color: PAL.ink2 }}>
+            Your Sun sign deity is for your ego. Your <strong style={{ color: PAL.accent }}>Ishta Devata</strong> is for your soul's liberation — Moksha. Mathematically derived from your birth chart via pure Jaimini Sutra logic.
+          </p>
+
+          <div className="rounded-sm p-4 md:p-5 mt-6 max-w-lg w-full text-left"
+            style={{ background: PAL.paper2, border: `1px solid ${PAL.border}` }}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3" style={{ color: PAL.accent }}>
+              The Jaimini derivation
             </p>
-
-            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-left space-y-2">
-              <p className="text-[11px] font-black uppercase tracking-widest text-indigo-600 mb-2">The Jaimini Derivation</p>
-              {[
-                { step: "01", text: "Identify the Atmakaraka (AK) — the soul planet with the highest degree" },
-                { step: "02", text: "Find AK's position in the D-9 Navamsa chart → the Karakamsa" },
-                { step: "03", text: "The 12th house from Karakamsa reveals your Ishta Devata" },
-              ].map(item => (
-                <div key={item.step} className="flex items-start gap-3">
-                  <span className="text-[10px] font-black text-indigo-400 mt-0.5 flex-shrink-0">{item.step}</span>
-                  <p className="text-[12px] text-slate-600 font-medium leading-relaxed">{item.text}</p>
-                </div>
-              ))}
-            </div>
+            {[
+              { step: "01", text: "Identify the Atmakaraka (AK) — the soul planet with the highest degree" },
+              { step: "02", text: "Find AK's position in the D-9 Navamsa chart → the Karakamsa" },
+              { step: "03", text: "The 12th house from Karakamsa reveals your Ishta Devata" },
+            ].map(item => (
+              <div key={item.step} className="flex items-start gap-3 mb-2 last:mb-0">
+                <span className="serif-display italic text-[12px] tabular-nums flex-shrink-0 w-6 mt-0.5" style={{ color: PAL.accent }}>
+                  {item.step}
+                </span>
+                <p className="serif-text text-[13px] md:text-[13.5px] leading-relaxed" style={{ color: PAL.ink2 }}>
+                  {item.text}
+                </p>
+              </div>
+            ))}
           </div>
 
-          <div className="flex flex-wrap justify-center gap-2 max-w-md">
-            {["Mathematical Derivation", "Jaimini Sutram", "All Divine Forms", "Soul Alignment", "Sadhana Prescription", "90-Day Protocol", "Moksha Path"].map(label => (
-              <span key={label} className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+          <div className="flex flex-wrap justify-center gap-1.5 max-w-lg mt-6">
+            {["Mathematical derivation", "Jaimini Sutram", "All divine forms", "Soul alignment", "Sadhana prescription", "90-day protocol", "Moksha path"].map(label => (
+              <span key={label}
+                className="serif-text text-[11.5px] font-semibold px-2.5 py-1 rounded-sm"
+                style={{ color: "#5A3A8F", background: "#ECE6F4", border: `1px solid #D2C4E5` }}
+              >
                 {label}
               </span>
             ))}
           </div>
 
-          <div className="flex flex-col items-center gap-2">
-            <button
-              onClick={generateReport}
-              className="px-10 py-4 rounded-xl font-black text-white text-sm shadow-xl transition-all hover:-translate-y-0.5 hover:shadow-2xl active:translate-y-0"
-              style={{
-                background: "linear-gradient(135deg, #4338CA 0%, #6366F1 100%)",
-                boxShadow: "0 8px 28px rgba(99,102,241,0.4)",
-              }}
-            >
-              🙏 Reveal My Ishta Devata — 5 Credits
-            </button>
-            <p className="text-[11px] text-slate-400 font-medium">
-              Saved permanently · Never expires · Free to re-read anytime
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ── LOADING ── */}
-      {status === "loading" && !reportData && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
-          <div className="relative">
-            <div
-              className="w-24 h-24 rounded-3xl flex items-center justify-center text-4xl"
-              style={{
-                background: "linear-gradient(135deg, #1E1B4B, #4338CA)",
-                animation: "pulse 2s ease-in-out infinite",
-                boxShadow: "0 0 50px rgba(99,102,241,0.4)",
-              }}
-            >
-              🙏
-            </div>
-            <div
-              className="absolute inset-0 rounded-3xl border-2"
-              style={{
-                borderColor: "transparent",
-                borderTopColor: "#6366F1",
-                animation: "spin 3s linear infinite",
-              }}
-            />
-          </div>
-
-          <div className="text-center space-y-3 max-w-sm">
-            <div className="font-black text-slate-900 text-xl tracking-tight">
-              The Jaimini Sutra Speaks...
-            </div>
-            <div className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">
-              ॥ Karakamsa Vicharah ॥
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={loadingLine}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.4 }}
-                className="text-sm text-slate-500 font-medium leading-relaxed"
-              >
-                {LOADING_LINES[loadingLine]}
-              </motion.p>
-            </AnimatePresence>
-          </div>
-
-          <div className="w-full max-w-xs space-y-2.5">
-            {[
-              { icon: "🪐", label: "Identifying Atmakaraka in Navamsa" },
-              { icon: "📐", label: "Computing 12th from Karakamsa" },
-              { icon: "📜", label: "Cross-referencing Jaimini Sutram" },
-              { icon: "🏛️", label: "Deriving all divine manifestations" },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2.5 text-[12px] text-slate-500 font-semibold"
-                style={{ animation: `slideIn 0.5s ease both`, animationDelay: `${i * 0.7}s` }}
-              >
-                <span className="text-base leading-none">{item.icon}</span>
-                <span>{item.label}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="w-full max-w-xs h-0.5 rounded-full overflow-hidden bg-slate-100">
-            <div
-              className="h-full rounded-full"
-              style={{
-                background: "linear-gradient(90deg, #4338CA, #818CF8, #4338CA)",
-                backgroundSize: "200% 100%",
-                animation: "shimmerBar 2s linear infinite",
-              }}
-            />
-          </div>
-
-          <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
-            <span>⏳</span>
-            <span>Chart analysis in progress · Keep this window open</span>
+          <button
+            onClick={generateReport}
+            className="mt-7 serif-text text-[13px] font-semibold px-7 py-3 rounded-sm text-white transition-opacity hover:opacity-90"
+            style={{ background: PAL.accent }}
+          >
+            🙏 Reveal my Ishta Devata — 5 credits
+          </button>
+          <p className="serif-text italic text-[11.5px] mt-3" style={{ color: PAL.ink3 }}>
+            Saved permanently · never expires · free to re-read anytime
           </p>
-
-          <style>{`
-            @keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
-            @keyframes shimmerBar { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-          `}</style>
         </div>
       )}
 
-      {/* ── ERROR ── */}
-      {status === "error" && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-8 text-center">
-          <div className="text-5xl">🚫</div>
-          <div>
-            <h3 className="font-black text-slate-900 text-lg">Derivation Failed</h3>
-            <p className="text-sm text-slate-500 mt-1 max-w-xs">{errorMsg}</p>
+      {/* LOADING */}
+      {status === "loading" && !reportData && (
+        <div className="flex flex-col items-center justify-center px-6 py-14 md:py-20 text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+            ॥ Karakamsa Vicharah ॥
+          </p>
+          <h3 className="serif-display text-[24px] md:text-[28px] font-semibold tracking-tight" style={{ color: PAL.ink }}>
+            The Jaimini Sutra speaks…
+          </h3>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={loadingLine}
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+              className="serif-text italic text-[13.5px] mt-3 max-w-sm" style={{ color: PAL.ink2 }}
+            >
+              {LOADING_LINES[loadingLine]}
+            </motion.p>
+          </AnimatePresence>
+          <div className="mt-6 inline-flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.15s" }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.3s" }} />
           </div>
+        </div>
+      )}
+
+      {/* ERROR */}
+      {status === "error" && (
+        <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+          <div className="serif-display text-[42px]" style={{ color: PAL.rose }}>⚠︎</div>
+          <h3 className="serif-display text-[20px] font-semibold mt-3" style={{ color: PAL.ink }}>Derivation failed</h3>
+          <p className="serif-text text-[13.5px] italic mt-1" style={{ color: PAL.ink2 }}>{errorMsg}</p>
           <button
             onClick={() => setStatus("idle")}
-            className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors"
+            className="mt-5 serif-text text-[13px] font-semibold px-5 py-2.5 rounded-sm text-white transition-opacity hover:opacity-90"
+            style={{ background: PAL.ink }}
           >
-            Try Again
+            Try again
           </button>
         </div>
       )}
 
-      {/* ── DONE — Full-Width Premium Report ── */}
+      {/* DONE */}
       {status === "done" && reportData && (
-        <div data-lenis-prevent className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="px-4 md:px-8 lg:px-12 py-4 md:py-6">
+        <div data-lenis-prevent className="flex-1 overflow-y-auto custom-scroll-light">
+          <div className="px-4 md:px-7 lg:px-9 py-5 md:py-7">
 
-            {/* Hero Header */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative rounded-2xl overflow-hidden mb-6 md:mb-8 p-4 md:p-6"
-              style={{
-                background: `linear-gradient(135deg, ${colors.from} 0%, ${colors.to} 100%)`,
-                boxShadow: `0 16px 48px ${colors.to}40`,
-              }}
+            {/* Hero */}
+            <motion.section
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              className="rounded-sm p-5 md:p-7 mb-6"
+              style={{ background: PAL.ink, color: PAL.paper, border: `1px solid ${PAL.ink}` }}
             >
-              <div
-                className="absolute inset-0 opacity-10"
-                style={{ backgroundImage: "radial-gradient(circle at 85% 15%, rgba(255,255,255,0.9) 0%, transparent 55%)" }}
-              />
-              <div className="relative">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-2xl">{deityEmoji}</span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/70">
-                        Ishta Devata · Jaimini Revelation
-                      </span>
-                    </div>
-                    <h2 className="text-xl md:text-2xl font-black text-white tracking-tight leading-tight mb-1">
-                      {reportData.ishtaDevata}
-                    </h2>
-                    <p className="text-white/60 text-xs font-semibold">
-                      Soul's Chosen Deity for Moksha · {profileName}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    <span className="text-[10px] bg-white/15 text-white/90 px-2.5 py-1 rounded-full font-bold border border-white/20">
-                      ✓ Permanently Saved
-                    </span>
-                    {reportData.generatedAt && (
-                      <span className="text-[10px] text-white/50 font-medium">
-                        {new Date(reportData.generatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
-                    )}
-                  </div>
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] mb-2" style={{ color: "#E1CE9B" }}>
+                    🙏 Ishta Devata · Jaimini revelation
+                  </p>
+                  <h2 className="serif-display text-[24px] md:text-[34px] font-semibold tracking-tight leading-tight">
+                    {reportData.ishtaDevata}
+                  </h2>
+                  <p className="serif-text italic text-[13px] mt-2" style={{ color: PAL.paper2 }}>
+                    Soul's chosen deity for Moksha · {profileName}
+                  </p>
                 </div>
+                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-1 rounded-sm"
+                    style={{ background: "rgba(255,255,255,0.10)", color: PAL.paper, border: `1px solid rgba(255,255,255,0.18)` }}
+                  >
+                    ✓ Saved
+                  </span>
+                  {reportData.generatedAt && (
+                    <span className="serif-text italic text-[11px]" style={{ color: PAL.paper2, opacity: 0.8 }}>
+                      {new Date(reportData.generatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-                <div className="h-px bg-white/15 mt-4 mb-4" />
+              <div className="h-px mt-4 mb-4" style={{ background: "rgba(255,255,255,0.12)" }} />
 
-                {/* Derivation chain */}
-                <div className="flex flex-wrap items-center gap-2 text-[10px] md:text-[11px] font-bold">
-                  {[
-                    { label: "AK", value: reportData.ak },
-                    { label: "Karakamsa", value: reportData.karakamsaSign },
-                    { label: "12th From", value: reportData.twelfthFromKarakamsa },
-                    { label: "Lord", value: reportData.twelfthLord },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <div className="flex flex-col items-center">
-                        <span className="text-white/40 text-[9px] uppercase tracking-widest">{item.label}</span>
-                        <span className="text-white font-black text-sm">{item.value}</span>
-                      </div>
-                      {i < 3 && <span className="text-white/30 text-base">→</span>}
+              {/* Derivation chain */}
+              <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
+                {[
+                  { label: "AK", value: reportData.ak },
+                  { label: "Karakamsa", value: reportData.karakamsaSign },
+                  { label: "12th from", value: reportData.twelfthFromKarakamsa },
+                  { label: "Lord", value: reportData.twelfthLord },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="text-center">
+                      <p className="text-[9px] uppercase tracking-[0.18em]" style={{ color: PAL.paper2, opacity: 0.7 }}>
+                        {item.label}
+                      </p>
+                      <p className="serif-display text-[15px] font-semibold mt-0.5" style={{ color: PAL.paper }}>
+                        {item.value}
+                      </p>
                     </div>
+                    {i < 3 && <span className="serif-display text-[16px]" style={{ color: PAL.paper2, opacity: 0.5 }}>→</span>}
+                  </div>
+                ))}
+                <div className="flex items-center gap-1 ml-2">
+                  <span className="serif-display text-[14px]" style={{ color: PAL.paper2, opacity: 0.5 }}>⇒</span>
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-[0.16em] px-2.5 py-1 rounded-sm"
+                    style={{ background: "rgba(255,255,255,0.14)", color: PAL.paper, border: `1px solid rgba(255,255,255,0.20)` }}
+                  >
+                    🙏 {reportData.ishtaDevata}
+                  </span>
+                </div>
+              </div>
+
+              {/* All forms */}
+              {reportData.allForms?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {reportData.allForms.map((form: string) => (
+                    <span key={form}
+                      className="text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-0.5 rounded-sm"
+                      style={{ background: "rgba(255,255,255,0.08)", color: PAL.paper, border: `1px solid rgba(255,255,255,0.14)` }}
+                    >
+                      {form}
+                    </span>
                   ))}
-                  <div className="flex items-center gap-1 ml-2">
-                    <span className="text-white/30">⇒</span>
-                    <span className="bg-white/20 text-white px-2.5 py-1 rounded-full font-black text-[11px] border border-white/30">
-                      🙏 {reportData.ishtaDevata}
-                    </span>
-                  </div>
                 </div>
+              )}
+            </motion.section>
 
-                {/* All forms */}
-                {reportData.allForms?.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {reportData.allForms.map((form: string) => (
-                      <span key={form} className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/10 text-white/80 border border-white/10">
-                        {form}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-
-            {/* Report Content — Full width, free-flowing, no card wrapper */}
+            {/* Markdown report */}
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+              className="prose-editorial-ishta"
             >
-              <div className="ishta-devata-report">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    h1: ({ children }) => (
-                      <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-4 mt-2">{children}</h1>
-                    ),
-                    h2: ({ children }) => (
-                      <div className="mt-10 mb-5">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-1.5 h-8 rounded-full" style={{ background: `linear-gradient(to bottom, ${colors.from}, ${colors.to})` }} />
-                          <h2 className="text-[19px] font-black text-slate-900 tracking-tight uppercase">{children}</h2>
-                        </div>
-                        <div className="h-px" style={{ background: `linear-gradient(to right, ${colors.to}40, transparent)` }} />
-                      </div>
-                    ),
-                    h3: ({ children }) => (
-                      <h3 className="text-[15px] font-extrabold mt-7 mb-2.5 flex items-center gap-2" style={{ color: colors.to }}>
-                        <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: colors.to }} />
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ children }) => (
+                    <h1 className="serif-display text-[28px] md:text-[34px] font-semibold tracking-tight mt-2 mb-4" style={{ color: PAL.ink }}>
+                      {children}
+                    </h1>
+                  ),
+                  h2: ({ children }) => (
+                    <div className="mt-10 mb-5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>Section</p>
+                      <h2 className="serif-display text-[22px] md:text-[26px] font-semibold tracking-tight leading-tight" style={{ color: PAL.ink }}>
                         {children}
-                      </h3>
-                    ),
-                    h4: ({ children }) => (
-                      <h4 className="text-sm font-bold text-slate-700 mt-5 mb-2">{children}</h4>
-                    ),
-                    p: ({ children }) => (
-                      <p className="text-[15px] text-slate-700 leading-[1.85] mb-4">{children}</p>
-                    ),
-                    strong: ({ children }) => (
-                      <strong className="font-extrabold text-slate-900">{children}</strong>
-                    ),
-                    em: ({ children }) => (
-                      <em className="font-medium not-italic" style={{ color: colors.to }}>{children}</em>
-                    ),
-                    hr: () => (
-                      <div className="my-8 flex items-center gap-3">
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-                        <span className="text-slate-300 text-xs">✦</span>
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                      </h2>
+                      <div className="h-px mt-3" style={{ background: `linear-gradient(to right, ${PAL.border}, transparent)` }} />
+                    </div>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="serif-display text-[17px] md:text-[19px] font-semibold tracking-tight mt-7 mb-2.5 flex items-center gap-2" style={{ color: planetTone.ink }}>
+                      <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: planetTone.ink }} />
+                      {children}
+                    </h3>
+                  ),
+                  h4: ({ children }) => (
+                    <h4 className="serif-display text-[15px] font-semibold mt-5 mb-2" style={{ color: PAL.ink2 }}>{children}</h4>
+                  ),
+                  p: ({ children }) => (
+                    <p className="serif-text text-[15px] md:text-[16px] leading-[1.85] mb-4" style={{ color: PAL.ink2 }}>{children}</p>
+                  ),
+                  strong: ({ children }) => <strong className="font-semibold" style={{ color: PAL.ink }}>{children}</strong>,
+                  em: ({ children }) => <em className="not-italic font-medium" style={{ color: planetTone.ink }}>{children}</em>,
+                  hr: () => (
+                    <div className="my-8 flex items-center gap-3">
+                      <div className="flex-1 h-px" style={{ background: PAL.border }} />
+                      <span className="serif-display italic text-[13px]" style={{ color: PAL.ink3 }}>✦</span>
+                      <div className="flex-1 h-px" style={{ background: PAL.border }} />
+                    </div>
+                  ),
+                  blockquote: ({ children }) => (
+                    <div className="my-5 rounded-sm pl-4 pr-4 py-3"
+                      style={{ background: planetTone.bg, border: `1px solid ${planetTone.border}`, borderLeft: `2px solid ${planetTone.ink}` }}
+                    >
+                      <div className="serif-display italic text-[14px] md:text-[15px] leading-relaxed" style={{ color: PAL.ink }}>
+                        {children}
                       </div>
-                    ),
-                    blockquote: ({ children }) => (
-                      <div className="my-5 relative">
-                        <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full" style={{ background: `linear-gradient(to bottom, ${colors.from}, ${colors.to})` }} />
-                        <div className="pl-5 pr-4 py-3 rounded-r-xl" style={{ background: `${colors.to}10` }}>
-                          <div className="text-[14px] text-slate-700 leading-relaxed font-medium italic">{children}</div>
-                        </div>
-                      </div>
-                    ),
-                    ul: ({ children }) => (
-                      <ul className="space-y-2.5 my-4 pl-0 list-none">{children}</ul>
-                    ),
-                    ol: ({ children }) => (
-                      <ol className="space-y-2.5 my-4 pl-0 list-none">{children}</ol>
-                    ),
-                    li: ({ children }) => (
-                      <li className="flex gap-3 text-[15px] text-slate-700 leading-relaxed">
-                        <span className="flex-shrink-0 w-5 h-5 mt-0.5 rounded-md flex items-center justify-center" style={{ background: `${colors.to}15` }}>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: colors.to }} />
-                        </span>
-                        <span className="flex-1">{children}</span>
-                      </li>
-                    ),
-                    table: ({ children }) => (
-                      <div className="my-6 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                        <table className="w-full text-sm border-collapse">{children}</table>
-                      </div>
-                    ),
-                    thead: ({ children }) => (
-                      <thead style={{ background: `linear-gradient(to right, ${colors.from}, ${colors.to})` }}>{children}</thead>
-                    ),
-                    th: ({ children }) => (
-                      <th className="text-left px-5 py-3 text-xs font-bold text-white uppercase tracking-wider">{children}</th>
-                    ),
-                    td: ({ children }) => (
-                      <td className="px-5 py-3 text-slate-700 font-medium border-t border-slate-100">{children}</td>
-                    ),
-                    tr: ({ children }) => (
-                      <tr className="even:bg-slate-50/70 hover:bg-indigo-50/40 transition-colors">{children}</tr>
-                    ),
-                  }}
-                >
-                  {reportData.report}
-                </ReactMarkdown>
-              </div>
+                    </div>
+                  ),
+                  ul: ({ children }) => <ul className="space-y-2 my-4 list-none pl-0">{children}</ul>,
+                  ol: ({ children }) => <ol className="space-y-2 my-4 list-none pl-0">{children}</ol>,
+                  li: ({ children }) => (
+                    <li className="serif-text text-[15px] leading-relaxed flex gap-3" style={{ color: PAL.ink2 }}>
+                      <span className="flex-shrink-0 mt-2 w-1.5 h-1.5 rounded-full" style={{ background: planetTone.ink }} />
+                      <span className="flex-1">{children}</span>
+                    </li>
+                  ),
+                  table: ({ children }) => (
+                    <div className="my-6 overflow-x-auto rounded-sm" style={{ border: `1px solid ${PAL.border}` }}>
+                      <table className="w-full text-[14px] border-collapse">{children}</table>
+                    </div>
+                  ),
+                  thead: ({ children }) => (
+                    <thead style={{ background: planetTone.ink, color: PAL.paper }}>{children}</thead>
+                  ),
+                  th: ({ children }) => (
+                    <th className="text-left px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em]">{children}</th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="px-4 py-2.5 serif-text text-[13.5px]" style={{ color: PAL.ink2, borderTop: `1px solid ${PAL.border2}` }}>{children}</td>
+                  ),
+                  tr: ({ children }) => <tr>{children}</tr>,
+                }}
+              >
+                {reportData.report}
+              </ReactMarkdown>
 
-              {/* Footer */}
-              <div className="mt-10 pt-5 border-t border-slate-100 flex items-center justify-between gap-4">
-                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider leading-relaxed">
-                  Derived via Jaimini Sutram · For spiritual guidance only
+              <div className="mt-10 pt-5 flex items-center justify-between flex-wrap gap-3" style={{ borderTop: `1px solid ${PAL.border}` }}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.ink3 }}>
+                  Derived via Jaimini Sutram · for spiritual guidance only
                 </p>
                 <button
                   onClick={() => window.print()}
-                  className="text-[11px] text-slate-400 hover:text-slate-700 font-bold transition-colors flex items-center gap-1.5 flex-shrink-0"
+                  className="serif-text text-[11.5px] font-semibold transition-opacity hover:opacity-70 flex items-center gap-1"
+                  style={{ color: PAL.ink2 }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" />
-                  </svg>
-                  Print
+                  <span>⎙</span> Print
                 </button>
               </div>
             </motion.div>
-
           </div>
         </div>
       )}

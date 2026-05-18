@@ -1,40 +1,23 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PAL } from "./destiny-theme";
 
 const LOADING_LINES = [
-  "Casting your Solar Return chart for the current year...",
-  "Analyzing Muntha position and Varshphal planetary strengths...",
-  "Scanning for active Yogas and hidden planetary combinations...",
-  "Decoding the month-by-month cosmic blueprint...",
-  "Synthesizing your precise actionable timeline...",
-  "Writing your brutal, legit Quantum Karma analysis...",
+  "Casting your Solar Return chart for the current year…",
+  "Analyzing Muntha position and Varshphal planetary strengths…",
+  "Scanning for active yogas and hidden planetary combinations…",
+  "Decoding the month-by-month cosmic blueprint…",
+  "Synthesising your precise actionable timeline…",
+  "Writing your Quantum Karma analysis…",
 ];
 
-interface Yoga {
-  name: string;
-  meaning: string;
-}
-
-interface MonthData {
-  monthNumber: number;
-  theme: string;
-  keywords: string[];
-  nuances: string;
-  actionPlan: string;
-  advice: string;
-}
+interface Yoga { name: string; meaning: string; }
+interface MonthData { monthNumber: number; theme: string; keywords: string[]; nuances: string; actionPlan: string; advice: string; }
 
 interface YearAheadReport {
-  parsed: {
-    intro: string;
-    activeYogas: Yoga[];
-    months: MonthData[];
-  };
-  metadata?: {
-    birthMonth: number;
-    varshaphalYear: number;
-  };
+  parsed: { intro: string; activeYogas: Yoga[]; months: MonthData[] };
+  metadata?: { birthMonth: number; varshaphalYear: number };
 }
 
 function getMonthLabel(monthIndex: number, birthMonth?: number, startYear?: number) {
@@ -53,214 +36,283 @@ export default function YearAheadPanel({ profileId }: { profileId: string }) {
   const [loadingLine, setLoadingLine] = useState(0);
   const [activeMonth, setActiveMonth] = useState<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     if (status === "loading") {
-      timerRef.current = setInterval(() => {
-        setLoadingLine((l) => (l + 1) % LOADING_LINES.length);
-      }, 2500);
+      timerRef.current = setInterval(() => setLoadingLine((l) => (l + 1) % LOADING_LINES.length), 2500);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [status]);
 
-  useEffect(() => {
-    if (!profileId) return;
-    checkForSaved();
-  }, [profileId]);
+  useEffect(() => { if (profileId) checkForSaved(); }, [profileId]);
 
   async function checkForSaved() {
     setStatus("loading");
     try {
       const res = await fetch(`/api/year-ahead?profileId=${profileId}`);
       const data = await res.json();
-      if (data.found && data.reportData?.parsed) {
-        setReportData(data.reportData);
-        setStatus("done");
-      } else {
-        setStatus("idle");
-      }
-    } catch {
-      setStatus("idle");
-    }
+      if (data.found && data.reportData?.parsed) { setReportData(data.reportData); setStatus("done"); }
+      else setStatus("idle");
+    } catch { setStatus("idle"); }
   }
 
   async function generateReport() {
-    setStatus("loading");
-    setErrorMsg("");
-    setLoadingLine(0);
+    setStatus("loading"); setErrorMsg(""); setLoadingLine(0);
     try {
       const res = await fetch("/api/year-ahead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileId }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profileId }),
       });
       const data = await res.json();
       if (!res.ok) { setErrorMsg(data.error || "Something went wrong."); setStatus("error"); return; }
-      setReportData(data);
-      setStatus("done");
-    } catch {
-      setErrorMsg("Network error. Please try again.");
-      setStatus("error");
-    }
+      setReportData(data); setStatus("done");
+    } catch { setErrorMsg("Network error. Please try again."); setStatus("error"); }
   }
 
   const parsed = reportData?.parsed;
 
   return (
-    <div data-lenis-prevent className="flex flex-col h-full bg-[#FAFAFA] overflow-y-auto w-full text-slate-800">
+    <div data-lenis-prevent className="flex flex-col w-full" style={{ background: PAL.paper, color: PAL.ink }}>
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-5 md:px-10 py-5 md:py-6 sticky top-0 z-10 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3 md:gap-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xl shadow-lg shadow-orange-500/20 flex-shrink-0">📅</div>
+      <div
+        className="px-5 md:px-7 lg:px-9 py-4 md:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-0 z-10 backdrop-blur-md"
+        style={{ background: "rgba(250,247,242,0.92)", borderBottom: `1px solid ${PAL.border2}` }}
+      >
+        <div className="flex items-baseline gap-3">
+          <span className="serif-display italic text-[18px] md:text-[22px]" style={{ color: PAL.accent }}>📅</span>
           <div>
-            <h2 className="text-lg md:text-xl font-black text-slate-900 tracking-tight">Year Ahead — {currentYear}</h2>
-            <p className="text-[11px] md:text-xs text-slate-500 font-bold uppercase tracking-wide">Solar Return Yogas & Monthly Blueprint</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.accent }}>
+              Year ahead · {currentYear}
+            </p>
+            <h2 className="serif-display text-[18px] md:text-[22px] font-semibold leading-none tracking-tight mt-0.5" style={{ color: PAL.ink }}>
+              Solar Return blueprint
+            </h2>
           </div>
         </div>
         {status === "done" && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 self-start sm:self-auto">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-            <span className="text-[11px] font-black text-emerald-700 uppercase tracking-widest">Live Blueprint</span>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm self-start sm:self-auto"
+            style={{ background: PAL.sageBg, border: `1px solid #C7D6BB` }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: PAL.sage }} />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: PAL.sage }}>Live</span>
           </div>
         )}
       </div>
 
-      <div className="flex-1 w-full max-w-[100vw] overflow-x-hidden">
+      <div className="flex-1 w-full">
+        {/* IDLE */}
         {status === "idle" && (
-          <div className="flex flex-col items-center justify-center h-full p-6 md:p-8 text-center max-w-2xl mx-auto min-h-[60vh]">
-            <div className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-xl bg-gradient-to-br from-orange-100 to-amber-100 border border-amber-200">✨</div>
-            <h3 className="text-2xl md:text-3xl font-black text-slate-900 mb-3">Decode Your Year</h3>
-            <p className="text-slate-600 text-sm leading-relaxed mb-8 font-medium">
-              We extract your exact Varshaphal (Solar Return) chart, active yogas, and monthly transitions to generate a brutal, accurate, and highly actionable blueprint for your entire year. No generic horoscopes.
+          <div className="flex flex-col items-center justify-center px-6 py-14 md:py-20 text-center">
+            <div
+              className="w-24 h-24 rounded-sm grid place-items-center serif-display text-[40px] mb-7"
+              style={{ background: PAL.amberBg, color: PAL.gold, border: `1px solid #E1CE9B` }}
+            >
+              ☼
+            </div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+              Begin · year ahead
             </p>
-            <button onClick={generateReport} className="bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 rounded-xl font-black shadow-xl shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 w-full md:w-auto">
-              Generate Year Ahead Blueprint
+            <h3 className="serif-display text-[28px] md:text-[36px] font-semibold tracking-tight leading-tight" style={{ color: PAL.ink }}>
+              Decode your year.
+            </h3>
+            <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed mt-3 max-w-md" style={{ color: PAL.ink2 }}>
+              We extract your exact Varshaphal (Solar Return) chart, active yogas, and monthly transitions to generate an accurate, highly actionable blueprint for your entire year.
+            </p>
+            <button
+              onClick={generateReport}
+              className="mt-7 serif-text text-[13px] font-semibold px-6 py-3 rounded-sm text-white transition-opacity hover:opacity-90"
+              style={{ background: PAL.accent }}
+            >
+              Generate year ahead blueprint
             </button>
           </div>
         )}
 
+        {/* LOADING */}
         {status === "loading" && (
-          <div className="flex flex-col items-center justify-center h-full p-6 md:p-8 min-h-[60vh]">
-            <div className="relative w-24 h-24 mb-8">
-              <div className="absolute inset-0 border-4 border-slate-200 rounded-full" />
-              <div className="absolute inset-0 border-4 border-amber-500 rounded-full border-t-transparent animate-spin" />
-              <div className="absolute inset-0 flex items-center justify-center text-3xl animate-pulse">📅</div>
-            </div>
-            <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-2 text-center">Live Cosmic Computation</h3>
-            <p className="text-amber-600 text-sm font-black text-center max-w-sm transition-all duration-300 h-10">
-              {LOADING_LINES[loadingLine]}
+          <div className="flex flex-col items-center justify-center px-6 py-14 md:py-20 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+              Live cosmic computation
             </p>
+            <h3 className="serif-display text-[24px] md:text-[28px] font-semibold tracking-tight" style={{ color: PAL.ink }}>
+              Casting your solar return…
+            </h3>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={loadingLine}
+                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                className="serif-text italic text-[13.5px] mt-3 max-w-sm" style={{ color: PAL.ink2 }}
+              >
+                {LOADING_LINES[loadingLine]}
+              </motion.p>
+            </AnimatePresence>
+            <div className="mt-6 inline-flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent }} />
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.15s" }} />
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.3s" }} />
+            </div>
           </div>
         )}
 
+        {/* ERROR */}
         {status === "error" && (
-          <div className="flex flex-col items-center justify-center h-full p-6 md:p-8 text-center min-h-[60vh]">
-            <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-2">Error Generating Report</h3>
-            <p className="text-slate-600 text-sm mb-6 font-medium">{errorMsg}</p>
-            <button onClick={generateReport} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold w-full md:w-auto">Try Again</button>
+          <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+            <div className="serif-display text-[42px]" style={{ color: PAL.rose }}>⚠︎</div>
+            <h3 className="serif-display text-[20px] font-semibold mt-3" style={{ color: PAL.ink }}>Generation failed</h3>
+            <p className="serif-text text-[13.5px] italic mt-1" style={{ color: PAL.ink2 }}>{errorMsg}</p>
+            <button
+              onClick={generateReport}
+              className="mt-5 serif-text text-[13px] font-semibold px-5 py-2.5 rounded-sm text-white transition-opacity hover:opacity-90"
+              style={{ background: PAL.ink }}
+            >
+              Try again
+            </button>
           </div>
         )}
 
+        {/* DONE */}
         {status === "done" && parsed && (
-          <div className="w-full px-4 md:px-10 lg:px-16 py-8 md:py-10 space-y-10">
-            
+          <div className="px-4 md:px-7 lg:px-9 py-5 md:py-7 space-y-7 md:space-y-9">
             {/* Intro */}
-            <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-100 to-orange-50 rounded-bl-full opacity-50 pointer-events-none" />
-              <h3 className="text-[11px] font-black uppercase tracking-widest text-amber-500 mb-3 relative z-10">Yearly Assessment</h3>
-              <p className="text-slate-700 text-[15px] md:text-[17px] leading-relaxed font-medium relative z-10 max-w-4xl">
+            <section className="rounded-sm p-5 md:p-7"
+              style={{ background: PAL.paper, border: `1px solid ${PAL.border}` }}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3" style={{ color: PAL.accent }}>
+                Yearly assessment
+              </p>
+              <p className="serif-text text-[15px] md:text-[17px] leading-relaxed max-w-3xl" style={{ color: PAL.ink }}>
                 {parsed.intro}
               </p>
-            </div>
+            </section>
 
             {/* Yogas */}
-            {parsed.activeYogas && parsed.activeYogas.length > 0 && (
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-black text-sm">⚡</div>
-                  <h3 className="text-xl font-black text-slate-900">Active Yogas</h3>
+            {parsed.activeYogas?.length > 0 && (
+              <section>
+                <div className="flex items-baseline gap-3 mb-4">
+                  <span className="serif-display italic text-[18px] md:text-[22px]" style={{ color: PAL.accent }}>✦</span>
+                  <h3 className="serif-display text-[20px] md:text-[24px] font-semibold tracking-tight" style={{ color: PAL.ink }}>
+                    Active yogas
+                  </h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   {parsed.activeYogas.map((yoga, i) => (
-                    <div key={i} className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                      <h4 className="text-lg font-black text-orange-600 mb-2">{yoga.name}</h4>
-                      <p className="text-slate-600 text-sm leading-relaxed">{yoga.meaning}</p>
+                    <div key={i} className="rounded-sm p-5"
+                      style={{ background: PAL.paper, border: `1px solid ${PAL.border2}` }}
+                    >
+                      <h4 className="serif-display text-[16px] md:text-[18px] font-semibold tracking-tight" style={{ color: PAL.accent }}>
+                        {yoga.name}
+                      </h4>
+                      <p className="serif-text text-[13.5px] mt-2 leading-relaxed" style={{ color: PAL.ink2 }}>
+                        {yoga.meaning}
+                      </p>
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
             )}
 
-            {/* Monthly Blueprint Grid */}
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-black text-sm">🗓️</div>
-                <h3 className="text-xl font-black text-slate-900">Monthly Blueprint</h3>
+            {/* Monthly blueprint */}
+            <section>
+              <div className="flex items-baseline gap-3 mb-3">
+                <span className="serif-display italic text-[18px] md:text-[22px]" style={{ color: PAL.accent }}>❑</span>
+                <h3 className="serif-display text-[20px] md:text-[24px] font-semibold tracking-tight" style={{ color: PAL.ink }}>
+                  Monthly blueprint
+                </h3>
               </div>
-              <p className="text-slate-500 text-sm mb-6 max-w-2xl">Your Solar Return (Varshaphal) chart begins precisely from your birth month this year. Here is your 12-month blueprint.</p>
+              <p className="serif-text text-[13.5px] md:text-[14.5px] mb-5 max-w-2xl italic" style={{ color: PAL.ink2 }}>
+                Your Solar Return (Varshaphal) chart begins precisely from your birth month this year. Below is your 12-month blueprint.
+              </p>
 
-              <div className="space-y-4">
+              <div className="space-y-2.5">
                 {parsed.months.map((m, i) => {
                   const isExpanded = activeMonth === i;
                   return (
-                    <div key={i} className={`rounded-2xl border transition-all duration-300 overflow-hidden ${isExpanded ? "border-indigo-200 shadow-md bg-white" : "border-slate-200 hover:border-slate-300 bg-white"}`}>
-                      {/* Month Header / Trigger */}
-                      <button 
+                    <div
+                      key={i}
+                      className="rounded-sm overflow-hidden transition-all"
+                      style={{
+                        background: isExpanded ? PAL.paper2 : PAL.paper,
+                        border: `1px solid ${isExpanded ? PAL.accent : PAL.border2}`,
+                      }}
+                    >
+                      <button
                         onClick={() => setActiveMonth(isExpanded ? null : i)}
-                        className={`w-full flex items-center justify-between p-4 md:p-5 text-left transition-colors ${isExpanded ? "bg-indigo-50/50" : ""}`}
+                        className="w-full flex items-center justify-between gap-3 p-4 md:p-5 text-left transition-colors"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-lg flex-shrink-0 border ${isExpanded ? "bg-indigo-600 text-white border-indigo-600" : "bg-slate-50 text-slate-700 border-slate-200"}`}>
-                            {m.monthNumber}
-                          </div>
-                          <div>
-                            <div className="text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-400 mb-1">
+                        <div className="flex items-center gap-4 min-w-0 flex-1">
+                          <span
+                            className="w-11 h-11 md:w-12 md:h-12 rounded-sm grid place-items-center serif-display text-[18px] font-semibold flex-shrink-0"
+                            style={
+                              isExpanded
+                                ? { background: PAL.accent, color: PAL.paper, border: `1px solid ${PAL.accent}` }
+                                : { background: PAL.paper2, color: PAL.ink, border: `1px solid ${PAL.border}` }
+                            }
+                          >
+                            {String(m.monthNumber).padStart(2, "0")}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: PAL.ink3 }}>
                               {getMonthLabel(m.monthNumber, reportData?.metadata?.birthMonth, reportData?.metadata?.varshaphalYear)}
-                            </div>
-                            <h4 className={`text-base md:text-lg font-black ${isExpanded ? "text-indigo-900" : "text-slate-800"}`}>{m.theme}</h4>
+                            </p>
+                            <h4 className="serif-display text-[16px] md:text-[18px] font-semibold tracking-tight leading-tight mt-0.5" style={{ color: PAL.ink }}>
+                              {m.theme}
+                            </h4>
                           </div>
                         </div>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-300 flex-shrink-0 ${isExpanded ? "bg-indigo-100 rotate-180" : "bg-slate-100"}`}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={isExpanded ? "text-indigo-600" : "text-slate-500"}><polyline points="6 9 12 15 18 9"></polyline></svg>
-                        </div>
+                        <span className="serif-display italic text-[14px] flex-shrink-0 transition-transform"
+                          style={{ color: isExpanded ? PAL.accent : PAL.ink3, transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}
+                        >›</span>
                       </button>
 
-                      {/* Month Details */}
                       <AnimatePresence>
                         {isExpanded && (
                           <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
+                            initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                           >
-                            <div className="p-4 md:p-6 pt-0 border-t border-slate-100">
-                              
-                              <div className="flex flex-wrap gap-2 mt-5 mb-6">
+                            <div className="px-4 md:px-5 pb-5 md:pb-6 pt-4" style={{ borderTop: `1px solid ${PAL.border2}` }}>
+                              <div className="flex flex-wrap gap-1.5 mb-5">
                                 {m.keywords.map((kw, j) => (
-                                  <span key={j} className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-black uppercase tracking-widest">
+                                  <span
+                                    key={j}
+                                    className="text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-0.5 rounded-sm"
+                                    style={{ color: PAL.ink2, background: PAL.paper, border: `1px solid ${PAL.border2}` }}
+                                  >
                                     {kw}
                                   </span>
                                 ))}
                               </div>
 
-                              <div className="space-y-6">
+                              <div className="space-y-5">
                                 <div>
-                                  <div className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2">Nuances & Subtleties</div>
-                                  <p className="text-slate-700 text-sm md:text-[15px] leading-relaxed">{m.nuances}</p>
+                                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1.5" style={{ color: PAL.accent }}>
+                                    Nuances &amp; subtleties
+                                  </p>
+                                  <p className="serif-text text-[14px] md:text-[15px] leading-relaxed" style={{ color: PAL.ink2 }}>
+                                    {m.nuances}
+                                  </p>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
-                                    <div className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-2 flex items-center gap-1.5"><span className="text-sm">🎯</span> Action Plan</div>
-                                    <p className="text-slate-700 text-sm leading-relaxed font-medium">{m.actionPlan}</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div className="rounded-sm p-4"
+                                    style={{ background: PAL.sageBg, border: `1px solid #C7D6BB` }}
+                                  >
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1.5" style={{ color: PAL.sage }}>
+                                      ✓ Action plan
+                                    </p>
+                                    <p className="serif-text text-[13.5px] leading-relaxed font-medium" style={{ color: PAL.ink }}>
+                                      {m.actionPlan}
+                                    </p>
                                   </div>
-                                  <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100">
-                                    <div className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-2 flex items-center gap-1.5"><span className="text-sm">💡</span> Advice</div>
-                                    <p className="text-slate-700 text-sm leading-relaxed font-medium">{m.advice}</p>
+                                  <div className="rounded-sm p-4"
+                                    style={{ background: PAL.amberBg, border: `1px solid #E1CE9B` }}
+                                  >
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1.5" style={{ color: PAL.gold }}>
+                                      ◆ Advice
+                                    </p>
+                                    <p className="serif-text text-[13.5px] leading-relaxed font-medium" style={{ color: PAL.ink }}>
+                                      {m.advice}
+                                    </p>
                                   </div>
                                 </div>
                               </div>
@@ -272,8 +324,7 @@ export default function YearAheadPanel({ profileId }: { profileId: string }) {
                   );
                 })}
               </div>
-            </div>
-
+            </section>
           </div>
         )}
       </div>

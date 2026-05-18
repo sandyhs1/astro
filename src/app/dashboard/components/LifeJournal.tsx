@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
-import { Mic, Square, Loader2, Sparkles, Activity } from "lucide-react";
+import { Mic, Square, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { PAL } from "./destiny-theme";
 
 export default function LifeJournal({ activeProfileId }: { activeProfileId: string }) {
   const [entries, setEntries] = useState<any[]>([]);
@@ -42,29 +43,18 @@ export default function LifeJournal({ activeProfileId }: { activeProfileId: stri
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data);
-        }
-      };
-
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
         await processAudio(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
-
       mediaRecorder.start();
       setIsRecording(true);
       setTimeLeft(60);
-      
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
-          if (prev <= 1) {
-             stopRecording();
-             return 0;
-          }
+          if (prev <= 1) { stopRecording(); return 0; }
           return prev - 1;
         });
       }, 1000);
@@ -83,24 +73,17 @@ export default function LifeJournal({ activeProfileId }: { activeProfileId: stri
   };
 
   const processAudio = async (blob: Blob) => {
-    setIsProcessing(true);
-    setError(null);
+    setIsProcessing(true); setError(null);
     try {
       const formData = new FormData();
       formData.append("audio", blob, "journal.webm");
       formData.append("profileId", activeProfileId);
-
-      const res = await fetch("/api/journal", {
-        method: "POST",
-        body: formData,
-      });
-
+      const res = await fetch("/api/journal", { method: "POST", body: formData });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Failed to process audio");
       }
-
-      await fetchEntries(); // Refresh list after saving
+      await fetchEntries();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -108,26 +91,40 @@ export default function LifeJournal({ activeProfileId }: { activeProfileId: stri
     }
   };
 
-  // Prepare data for the chart
   const chartData = entries.map(e => ({
     date: format(new Date(e.created_at), "MMM d"),
     sentiment: e.sentiment_score,
     label: e.sentiment,
     text: e.transcription,
-    fullDate: new Date(e.created_at).getTime()
+    fullDate: new Date(e.created_at).getTime(),
   })).sort((a, b) => a.fullDate - b.fullDate);
 
-  // Custom tooltip for chart
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl text-white max-w-xs">
-          <p className="text-xs font-bold text-slate-400 mb-1">{data.date}</p>
-          <p className="text-sm font-semibold capitalize mb-2 flex items-center gap-2">
-            Sentiment: <span className={data.label === "positive" ? "text-green-400" : data.label === "negative" ? "text-red-400" : "text-slate-300"}>{data.label}</span>
+        <div
+          className="rounded-sm p-3 max-w-xs shadow-xl"
+          style={{ background: PAL.ink, color: PAL.paper, border: `1px solid ${PAL.ink}` }}
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1" style={{ color: "#E1CE9B" }}>
+            {data.date}
           </p>
-          <p className="text-xs text-slate-300 italic line-clamp-3">"{data.text}"</p>
+          <p className="serif-display text-[13px] font-semibold mb-1.5">
+            Sentiment ·{" "}
+            <span
+              style={{
+                color:
+                  data.label === "positive" ? "#A7F3D0" :
+                  data.label === "negative" ? "#FCA5A5" : PAL.paper2,
+              }}
+            >
+              {data.label}
+            </span>
+          </p>
+          <p className="serif-text italic text-[12px] leading-snug line-clamp-3" style={{ color: PAL.paper2 }}>
+            "{data.text}"
+          </p>
         </div>
       );
     }
@@ -135,216 +132,269 @@ export default function LifeJournal({ activeProfileId }: { activeProfileId: stri
   };
 
   return (
-    <div className="h-full flex flex-col bg-white md:rounded-2xl shadow-sm border-x md:border border-slate-200 overflow-hidden relative">
+    <div className="flex flex-col w-full" style={{ background: PAL.paper, color: PAL.ink }}>
       {/* Header */}
-      <div className="flex-shrink-0 px-6 py-5 border-b border-slate-100 bg-white z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
-            <Activity className="text-indigo-600" size={20} />
-          </div>
+      <div
+        className="px-5 md:px-7 lg:px-9 py-4 md:py-5 sticky top-0 z-10 backdrop-blur-md"
+        style={{ background: "rgba(250,247,242,0.92)", borderBottom: `1px solid ${PAL.border2}` }}
+      >
+        <div className="flex items-baseline gap-3">
+          <span className="serif-display italic text-[18px] md:text-[22px]" style={{ color: PAL.accent }}>✎</span>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Life Journal</h1>
-            <p className="text-xs text-slate-500 font-medium">Speak your thoughts. Get a precise behavioral and astrological pattern analysis.</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.accent }}>
+              Life journal
+            </p>
+            <h2 className="serif-display text-[18px] md:text-[22px] font-semibold leading-none tracking-tight mt-0.5" style={{ color: PAL.ink }}>
+              Behavioural intelligence
+            </h2>
+            <p className="serif-text italic text-[11.5px] mt-1" style={{ color: PAL.ink3 }}>
+              Sentiment · intent · Dasha correlation
+            </p>
           </div>
         </div>
       </div>
 
-      <div data-lenis-prevent className="flex-1 overflow-y-auto p-6 space-y-8">
-        
-        {/* Intro Section */}
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6 shadow-sm">
-          <div>
-            <h2 className="text-lg font-bold text-indigo-900 mb-1 tracking-tight">
-              Behavioral Intelligence Engine
-            </h2>
-            <p className="text-[11px] font-semibold text-indigo-400 uppercase tracking-widest mb-4">
-              Sentiment · Intent · Dasha Correlation
+      <div data-lenis-prevent className="flex-1 overflow-y-auto custom-scroll-light">
+        <div className="px-4 md:px-7 lg:px-9 py-5 md:py-7 space-y-7">
+
+          {/* Intro */}
+          <section className="rounded-sm p-5 md:p-7"
+            style={{ background: PAL.paper2, border: `1px solid ${PAL.border2}` }}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+              How it works
             </p>
-            <p className="text-sm text-indigo-800/80 leading-relaxed mb-3 max-w-2xl">
-              Every time you speak into this journal, two precision AI systems analyze your audio in parallel. The first measures your <strong>emotional state</strong> — scoring sentiment on a continuous scale from highly negative to highly positive, capturing intensity that words alone cannot convey. The second identifies your <strong>behavioral intent</strong> — the underlying psychological driver behind what you are saying: are you seeking reassurance, processing a loss, venting frustration, or pushing for direction?
+            <h3 className="serif-display text-[20px] md:text-[24px] font-semibold tracking-tight leading-tight" style={{ color: PAL.ink }}>
+              Speak. We measure your emotion, intent, and karmic moment.
+            </h3>
+            <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed mt-3 max-w-3xl" style={{ color: PAL.ink2 }}>
+              Every time you speak into this journal, two precision AI systems analyse your audio in parallel. The first measures your <strong style={{ color: PAL.ink }}>emotional state</strong> — scoring sentiment from highly negative to highly positive. The second identifies your <strong style={{ color: PAL.ink }}>behavioural intent</strong> — the underlying psychological driver behind what you are saying.
             </p>
-            <p className="text-sm text-indigo-800/80 leading-relaxed mb-5 max-w-2xl">
-              Both signals are then cross-referenced against your active <strong>Vimshottari Dasha</strong> period and live planetary positions. The output is not a general reading — it is a precise, data-driven correlation between your psychological state right now and the astrological period you are currently in.
+            <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed mt-3 max-w-3xl" style={{ color: PAL.ink2 }}>
+              Both signals are cross-referenced against your active <strong style={{ color: PAL.ink }}>Vimshottari Dasha</strong> period and live planetary positions. The output is not a general reading — it's a precise, data-driven correlation between your psychological state right now and the astrological period you are in.
             </p>
 
-            <div className="bg-white/70 rounded-xl p-4 border border-indigo-100">
-              <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-3">How to get the most accurate reading:</h3>
-              <ul className="text-xs text-indigo-800/70 space-y-2.5 list-disc list-inside font-medium">
-                <li>Tap the microphone and speak naturally for up to 60 seconds.</li>
-                <li>Be direct and specific — vague expressions produce weaker analysis than concrete statements.</li>
-                <li><strong>Example:</strong> "I feel stuck in my career. Nothing I try seems to work and I don't know why I keep hitting this wall."</li>
-                <li><strong>Example:</strong> "I got a major opportunity today but I'm terrified to take it. Something feels off."</li>
-                <li>After submission, you'll receive a pattern analysis tied to your current Dasha and transits, plus a direct, actionable step.</li>
+            <div className="rounded-sm p-4 mt-5"
+              style={{ background: PAL.paper, border: `1px solid ${PAL.border}` }}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2.5" style={{ color: PAL.accent }}>
+                For the most accurate reading
+              </p>
+              <ul className="space-y-2 serif-text text-[13.5px] leading-relaxed" style={{ color: PAL.ink2 }}>
+                <li className="flex gap-2"><span style={{ color: PAL.accent }}>◆</span><span>Tap the microphone and speak naturally for up to 60 seconds.</span></li>
+                <li className="flex gap-2"><span style={{ color: PAL.accent }}>◆</span><span>Be direct and specific — vague expressions produce weaker analysis than concrete statements.</span></li>
+                <li className="flex gap-2"><span style={{ color: PAL.accent }}>◆</span><span><em style={{ color: PAL.ink, fontStyle: "italic" }}>Example.</em> "I feel stuck in my career. Nothing I try seems to work and I don't know why."</span></li>
+                <li className="flex gap-2"><span style={{ color: PAL.accent }}>◆</span><span><em style={{ color: PAL.ink, fontStyle: "italic" }}>Example.</em> "I got a major opportunity today but I'm terrified to take it. Something feels off."</span></li>
               </ul>
             </div>
-          </div>
-        </div>
+          </section>
 
-        {/* Graph Section */}
-        {entries.length > 0 ? (
-          <div className="bg-slate-900 rounded-2xl p-6 shadow-xl border border-slate-800 relative overflow-hidden">
-            {/* Background glow effects for premium look */}
-            <div className="absolute top-0 left-1/4 w-1/2 h-full bg-indigo-500/10 blur-3xl rounded-full pointer-events-none"></div>
-            
-            <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2 relative z-10">
-              <Activity size={14} /> Emotional Timeline
-            </h3>
-            
-            <div className="h-56 w-full relative z-10">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorSentiment" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickMargin={10} />
-                  <YAxis 
-                    domain={[-1, 1]} 
-                    stroke="#64748b" 
-                    fontSize={11} 
-                    tickLine={false} 
-                    axisLine={false} 
-                    ticks={[-1, 0, 1]} 
-                    tickFormatter={(val) => val === 1 ? 'Positive' : val === -1 ? 'Negative' : 'Neutral'} 
-                    width={55}
-                  />
-                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#475569', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                  <ReferenceLine y={0} stroke="#334155" strokeDasharray="3 3" />
-                  <Area 
-                    type="monotone" 
-                    dataKey="sentiment" 
-                    stroke="#818cf8" 
-                    strokeWidth={3}
-                    fillOpacity={1} 
-                    fill="url(#colorSentiment)"
-                    activeDot={{ r: 6, fill: "#c7d2fe", stroke: "#fff", strokeWidth: 2 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 text-center">
-            <Activity className="text-indigo-300 mx-auto mb-2" size={32} />
-            <h3 className="text-sm font-bold text-indigo-900 mb-1">Your Emotional Canvas is Empty</h3>
-            <p className="text-xs text-indigo-700/70 max-w-sm mx-auto">
-              Start recording your daily thoughts to see how your mood correlates with astrological transits over time.
-            </p>
-          </div>
-        )}
-
-        {/* Recording Section */}
-        <div className="flex flex-col items-center justify-center py-6">
-          <div className="relative">
-            {isRecording && (
-              <>
-                <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-20"></div>
-                <div className="absolute -inset-4 border border-red-200 rounded-full animate-pulse"></div>
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-red-100 text-red-600 text-[10px] font-bold px-3 py-1 rounded-full shadow-sm whitespace-nowrap">
-                  {timeLeft}s remaining
-                </div>
-              </>
-            )}
-            
-            <button
-              onClick={isRecording ? stopRecording : startRecording}
-              disabled={isProcessing}
-              className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center transition-all shadow-xl ${
-                isProcessing ? "bg-slate-100 text-slate-400 cursor-not-allowed" :
-                isRecording ? "bg-red-500 hover:bg-red-600 text-white shadow-red-500/30" : 
-                "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30"
-              }`}
+          {/* Chart */}
+          {entries.length > 0 ? (
+            <section className="rounded-sm p-5 md:p-7"
+              style={{ background: PAL.ink, color: PAL.paper, border: `1px solid ${PAL.ink}` }}
             >
-              {isProcessing ? (
-                <Loader2 size={28} className="animate-spin" />
-              ) : isRecording ? (
-                <Square size={24} fill="currentColor" />
-              ) : (
-                <Mic size={32} />
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] mb-4" style={{ color: "#E1CE9B" }}>
+                ◐ Emotional timeline
+              </p>
+              <div className="h-56 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="qkSentiment" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#E1CE9B" stopOpacity={0.5} />
+                        <stop offset="95%" stopColor="#E1CE9B" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" stroke={PAL.paper2} fontSize={11} tickLine={false} axisLine={false} tickMargin={10} />
+                    <YAxis
+                      domain={[-1, 1]}
+                      stroke={PAL.paper2}
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                      ticks={[-1, 0, 1]}
+                      tickFormatter={(val) => val === 1 ? "Positive" : val === -1 ? "Negative" : "Neutral"}
+                      width={62}
+                    />
+                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(255,255,255,0.30)", strokeWidth: 1, strokeDasharray: "4 4" }} />
+                    <ReferenceLine y={0} stroke="rgba(255,255,255,0.20)" strokeDasharray="3 3" />
+                    <Area
+                      type="monotone"
+                      dataKey="sentiment"
+                      stroke="#E1CE9B"
+                      strokeWidth={2.5}
+                      fillOpacity={1}
+                      fill="url(#qkSentiment)"
+                      activeDot={{ r: 5, fill: PAL.paper, stroke: "#E1CE9B", strokeWidth: 2 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          ) : (
+            <section className="rounded-sm p-7 text-center"
+              style={{ background: PAL.paper2, border: `1px solid ${PAL.border2}` }}
+            >
+              <p className="serif-display italic text-[20px] md:text-[24px]" style={{ color: PAL.ink2 }}>
+                Your emotional canvas is empty.
+              </p>
+              <p className="serif-text text-[13.5px] mt-1.5 max-w-md mx-auto" style={{ color: PAL.ink3 }}>
+                Start recording your daily thoughts to see how your mood correlates with astrological transits over time.
+              </p>
+            </section>
+          )}
+
+          {/* Recording */}
+          <section className="flex flex-col items-center justify-center py-4 md:py-6">
+            <div className="relative">
+              {isRecording && (
+                <>
+                  <div
+                    className="absolute inset-0 rounded-full animate-ping opacity-30"
+                    style={{ background: PAL.rose }}
+                  />
+                  <div
+                    className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 rounded-sm text-[10px] font-semibold uppercase tracking-[0.18em] tabular-nums whitespace-nowrap"
+                    style={{ background: PAL.roseBg, color: PAL.rose, border: `1px solid #E5BFC1` }}
+                  >
+                    {timeLeft}s remaining
+                  </div>
+                </>
               )}
-            </button>
-          </div>
-          <p className="text-xs font-semibold text-slate-500 mt-6 h-4">
-            {isProcessing ? "Analyzing sentiment & planetary transits..." : isRecording ? "Listening to your thoughts..." : "Tap to record your journal"}
-          </p>
-          {error && <p className="text-xs text-red-500 font-medium mt-2">{error}</p>}
+
+              <button
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isProcessing}
+                className="relative z-10 w-20 h-20 grid place-items-center rounded-full transition-all"
+                style={
+                  isProcessing
+                    ? { background: PAL.paper2, color: PAL.ink3, border: `1px solid ${PAL.border}`, cursor: "not-allowed" }
+                    : isRecording
+                    ? { background: PAL.rose, color: PAL.paper, border: `1px solid ${PAL.rose}`, boxShadow: "0 8px 20px -6px rgba(156,42,63,0.40)" }
+                    : { background: PAL.accent, color: PAL.paper, border: `1px solid ${PAL.accent}`, boxShadow: "0 8px 20px -6px rgba(123,10,31,0.40)" }
+                }
+              >
+                {isProcessing ? <Loader2 size={28} className="animate-spin" /> :
+                 isRecording ? <Square size={22} fill="currentColor" /> : <Mic size={32} />}
+              </button>
+            </div>
+
+            <p className="serif-text italic text-[13px] mt-5 h-4" style={{ color: PAL.ink2 }}>
+              {isProcessing
+                ? "Analysing sentiment & planetary transits…"
+                : isRecording
+                ? "Listening to your thoughts…"
+                : "Tap to record your journal"}
+            </p>
+            {error && (
+              <p className="serif-text text-[12.5px] mt-2 px-3 py-1.5 rounded-sm"
+                style={{ background: PAL.roseBg, color: PAL.rose, border: `1px solid #E5BFC1` }}
+              >
+                {error}
+              </p>
+            )}
+          </section>
+
+          {/* History */}
+          {entries.length > 0 && (
+            <section>
+              <div className="pb-3 mb-4" style={{ borderBottom: `1px solid ${PAL.border2}` }}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.accent }}>
+                  Recent entries
+                </p>
+              </div>
+
+              <div className="space-y-3.5">
+                {entries.slice().reverse().map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="rounded-sm p-4 md:p-5 transition-colors"
+                    style={{ background: PAL.paper, border: `1px solid ${PAL.border2}` }}
+                  >
+                    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: PAL.ink3 }}>
+                        {format(new Date(entry.created_at), "MMM d, yyyy · h:mm a")}
+                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className="text-[10px] font-semibold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm"
+                          style={
+                            entry.sentiment === "positive"
+                              ? { color: PAL.sage, background: PAL.sageBg, border: `1px solid #C7D6BB` }
+                              : entry.sentiment === "negative"
+                              ? { color: PAL.rose, background: PAL.roseBg, border: `1px solid #E5BFC1` }
+                              : { color: PAL.ink2, background: PAL.paper2, border: `1px solid ${PAL.border2}` }
+                          }
+                        >
+                          {entry.sentiment}
+                        </span>
+                        {Array.isArray(entry.intents) && entry.intents.length > 0 && entry.intents.map((intent: string) => (
+                          <span
+                            key={intent}
+                            className="text-[10px] font-semibold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm capitalize"
+                            style={{ color: "#5A3A8F", background: "#ECE6F4", border: `1px solid #D2C4E5` }}
+                          >
+                            {intent}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <p className="serif-display italic text-[15px] md:text-[16px] leading-relaxed mb-4" style={{ color: PAL.ink }}>
+                      "{entry.transcription}"
+                    </p>
+
+                    {/* AI Feedback */}
+                    {entry.ai_feedback && (
+                      <div
+                        className="rounded-sm p-4 space-y-3"
+                        style={{ background: PAL.paper2, border: `1px solid ${PAL.border2}` }}
+                      >
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1" style={{ color: PAL.accent }}>
+                            ✦ Cosmic insight
+                          </p>
+                          <p className="serif-text text-[13.5px] leading-relaxed" style={{ color: PAL.ink2 }}>
+                            {entry.ai_feedback.cosmic_insight}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1" style={{ color: PAL.sage }}>
+                            ✓ Action plan
+                          </p>
+                          <p className="serif-text text-[13.5px] leading-relaxed" style={{ color: PAL.ink2 }}>
+                            {entry.ai_feedback.action_plan}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Transit signature */}
+                    {entry.gochar_snapshot && entry.gochar_snapshot.planets && (
+                      <div className="rounded-sm p-3 mt-3 flex items-start gap-3"
+                        style={{ background: PAL.amberBg, border: `1px solid #E1CE9B` }}
+                      >
+                        <span className="serif-display text-[16px] flex-shrink-0" style={{ color: PAL.gold }}>◯</span>
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.gold }}>
+                            Transit signature
+                          </p>
+                          <p className="serif-text text-[12.5px] mt-0.5" style={{ color: PAL.ink2 }}>
+                            Saturn in <strong style={{ color: PAL.ink }}>{entry.gochar_snapshot.planets.find((p: any) => p.name === "Saturn")?.sign || "Unknown"}</strong>
+                            {entry.dasha_snapshot?.mahadasha && (
+                              <> · Dasha · <strong style={{ color: PAL.ink }}>{entry.dasha_snapshot.mahadasha}</strong></>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
-
-        {/* History List */}
-        {entries.length > 0 && (
-          <div>
-             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Recent Entries</h3>
-             <div className="space-y-4">
-               {entries.slice().reverse().map((entry) => (
-                 <div key={entry.id} className="bg-slate-50 border border-slate-100 rounded-xl p-4 transition-all hover:shadow-sm">
-                   <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                     <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
-                       {format(new Date(entry.created_at), "MMM d, yyyy • h:mm a")}
-                     </span>
-                     <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                          entry.sentiment === "positive" ? "bg-green-100 text-green-700" :
-                          entry.sentiment === "negative" ? "bg-red-100 text-red-700" :
-                          "bg-slate-200 text-slate-700"
-                       }`}>
-                         {entry.sentiment}
-                       </span>
-                       {/* Intent pills from Deepgram Intent Recognition */}
-                       {Array.isArray(entry.intents) && entry.intents.length > 0 && entry.intents.map((intent: string) => (
-                         <span
-                           key={intent}
-                           className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-100 capitalize"
-                         >
-                           {intent}
-                         </span>
-                       ))}
-                     </div>
-                   </div>
-                   <p className="text-sm text-slate-700 italic mb-4">"{entry.transcription}"</p>
-                   
-                   {/* AI Feedback & Astro Context */}
-                   <div className="mt-4 space-y-3">
-                     {entry.ai_feedback && (
-                       <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4">
-                         <h4 className="text-[11px] font-bold text-indigo-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                           <Sparkles size={12} className="text-indigo-500" />
-                           Cosmic Insight
-                         </h4>
-                         <p className="text-xs text-indigo-800 leading-relaxed font-medium mb-3">
-                           {entry.ai_feedback.cosmic_insight}
-                         </p>
-                         <h4 className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                           <Activity size={12} className="text-emerald-600" />
-                           Action Plan
-                         </h4>
-                         <p className="text-xs text-emerald-700 leading-relaxed">
-                           {entry.ai_feedback.action_plan}
-                         </p>
-                       </div>
-                     )}
-
-                     {entry.gochar_snapshot && entry.gochar_snapshot.planets && (
-                       <div className="bg-white border border-slate-200 rounded-lg p-3 flex items-start gap-3 shadow-sm">
-                         <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                           <span className="text-xs">🪐</span>
-                         </div>
-                         <div>
-                           <p className="text-[11px] font-bold text-slate-800 leading-tight">Transit Signature</p>
-                           <p className="text-[11px] text-slate-500 mt-0.5">
-                             Saturn in <span className="font-semibold text-slate-700">{entry.gochar_snapshot.planets.find((p: any) => p.name === 'Saturn')?.sign || 'Unknown'}</span>. 
-                             Dasha: <span className="font-semibold text-slate-700">{entry.dasha_snapshot?.mahadasha}</span>
-                           </p>
-                         </div>
-                       </div>
-                     )}
-                   </div>
-                 </div>
-               ))}
-             </div>
-          </div>
-        )}
       </div>
     </div>
   );

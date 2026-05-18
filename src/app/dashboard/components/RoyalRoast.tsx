@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PAL } from "./destiny-theme";
 
 interface RoyalRoastProps {
   profileId: string;
@@ -10,26 +11,38 @@ interface RoyalRoastProps {
 }
 
 const LOADING_LINES = [
-  "Pulling up your chart and keeping it real...",
-  "Reading between the planetary lines...",
-  "Your planets are talking. Some of them are shading you...",
-  "No gemstones, just the truth...",
-  "Compiling your personality at full resolution...",
-  "The stars have opinions. Bracing for impact...",
+  "Pulling up your chart and keeping it real…",
+  "Reading between the planetary lines…",
+  "Your planets are talking. Some of them are shading you…",
+  "No gemstones, just the truth…",
+  "Compiling your personality at full resolution…",
+  "The stars have opinions. Bracing for impact…",
 ];
 
-const CAT_CONFIG: Record<string, { emoji: string; color: string; bg: string; label: string; intensity: string }> = {
-  SELF:          { emoji: "🪞", color: "#6366F1", bg: "#EEF2FF", label: "Self",                  intensity: "Deep" },
-  LOVE:          { emoji: "💘", color: "#EC4899", bg: "#FDF2F8", label: "Love Life",             intensity: "Spicy" },
-  CAREER:        { emoji: "🚀", color: "#F59E0B", bg: "#FFFBEB", label: "Career",                intensity: "Nuclear" },
-  PERSONALITY:   { emoji: "🎭", color: "#8B5CF6", bg: "#F5F3FF", label: "Personality",           intensity: "Savage" },
-  MONEY:         { emoji: "💸", color: "#10B981", bg: "#ECFDF5", label: "Money",                 intensity: "Brutal" },
-  HEALTH:        { emoji: "🏋️", color: "#14B8A6", bg: "#F0FDFA", label: "Health",                intensity: "Real" },
-  SOCIAL:        { emoji: "🫂", color: "#3B82F6", bg: "#EFF6FF", label: "Social",                intensity: "Honest" },
-  FEARS:         { emoji: "😰", color: "#EF4444", bg: "#FEF2F2", label: "Secret Fears",          intensity: "Exposed" },
-  FAMILY:        { emoji: "🏡", color: "#F97316", bg: "#FFF7ED", label: "Family",                intensity: "Raw" },
-  COMMUNICATION: { emoji: "🗣️", color: "#06B6D4", bg: "#ECFEFF", label: "Communication",         intensity: "Sharp" },
-  VERDICT:       { emoji: "🏆", color: "#D97706", bg: "#FFFBEB", label: "Verdict",               intensity: "Final" },
+/* Editorial tones for each category */
+type ToneName = "indigo" | "rose" | "gold" | "sage" | "blue" | "ink" | "fire";
+const TONES: Record<ToneName, { ink: string; bg: string; border: string }> = {
+  indigo: { ink: "#5A3A8F", bg: "#ECE6F4", border: "#D2C4E5" },
+  rose:   { ink: PAL.rose, bg: PAL.roseBg, border: "#E5BFC1" },
+  gold:   { ink: PAL.gold, bg: PAL.amberBg, border: "#E1CE9B" },
+  sage:   { ink: PAL.sage, bg: PAL.sageBg, border: "#C7D6BB" },
+  blue:   { ink: "#1F4F7A", bg: "#E5EEF6", border: "#BCD0E1" },
+  ink:    { ink: PAL.ink, bg: PAL.paper2, border: PAL.border },
+  fire:   { ink: PAL.accent, bg: PAL.roseBg, border: "#E5BFC1" },
+};
+
+const CAT_CONFIG: Record<string, { symbol: string; label: string; intensity: string; tone: ToneName }> = {
+  SELF:          { symbol: "◯", label: "Self",          intensity: "Deep",     tone: "indigo" },
+  LOVE:          { symbol: "♡", label: "Love life",     intensity: "Spicy",    tone: "rose" },
+  CAREER:        { symbol: "✈", label: "Career",        intensity: "Nuclear",  tone: "fire" },
+  PERSONALITY:   { symbol: "◧", label: "Personality",   intensity: "Savage",   tone: "indigo" },
+  MONEY:         { symbol: "₹", label: "Money",         intensity: "Brutal",   tone: "sage" },
+  HEALTH:        { symbol: "✚", label: "Health",        intensity: "Real",     tone: "sage" },
+  SOCIAL:        { symbol: "❀", label: "Social",        intensity: "Honest",   tone: "blue" },
+  FEARS:         { symbol: "✗", label: "Secret fears",  intensity: "Exposed",  tone: "rose" },
+  FAMILY:        { symbol: "⌂", label: "Family",        intensity: "Raw",      tone: "fire" },
+  COMMUNICATION: { symbol: "✎", label: "Communication", intensity: "Sharp",    tone: "blue" },
+  VERDICT:       { symbol: "✦", label: "Verdict",       intensity: "Final",    tone: "gold" },
 };
 
 interface RoastCard {
@@ -43,140 +56,104 @@ interface RoastCard {
 
 function parseStructuredReport(raw: string): { intro: string; cards: RoastCard[] } {
   const cards: RoastCard[] = [];
-
-  // Extract intro (before first ---SECTION---)
   const firstSection = raw.indexOf("---SECTION---");
   const intro = firstSection > -1 ? raw.slice(0, firstSection).trim() : "";
-
-  // Extract each section block
   const blocks = raw.split("---SECTION---").slice(1);
   for (const block of blocks) {
     const end = block.indexOf("---END---");
     const content = end > -1 ? block.slice(0, end) : block;
-
     const get = (key: string): string => {
       const regex = new RegExp(`^${key}:\\s*(.+)`, "m");
       const match = content.match(regex);
       return match ? match[1].trim() : "";
     };
-
     const category = get("CATEGORY").toUpperCase();
     if (!category) continue;
-
     cards.push({
-      category,
-      headline:  get("HEADLINE"),
-      roast:     get("ROAST"),
-      proof:     get("PROOF"),
-      impact:    get("IMPACT"),
-      tip:       get("TIP") || get("The shift"),
+      category, headline: get("HEADLINE"), roast: get("ROAST"),
+      proof: get("PROOF"), impact: get("IMPACT"),
+      tip: get("TIP") || get("The shift"),
     });
   }
-
   return { intro, cards };
 }
 
-function IntensityDots({ color }: { color: string }) {
+function IntensityDots({ ink }: { ink: string }) {
   return (
-    <div className="flex items-center gap-0.5">
-      {[0,1,2,3,4].map(i => (
-        <div key={i} className="w-2 h-2 rounded-full" style={{ background: i < 3 ? color : `${color}30` }} />
+    <span className="inline-flex items-center gap-0.5">
+      {[0, 1, 2, 3, 4].map(i => (
+        <span key={i} className="w-1 h-1 rounded-full" style={{ background: i < 3 ? ink : `${ink}40` }} />
       ))}
-    </div>
+    </span>
   );
 }
 
-function RoastCard({ card, index }: { card: RoastCard; index: number }) {
+function RoastCardView({ card, index }: { card: RoastCard; index: number }) {
   const cfg = CAT_CONFIG[card.category] || CAT_CONFIG["SELF"];
-  const isVerdict = card.category === "VERDICT";
+  const tone = TONES[cfg.tone];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.06, duration: 0.4 }}
-      className={`relative rounded-2xl overflow-hidden border bg-white shadow-sm hover:shadow-md transition-shadow duration-300 ${
-        isVerdict ? "col-span-full" : ""
-      }`}
-      style={{ borderColor: `${cfg.color}25` }}
+      transition={{ delay: index * 0.05, duration: 0.4 }}
+      className="rounded-sm overflow-hidden"
+      style={{ background: PAL.paper, border: `1px solid ${PAL.border2}` }}
     >
-      {/* Top color bar */}
-      <div className="h-1 w-full" style={{ background: `linear-gradient(to right, ${cfg.color}, ${cfg.color}60)` }} />
-
-      {/* Header row */}
-      <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-            style={{ background: cfg.bg }}
-          >
-            {cfg.emoji}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span
-                className="text-[9px] font-black uppercase tracking-[0.18em]"
-                style={{ color: cfg.color }}
-              >
-                {cfg.label}
-              </span>
-              <IntensityDots color={cfg.color} />
-              <span
-                className="text-[9px] font-black uppercase tracking-wider"
-                style={{ color: cfg.color }}
-              >
-                {cfg.intensity}
-              </span>
-            </div>
-            <h3 className="font-black text-slate-900 text-[15px] leading-snug mt-0.5">
-              {card.headline || cfg.label}
-            </h3>
-          </div>
+      {/* Category strip */}
+      <div className="px-5 py-3.5" style={{ background: tone.bg, borderBottom: `1px solid ${tone.border}` }}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="serif-display text-[16px]" style={{ color: tone.ink }}>{cfg.symbol}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: tone.ink }}>
+            {cfg.label}
+          </span>
+          <IntensityDots ink={tone.ink} />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: tone.ink }}>
+            {cfg.intensity}
+          </span>
         </div>
+        <h3 className="serif-display text-[16px] md:text-[18px] font-semibold tracking-tight leading-tight mt-1" style={{ color: PAL.ink }}>
+          {card.headline || cfg.label}
+        </h3>
       </div>
 
-      {/* Divider */}
-      <div className="mx-5 h-px" style={{ background: `${cfg.color}18` }} />
-
-      {/* Roast text */}
-      <div className="px-5 py-3">
-        <p className="text-slate-700 text-sm leading-relaxed">{card.roast}</p>
+      {/* Roast */}
+      <div className="px-5 py-4">
+        <p className="serif-text text-[14.5px] leading-relaxed" style={{ color: PAL.ink }}>
+          {card.roast}
+        </p>
       </div>
 
-      {/* Chart proof */}
+      {/* Proof */}
       {card.proof && (
-        <div className="mx-5 mb-3 px-3.5 py-2.5 rounded-xl" style={{ background: cfg.bg }}>
-          <div className="flex items-start gap-2">
-            <span className="text-[11px] font-black uppercase tracking-wider flex-shrink-0 mt-0.5" style={{ color: cfg.color }}>
-              🔭
-            </span>
-            <p className="text-[12px] font-semibold text-slate-600 leading-relaxed">
-              {card.proof.replace(/^Chart:\s*/i, "")}
-            </p>
-          </div>
+        <div className="mx-5 mb-4 px-3.5 py-2.5 rounded-sm" style={{ background: tone.bg, border: `1px solid ${tone.border}` }}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] mb-1" style={{ color: tone.ink }}>
+            Chart proof
+          </p>
+          <p className="serif-text text-[13px] leading-relaxed" style={{ color: PAL.ink2 }}>
+            {card.proof.replace(/^Chart:\s*/i, "")}
+          </p>
         </div>
       )}
 
       {/* Impact + Tip */}
-      <div className="mx-5 mb-4 space-y-2">
+      <div className="mx-5 mb-5 space-y-2.5">
         {card.impact && (
-          <div className="flex items-start gap-2">
-            <span className="text-[11px] font-black text-slate-400 mt-0.5 flex-shrink-0">⚡</span>
-            <p className="text-[12px] text-slate-500 leading-relaxed">
-              <span className="font-bold text-slate-600">In real life: </span>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1" style={{ color: PAL.ink3 }}>
+              In real life
+            </p>
+            <p className="serif-text text-[13px] leading-relaxed" style={{ color: PAL.ink2 }}>
               {card.impact.replace(/^In real life:\s*/i, "")}
             </p>
           </div>
         )}
         {card.tip && (
-          <div className="flex items-start gap-2">
-            <span className="text-[11px] mt-0.5 flex-shrink-0">
-              {card.category === "VERDICT" ? "🔑" : "💡"}
-            </span>
-            <p className="text-[12px] leading-relaxed font-semibold" style={{ color: cfg.color }}>
-              <span className="font-black">
-                {card.category === "VERDICT" ? "The shift: " : "Try this: "}
-              </span>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1" style={{ color: PAL.accent }}>
+              {card.category === "VERDICT" ? "The shift" : "Try this"}
+            </p>
+            <p className="serif-display italic text-[13.5px] leading-relaxed" style={{ color: PAL.ink }}>
               {card.tip.replace(/^(Try this:|The shift:)\s*/i, "")}
             </p>
           </div>
@@ -216,240 +193,314 @@ export default function RoyalRoast({ profileId, profileName, isB2B = false }: Ro
   }
 
   async function generateRoast() {
-    setStatus("loading");
-    setErrorMsg("");
+    setStatus("loading"); setErrorMsg("");
     try {
       const res = await fetch("/api/royal-roast", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileId }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profileId }),
       });
       const data = await res.json();
       if (!res.ok) { setErrorMsg(data.error || "Something went wrong."); setStatus("error"); return; }
-      setReportData(data);
-      setStatus("done");
+      setReportData(data); setStatus("done");
     } catch { setErrorMsg("Network error. Please try again."); setStatus("error"); }
   }
 
   const parsed = reportData?.report ? parseStructuredReport(reportData.report) : null;
-  // Split cards: first 10 in 2-col grid, verdict (index 10) full-width
   const gridCards = parsed?.cards.filter(c => c.category !== "VERDICT") ?? [];
   const verdictCard = parsed?.cards.find(c => c.category === "VERDICT");
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-slate-50">
-
-      {/* ── Header ── */}
-      <div className="flex-shrink-0 px-6 py-4 border-b border-slate-100 bg-white flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-100 to-red-100 flex items-center justify-center text-xl">🔥</div>
-          <div>
-            <h2 className="font-black text-slate-900 text-base leading-tight">Royal Roast</h2>
-            <p className="text-[11px] text-slate-400 font-medium">
-              {reportData ? `${reportData.personName} · ${reportData.lagna} Rising · ${reportData.moonNak} Moon` : `Chart-based personality breakdown · ${profileName}`}
+    <div className="flex flex-col w-full" style={{ background: PAL.paper, color: PAL.ink }}>
+      {/* Header */}
+      <div
+        className="px-5 md:px-7 lg:px-9 py-4 md:py-5 flex items-center justify-between gap-3 sticky top-0 z-10 backdrop-blur-md"
+        style={{ background: "rgba(250,247,242,0.92)", borderBottom: `1px solid ${PAL.border2}` }}
+      >
+        <div className="flex items-baseline gap-3 min-w-0 flex-1">
+          <span className="serif-display italic text-[18px] md:text-[22px]" style={{ color: PAL.accent }}>🔥</span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.accent }}>
+              Royal roast
+            </p>
+            <h2 className="serif-display text-[16px] md:text-[20px] font-semibold leading-none tracking-tight mt-0.5 truncate" style={{ color: PAL.ink }}>
+              Chart-based, unfiltered
+            </h2>
+            <p className="serif-text text-[11.5px] italic mt-1" style={{ color: PAL.ink3 }}>
+              {reportData
+                ? `${reportData.personName} · ${reportData.lagna} Rising · ${reportData.moonNak} Moon`
+                : profileName}
             </p>
           </div>
         </div>
         {status === "done" && (
           <button
             onClick={() => { setStatus("idle"); setReportData(null); }}
-            className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50 border border-slate-200 bg-white"
+            className="flex-shrink-0 serif-text text-[12px] font-semibold px-3 py-1.5 rounded-sm transition-colors hover:bg-black/[0.04]"
+            style={{ color: PAL.ink2, border: `1px solid ${PAL.border}`, background: "transparent" }}
           >
             ↺ Regenerate
           </button>
         )}
       </div>
 
-      {/* ── IDLE ── */}
+      {/* IDLE */}
       {status === "idle" && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-6">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-100 to-red-100 border border-red-200 flex items-center justify-center text-4xl shadow-sm">
+        <div className="flex flex-col items-center justify-center px-6 py-14 md:py-20 text-center">
+          <div
+            className="w-24 h-24 rounded-sm grid place-items-center serif-display text-[40px] mb-6"
+            style={{ background: PAL.roseBg, color: PAL.accent, border: `1px solid #E5BFC1` }}
+          >
             🔥
           </div>
-          <div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">Ready for the truth, {profileName}?</h3>
-            <p className="text-slate-500 mt-2 max-w-sm text-sm leading-relaxed">
-              Your birth chart has a lot to say about you. We're going to say it — with real data, a little shade, and actual encouragement.
-            </p>
-          </div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2" style={{ color: PAL.accent }}>
+            Begin · roast
+          </p>
+          <h3 className="serif-display text-[26px] md:text-[34px] font-semibold tracking-tight leading-tight" style={{ color: PAL.ink }}>
+            Ready for the truth, {profileName}?
+          </h3>
+          <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed mt-3 max-w-md" style={{ color: PAL.ink2 }}>
+            Your birth chart has a lot to say about you. We're going to say it — with real data, a little shade, and actual encouragement.
+          </p>
+
           {/* Category preview chips */}
-          <div className="flex flex-wrap justify-center gap-2 max-w-lg">
-            {Object.entries(CAT_CONFIG).slice(0, 8).map(([key, cfg]) => (
-              <span key={key} className="text-[11px] font-bold px-3 py-1.5 rounded-full"
-                style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}28` }}>
-                {cfg.emoji} {cfg.label}
-              </span>
-            ))}
-            <span className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">+3 more</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <button
-              onClick={generateRoast}
-              className="px-8 py-3.5 rounded-xl font-black text-white text-sm shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
-              style={{ background: "linear-gradient(135deg, #F97316, #EF4444)" }}
+          <div className="flex flex-wrap justify-center gap-1.5 max-w-xl mt-5">
+            {Object.entries(CAT_CONFIG).slice(0, 8).map(([key, cfg]) => {
+              const tone = TONES[cfg.tone];
+              return (
+                <span
+                  key={key}
+                  className="serif-text text-[11.5px] font-semibold px-2.5 py-1 rounded-sm"
+                  style={{ color: tone.ink, background: tone.bg, border: `1px solid ${tone.border}` }}
+                >
+                  {cfg.symbol} {cfg.label}
+                </span>
+              );
+            })}
+            <span
+              className="serif-text text-[11.5px] font-semibold px-2.5 py-1 rounded-sm"
+              style={{ color: PAL.ink3, background: PAL.paper2, border: `1px solid ${PAL.border2}` }}
             >
-              🔥 Generate My Royal Roast — 15 Credits
-            </button>
-            <p className="text-[10px] text-slate-400 font-medium">Saved after generation · Free to re-read anytime</p>
+              + 3 more
+            </span>
           </div>
+
+          <button
+            onClick={generateRoast}
+            className="mt-7 serif-text text-[13px] font-semibold px-6 py-3 rounded-sm text-white transition-opacity hover:opacity-90"
+            style={{ background: PAL.accent }}
+          >
+            🔥 Generate my royal roast — 15 credits
+          </button>
+          <p className="serif-text italic text-[11.5px] mt-3" style={{ color: PAL.ink3 }}>
+            Saved after generation · free to re-read anytime
+          </p>
         </div>
       )}
 
-      {/* ── LOADING ── */}
+      {/* LOADING */}
       {status === "loading" && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
-          <div className="text-5xl animate-bounce">🔥</div>
-          <div className="text-center space-y-2">
-            <div className="font-black text-slate-900 text-base">Building your Royal Roast...</div>
-            <AnimatePresence mode="wait">
-              <motion.p key={loadingLine} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="text-sm text-slate-400 font-medium">
-                {LOADING_LINES[loadingLine]}
-              </motion.p>
-            </AnimatePresence>
-          </div>
-          <div className="flex gap-1.5">
-            {[0,1,2,3].map(i => (
-              <div key={i} className="w-2 h-2 rounded-full bg-orange-300 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-            ))}
+        <div className="flex flex-col items-center justify-center px-6 py-14 md:py-20 text-center">
+          <div className="serif-display text-[42px]" style={{ color: PAL.accent }}>🔥</div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mt-3" style={{ color: PAL.accent }}>
+            Building your roast
+          </p>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={loadingLine}
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+              className="serif-display italic text-[18px] md:text-[22px] mt-3 max-w-md" style={{ color: PAL.ink }}
+            >
+              {LOADING_LINES[loadingLine]}
+            </motion.p>
+          </AnimatePresence>
+          <div className="mt-5 inline-flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.15s" }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.3s" }} />
           </div>
         </div>
       )}
 
-      {/* ── ERROR ── */}
+      {/* ERROR */}
       {status === "error" && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-8 text-center">
-          <div className="text-5xl">😬</div>
-          <div>
-            <h3 className="font-black text-slate-900">Something went wrong</h3>
-            <p className="text-sm text-slate-500 mt-1">{errorMsg}</p>
-          </div>
-          <button onClick={generateRoast} className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors">
-            Try Again
+        <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+          <div className="serif-display text-[42px]" style={{ color: PAL.rose }}>⚠︎</div>
+          <h3 className="serif-display text-[20px] font-semibold mt-3" style={{ color: PAL.ink }}>Something went wrong</h3>
+          <p className="serif-text text-[13.5px] italic mt-1" style={{ color: PAL.ink2 }}>{errorMsg}</p>
+          <button
+            onClick={generateRoast}
+            className="mt-5 serif-text text-[13px] font-semibold px-5 py-2.5 rounded-sm text-white transition-opacity hover:opacity-90"
+            style={{ background: PAL.ink }}
+          >
+            Try again
           </button>
         </div>
       )}
 
-      {/* ── DONE ── */}
+      {/* DONE */}
       {status === "done" && reportData && (
-        <div data-lenis-prevent className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="max-w-5xl mx-auto px-4 md:px-8 py-6">
+        <div data-lenis-prevent className="flex-1 overflow-y-auto custom-scroll-light">
+          <div className="max-w-5xl mx-auto px-4 md:px-7 lg:px-9 py-5 md:py-7">
 
-            {/* Intro Hero */}
+            {/* Intro hero */}
             {parsed?.intro && (
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative rounded-2xl overflow-hidden mb-6 p-6 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 shadow-lg shadow-orange-100"
+                className="rounded-sm overflow-hidden mb-5 md:mb-6 p-5 md:p-7"
+                style={{ background: PAL.ink, color: PAL.paper, border: `1px solid ${PAL.ink}` }}
               >
-                <div className="absolute inset-0 opacity-10"
-                  style={{ backgroundImage: "radial-gradient(circle at 80% 20%, white 0%, transparent 60%)" }} />
-                <div className="relative">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-2xl">🔥</span>
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/70">Royal Roast</span>
-                      <h2 className="text-lg font-black text-white leading-tight">
-                        {reportData.personName}'s Chart, Unfiltered
-                      </h2>
-                    </div>
-                    <div className="ml-auto flex flex-col items-end gap-1">
-                      {reportData.lagna && <span className="text-[11px] bg-white/20 text-white px-2.5 py-1 rounded-full font-bold">{reportData.lagna} Rising</span>}
-                      {reportData.moonNak && <span className="text-[11px] bg-white/20 text-white px-2.5 py-1 rounded-full font-bold">{reportData.moonNak} Moon</span>}
-                      {reportData.ak && <span className="text-[11px] bg-white/20 text-white px-2.5 py-1 rounded-full font-bold">AK: {reportData.ak}</span>}
-                    </div>
+                <div className="flex items-start gap-3 mb-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em]" style={{ color: "#E1CE9B" }}>
+                      Royal roast
+                    </p>
+                    <h2 className="serif-display text-[20px] md:text-[26px] font-semibold leading-tight tracking-tight mt-1">
+                      {reportData.personName}'s chart, unfiltered
+                    </h2>
                   </div>
-                  <div className="h-px bg-white/20 mb-3" />
-                  <p className="text-white/90 text-sm leading-relaxed font-medium">{parsed.intro}</p>
-                  {reportData.dasha && (
-                    <div className="mt-3 flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-white/50">Current Dasha</span>
-                      <span className="text-[11px] bg-white/15 text-white/90 px-2.5 py-1 rounded-full font-bold">{reportData.dasha}</span>
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-1.5">
+                    {reportData.lagna && (
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-1 rounded-sm"
+                        style={{ background: "rgba(255,255,255,0.10)", color: PAL.paper, border: `1px solid rgba(255,255,255,0.18)` }}
+                      >
+                        {reportData.lagna} Rising
+                      </span>
+                    )}
+                    {reportData.moonNak && (
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-1 rounded-sm"
+                        style={{ background: "rgba(255,255,255,0.10)", color: PAL.paper, border: `1px solid rgba(255,255,255,0.18)` }}
+                      >
+                        {reportData.moonNak} Moon
+                      </span>
+                    )}
+                    {reportData.ak && (
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-1 rounded-sm"
+                        style={{ background: "rgba(255,255,255,0.10)", color: PAL.paper, border: `1px solid rgba(255,255,255,0.18)` }}
+                      >
+                        AK · {reportData.ak}
+                      </span>
+                    )}
+                  </div>
                 </div>
+
+                <div className="h-px mb-4" style={{ background: "rgba(255,255,255,0.12)" }} />
+
+                <p className="serif-text text-[14.5px] md:text-[15.5px] leading-relaxed" style={{ color: PAL.paper2 }}>
+                  {parsed.intro}
+                </p>
+
+                {reportData.dasha && (
+                  <div className="mt-4 inline-flex items-center gap-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: "#E1CE9B" }}>
+                      Current dasha
+                    </span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] px-2 py-0.5 rounded-sm"
+                      style={{ background: "rgba(255,255,255,0.10)", color: PAL.paper, border: `1px solid rgba(255,255,255,0.18)` }}
+                    >
+                      {reportData.dasha}
+                    </span>
+                  </div>
+                )}
               </motion.div>
             )}
 
-            {/* 2-column card grid */}
+            {/* 2-col grid */}
             {gridCards.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
                 {gridCards.map((card, i) => (
-                  <RoastCard key={card.category} card={card} index={i} />
+                  <RoastCardView key={card.category} card={card} index={i} />
                 ))}
               </div>
             )}
 
-            {/* Verdict — full width gold */}
+            {/* Verdict */}
             {verdictCard && (
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
-                className="rounded-2xl overflow-hidden border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 shadow-sm mb-6"
+                className="rounded-sm overflow-hidden mb-6"
+                style={{ background: PAL.amberBg, border: `1px solid #E1CE9B` }}
               >
-                <div className="h-1 bg-gradient-to-r from-amber-400 to-yellow-400" />
-                <div className="px-6 pt-5 pb-2">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-xl">🏆</div>
-                    <div>
-                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-600">Overall Verdict</span>
-                      <h3 className="font-black text-slate-900 text-base leading-tight">
-                        {verdictCard.headline || "The Bottom Line"}
+                <div className="px-5 md:px-6 py-5">
+                  <div className="flex items-start gap-3 mb-3 flex-wrap">
+                    <span className="serif-display text-[24px]" style={{ color: PAL.gold }}>✦</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.24em]" style={{ color: PAL.gold }}>
+                        Overall verdict
+                      </p>
+                      <h3 className="serif-display text-[20px] md:text-[24px] font-semibold leading-tight tracking-tight mt-1" style={{ color: PAL.ink }}>
+                        {verdictCard.headline || "The bottom line"}
                       </h3>
                     </div>
-                    <div className="ml-auto">
-                      <div className="flex gap-1">
-                        {[0,1,2,3,4].map(i => (
-                          <div key={i} className="w-2 h-2 rounded-full bg-amber-400" />
-                        ))}
-                      </div>
-                      <span className="text-[9px] font-black uppercase tracking-wider text-amber-500">Final</span>
+                    <div className="text-right flex-shrink-0">
+                      <IntensityDots ink={PAL.gold} />
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mt-1" style={{ color: PAL.gold }}>
+                        Final
+                      </p>
                     </div>
                   </div>
-                  <div className="h-px bg-amber-200 mb-3" />
-                  <p className="text-slate-700 text-sm leading-relaxed mb-3">{verdictCard.roast}</p>
+
+                  <div className="h-px mb-4" style={{ background: "#E1CE9B" }} />
+
+                  <p className="serif-text text-[15px] leading-relaxed mb-4" style={{ color: PAL.ink }}>
+                    {verdictCard.roast}
+                  </p>
+
                   {verdictCard.proof && (
-                    <div className="px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-100 mb-3">
-                      <p className="text-[12px] font-semibold text-slate-600">
-                        🔭 {verdictCard.proof.replace(/^Chart:\s*/i, "")}
+                    <div className="rounded-sm px-3.5 py-2.5 mb-3"
+                      style={{ background: PAL.paper, border: `1px solid #E1CE9B` }}
+                    >
+                      <p className="serif-text text-[12.5px] leading-relaxed" style={{ color: PAL.ink2 }}>
+                        <strong style={{ color: PAL.gold }}>Chart proof.</strong> {verdictCard.proof.replace(/^Chart:\s*/i, "")}
                       </p>
                     </div>
                   )}
+
                   {verdictCard.impact && (
-                    <p className="text-[12px] text-slate-500 mb-2">
-                      <span className="font-bold text-slate-600">⚡ In real life: </span>
-                      {verdictCard.impact.replace(/^In real life:\s*/i, "")}
+                    <p className="serif-text text-[13px] leading-relaxed mb-3" style={{ color: PAL.ink2 }}>
+                      <strong style={{ color: PAL.ink }}>In real life.</strong> {verdictCard.impact.replace(/^In real life:\s*/i, "")}
                     </p>
                   )}
+
                   {verdictCard.tip && (
-                    <div className="mt-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 shadow-sm">
-                      <p className="text-sm font-black text-white">
-                        🔑 The shift: {verdictCard.tip.replace(/^(The shift:|Try this:)\s*/i, "")}
+                    <div className="rounded-sm px-4 py-3 mt-3"
+                      style={{ background: PAL.gold, color: PAL.paper, border: `1px solid ${PAL.gold}` }}
+                    >
+                      <p className="serif-display text-[14.5px] md:text-[15.5px] font-semibold italic">
+                        ✦ The shift · {verdictCard.tip.replace(/^(The shift:|Try this:)\s*/i, "")}
                       </p>
                     </div>
                   )}
                 </div>
-                <div className="px-6 py-4 flex items-center justify-between border-t border-amber-100 mt-3">
-                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-                    Based on Vedic birth chart · Not medical advice
+
+                <div className="px-5 md:px-6 py-3 flex items-center justify-between flex-wrap gap-2"
+                  style={{ borderTop: `1px solid #E1CE9B`, background: PAL.paper }}
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: PAL.ink3 }}>
+                    Based on Vedic birth chart · not medical advice
                   </p>
-                  <button onClick={() => window.print()} className="text-[11px] text-slate-400 hover:text-slate-600 font-bold transition-colors flex items-center gap-1.5">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" />
-                    </svg>
-                    Print
+                  <button
+                    onClick={() => window.print()}
+                    className="serif-text text-[11.5px] font-semibold transition-opacity hover:opacity-70 flex items-center gap-1"
+                    style={{ color: PAL.ink2 }}
+                  >
+                    <span>⎙</span> Print
                   </button>
                 </div>
               </motion.div>
             )}
 
-            {/* Fallback: if LLM didn't use structured format, render raw */}
+            {/* Fallback for unstructured */}
             {(!parsed || (parsed.cards.length === 0 && parsed.intro)) && reportData.report && (
-              <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-                <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{reportData.report}</p>
+              <div className="rounded-sm p-5 md:p-6"
+                style={{ background: PAL.paper, border: `1px solid ${PAL.border}` }}
+              >
+                <p className="serif-text text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: PAL.ink2 }}>
+                  {reportData.report}
+                </p>
               </div>
             )}
-
           </div>
         </div>
       )}
