@@ -24,6 +24,7 @@ import TopupModal from "./components/TopupModal";
 import DetailsPanel from "./components/DetailsPanel";
 import RoyalRoast from "./components/RoyalRoast";
 import Compatibility from "./components/Compatibility";
+import ChatChipsRow from "./components/ChatChipsRow";
 import DailyBriefingWidget from "./components/DailyBriefingWidget";
 import YourGotra from "./components/YourGotra";
 import IshtaDevata from "./components/IshtaDevata";
@@ -173,6 +174,51 @@ export default function DashboardPage() {
   };
 
   const [suggestionChips, setSuggestionChips] = useState<string[]>(INITIAL_CHIPS);
+  // Tracks whether the most recent chip set came from the smart LLM suggester
+  const [smartSuggestions, setSmartSuggestions] = useState(false);
+  // Tracks "currently fetching new suggestions" so the row can show a skeleton
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+
+  /**
+   * SMART SUGGESTIONS — async, non-blocking.
+   *
+   * Called after each AI reply (or after the user sends a topic-shifting
+   * message). Hits /api/astro-chat/suggest-prompts which uses Gemini Flash
+   * Lite to compose 4 contextual follow-ups built directly on the latest
+   * exchange. Falls back to keyword-based static chips if anything goes
+   * wrong — the chat UX is never blocked or broken by this.
+   */
+  const fetchSmartSuggestions = async (
+    lastUserMessage: string,
+    lastAssistantMessage: string,
+  ) => {
+    setSuggestionsLoading(true);
+    try {
+      const res = await fetch("/api/astro-chat/suggest-prompts", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          lastUserMessage,
+          lastAssistantMessage,
+          profileName: profile?.full_name || "",
+        }),
+      });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const data = await res.json();
+      const list = Array.isArray(data?.suggestions) ? data.suggestions : [];
+      if (list.length >= 2) {
+        setSuggestionChips(list.slice(0, 4));
+        setSmartSuggestions(data?.source === "llm");
+        return;
+      }
+    } catch (err) {
+      console.warn("[suggest-prompts] failed:", err);
+    } finally {
+      setSuggestionsLoading(false);
+    }
+    // Last-resort fallback: keep the existing keyword-matched chips
+    updateChipsFromContext(lastUserMessage);
+  };
 
   // Dynamically update chips based on the latest AI response
   const updateChipsFromContext = (latestUserMsg: string) => {
@@ -275,11 +321,19 @@ export default function DashboardPage() {
             return { role: m.role as "user" | "assistant" | "system", content: text, marker: mkr };
           });
           setMessages([{ role: "assistant", content: welcomeMsg }, ...loaded]);
-          const lastUserMsg = [...loaded].reverse().find(m => m.role === "user");
-          if (lastUserMsg) updateChipsFromContext(lastUserMsg.content);
+          // If we have prior messages, generate smart suggestions from the
+          // last exchange. Otherwise fall back to topic chips.
+          const lastUserMsg      = [...loaded].reverse().find(m => m.role === "user");
+          const lastAssistantMsg = [...loaded].reverse().find(m => m.role === "assistant");
+          if (lastUserMsg && lastAssistantMsg) {
+            fetchSmartSuggestions(lastUserMsg.content, lastAssistantMsg.content);
+          } else if (lastUserMsg) {
+            updateChipsFromContext(lastUserMsg.content);
+          }
         } else {
           setMessages([{ role: "assistant", content: welcomeMsg }]);
           setSuggestionChips(INITIAL_CHIPS);
+          setSmartSuggestions(false);
         }
       } catch (err) {
         console.error("Failed to load chat history:", err);
@@ -500,8 +554,13 @@ export default function DashboardPage() {
         if (data.creditsRemaining !== undefined && profile) {
            setProfile({ ...profile, credits: data.creditsRemaining });
         }
-        // Dynamically update suggestion chips based on conversation context
-        updateChipsFromContext(userMessage);
+        // Generate hyper-personalized follow-up suggestions based on the
+        // latest exchange. Fire-and-forget — UX continues regardless.
+        if (data.reply) {
+          fetchSmartSuggestions(userMessage, data.reply);
+        } else {
+          updateChipsFromContext(userMessage);
+        }
         // Auto-scroll when AI replies
         setTimeout(scrollToBottom, 100);
       }
@@ -560,6 +619,7 @@ export default function DashboardPage() {
       // Reset local messages state
       setMessages([{ role: "assistant", content: welcomeMsg }]);
       setSuggestionChips(INITIAL_CHIPS);
+      setSmartSuggestions(false);
     } catch (err) {
       console.error("Failed to clear chat:", err);
       alert("Failed to clear chat history. Please try again.");
@@ -1093,6 +1153,8 @@ export default function DashboardPage() {
               handleClearChat={handleClearChat}
               handleChipClick={handleChipClick}
               suggestionChips={suggestionChips}
+              smartSuggestions={smartSuggestions}
+              suggestionsLoading={suggestionsLoading}
               chatContainerRef={chatContainerRef}
               messagesEndRef={messagesEndRef}
               textareaRef={textareaRef}
@@ -1151,19 +1213,24 @@ export default function DashboardPage() {
 
               <section>
                 <SectionHeading num="—" title="Ask the Oracle" hint="Quick prompts you can run now" />
-                {!isOutOfCredits && suggestionChips.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pb-1">
-                    {suggestionChips.map((chip, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleChipClick(chip)}
-                        className="serif-text text-[13.5px] px-4 py-2 rounded-sm transition-colors hover:bg-black/[0.04]"
-                        style={{ background: PAL.paper2, color: PAL.ink, border: `1px solid ${PAL.border2}` }}
-                      >
-                        "{chip}"
-                      </button>
-                    ))}
-                  </div>
+                {!isOutOfCredits && (
+                  <ChatChipsRow
+                    chips={suggestionChips}
+                    onChipClick={handleChipClick}
+                    variant="comfy"
+                    smartBadge={smartSuggestions}
+                    loading={suggestionsLoading && suggestionChips.length === 0}
+                    palette={{
+                      bg:          PAL.paper2,
+                      border:      PAL.border2,
+                      ink:         PAL.ink,
+                      accent:      PAL.accent,
+                      arrowBg:     PAL.paper,
+                      arrowInk:    PAL.ink,
+                      arrowBorder: PAL.border,
+                      paperBg:     PAL.paper,
+                    }}
+                  />
                 )}
                 {isOutOfCredits && (
                   <div className="rounded-sm p-5"
@@ -1804,6 +1871,7 @@ function SidebarBtn({
 function OracleChatPanel({
   messages, isTyping, input, setInput, autoResize,
   handleSendMessage, handleClearChat, handleChipClick, suggestionChips,
+  smartSuggestions, suggestionsLoading,
   chatContainerRef, messagesEndRef, textareaRef,
   displayName, activeProfileName, selfProfile, activeProfileId,
   isOutOfCredits, profile, setShowTopup, onBackToHome, onOpenMenu,
@@ -1817,6 +1885,8 @@ function OracleChatPanel({
   handleClearChat: () => void;
   handleChipClick: (s: string) => void;
   suggestionChips: string[];
+  smartSuggestions: boolean;
+  suggestionsLoading: boolean;
   chatContainerRef: React.RefObject<HTMLDivElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -2049,20 +2119,29 @@ function OracleChatPanel({
         style={{ background: PAL.paper, borderTop: `1px solid ${PAL.border2}` }}
       >
         <div className="max-w-[760px] mx-auto">
-          {/* Suggestion chips — hidden once user starts typing on mobile */}
-          {!isOutOfCredits && suggestionChips.length > 0 && (
-            <div className="mb-2.5 md:mb-3 flex gap-2 overflow-x-auto no-scrollbar pb-1">
-              {suggestionChips.map((chip, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleChipClick(chip)}
-                  className="flex-shrink-0 serif-text text-[12.5px] md:text-[13px] px-3.5 py-1.5 rounded-sm transition-colors hover:bg-black/[0.04] whitespace-nowrap"
-                  style={{ background: PAL.paper2, color: PAL.ink, border: `1px solid ${PAL.border2}` }}
-                >
-                  "{chip}"
-                </button>
-              ))}
-            </div>
+          {/* Suggestion chips — horizontally scrollable with prev/next arrows.
+              Smart-suggestions badge appears when the LLM-generated chips are
+              served. Falls back gracefully to keyword chips if the suggestion
+              endpoint is slow or unavailable. */}
+          {!isOutOfCredits && (
+            <ChatChipsRow
+              chips={suggestionChips}
+              onChipClick={handleChipClick}
+              variant="compact"
+              smartBadge={smartSuggestions}
+              loading={suggestionsLoading && suggestionChips.length === 0}
+              className="mb-2.5 md:mb-3"
+              palette={{
+                bg:          PAL.paper2,
+                border:      PAL.border2,
+                ink:         PAL.ink,
+                accent:      PAL.accent,
+                arrowBg:     PAL.paper,
+                arrowInk:    PAL.ink,
+                arrowBorder: PAL.border,
+                paperBg:     PAL.paper,
+              }}
+            />
           )}
 
           {isOutOfCredits ? (
