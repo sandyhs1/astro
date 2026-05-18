@@ -25,6 +25,7 @@ import DetailsPanel from "./components/DetailsPanel";
 import RoyalRoast from "./components/RoyalRoast";
 import Compatibility from "./components/Compatibility";
 import ChatChipsRow from "./components/ChatChipsRow";
+import ImportantNoteModal from "./components/ImportantNoteModal";
 import DailyBriefingWidget from "./components/DailyBriefingWidget";
 import YourGotra from "./components/YourGotra";
 import IshtaDevata from "./components/IshtaDevata";
@@ -117,6 +118,8 @@ export default function DashboardPage() {
   const [entitlement, setEntitlement] = useState<any>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showTopup, setShowTopup] = useState(false);
+  // Controls the "Important" disclaimer modal opened from below the chat composer
+  const [showImportantNote, setShowImportantNote] = useState(false);
   const [modalType, setModalType] = useState<"self" | "family">("self");
   const [formData, setFormData] = useState({
     name: "",
@@ -1227,6 +1230,7 @@ export default function DashboardPage() {
               setShowTopup={setShowTopup}
               onBackToHome={() => setActiveFeature("home")}
               onOpenMenu={() => setNavDrawerOpen(true)}
+              onOpenImportant={() => setShowImportantNote(true)}
             />
           )}
 
@@ -1494,6 +1498,23 @@ export default function DashboardPage() {
           }}
         />
       )}
+
+      <ImportantNoteModal
+        open={showImportantNote}
+        onClose={() => setShowImportantNote(false)}
+        userName={profile?.full_name || user?.email?.split("@")[0] || null}
+        palette={{
+          paper:   PAL.paper,
+          paper2:  PAL.paper2,
+          ink:     PAL.ink,
+          ink2:    PAL.ink2,
+          ink3:    PAL.ink3,
+          border:  PAL.border,
+          border2: PAL.border2,
+          accent:  PAL.accent,
+          gold:    PAL.gold,
+        }}
+      />
 
       <style dangerouslySetInnerHTML={{ __html: `
         .custom-scroll-light::-webkit-scrollbar { width: 6px; }
@@ -1934,7 +1955,7 @@ function OracleChatPanel({
   smartSuggestions, suggestionsLoading,
   chatContainerRef, messagesEndRef, textareaRef,
   displayName, activeProfileName, selfProfile, activeProfileId,
-  isOutOfCredits, profile, setShowTopup, onBackToHome, onOpenMenu,
+  isOutOfCredits, profile, setShowTopup, onBackToHome, onOpenMenu, onOpenImportant,
 }: {
   messages: { role: "user" | "assistant" | "system"; content: string; marker?: string }[];
   isTyping: boolean;
@@ -1959,6 +1980,7 @@ function OracleChatPanel({
   setShowTopup: (b: boolean) => void;
   onBackToHome: () => void;
   onOpenMenu: () => void;
+  onOpenImportant: () => void;
 }) {
   const composerDisabled = isTyping || (!selfProfile && activeProfileId === "self");
   const placeholder = (!selfProfile && activeProfileId === "self")
@@ -2264,7 +2286,15 @@ function OracleChatPanel({
           <div className="text-center mt-2 md:mt-3">
             <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: PAL.ink3 }}>
               <span className="hidden sm:inline">⌘ + Return to send · </span>
-              AI-generated insights · Not medical advice
+              <button
+                type="button"
+                onClick={onOpenImportant}
+                aria-label="Open important note about karma, free will, and disclaimers"
+                className="inline-flex items-center gap-1 underline-offset-[3px] underline transition-opacity hover:opacity-80 focus:outline-none focus:ring-1 focus:ring-offset-1 rounded-sm"
+                style={{ color: PAL.accent, textDecorationColor: PAL.accent }}
+              >
+                Important
+              </button>
             </span>
           </div>
         </div>
