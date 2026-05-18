@@ -88,6 +88,8 @@ export default function ImportantNoteModal({ open, onClose, userName, palette }:
           role="dialog"
           aria-modal="true"
           aria-labelledby="important-note-title"
+          data-lenis-prevent
+          data-modal-scroll
         >
           <motion.div
             key="sheet"
@@ -96,13 +98,23 @@ export default function ImportantNoteModal({ open, onClose, userName, palette }:
             exit={{    y: 32, opacity: 0 }}
             transition={{ type: "spring", stiffness: 320, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
+            // Stop wheel/touch events from bubbling up to the page-level Lenis
+            // smooth-scroll instance, which would otherwise hijack the modal scroll.
+            // The data-lenis-prevent + data-modal-scroll attributes on this
+            // element AND on the backdrop above make Lenis ignore any pointer
+            // input that originates inside the modal tree.
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
             className="relative w-full sm:max-w-[640px] sm:mx-4 max-h-[92svh] sm:max-h-[88vh] overflow-y-auto rounded-t-2xl sm:rounded-md shadow-2xl"
             style={{
               background: PAL.paper,
               border: `1px solid ${PAL.border}`,
               paddingBottom: "max(env(safe-area-inset-bottom), 0px)",
               WebkitOverflowScrolling: "touch",
+              overscrollBehavior: "contain",
             }}
+            data-lenis-prevent
+            data-modal-scroll
           >
             {/* Mobile drag-handle affordance */}
             <div className="sm:hidden flex justify-center pt-3">
