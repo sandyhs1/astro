@@ -17,6 +17,7 @@ import { getOrBuildChart } from "@/lib/astrology/manager";
 import { buildClaudeContext, ASTRO_SYSTEM_PROMPT, detectTopic } from "@/lib/astrology/prompts";
 import { buildPredictionContext } from "@/lib/astrology/prediction-engine";
 import { gatekeeperCheck, classifyIntent, INTENT_TOKEN_BUDGETS, type ChatIntent } from "@/lib/astrology/llm-router";
+import { classifyGateDecision } from "@/lib/astrology/guardrails";
 import { getCurrentGochar } from "@/lib/astrology/gochar";
 import { getRelevantScriptures } from "@/lib/astrology/rag";
 
@@ -126,19 +127,43 @@ export async function prepareChatRequest(body: ChatRequestBody): Promise<Pipelin
   }
 
   // ── Gatekeeper ────────────────────────────────────────────────────
-  const trimmed = message.trim().toLowerCase();
-  const isShortReply = message.trim().length <= 20;
-  const isAffirmative = ["yes","no","ok","okay","sure","go on","go ahead",
-    "tell me","please","continue","more","yes please","absolutely",
-    "of course","definitely","yeah","yep","yup","nope","tell me more",
-    "what does it mean","explain","and","so","then","next",
-  ].some(a => trimmed === a || trimmed.startsWith(a+" ") || trimmed.endsWith(" "+a));
+  // The decision logic lives in src/lib/astrology/guardrails.ts as a pure,
+  // unit-tested helper. See:
+  //   .kiro/specs/oracle-chat-guardrails-refinement/{requirements,design}.md
+  //
+  // Three outcomes:
+  //   "skip"               — clearly on-topic personal / chart / continuation
+  //                          message; the gatekeeper LLM is bypassed.
+  //   "run"                — default; the gatekeeper LLM classifies it.
+  //   "force_run_redflag"  — injection signature detected; the gatekeeper
+  //                          LLM runs AND we apply a defensive override
+  //                          below in case the gatekeeper misses it.
   const hasPriorContext = !!(history && history.length > 0);
+  const gateDecision = classifyGateDecision(message, hasPriorContext);
 
-  if (!isShortReply && !isAffirmative) {
+  if (gateDecision.decision === "skip") {
+    console.log(`[GATEKEEPER] skipped — reason=${gateDecision.reason}`);
+  } else {
+    if (gateDecision.decision === "force_run_redflag") {
+      console.warn(`[GATEKEEPER] red-flag signature — running classifier defensively: ${message.slice(0, 120)}`);
+    }
     const gate = await gatekeeperCheck(message);
     if (!gate.allowed) {
       return { kind: "warning", body: { systemWarning: gate.reason, creditsRemaining: credits } };
+    }
+    // Defensive override: if a red-flag signature was present but the
+    // gatekeeper passed cleanly, refuse anyway. We assume the gatekeeper
+    // either errored out or was tricked rather than truly cleared the
+    // message. Property 1 of the spec: no-injection-bypass.
+    if (gateDecision.decision === "force_run_redflag" && !gate.injectionDetected) {
+      console.warn(`[GATEKEEPER] red-flag override → refusing: ${message.slice(0, 120)}`);
+      return {
+        kind: "warning",
+        body: {
+          systemWarning: "⚠️ This attempt has been flagged and logged. The Grand Master reads charts, not commands.",
+          creditsRemaining: credits,
+        },
+      };
     }
   }
 
