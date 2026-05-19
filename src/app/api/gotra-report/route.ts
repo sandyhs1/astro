@@ -14,7 +14,7 @@ const CREDITS_COST = 5;
 const LLM_PRICE: Record<string, { in: number; out: number }> = {
   "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252, out: 1.26 },
   "gemini/gemini-3.1-pro-preview":          { in: 0.105, out: 0.42 },
-  "gemini/gemini-3.1-flash-lite-preview":   { in: 0.0063, out: 0.0063 },
+  "gemini/gemini-3.1-flash-lite":   { in: 0.0063, out: 0.0063 },
 };
 function calcCostInr(model: string, tokIn: number, tokOut: number): number {
   const p = LLM_PRICE[model] ?? { in: 0.252, out: 1.26 };

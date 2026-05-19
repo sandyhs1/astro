@@ -342,7 +342,7 @@ Example shape (do not copy verbatim — generate fresh based on the chart and th
   try {
     const gemini = new GoogleGenerativeAI(apiKey);
     const model  = gemini.getGenerativeModel({
-      model: "gemini-3.1-flash-lite-preview",
+      model: "gemini-3.1-flash-lite",
       generationConfig: {
         responseMimeType: "application/json",
         maxOutputTokens: 300,

@@ -189,7 +189,7 @@ export async function routeLLMCached(
 
 const GEMINI_API_KEY     = process.env.GEMINI_API_KEY || "";
 const GEMINI_PRO_MODEL   = "gemini-3.1-pro-preview";
-const GEMINI_FLASH_MODEL = "gemini-3.1-flash-lite-preview";
+const GEMINI_FLASH_MODEL = "gemini-3.1-flash-lite";
 
 async function callGeminiPro(
   systemPrompt: string,

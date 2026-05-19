@@ -12,7 +12,6 @@ import PanchangHoras      from "./PanchangHoras";
 import PanchangMuhurat    from "./PanchangMuhurat";
 import PanchangCalendar   from "./PanchangCalendar";
 import DashaLifePlanner   from "./DashaLifePlanner";
-import ScoreHistory       from "./ScoreHistory";
 import PlanetaryTransits  from "./PlanetaryTransits";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -23,7 +22,7 @@ interface DayData {
   factors: string[];
   dominantPlanet: string;
 }
-type Tab = "today" | "choghadiya" | "horas" | "muhurat" | "calendar" | "dasha" | "transits" | "history" | "month";
+type Tab = "today" | "choghadiya" | "horas" | "muhurat" | "calendar" | "dasha" | "transits" | "month";
 
 /* Tithi short text (preserved from previous version) */
 const TITHI_SIGNS: Record<number, string> = {
@@ -199,8 +198,7 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
           <TabBtn active={tab === "calendar"}   onClick={() => setTab("calendar")}   emoji="❑" label="My calendar" />
           <TabBtn active={tab === "dasha"}      onClick={() => setTab("dasha")}      emoji="◐" label="Dasha planner" />
           <TabBtn active={tab === "transits"}   onClick={() => setTab("transits")}   emoji="◉" label="Live transits" />
-          <TabBtn active={tab === "history"}    onClick={() => setTab("history")}    emoji="❑" label="Score history" />
-          <TabBtn active={tab === "month"}      onClick={() => setTab("month")}      emoji="◇" label="30-day map" />
+          <TabBtn active={tab === "month"}      onClick={() => setTab("month")}      emoji="🗓" label="30-day window" highlight />
         </div>
       </div>
 
@@ -209,7 +207,7 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
         <div className="max-w-[1100px] mx-auto px-4 md:px-6 lg:px-7 py-5 md:py-7">
 
           {/* Loading / error */}
-          {pLoading && tab !== "month" && tab !== "muhurat" && tab !== "calendar" && tab !== "dasha" && tab !== "transits" && tab !== "history" && (
+          {pLoading && tab !== "month" && tab !== "muhurat" && tab !== "calendar" && tab !== "dasha" && tab !== "transits" && (
             <div className="flex items-center justify-center py-16 gap-3" style={{ color: PAL.ink3 }}>
               <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent }} />
               <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: PAL.accent, animationDelay: "0.15s" }} />
@@ -239,7 +237,6 @@ export default function DestinyCalendar({ profileId, profileName }: { profileId:
           {tab === "calendar" && <PanchangCalendar profileId={profileId} />}
           {tab === "dasha"    && <DashaLifePlanner profileId={profileId} />}
           {tab === "transits" && <PlanetaryTransits profileId={profileId} />}
-          {tab === "history"  && <ScoreHistory profileId={profileId} />}
 
           {/* ── 30-Day Map ─────────────────────────────────────── */}
           {tab === "month" && (

@@ -22,7 +22,7 @@ const PRICE = {
   "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26  },
   "bedrock/claude-3-7-sonnet":               { in: 0.252,  out: 1.26  },
   "gemini/gemini-3.1-pro-preview":           { in: 0.105,  out: 0.42  },
-  "gemini/gemini-3.1-flash-lite-preview":    { in: 0.0063, out: 0.0063 },
+  "gemini/gemini-3.1-flash-lite":    { in: 0.0063, out: 0.0063 },
 } as Record<string, { in: number; out: number }>;
 const ASTRO_CALL_COST_INR = 0.084;
 

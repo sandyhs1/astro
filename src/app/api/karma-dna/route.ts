@@ -18,7 +18,7 @@ const LLM_PRICE: Record<string, { in: number; out: number }> = {
   "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26   }, // ✅ Active
   "bedrock/claude-3-7-sonnet":               { in: 0.252,  out: 1.26   }, // ⛔ Legacy only
   "gemini/gemini-3.1-pro-preview":           { in: 0.105,  out: 0.42   }, // ✅ Fallback
-  "gemini/gemini-3.1-flash-lite-preview":    { in: 0.0063, out: 0.0063 }, // ✅ Gatekeeper
+  "gemini/gemini-3.1-flash-lite":    { in: 0.0063, out: 0.0063 }, // ✅ Gatekeeper
 };
 function calcCostInr(model: string, tokIn: number, tokOut: number): number {
   const p = LLM_PRICE[model] ?? { in: 0.252, out: 1.26 }; // default to Claude if unknown

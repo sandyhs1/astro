@@ -136,26 +136,33 @@ export function SectionHeader({
 
 /* ── Tab Button — editorial pill, restrained accent ───────────────────────── */
 export function TabBtn({
-  active, onClick, emoji, label,
-}: { active: boolean; onClick: () => void; emoji: string; label: string }) {
+  active, onClick, emoji, label, highlight = false,
+}: { active: boolean; onClick: () => void; emoji: string; label: string; highlight?: boolean }) {
+  const baseInactive = highlight
+    ? { background: PAL.amberBg, color: PAL.gold, border: `1px solid ${PAL.gold}` }
+    : { background: "transparent", color: PAL.ink2, border: `1px solid ${PAL.border}` };
+  const baseActive = highlight
+    ? { background: PAL.gold, color: PAL.paper, border: `1px solid ${PAL.gold}` }
+    : { background: PAL.ink, color: PAL.paper, border: `1px solid ${PAL.ink}` };
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 h-9 px-3.5 md:px-4 rounded-sm text-[12.5px] font-semibold whitespace-nowrap flex-shrink-0 transition-all"
-      style={
-        active
-          ? { background: PAL.ink, color: PAL.paper, border: `1px solid ${PAL.ink}` }
-          : { background: "transparent", color: PAL.ink2, border: `1px solid ${PAL.border}` }
-      }
+      className={`inline-flex items-center gap-1.5 h-9 px-3.5 md:px-4 rounded-sm text-[12.5px] font-semibold whitespace-nowrap flex-shrink-0 transition-all ${highlight ? "shadow-sm" : ""}`}
+      style={active ? baseActive : baseInactive}
       onMouseEnter={(e) => {
-        if (!active) (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.04)";
+        if (!active && !highlight) (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.04)";
       }}
       onMouseLeave={(e) => {
-        if (!active) (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+        if (!active && !highlight) (e.currentTarget as HTMLButtonElement).style.background = "transparent";
       }}
     >
       <span className="text-[13px] leading-none">{emoji}</span>
       <span className="serif-text">{label}</span>
+      {highlight && !active && (
+        <span className="ml-1 text-[9px] font-bold uppercase tracking-wider" style={{ color: PAL.gold }}>
+          ★
+        </span>
+      )}
     </button>
   );
 }
