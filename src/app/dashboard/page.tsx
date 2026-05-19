@@ -8,7 +8,7 @@ import {
   LogOut, Sparkles, Send, Users, AlertTriangle, MessageCircle, BookOpen,
   Calendar, Map, Flame, Sun, Heart, Mic, Crown, Gem, FileText, ListChecks,
   Compass, Search, Bell, Plus, ArrowRight, ArrowUpRight, ArrowLeft, X, Menu,
-  ChevronRight, Trash2, Pencil,
+  ChevronRight, ChevronDown, Trash2, Pencil,
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -143,8 +143,8 @@ export default function DashboardPage() {
   const [activeProfileId, setActiveProfileId] = useState<string>("self");
   const [activeFeature, setActiveFeature] = useState<"home" | "chat" | "explainer" | "destiny" | "karma-dna" | "karmic-patterns" | "remedy" | "roadmap" | "details" | "royal-roast" | "gotra" | "ishta-devata" | "journal" | "reports" | "soul-code" | "year-ahead" | "compatibility">("home");
   
-  const [messages, setMessages] = useState<{role: "user" | "assistant" | "system", content: string, marker?: string}[]>([
-    { role: "assistant", content: "Hey there, I am your Quantum Karma Astrologer...", marker: "A" }
+  const [messages, setMessages] = useState<{id: string, role: "user" | "assistant" | "system", content: string, marker?: string}[]>([
+    { id: "welcome", role: "assistant", content: "Hey there, I am your Quantum Karma Astrologer...", marker: "A" }
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -152,6 +152,19 @@ export default function DashboardPage() {
   // Editorial dashboard: mobile sidebar drawer
   const [navDrawerOpen, setNavDrawerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Refs to each USER message bubble — used to scroll the user's question to
+  // the top of the viewport when an AI reply arrives (so the answer is read
+  // top-down without manual scrolling). Keyed by message.id.
+  const userMsgRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Cheap unique id for chat messages. crypto.randomUUID() may not exist in
+  // older Safari versions; this fallback is collision-safe for chat use.
+  const newMsgId = useCallback((): string => {
+    if (typeof crypto !== "undefined" && (crypto as any).randomUUID) {
+      return (crypto as any).randomUUID();
+    }
+    return `m_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  }, []);
 
   // ── Curated Suggestion Chips ──
   const INITIAL_CHIPS = [
@@ -336,7 +349,7 @@ export default function DashboardPage() {
       }
 
       if (!targetId) {
-        setMessages([{ role: "assistant", content: welcomeMsg }]);
+        setMessages([{ id: "welcome", role: "assistant", content: welcomeMsg }]);
         setHistoryLoaded(true);
         return;
       }
@@ -350,7 +363,7 @@ export default function DashboardPage() {
           .order("created_at", { ascending: true });
 
         if (!error && data && data.length > 0) {
-          const loaded = data.map((m: any) => {
+          const loaded = data.map((m: any, idx: number) => {
             let text = m.content;
             let mkr = undefined;
             const markerMatch = text.match(/<!-- MARKER:([A-Z]) -->/);
@@ -358,9 +371,12 @@ export default function DashboardPage() {
               mkr = markerMatch[1];
               text = text.replace(/<!-- MARKER:[A-Z] -->/, "").trim();
             }
-            return { role: m.role as "user" | "assistant" | "system", content: text, marker: mkr };
+            // Stable id derived from created_at + index — survives re-renders
+            // and prevents accidental ref collisions with newly-sent messages.
+            const stableId = `h_${m.created_at || idx}_${idx}`;
+            return { id: stableId, role: m.role as "user" | "assistant" | "system", content: text, marker: mkr };
           });
-          setMessages([{ role: "assistant", content: welcomeMsg }, ...loaded]);
+          setMessages([{ id: "welcome", role: "assistant", content: welcomeMsg }, ...loaded]);
 
           // Rebuild the exclusion ledger from prior user messages so we never
           // re-suggest something the user has already typed in this profile.
@@ -379,14 +395,14 @@ export default function DashboardPage() {
             updateChipsFromContext(lastUserMsg.content);
           }
         } else {
-          setMessages([{ role: "assistant", content: welcomeMsg }]);
+          setMessages([{ id: "welcome", role: "assistant", content: welcomeMsg }]);
           setSuggestionChips(INITIAL_CHIPS);
           setSmartSuggestions(false);
           askedQuestionsRef.current = new Set();
         }
       } catch (err) {
         console.error("Failed to load chat history:", err);
-        setMessages([{ role: "assistant", content: welcomeMsg }]);
+        setMessages([{ id: "welcome", role: "assistant", content: welcomeMsg }]);
       }
       setHistoryLoaded(true);
     }
@@ -427,6 +443,25 @@ export default function DashboardPage() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef      = useRef<HTMLTextAreaElement>(null);
 
+  // ── "Jump to latest" pill state ─────────────────────────────────────────
+  // Visible only when the user has scrolled up far enough that the latest
+  // message is below the fold. Toggled by a scroll listener on the chat
+  // messages container. Threshold is generous (~280px) so the pill doesn't
+  // flicker for tiny scroll-up gestures.
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
+  useEffect(() => {
+    if (activeFeature !== "chat") return;
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const distFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight);
+      setShowJumpToLatest(distFromBottom > 280);
+    };
+    onScroll(); // initialise
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [activeFeature, messages.length]);
+
   // Auto-resize textarea: shrinks back when cleared, grows up to max-height set in CSS
   const autoResize = useCallback(() => {
     const el = textareaRef.current;
@@ -444,10 +479,33 @@ export default function DashboardPage() {
     }
   };
 
-  // Only auto-scroll when history is initially loaded, NOT continuously on every re-render
+  // ── Scroll the user's just-asked question to the top of the viewport ─────
+  // This is the key UX fix: when a long AI answer arrives, we land the reader
+  // at the START of their question, not the END of the answer. They then read
+  // top-down naturally without having to scroll up.
+  const scrollUserMessageToTop = (msgId: string) => {
+    const el = userMsgRefs.current[msgId];
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // ── Whenever the user opens the Chat tab, jump to the latest message ─────
+  // The chat panel is conditionally rendered, so on each tab activation we
+  // wait one paint for layout, then snap to the bottom (no smooth — instant
+  // feels right when revealing a feature).
+  useEffect(() => {
+    if (activeFeature !== "chat") return;
+    if (!historyLoaded) return;
+    const id = requestAnimationFrame(() => {
+      const el = chatContainerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [activeFeature, historyLoaded]);
+
+  // Initial-load scroll (kept as a safety net; the effect above handles tab switches)
   useEffect(() => {
     if (historyLoaded) {
-      // Small delay to ensure DOM is updated
       setTimeout(scrollToBottom, 100);
     }
   }, [historyLoaded]);
@@ -555,7 +613,7 @@ export default function DashboardPage() {
         targetProfileId = selfProfile.id;
         targetPob = selfProfile.pob || "";
       } else {
-        setMessages(prev => [...prev, { role: "system", content: "Please complete your birth profile onboarding first." }]);
+        setMessages(prev => [...prev, { id: newMsgId(), role: "system", content: "Please complete your birth profile onboarding first." }]);
         setShowProfileModal(true);
         return;
       }
@@ -570,61 +628,209 @@ export default function DashboardPage() {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
-    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
+    // Tag this user message with a stable id so we can ref it and scroll to it
+    // when the AI reply arrives.
+    const userMsgId = newMsgId();
+    setMessages(prev => [...prev, { id: userMsgId, role: "user", content: userMessage }]);
     setIsTyping(true);
-    
-    // Auto-scroll when user sends a message
-    setTimeout(scrollToBottom, 50);
+
+    // Auto-scroll the freshly-typed question to the TOP of the viewport so the
+    // user can read the AI's incoming answer top-down, naturally.
+    setTimeout(() => scrollUserMessageToTop(userMsgId), 50);
+
+    // Build the request body once — used by both the streaming path and the
+    // non-streaming fallback so we cannot drift between them.
+    const requestBody = {
+      message: userMessage,
+      profileId: targetProfileId,
+      lat: geocoordCache[targetPob]?.lat,
+      lon: geocoordCache[targetPob]?.lon,
+      history: messages.filter(m => m.role !== "system").slice(-10),
+    };
+
+    // ── STREAMING PATH ──────────────────────────────────────────────────────
+    // Hits /api/astro-chat/stream and parses Server-Sent Events. As "delta"
+    // events arrive, we append text to a placeholder assistant message in
+    // place — this is what gives the user the live "typing in" experience.
+    // If anything goes wrong before any delta, we fall back to the one-shot
+    // /api/astro-chat endpoint.
+    const assistantMsgId = newMsgId();
+    type StreamMeta = {
+      creditsRemaining?: number;
+      model?: string;
+      marker?: string;
+      chartCached?: boolean;
+      confidence?: number;
+      suggestedPrompts?: string[];
+      usage?: Record<string, number>;
+    };
+    let streamReceivedAnyDelta = false;
+    const streamState: { meta: StreamMeta | null; warning: string | null; error: string | null } = {
+      meta: null, warning: null, error: null,
+    };
 
     try {
-      const res = await fetch("/api/astro-chat", {
+      const res = await fetch("/api/astro-chat/stream", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: userMessage,
-          profileId: targetProfileId,
-          lat: geocoordCache[targetPob]?.lat,
-          lon: geocoordCache[targetPob]?.lon,
-          history: messages.filter(m => m.role !== "system").slice(-10)
-        })
+        headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
+        body: JSON.stringify(requestBody),
       });
 
-      const data = await res.json();
-      
-        if (!res.ok) {
-          setMessages(prev => [...prev, { role: "system", content: data.error || "An error occurred." }]);
-        } else {
-        if (data.systemWarning) {
-           setMessages(prev => [...prev, { role: "system", content: data.systemWarning }]);
+      if (!res.ok || !res.body) {
+        throw new Error(`stream HTTP ${res.status}`);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      // Parse SSE: events are separated by blank lines. Each event has lines
+      // like "event: delta" and "data: {...}". We accumulate the data lines
+      // for one event, then dispatch on the event name.
+      const dispatch = (eventName: string, dataStr: string) => {
+        let payload: { text?: string; systemWarning?: string; error?: string;
+                       creditsRemaining?: number; model?: string; marker?: string;
+                       chartCached?: boolean; confidence?: number;
+                       suggestedPrompts?: string[]; usage?: Record<string, number> } = {};
+        try { payload = JSON.parse(dataStr); } catch { return; }
+
+        if (eventName === "delta" && typeof payload.text === "string") {
+          const deltaText = payload.text;
+          if (!streamReceivedAnyDelta) {
+            streamReceivedAnyDelta = true;
+            // First delta: insert the placeholder assistant message
+            setMessages(prev => [...prev, { id: assistantMsgId, role: "assistant", content: deltaText }]);
+          } else {
+            setMessages(prev => prev.map(m => m.id === assistantMsgId
+              ? { ...m, content: m.content + deltaText }
+              : m
+            ));
+          }
+        } else if (eventName === "meta") {
+          streamState.meta = payload;
+        } else if (eventName === "warning") {
+          streamState.warning = payload.systemWarning || "Request blocked.";
+        } else if (eventName === "error") {
+          streamState.error = payload.error || "stream failed";
         }
-        if (data.reply) {
-           setMessages(prev => [...prev, { role: "assistant", content: data.reply, marker: data.marker }]);
+      };
+
+      // Read loop
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        // Split out complete SSE events on the \n\n delimiter
+        let sepIdx = buffer.indexOf("\n\n");
+        while (sepIdx !== -1) {
+          const rawEvent = buffer.slice(0, sepIdx);
+          buffer = buffer.slice(sepIdx + 2);
+
+          let eventName = "message";
+          const dataLines: string[] = [];
+          for (const line of rawEvent.split("\n")) {
+            if (line.startsWith(":")) continue;            // comment / heartbeat
+            if (line.startsWith("event:")) eventName = line.slice(6).trim();
+            else if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
+          }
+          if (dataLines.length > 0) dispatch(eventName, dataLines.join("\n"));
+          sepIdx = buffer.indexOf("\n\n");
         }
-        if (data.creditsRemaining !== undefined && profile) {
-           setProfile({ ...profile, credits: data.creditsRemaining });
+      }
+
+      // Apply finalised metadata
+      if (streamState.warning) {
+        const warn = streamState.warning;
+        setMessages(prev => [...prev, { id: newMsgId(), role: "system", content: warn }]);
+      }
+      if (streamState.error && !streamReceivedAnyDelta) {
+        // Only surface error if we never got any text — otherwise the user
+        // already has a partial answer and we shouldn't dump an error on top.
+        throw new Error(streamState.error);
+      }
+      if (streamState.meta) {
+        const meta = streamState.meta;
+        if (meta.creditsRemaining !== undefined && profile) {
+          setProfile({ ...profile, credits: meta.creditsRemaining });
         }
-        // Generate hyper-personalized follow-up suggestions based on the
-        // latest exchange. Fire-and-forget — UX continues regardless.
-        if (data.reply) {
-          // Build the thread the suggester will see: every message we have so
-          // far PLUS the freshly-sent user message and the freshly-arrived
-          // reply (state batching means `messages` doesn't include them yet).
+        // Patch marker on the just-streamed assistant message
+        if (meta.marker && streamReceivedAnyDelta) {
+          const markerVal = meta.marker;
+          setMessages(prev => prev.map(m => m.id === assistantMsgId
+            ? { ...m, marker: markerVal }
+            : m
+          ));
+        }
+        // Trigger smart suggestions using the fully-streamed reply
+        if (streamReceivedAnyDelta) {
+          const finalReply = (await new Promise<string>((resolve) => {
+            // setMessages is async; resolve with current state via functional update
+            setMessages(prev => {
+              const m = prev.find(x => x.id === assistantMsgId);
+              resolve(m?.content ?? "");
+              return prev;
+            });
+          }));
           const threadForSuggester = [
             ...messages.filter(m => m.role !== "system"),
             { role: "user"      as const, content: userMessage },
-            { role: "assistant" as const, content: data.reply },
+            { role: "assistant" as const, content: finalReply },
           ];
-          // Mark the user's question as "asked" so it can't be re-suggested
           recordAskedQuestion(userMessage);
-          fetchSmartSuggestions(userMessage, data.reply, threadForSuggester);
+          fetchSmartSuggestions(userMessage, finalReply, threadForSuggester);
         } else {
           updateChipsFromContext(userMessage);
         }
-        // Auto-scroll when AI replies
-        setTimeout(scrollToBottom, 100);
       }
-    } catch (err) {
-      setMessages(prev => [...prev, { role: "system", content: "Network error. Please try again." }]);
+
+      // Re-anchor on the user's question (final position) once the stream completes
+      setTimeout(() => scrollUserMessageToTop(userMsgId), 100);
+    } catch (streamErr) {
+      // ── FALLBACK PATH (non-streaming) ───────────────────────────────────
+      // If the stream never produced any deltas, fall back to /api/astro-chat
+      // for a one-shot JSON reply. If we already received some deltas before
+      // the error, we keep what we have and surface a soft notice.
+      if (streamReceivedAnyDelta) {
+        console.warn("[CHAT] stream errored mid-flight; keeping partial reply", streamErr);
+      } else {
+        console.warn("[CHAT] stream failed before first delta; falling back to /api/astro-chat", streamErr);
+        try {
+          const res = await fetch("/api/astro-chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            setMessages(prev => [...prev, { id: newMsgId(), role: "system", content: data.error || "An error occurred." }]);
+          } else {
+            if (data.systemWarning) {
+              setMessages(prev => [...prev, { id: newMsgId(), role: "system", content: data.systemWarning }]);
+            }
+            if (data.reply) {
+              setMessages(prev => [...prev, { id: assistantMsgId, role: "assistant", content: data.reply, marker: data.marker }]);
+            }
+            if (data.creditsRemaining !== undefined && profile) {
+              setProfile({ ...profile, credits: data.creditsRemaining });
+            }
+            if (data.reply) {
+              const threadForSuggester = [
+                ...messages.filter(m => m.role !== "system"),
+                { role: "user"      as const, content: userMessage },
+                { role: "assistant" as const, content: data.reply },
+              ];
+              recordAskedQuestion(userMessage);
+              fetchSmartSuggestions(userMessage, data.reply, threadForSuggester);
+            } else {
+              updateChipsFromContext(userMessage);
+            }
+            setTimeout(() => scrollUserMessageToTop(userMsgId), 100);
+          }
+        } catch {
+          setMessages(prev => [...prev, { id: newMsgId(), role: "system", content: "Network error. Please try again." }]);
+        }
+      }
     } finally {
       setIsTyping(false);
     }
@@ -679,7 +885,7 @@ export default function DashboardPage() {
       const welcomeMsg = `Hey ${userFirstName}, I am your Quantum Karma Astrologer. What brings you here today? Ask away all your questions—I'm here to uncover the deepest truths of your chart just for you.`;
 
       // Reset local messages state
-      setMessages([{ role: "assistant", content: welcomeMsg }]);
+      setMessages([{ id: "welcome", role: "assistant", content: welcomeMsg }]);
       setSuggestionChips(INITIAL_CHIPS);
       setSmartSuggestions(false);
       askedQuestionsRef.current = new Set();
@@ -1221,6 +1427,9 @@ export default function DashboardPage() {
               chatContainerRef={chatContainerRef}
               messagesEndRef={messagesEndRef}
               textareaRef={textareaRef}
+              userMsgRefs={userMsgRefs}
+              showJumpToLatest={showJumpToLatest}
+              onJumpToLatest={scrollToBottom}
               displayName={displayName}
               activeProfileName={activeProfileName}
               selfProfile={selfProfile}
@@ -1953,11 +2162,12 @@ function OracleChatPanel({
   messages, isTyping, input, setInput, autoResize,
   handleSendMessage, handleClearChat, handleChipClick, suggestionChips,
   smartSuggestions, suggestionsLoading,
-  chatContainerRef, messagesEndRef, textareaRef,
+  chatContainerRef, messagesEndRef, textareaRef, userMsgRefs,
+  showJumpToLatest, onJumpToLatest,
   displayName, activeProfileName, selfProfile, activeProfileId,
   isOutOfCredits, profile, setShowTopup, onBackToHome, onOpenMenu, onOpenImportant,
 }: {
-  messages: { role: "user" | "assistant" | "system"; content: string; marker?: string }[];
+  messages: { id: string; role: "user" | "assistant" | "system"; content: string; marker?: string }[];
   isTyping: boolean;
   input: string;
   setInput: (s: string) => void;
@@ -1971,6 +2181,9 @@ function OracleChatPanel({
   chatContainerRef: React.RefObject<HTMLDivElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  userMsgRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+  showJumpToLatest: boolean;
+  onJumpToLatest: () => void;
   displayName: string;
   activeProfileName: string;
   selfProfile: any;
@@ -2099,7 +2312,8 @@ function OracleChatPanel({
 
           {messages.map((msg, idx) => (
             <div
-              key={idx}
+              key={msg.id ?? idx}
+              ref={msg.role === "user" ? (el) => { userMsgRefs.current[msg.id] = el; } : undefined}
               className={`flex animate-fade-in ${msg.role === "system" ? "justify-center" : msg.role === "user" ? "justify-end" : "items-start gap-3 md:gap-4"}`}
             >
               {msg.role === "system" ? (
@@ -2195,11 +2409,30 @@ function OracleChatPanel({
         </div>
       </div>
 
-      {/* ── Composer ───────────────────────────────────────── */}
-      <div
-        className="oracle-card-frame flex-shrink-0 px-3 md:px-6 lg:px-8 pt-3 md:pt-4 pb-[max(env(safe-area-inset-bottom),12px)] md:pb-5"
-        style={{ background: PAL.paper, borderTop: `1px solid ${PAL.border2}` }}
-      >
+      {/* ── "Jump to latest" pill — sits above composer when user has scrolled up ── */}
+      <div className="relative">
+        {showJumpToLatest && (
+          <button
+            type="button"
+            onClick={onJumpToLatest}
+            className="absolute -top-12 left-1/2 -translate-x-1/2 z-10 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-semibold shadow-md transition-all hover:scale-105 active:scale-95 animate-fade-in"
+            style={{
+              background: PAL.ink,
+              color: "#fff",
+              border: `1px solid ${PAL.border}`,
+            }}
+            aria-label="Jump to latest message"
+          >
+            <ChevronDown size={14} />
+            Jump to latest
+          </button>
+        )}
+
+        {/* ── Composer ───────────────────────────────────────── */}
+        <div
+          className="oracle-card-frame flex-shrink-0 px-3 md:px-6 lg:px-8 pt-3 md:pt-4 pb-[max(env(safe-area-inset-bottom),12px)] md:pb-5"
+          style={{ background: PAL.paper, borderTop: `1px solid ${PAL.border2}` }}
+        >
         <div className="max-w-[760px] mx-auto">
           {/* Suggestion chips — horizontally scrollable with prev/next arrows.
               Smart-suggestions badge appears when the LLM-generated chips are
@@ -2298,6 +2531,8 @@ function OracleChatPanel({
             </span>
           </div>
         </div>
+      </div>
+      {/* /jump-pill + composer wrapper */}
       </div>
     </div>
   );
