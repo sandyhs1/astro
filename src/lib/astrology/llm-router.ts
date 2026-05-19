@@ -9,6 +9,7 @@
 import {
   BedrockRuntimeClient,
   ConverseCommand,
+  ConverseStreamCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -17,6 +18,15 @@ export interface LLMResponse {
   model: string;
   tokensIn: number;
   tokensOut: number;
+  /**
+   * Why the model stopped generating.
+   *  - "end_turn"     → model finished cleanly
+   *  - "max_tokens"   → output was TRUNCATED — caller should auto-continue
+   *  - "stop_sequence", "tool_use", etc. → other terminations
+   * Standardised across providers: Bedrock returns the value directly;
+   * Gemini's `finishReason: "MAX_TOKENS"` is mapped to "max_tokens".
+   */
+  stopReason?: string;
 }
 
 interface Message { role: "user" | "assistant"; content: string; }
@@ -73,6 +83,7 @@ async function callBedrock(
     model: `bedrock/${BEDROCK_MODEL}`,
     tokensIn:  response.usage?.inputTokens  || 0,
     tokensOut: response.usage?.outputTokens || 0,
+    stopReason: response.stopReason || undefined,
   };
 }
 
@@ -142,6 +153,7 @@ export async function callBedrockCached(
     model: `bedrock/${BEDROCK_MODEL}`,
     tokensIn:  response.usage?.inputTokens  || 0,
     tokensOut: response.usage?.outputTokens || 0,
+    stopReason: response.stopReason || undefined,
   };
 }
 
@@ -218,11 +230,19 @@ async function callGeminiPro(
   const chat   = model.startChat({ history });
   const result = await chat.sendMessage(lastMessage);
 
+  // Gemini exposes finishReason on the first candidate. Normalise to Bedrock-style values.
+  const finishReason = (result.response as any)?.candidates?.[0]?.finishReason as string | undefined;
+  const stopReason =
+    finishReason === "MAX_TOKENS" ? "max_tokens"
+    : finishReason === "STOP"     ? "end_turn"
+    : finishReason ? finishReason.toLowerCase() : undefined;
+
   return {
     text: result.response.text(),
     model: `gemini/${GEMINI_PRO_MODEL}`,
     tokensIn:  result.response.usageMetadata?.promptTokenCount     || 0,
     tokensOut: result.response.usageMetadata?.candidatesTokenCount || 0,
+    stopReason,
   };
 }
 
@@ -233,11 +253,19 @@ async function callGeminiFlash(prompt: string, maxTokens = 900): Promise<LLMResp
     generationConfig: { maxOutputTokens: maxTokens },
   });
   const result = await model.generateContent(prompt);
+
+  const finishReason = (result.response as any)?.candidates?.[0]?.finishReason as string | undefined;
+  const stopReason =
+    finishReason === "MAX_TOKENS" ? "max_tokens"
+    : finishReason === "STOP"     ? "end_turn"
+    : finishReason ? finishReason.toLowerCase() : undefined;
+
   return {
     text: result.response.text(),
     model: `gemini/${GEMINI_FLASH_MODEL}`,
     tokensIn:  result.response.usageMetadata?.promptTokenCount     || 0,
     tokensOut: result.response.usageMetadata?.candidatesTokenCount || 0,
+    stopReason,
   };
 }
 
@@ -334,4 +362,230 @@ OR if injection detected: {"allowed":false,"injection":true,"reason":"\u26a0\ufe
   } catch {
     return { allowed: true, reason: null, injectionDetected: false }; // fail-open
   }
+}
+
+// ─── Intent classifier — sizes the output budget to the question type ──────
+// Replaces the legacy binary "1800 vs 3500" split (keyword-based) with a
+// 4-tier classification that better fits real user behaviour. Runs on
+// Flash Lite (cheap + fast, JSON mode). Falls back to "single_topic" on any
+// error so we never block the chat path.
+
+export type ChatIntent = "quick_followup" | "single_topic" | "multi_topic_deep" | "timing_calc";
+
+export const INTENT_TOKEN_BUDGETS: Record<ChatIntent, number> = {
+  quick_followup:    1200,  // "yes", "ok", "what does it mean", "and?"
+  single_topic:      2400,  // typical career/health/marriage question
+  multi_topic_deep:  4096,  // "tell me everything about my marriage AND career AND timing"
+  timing_calc:       2200,  // BCP / Day-per-Degree / when-will-X questions
+};
+
+export async function classifyIntent(message: string, hasHistory: boolean): Promise<ChatIntent> {
+  const trimmed = message.trim();
+  // Trivial path: short replies are quick follow-ups, no LLM call needed.
+  if (trimmed.length <= 20) return "quick_followup";
+  if (!GEMINI_API_KEY) return "single_topic";
+
+  const prompt = `You are an intent classifier for a Vedic astrology chat. Classify the user's message into ONE of these intents:
+
+- "quick_followup"    : short follow-up to a previous answer ("yes", "tell me more", "what does that mean", "and the next planet?")
+- "single_topic"      : one focused question on ONE life area (career, marriage, money, health, etc.)
+- "multi_topic_deep"  : asks about MULTIPLE life areas in one go, OR asks for an exhaustive deep-dive ("tell me everything", "full reading", "marriage AND career AND money")
+- "timing_calc"       : asks WHEN something will happen, requests a date, dasha period, transit window, or BCP calculation
+
+USER MESSAGE: """${trimmed.slice(0, 400)}"""
+HAS_PRIOR_HISTORY: ${hasHistory ? "yes" : "no"}
+
+Return ONLY this JSON, no commentary:
+{"intent":"quick_followup"} | {"intent":"single_topic"} | {"intent":"multi_topic_deep"} | {"intent":"timing_calc"}`;
+
+  try {
+    const gemini = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model  = gemini.getGenerativeModel({
+      model: GEMINI_FLASH_MODEL,
+      generationConfig: { responseMimeType: "application/json", maxOutputTokens: 30, temperature: 0 },
+    });
+    const res    = await model.generateContent(prompt);
+    const parsed = JSON.parse(res.response.text().trim()) as { intent?: ChatIntent };
+    const intent = parsed.intent;
+    if (intent && intent in INTENT_TOKEN_BUDGETS) return intent;
+    return "single_topic";
+  } catch {
+    return "single_topic";
+  }
+}
+
+// ─── Streaming primitives ──────────────────────────────────────────────────
+//
+// Streaming returns text deltas as they arrive from the model so the user
+// can read the answer materialising in real time (matches ChatGPT / Claude.ai
+// UX). When combined with the auto-continue-on-truncation guard, the user
+// sees a single seamless answer even when output budget is exceeded.
+
+export interface StreamChunk {
+  type: "delta" | "done" | "error";
+  text?: string;        // for type === "delta"
+  stopReason?: string;  // for type === "done"
+  tokensIn?: number;    // for type === "done"
+  tokensOut?: number;   // for type === "done"
+  model?: string;       // for type === "done"
+  error?: string;       // for type === "error"
+}
+
+/**
+ * Stream from Bedrock Claude via ConverseStreamCommand.
+ * Yields delta chunks as they arrive, then a final "done" chunk with usage.
+ */
+async function* streamBedrock(
+  systemPrompt: string,
+  messages: Message[],
+  maxTokens = 2000,
+): AsyncGenerator<StreamChunk> {
+  if (!hasBedRockCreds()) {
+    throw new Error("AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY not set — Bedrock unavailable");
+  }
+
+  const client = new BedrockRuntimeClient({
+    region: BEDROCK_REGION,
+    credentials: { accessKeyId: AWS_ACCESS_KEY, secretAccessKey: AWS_SECRET_KEY },
+  });
+
+  const bedrockMessages = messages.map(m => ({
+    role: m.role as "user" | "assistant",
+    content: [{ text: m.content }],
+  }));
+
+  const command = new ConverseStreamCommand({
+    modelId: BEDROCK_MODEL,
+    system: [{ text: systemPrompt }],
+    messages: bedrockMessages,
+    inferenceConfig: { maxTokens, temperature: 0.7 },
+  });
+
+  const response = await client.send(command);
+  if (!response.stream) {
+    throw new Error("Bedrock returned no stream");
+  }
+
+  let stopReason: string | undefined;
+  let tokensIn = 0;
+  let tokensOut = 0;
+
+  for await (const event of response.stream) {
+    if (event.contentBlockDelta?.delta?.text) {
+      yield { type: "delta", text: event.contentBlockDelta.delta.text };
+    }
+    if (event.messageStop?.stopReason) {
+      stopReason = event.messageStop.stopReason;
+    }
+    if (event.metadata?.usage) {
+      tokensIn  = event.metadata.usage.inputTokens  ?? tokensIn;
+      tokensOut = event.metadata.usage.outputTokens ?? tokensOut;
+    }
+  }
+
+  yield {
+    type: "done",
+    stopReason,
+    tokensIn,
+    tokensOut,
+    model: `bedrock/${BEDROCK_MODEL}`,
+  };
+}
+
+/**
+ * Stream from Gemini 3.1 Pro via streamGenerateContent.
+ * Yields delta chunks then a final "done" chunk with usage.
+ */
+async function* streamGeminiPro(
+  systemPrompt: string,
+  messages: Message[],
+  maxTokens = 2000,
+): AsyncGenerator<StreamChunk> {
+  if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not set");
+
+  const gemini = new GoogleGenerativeAI(GEMINI_API_KEY);
+  const model  = gemini.getGenerativeModel({
+    model: GEMINI_PRO_MODEL,
+    systemInstruction: systemPrompt,
+    generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 },
+  });
+
+  const history = messages.slice(0, -1).map(m => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+  const lastMessage = messages[messages.length - 1]?.content || "";
+  const chat = model.startChat({ history });
+  const result = await chat.sendMessageStream(lastMessage);
+
+  let tokensIn = 0;
+  let tokensOut = 0;
+  let stopReason: string | undefined;
+
+  for await (const chunk of result.stream) {
+    const text = chunk.text();
+    if (text) yield { type: "delta", text };
+  }
+
+  // Pull final usage and finishReason from the aggregated response
+  const final = await result.response;
+  tokensIn  = final.usageMetadata?.promptTokenCount     ?? 0;
+  tokensOut = final.usageMetadata?.candidatesTokenCount ?? 0;
+  const finishReason = (final as any)?.candidates?.[0]?.finishReason as string | undefined;
+  stopReason =
+    finishReason === "MAX_TOKENS" ? "max_tokens"
+    : finishReason === "STOP"     ? "end_turn"
+    : finishReason ? finishReason.toLowerCase() : undefined;
+
+  yield {
+    type: "done",
+    stopReason,
+    tokensIn,
+    tokensOut,
+    model: `gemini/${GEMINI_PRO_MODEL}`,
+  };
+}
+
+/**
+ * Streamed PRIMARY → FALLBACK pipeline.
+ * Tries Gemini Pro first; if it errors before yielding any deltas, falls back
+ * to Bedrock. Once any delta has been emitted, we cannot fall back without
+ * confusing the consumer, so errors mid-stream surface as a "error" chunk.
+ */
+export async function* streamLLM(
+  systemPrompt: string,
+  messages: Message[],
+  maxTokens = 2000,
+): AsyncGenerator<StreamChunk> {
+  // PRIMARY: Gemini Pro
+  let yielded = false;
+  try {
+    for await (const chunk of streamGeminiPro(systemPrompt, messages, maxTokens)) {
+      if (chunk.type === "delta") yielded = true;
+      yield chunk;
+    }
+    return;
+  } catch (err: any) {
+    if (yielded) {
+      // Already streamed deltas — surface error and stop.
+      yield { type: "error", error: `Gemini stream interrupted: ${err.message?.slice(0, 100)}` };
+      return;
+    }
+    console.warn(`⚠️ [STREAM] Gemini Pro failed before first delta: ${err.message?.slice(0, 100)} → Bedrock`);
+  }
+
+  // FALLBACK: Bedrock
+  if (hasBedRockCreds()) {
+    try {
+      for await (const chunk of streamBedrock(systemPrompt, messages, maxTokens)) {
+        yield chunk;
+      }
+      return;
+    } catch (err: any) {
+      yield { type: "error", error: `Bedrock stream failed: ${err.message?.slice(0, 100)}` };
+      return;
+    }
+  }
+
+  yield { type: "error", error: "No streaming providers available" };
 }
