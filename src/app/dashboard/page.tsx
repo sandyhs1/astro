@@ -113,6 +113,23 @@ export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  // ── Push the Intercom launcher above the mobile bottom-nav while on the
+  // dashboard. We use `update` (not `boot`) so we don't disturb the existing
+  // Intercom session set up in IntercomProvider. Reset on unmount so other
+  // pages keep the default position.
+  useEffect(() => {
+    const w: any = typeof window !== "undefined" ? window : null;
+    if (!w?.Intercom) return;
+    try {
+      // Bottom nav is ~58px tall + safe-area; lift launcher above it on mobile.
+      // Intercom ignores values > ~100, so cap it.
+      w.Intercom("update", { vertical_padding: 90 });
+    } catch { /* noop */ }
+    return () => {
+      try { w.Intercom?.("update", { vertical_padding: 20 }); } catch { /* noop */ }
+    };
+  }, []);
+
   const [profile, setProfile] = useState<any>(null);
   const [familyProfiles, setFamilyProfiles] = useState<any[]>([]);
   const [entitlement, setEntitlement] = useState<any>(null);
@@ -1252,9 +1269,9 @@ export default function DashboardPage() {
         />
 
         {navDrawerOpen && (
-          <div className="fixed inset-0 z-40 md:hidden" onClick={() => setNavDrawerOpen(false)}>
+          <div className="fixed inset-0 z-[60] md:hidden" onClick={() => setNavDrawerOpen(false)}>
             <div className="absolute inset-0" style={{ background: "rgba(14,26,51,0.55)" }} />
-            <div onClick={(e) => e.stopPropagation()} className="relative z-10">
+            <div onClick={(e) => e.stopPropagation()} className="relative z-10 h-full">
               <EditorialSidebar
                 activeFeature={activeFeature}
                 setActiveFeature={(k) => { setActiveFeature(k); setNavDrawerOpen(false); }}
@@ -1284,8 +1301,13 @@ export default function DashboardPage() {
                 }}
                 credits={Math.floor(profile.credits ?? 0)}
                 isOutOfCredits={isOutOfCredits}
-                className="flex h-[100dvh] w-[284px]"
+                className="flex h-[100dvh] w-[284px] max-w-[88vw]"
                 onClose={() => setNavDrawerOpen(false)}
+                onTopUp={(profile.plan_type === "plan2" || profile.plan_type === "promo")
+                  ? () => { setNavDrawerOpen(false); setShowTopup(true); }
+                  : undefined}
+                onOpenSubscription={() => { setNavDrawerOpen(false); router.push("/subscription"); }}
+                onSignOut={() => { setNavDrawerOpen(false); handleSignOut(); }}
               />
             </div>
           </div>
@@ -1658,26 +1680,33 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* Mobile bottom tab bar — hidden when Oracle Chat is open (chat owns the screen) */}
+      {/* Mobile bottom tab bar — hidden when Oracle Chat is open (chat owns the screen).
+          Items overflow horizontally on narrow phones; scroll-snap keeps them legible. */}
       {activeFeature !== "chat" && (
       <nav
         className="md:hidden fixed inset-x-0 bottom-0 z-30 pb-[env(safe-area-inset-bottom)]"
         style={{ background: PAL.paper, borderTop: `1px solid ${PAL.border}` }}
       >
-        <div className="grid grid-cols-5">
-          {[
+        <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory">
+          {([
             { key: "home" as FeatureKey,       label: "Home",    Icon: Sparkles },
             { key: "chat" as FeatureKey,       label: "Oracle",  Icon: MessageCircle },
             { key: "destiny" as FeatureKey,    label: "Destiny", Icon: Calendar },
             { key: "year-ahead" as FeatureKey, label: "Year",    Icon: Compass  },
+            { key: "karma-dna" as FeatureKey,  label: "Karma",   Icon: Sparkles },
+            { key: "remedy" as FeatureKey,     label: "Remedy",  Icon: Gem },
+            { key: "reports" as FeatureKey,    label: "Reports", Icon: FileText },
+            ...((profile.plan_type === "plan2" || profile.plan_type === "promo")
+              ? [{ key: "topup", label: "Top Up", Icon: Plus, onClick: () => setShowTopup(true) }]
+              : []),
             { key: "menu",                     label: "Index",   Icon: Menu, onClick: () => setNavDrawerOpen(true) },
-          ].map((it: any) => {
+          ] as Array<{ key: string; label: string; Icon: LucideIcon; onClick?: () => void }>).map((it) => {
             const isActive = activeFeature === it.key;
             return (
               <button
                 key={it.label}
-                onClick={() => (it.onClick ? it.onClick() : setActiveFeature(it.key))}
-                className="relative flex flex-col items-center justify-center py-2.5 transition-colors"
+                onClick={() => (it.onClick ? it.onClick() : setActiveFeature(it.key as FeatureKey))}
+                className="relative flex-shrink-0 snap-start min-w-[72px] flex flex-col items-center justify-center py-2.5 px-2 transition-colors"
                 style={{
                   color: isActive ? PAL.ink : PAL.ink3,
                   background: isActive ? "rgba(123,10,31,0.04)" : "transparent",
@@ -1917,6 +1946,7 @@ function EditorialSidebar({
   openSelfEdit, openFamilyEdit, openAddBond,
   credits, isOutOfCredits,
   className = "", onClose,
+  onTopUp, onOpenSubscription, onSignOut,
 }: {
   activeFeature: string;
   setActiveFeature: (k: FeatureKey) => void;
@@ -1931,18 +1961,28 @@ function EditorialSidebar({
   isOutOfCredits: boolean;
   className?: string;
   onClose?: () => void;
+  onTopUp?: () => void;
+  onOpenSubscription?: () => void;
+  onSignOut?: () => void;
 }) {
+  // When rendered inside the mobile drawer (onClose provided) the entire
+  // sidebar must be vertically scrollable as one unit so the footer
+  // (Credits, Top Up, Subscription, Sign Out) can never be clipped on
+  // short viewports. On desktop we keep the original split layout where
+  // only the nav scrolls and the footer stays pinned.
+  const isMobileDrawer = !!onClose;
+
   return (
     <aside
-      className={`flex-shrink-0 w-[284px] flex-col ${onClose ? "" : "self-start sticky top-16 h-[calc(100dvh-4rem)]"} ${className}`}
+      className={`flex-shrink-0 w-[284px] flex-col ${onClose ? "" : "self-start sticky top-16 h-[calc(100dvh-4rem)]"} ${className} ${isMobileDrawer ? "overflow-y-auto custom-scroll-light" : ""}`}
       style={{ background: PAL.paper, borderRight: `1px solid ${PAL.border2}` }}
       data-lenis-prevent
     >
       {onClose && (
-        <div className="flex items-center justify-between px-5 pt-4 md:hidden">
-          <span className="serif-display text-[14px] font-semibold" style={{ color: PAL.ink }}>Index</span>
-          <button onClick={onClose} className="h-8 w-8 grid place-items-center rounded hover:bg-black/5">
-            <X size={16} style={{ color: PAL.ink }} />
+        <div className="flex items-center justify-between px-5 pt-4 md:hidden sticky top-0 z-10" style={{ background: PAL.paper, borderBottom: `1px solid ${PAL.border2}` }}>
+          <span className="serif-display text-[14px] font-semibold pb-3" style={{ color: PAL.ink }}>Index</span>
+          <button onClick={onClose} aria-label="Close menu" className="h-9 w-9 mb-2 grid place-items-center rounded hover:bg-black/5 active:bg-black/10">
+            <X size={18} style={{ color: PAL.ink }} />
           </button>
         </div>
       )}
@@ -2042,7 +2082,7 @@ function EditorialSidebar({
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-5 pt-5 pb-3 custom-scroll-light">
+      <nav className={`${isMobileDrawer ? "" : "flex-1 overflow-y-auto custom-scroll-light"} px-5 pt-5 pb-3`}>
         <SidebarBtn
           label="Home"
           mono="—"
@@ -2081,7 +2121,10 @@ function EditorialSidebar({
         ))}
       </nav>
 
-      <div className="px-5 py-4 space-y-3" style={{ borderTop: `1px solid ${PAL.border2}` }}>
+      <div
+        className="px-5 py-4 space-y-3 pb-[max(env(safe-area-inset-bottom),16px)]"
+        style={{ borderTop: `1px solid ${PAL.border2}` }}
+      >
         <div className="rounded-sm p-3" style={{ background: PAL.paper2, border: `1px solid ${PAL.border2}` }}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: PAL.ink3 }}>Credits</span>
@@ -2090,7 +2133,40 @@ function EditorialSidebar({
           <div className="h-[3px] rounded-full overflow-hidden" style={{ background: PAL.border2 }}>
             <div className="h-full rounded-full" style={{ width: `${Math.min(100, (credits / 50) * 100)}%`, background: PAL.accent }} />
           </div>
+          {onTopUp && (
+            <button
+              onClick={onTopUp}
+              className="mt-3 w-full inline-flex items-center justify-center gap-1.5 h-9 rounded-sm text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: PAL.accent }}
+            >
+              <Plus size={12} /> Top up credits
+            </button>
+          )}
         </div>
+
+        {(onOpenSubscription || onSignOut) && (
+          <div className="grid grid-cols-2 gap-2">
+            {onOpenSubscription && (
+              <button
+                onClick={onOpenSubscription}
+                className="h-9 rounded-sm text-[11.5px] font-semibold transition-colors hover:bg-black/[0.04]"
+                style={{ color: PAL.ink, border: `1px solid ${PAL.border}` }}
+              >
+                Subscription
+              </button>
+            )}
+            {onSignOut && (
+              <button
+                onClick={onSignOut}
+                className="h-9 rounded-sm text-[11.5px] font-semibold transition-colors hover:bg-black/[0.04]"
+                style={{ color: PAL.ink2, border: `1px solid ${PAL.border}` }}
+              >
+                Sign out
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="rounded-sm px-3 py-2.5" style={{ background: "rgba(165,124,42,0.08)", border: `1px solid rgba(165,124,42,0.18)` }}>
           <div className="flex items-start gap-2">
             <AlertTriangle size={11} className="flex-shrink-0 mt-0.5" style={{ color: PAL.gold }} />
