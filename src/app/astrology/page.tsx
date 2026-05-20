@@ -7,56 +7,6 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import FloatingLogo from "@/components/ui/FloatingLogo";
 
 /* ──────────────────────────────────────────────────────────────────
-   COSMIC ORBIT (Hero loop animation)
-   Concentric rings + dashed outer ring + pulsing core + particles.
-   Feels like the inside of a karmic engine.
-   ────────────────────────────────────────────────────────────────── */
-function CosmicOrbit() {
-    return (
-        <div className="relative w-[260px] h-[260px] md:w-[420px] md:h-[420px] mx-auto">
-            {[1, 2, 3, 4].map((ring) => (
-                <motion.div
-                    key={ring}
-                    className="absolute inset-0 rounded-full border border-[#FFD700]/20"
-                    style={{ scale: 0.3 + ring * 0.18 }}
-                    animate={{ rotate: ring % 2 === 0 ? 360 : -360 }}
-                    transition={{ duration: 25 + ring * 8, repeat: Infinity, ease: "linear" }}
-                >
-                    <div className="absolute w-2 h-2 rounded-full bg-[#FFD700] shadow-[0_0_20px_rgba(255,215,0,0.8)]"
-                        style={{ top: 0, left: "50%", transform: "translate(-50%, -50%)" }} />
-                </motion.div>
-            ))}
-            <motion.div
-                className="absolute inset-0 rounded-full border-2 border-dashed border-[#FFD700]/30"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
-            />
-            <motion.div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-[#FFD700] via-amber-500 to-orange-700 blur-2xl"
-                animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.8, 0.4] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <motion.div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-[#FFD700] to-amber-700 flex items-center justify-center shadow-[0_0_60px_rgba(255,215,0,0.6)] font-serif"
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            >
-                <span className="text-3xl md:text-4xl font-bold text-black">☉</span>
-            </motion.div>
-            {[...Array(14)].map((_, i) => (
-                <motion.div
-                    key={i}
-                    className="absolute w-1 h-1 rounded-full bg-[#FFD700]"
-                    style={{ top: `${20 + Math.random() * 60}%`, left: `${20 + Math.random() * 60}%` }}
-                    animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0] }}
-                    transition={{ duration: 2 + Math.random() * 2, repeat: Infinity, delay: Math.random() * 3 }}
-                />
-            ))}
-        </div>
-    );
-}
-
-/* ──────────────────────────────────────────────────────────────────
    FRACTAL UNIVERSE SVG · "As Above, So Below"
    Two nested mandalas rotating in opposite directions with a
    pulsing center — visually expresses macro/micro fractal symmetry.
@@ -281,7 +231,7 @@ export default function Astrology() {
             }} />
 
             {/* ────────────────────────── 01 · HERO ────────────────────────── */}
-            <section ref={heroRef} className="relative min-h-[100vh] flex flex-col items-center justify-center text-center px-4 md:px-6 overflow-hidden pt-24 pb-12">
+            <section ref={heroRef} className="relative min-h-[88vh] flex flex-col items-center justify-center text-center px-4 md:px-6 overflow-hidden pt-24 pb-12">
                 {/* Cursor-tracking aurora */}
                 <motion.div
                     className="absolute -top-40 left-1/2 -translate-x-1/2 w-[140%] h-[120vh] pointer-events-none"
@@ -295,73 +245,60 @@ export default function Astrology() {
 
                 <motion.div
                     style={{ y: heroY, opacity: heroOpacity }}
-                    className="z-10 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-8 items-center"
+                    className="z-10 max-w-5xl mx-auto text-center"
                 >
-                    <div className="text-center lg:text-left">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.1 }}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/30 mb-6 backdrop-blur"
-                        >
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FFD700] opacity-75" />
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FFD700]" />
-                            </span>
-                            <span className="text-[10px] md:text-xs font-mono font-bold uppercase tracking-[0.3em] text-[#FFD700]">Vedic Truth · No Filter</span>
-                        </motion.div>
-
-                        <motion.h1
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.2 }}
-                            className="font-serif text-4xl sm:text-5xl md:text-7xl font-bold mb-8 tracking-tighter leading-[0.95] text-transparent bg-clip-text bg-gradient-to-br from-white via-gray-200 to-gray-600"
-                        >
-                            THE PLANETS DO NOT<br />
-                            CONTROL YOU.<br />
-                            <span className="text-[#FFD700] [-webkit-text-fill-color:#FFD700]">THEY REFLECT YOU.</span>
-                        </motion.h1>
-
-                        <motion.p
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.7, delay: 0.4 }}
-                            className="font-mono text-base md:text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
-                        >
-                            There is no bearded man in the sky moving Jupiter to destroy your marriage.<br />
-                            The planets are mirrors.
-                        </motion.p>
-
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.7, delay: 0.5 }}
-                            className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start"
-                        >
-                            <button
-                                onClick={openModal}
-                                className="group inline-flex items-center justify-center gap-2 px-7 py-4 bg-[#FFD700] text-black font-bold uppercase tracking-widest text-xs hover:scale-[1.03] transition-all shadow-[0_0_40px_rgba(255,215,0,0.3)] hover:shadow-[0_0_60px_rgba(255,215,0,0.5)]"
-                            >
-                                Decode my chart
-                                <span className="group-hover:translate-x-1 transition-transform">→</span>
-                            </button>
-                            <a
-                                href="#mechanism"
-                                className="inline-flex items-center justify-center gap-2 px-7 py-4 border border-white/20 text-white font-bold uppercase tracking-widest text-xs hover:bg-white/5 transition-all"
-                            >
-                                See the math
-                            </a>
-                        </motion.div>
-                    </div>
-
-                    {/* Cosmic orbit visual */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.85 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 1, delay: 0.3 }}
-                        className="relative flex items-center justify-center"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.1 }}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/30 mb-8 backdrop-blur"
                     >
-                        <CosmicOrbit />
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FFD700] opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FFD700]" />
+                        </span>
+                        <span className="text-[10px] md:text-xs font-mono font-bold uppercase tracking-[0.3em] text-[#FFD700]">Vedic Truth · No Filter</span>
+                    </motion.div>
+
+                    <motion.h1
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-8 tracking-tight leading-[1.05] text-transparent bg-clip-text bg-gradient-to-br from-white via-gray-200 to-gray-600 mx-auto max-w-4xl"
+                    >
+                        THE PLANETS DO NOT CONTROL YOU.<br />
+                        <span className="text-[#FFD700] [-webkit-text-fill-color:#FFD700]">THEY REFLECT YOU.</span>
+                    </motion.h1>
+
+                    <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.7, delay: 0.4 }}
+                        className="font-mono text-base md:text-lg text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed"
+                    >
+                        There is no bearded man in the sky moving Mars into your 7th house to wreck your marriage.<br />
+                        The planets are mirrors.
+                    </motion.p>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.7, delay: 0.5 }}
+                        className="flex flex-col sm:flex-row gap-3 justify-center"
+                    >
+                        <button
+                            onClick={openModal}
+                            className="group inline-flex items-center justify-center gap-2 px-7 py-4 bg-[#FFD700] text-black font-bold uppercase tracking-widest text-xs hover:scale-[1.03] transition-all shadow-[0_0_40px_rgba(255,215,0,0.3)] hover:shadow-[0_0_60px_rgba(255,215,0,0.5)]"
+                        >
+                            Decode my chart
+                            <span className="group-hover:translate-x-1 transition-transform">→</span>
+                        </button>
+                        <a
+                            href="#mechanism"
+                            className="inline-flex items-center justify-center gap-2 px-7 py-4 border border-white/20 text-white font-bold uppercase tracking-widest text-xs hover:bg-white/5 transition-all"
+                        >
+                            See the math
+                        </a>
                     </motion.div>
                 </motion.div>
 
