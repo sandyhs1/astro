@@ -54,14 +54,32 @@ export async function GET(req: Request) {
     // ── Fetch data in parallel ─────────────────────────────────────────────────
     const [usersRes, logsRes, astroLogsRes] = await Promise.all([
       supabase.from('user_profiles').select('id, full_name, email, created_at, credits'),
-      supabase.from('token_usage_logs').select('*').order('created_at', { ascending: false }).limit(500),
-      supabase.from('astroapi_logs').select('*').order('created_at', { ascending: false }).limit(500),
+      supabase.from('token_usage_logs').select('*').order('created_at', { ascending: false }).limit(2000),
+      supabase.from('astroapi_logs').select('*').order('created_at', { ascending: false }).limit(2000),
     ]);
 
     if (usersRes.error) throw usersRes.error;
     const users    = usersRes.data  || [];
     const logs     = logsRes.data   || [];
     const astroLogs= astroLogsRes.data || [];
+
+    // ── Feature catalog (the 12 user-visible features) ────────────────────────
+    // Stable feature keys → human-readable labels, used for grouping in the
+    // admin dashboard. The order here drives column order in the UI tables.
+    const FEATURE_CATALOG: Array<{ key: string; label: string; engine: 'llm' | 'astro_pdf' }> = [
+      { key: 'karma_dna',              label: 'Karma DNA',                 engine: 'llm' },
+      { key: 'karmic_patterns',        label: 'Karmic Patterns',           engine: 'llm' },
+      { key: 'your_purpose',           label: 'Your Purpose',              engine: 'llm' },
+      { key: 'year_ahead',             label: 'Year Ahead',                engine: 'llm' },
+      { key: 'royal_roast',            label: 'Royal Roast',               engine: 'llm' },
+      { key: 'remedy',                 label: 'Remedy',                    engine: 'llm' },
+      { key: 'your_gotra',             label: 'Your Gotra',                engine: 'llm' },
+      { key: 'ishta_devata',           label: 'Ishta Devata',              engine: 'llm' },
+      { key: 'nakshatra_ascendant',    label: 'Nakshatra + Ascendant',     engine: 'llm' },
+      { key: 'core_horoscope',         label: 'Core Horoscope (PDF)',      engine: 'astro_pdf' },
+      { key: 'professional_horoscope', label: 'Professional Horoscope',    engine: 'astro_pdf' },
+      { key: 'chat',                   label: 'Oracle Chat',               engine: 'llm' },
+    ];
 
     // ── LLM Global Aggregates ──────────────────────────────────────────────────
     const CREDIT_VALUE_INR_GLOBAL = 35.98; // ₹1799 / 50 credits
@@ -97,6 +115,101 @@ export async function GET(req: Request) {
 
     // ── Per-User Stats ─────────────────────────────────────────────────────────
     const CREDIT_VALUE_INR = 35.98; // ₹1799 / 50 credits
+
+    // Helper: classify a token-log row into a feature key. Falls back to a
+    // best-effort match on question_preview for legacy rows that pre-date
+    // the `feature` column.
+    const featureFromLog = (l: any): string => {
+      if (l.feature) return l.feature;
+      const q = (l.question_preview || '').toLowerCase();
+      if (q.startsWith('karma dna'))         return 'karma_dna';
+      if (q.startsWith('karmic patterns'))   return 'karmic_patterns';
+      if (q.startsWith('your purpose'))      return 'your_purpose';
+      if (q.startsWith('year ahead'))        return 'year_ahead';
+      if (q.startsWith('royal roast'))       return 'royal_roast';
+      if (q.startsWith('remedy'))            return 'remedy';
+      if (q.startsWith('gotra'))             return 'your_gotra';
+      if (q.startsWith('ishta devata'))      return 'ishta_devata';
+      if (q.startsWith('nakshatra'))         return 'nakshatra_ascendant';
+      if (q.length > 0)                      return 'chat';
+      return 'other';
+    };
+    const featureFromAstro = (l: any): string => {
+      if (l.feature) return l.feature;
+      if (l.endpoint === 'basic_horoscope_pdf') return 'core_horoscope';
+      if (l.endpoint === 'pro_horoscope_pdf')   return 'professional_horoscope';
+      return 'chart_prep';
+    };
+
+    // ── Global per-feature aggregates ─────────────────────────────────────────
+    type FeatureBucket = {
+      key: string; label: string; engine: 'llm' | 'astro_pdf';
+      calls: number;
+      inputTokens: number; outputTokens: number; totalTokens: number;
+      llmCostInr: number; astroCostInr: number; totalCostInr: number;
+      creditsCharged: number;
+      uniqueUsers: Set<string>;
+    };
+    const featureGlobal: Record<string, FeatureBucket> = {};
+    const ensureBucket = (key: string): FeatureBucket => {
+      if (!featureGlobal[key]) {
+        const meta = FEATURE_CATALOG.find(f => f.key === key);
+        featureGlobal[key] = {
+          key,
+          label: meta?.label ?? key,
+          engine: meta?.engine ?? 'llm',
+          calls: 0,
+          inputTokens: 0, outputTokens: 0, totalTokens: 0,
+          llmCostInr: 0, astroCostInr: 0, totalCostInr: 0,
+          creditsCharged: 0,
+          uniqueUsers: new Set(),
+        };
+      }
+      return featureGlobal[key];
+    };
+    for (const l of logs) {
+      const key = featureFromLog(l);
+      const b = ensureBucket(key);
+      b.calls          += 1;
+      b.inputTokens    += l.input_tokens  || 0;
+      b.outputTokens   += l.output_tokens || 0;
+      b.totalTokens    += (l.input_tokens || 0) + (l.output_tokens || 0);
+      const cost        = parseFloat(l.cost_inr || 0);
+      b.llmCostInr     += cost;
+      b.totalCostInr   += cost;
+      b.creditsCharged += l.credits_used || 0;
+      if (l.user_id) b.uniqueUsers.add(l.user_id);
+    }
+    for (const l of astroLogs) {
+      const key = featureFromAstro(l);
+      // chart_prep is internal — only surface it under "Other" if there's no
+      // matching feature in the catalog. Skipping it from the per-feature
+      // table keeps the UI focused on the 12 user-facing reports.
+      if (key === 'chart_prep') continue;
+      const b = ensureBucket(key);
+      b.calls          += 1;
+      const cost        = parseFloat(l.cost_inr || ASTRO_API_COST_INR);
+      b.astroCostInr   += cost;
+      b.totalCostInr   += cost;
+      if (l.user_id) b.uniqueUsers.add(l.user_id);
+    }
+    const featureBreakdown = FEATURE_CATALOG
+      .map(f => featureGlobal[f.key])
+      .filter((b): b is FeatureBucket => !!b)
+      .map(b => ({
+        key: b.key, label: b.label, engine: b.engine,
+        calls: b.calls,
+        uniqueUsers: b.uniqueUsers.size,
+        inputTokens: b.inputTokens,
+        outputTokens: b.outputTokens,
+        totalTokens: b.totalTokens,
+        llmCostInr: parseFloat(b.llmCostInr.toFixed(6)),
+        astroCostInr: parseFloat(b.astroCostInr.toFixed(6)),
+        totalCostInr: parseFloat(b.totalCostInr.toFixed(6)),
+        creditsCharged: b.creditsCharged,
+      }));
+
+    // ── Per-User Stats ─────────────────────────────────────────────────────────
     const userStats = users.map((u) => {
       const userLogs     = logs.filter((l) => l.user_id === u.id);
       const userAstro    = astroLogs.filter((l) => l.user_id === u.id);
@@ -109,6 +222,69 @@ export async function GET(req: Request) {
       // actualCreditCost = what it TRULY cost in credits (costInr / 35.98)
       const actualCreditCost = llmCostInr / CREDIT_VALUE_INR;
       const models       = Array.from(new Set(userLogs.map((l) => l.model_name).filter(Boolean)));
+
+      // ── Per-feature breakdown for THIS user ──────────────────────────────
+      // Returns one row per feature the user has actually consumed, ordered
+      // by total cost (most expensive first). Used by the admin "User × Feature"
+      // matrix table.
+      const userFeatureMap: Record<string, {
+        key: string; label: string; engine: 'llm' | 'astro_pdf';
+        calls: number;
+        inputTokens: number; outputTokens: number; totalTokens: number;
+        llmCostInr: number; astroCostInr: number; totalCostInr: number;
+        creditsCharged: number;
+        lastUsedAt: string | null;
+      }> = {};
+      const ensureUserBucket = (key: string) => {
+        if (!userFeatureMap[key]) {
+          const meta = FEATURE_CATALOG.find(f => f.key === key);
+          userFeatureMap[key] = {
+            key,
+            label: meta?.label ?? key,
+            engine: meta?.engine ?? 'llm',
+            calls: 0,
+            inputTokens: 0, outputTokens: 0, totalTokens: 0,
+            llmCostInr: 0, astroCostInr: 0, totalCostInr: 0,
+            creditsCharged: 0,
+            lastUsedAt: null,
+          };
+        }
+        return userFeatureMap[key];
+      };
+      for (const l of userLogs) {
+        const b = ensureUserBucket(featureFromLog(l));
+        b.calls          += 1;
+        b.inputTokens    += l.input_tokens  || 0;
+        b.outputTokens   += l.output_tokens || 0;
+        b.totalTokens    += (l.input_tokens || 0) + (l.output_tokens || 0);
+        const cost        = parseFloat(l.cost_inr || 0);
+        b.llmCostInr     += cost;
+        b.totalCostInr   += cost;
+        b.creditsCharged += l.credits_used || 0;
+        if (!b.lastUsedAt || new Date(l.created_at) > new Date(b.lastUsedAt)) {
+          b.lastUsedAt = l.created_at;
+        }
+      }
+      for (const l of userAstro) {
+        const key = featureFromAstro(l);
+        if (key === 'chart_prep') continue;
+        const b = ensureUserBucket(key);
+        b.calls         += 1;
+        const cost       = parseFloat(l.cost_inr || ASTRO_API_COST_INR);
+        b.astroCostInr  += cost;
+        b.totalCostInr  += cost;
+        if (!b.lastUsedAt || new Date(l.created_at) > new Date(b.lastUsedAt)) {
+          b.lastUsedAt = l.created_at;
+        }
+      }
+      const featureBreakdown = Object.values(userFeatureMap)
+        .map(b => ({
+          ...b,
+          llmCostInr:   parseFloat(b.llmCostInr.toFixed(6)),
+          astroCostInr: parseFloat(b.astroCostInr.toFixed(6)),
+          totalCostInr: parseFloat(b.totalCostInr.toFixed(6)),
+        }))
+        .sort((a, b) => b.totalCostInr - a.totalCostInr);
 
       // Last activity
       const lastLog = userLogs[0];
@@ -131,6 +307,7 @@ export async function GET(req: Request) {
         profitMultiple:   creditsDeducted > 0 ? parseFloat((creditsDeducted / actualCreditCost).toFixed(2)) : null,
         creditsRemaining: u.credits ?? 0,
         modelsUsed:       models,
+        featureBreakdown,                         // ← per-feature rows for this user
       };
     });
 
@@ -173,7 +350,9 @@ export async function GET(req: Request) {
         totalCostInr: totalLLMCostInr + totalAstroCostInr,
         modelUsage,
         astroEndpointUsage,
+        featureBreakdown,        // ← per-feature aggregates across all users
       },
+      featureCatalog: FEATURE_CATALOG,  // ← stable list of the 12 features for the UI
       users: userStats,
       recentActivity,
       fetchedAt: new Date().toISOString(),

@@ -42,3 +42,8 @@ next-env.d.ts
 
 # Internal documentation (founder/investor only — never public, never committed)
 /docs-internal/
+
+# Local backups (never commit — keep working copies safe but out of repo)
+*.backup.tsx
+*.backup.ts
+.*.backup.tsx

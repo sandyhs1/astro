@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Upload, LogOut, Copy, CheckCircle2, Loader2, Users, Activity, Database, RefreshCw, IndianRupee, Zap, TrendingUp } from "lucide-react";
+import { Upload, LogOut, Copy, CheckCircle2, Loader2, Users, Activity, Database, RefreshCw, IndianRupee, Zap, TrendingUp, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
 import "./admin.css";
 
-type Tab = "users" | "ai" | "astro" | "promos" | "astrologers";
+type Tab = "users" | "ai" | "features" | "astro" | "promos" | "astrologers";
 
 const fmt = (n: number) => n.toLocaleString("en-IN");
 const inr = (n: number) => `₹${n.toFixed(4)}`;
@@ -30,6 +30,8 @@ export default function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [featureSearch, setFeatureSearch] = useState("");
 
   const fetchUsers = useCallback(async (t: string) => {
     const res = await fetch("/api/admin/users", { headers: { Authorization: `Bearer ${t}` } });
@@ -83,13 +85,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (authed && token && tab === "users") fetchUsers(token);
-    if (authed && token && (tab === "ai" || tab === "astro")) fetchMetrics(token);
+    if (authed && token && (tab === "ai" || tab === "astro" || tab === "features")) fetchMetrics(token);
     if (authed && token && tab === "promos") fetchPromos(token);
     if (authed && token && tab === "astrologers") fetchAstrologers(token);
   }, [tab, authed, token]);
 
   useEffect(() => {
-    if (!authed || !token || (tab !== "ai" && tab !== "astro")) return;
+    if (!authed || !token || (tab !== "ai" && tab !== "astro" && tab !== "features")) return;
     const iv = setInterval(() => fetchMetrics(token, true), 30000);
     return () => clearInterval(iv);
   }, [tab, authed, token]);
@@ -161,7 +163,7 @@ export default function AdminDashboard() {
 
       {/* Tabs */}
       <div className="flex gap-3 mb-6 px-6 flex-wrap">
-        {([[ "users", "Users & Plans", <Users size={15} key="u"/>],["ai","LLM Usage & Cost",<Activity size={15} key="ai"/>],["astro","AstrologyAPI",<Database size={15} key="db"/>],["promos","Promo Codes",<Zap size={15} key="z"/>],["astrologers","Astrologers",<Users size={15} key="a"/>]] as const).map(([id, label, icon]) => (
+        {([[ "users", "Users & Plans", <Users size={15} key="u"/>],["ai","LLM Usage & Cost",<Activity size={15} key="ai"/>],["features","Feature Breakdown",<Sparkles size={15} key="f"/>],["astro","AstrologyAPI",<Database size={15} key="db"/>],["promos","Promo Codes",<Zap size={15} key="z"/>],["astrologers","Astrologers",<Users size={15} key="a"/>]] as const).map(([id, label, icon]) => (
           <button key={id} onClick={() => setTab(id as Tab)}
             className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${tab === id ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>
             {icon}{label}
@@ -421,6 +423,196 @@ export default function AdminDashboard() {
                           </td>
                         </tr>
                       ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>}
+        </div>
+      )}
+
+      {/* ── FEATURES TAB ────────────────────────────────────────────── */}
+      {/* Per-feature breakdown across all 12 user-visible reports + Oracle Chat. */}
+      {/* Shows token spend, INR cost and credit charge for each feature, plus  */}
+      {/* a per-user matrix that lists exactly which features each user has    */}
+      {/* consumed and how much each one cost.                                 */}
+      {tab === "features" && (
+        <div className="px-6 pb-12">
+          {!metrics ? <div className="flex justify-center py-16"><Loader2 className="animate-spin text-indigo-500 w-8 h-8" /></div> : <>
+
+            {/* Header banner */}
+            <div className="mb-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700 text-xs text-slate-400 flex flex-wrap gap-4">
+              <span className="text-slate-300">📊 <strong>Feature Breakdown</strong></span>
+              <span>Tracks tokens & cost (INR) per feature, per user.</span>
+              <span>LLM features show token counts; PDF features (Core / Professional Horoscope) show only AstrologyAPI cost.</span>
+              <span className="ml-auto">Auto-refreshes every 30s</span>
+            </div>
+
+            {/* ── Global feature aggregates ─────────────────────────────── */}
+            <div className="mb-8 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                <h2 className="font-bold text-white">All-User Totals by Feature</h2>
+                <span className="text-xs text-slate-500">{(metrics.global?.featureBreakdown || []).length} features tracked</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-900/60 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700">
+                    <tr>
+                      <th className="px-5 py-3">Feature</th>
+                      <th className="px-5 py-3">Engine</th>
+                      <th className="px-5 py-3">Calls</th>
+                      <th className="px-5 py-3">Unique Users</th>
+                      <th className="px-5 py-3">Input Tokens</th>
+                      <th className="px-5 py-3">Output Tokens</th>
+                      <th className="px-5 py-3">Total Tokens</th>
+                      <th className="px-5 py-3">LLM Cost ₹</th>
+                      <th className="px-5 py-3">Astro Cost ₹</th>
+                      <th className="px-5 py-3 text-rose-300">Total Cost ₹</th>
+                      <th className="px-5 py-3">Credits Charged</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {(metrics.global?.featureBreakdown || []).length === 0
+                      ? <tr><td colSpan={11} className="px-5 py-8 text-center text-slate-500">No feature usage logged yet. Once users generate reports, rows will appear here.</td></tr>
+                      : (metrics.global.featureBreakdown as any[]).map(f => (
+                        <tr key={f.key} className="hover:bg-slate-800/50 transition-colors">
+                          <td className="px-5 py-4 font-semibold text-white">{f.label}</td>
+                          <td className="px-5 py-4">
+                            <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              f.engine === 'llm' ? 'bg-indigo-900/40 text-indigo-300 border border-indigo-700/40'
+                              : 'bg-emerald-900/40 text-emerald-300 border border-emerald-700/40'
+                            }`}>{f.engine === 'llm' ? 'LLM' : 'PDF'}</span>
+                          </td>
+                          <td className="px-5 py-4 font-mono text-white">{fmt(f.calls)}</td>
+                          <td className="px-5 py-4 font-mono text-cyan-300">{fmt(f.uniqueUsers)}</td>
+                          <td className="px-5 py-4 font-mono text-indigo-400">{fmt(f.inputTokens)}</td>
+                          <td className="px-5 py-4 font-mono text-emerald-400">{fmt(f.outputTokens)}</td>
+                          <td className="px-5 py-4 font-mono text-white font-bold">{fmt(f.totalTokens)}</td>
+                          <td className="px-5 py-4 font-mono text-amber-400">{inr(f.llmCostInr || 0)}</td>
+                          <td className="px-5 py-4 font-mono text-emerald-400">{inr(f.astroCostInr || 0)}</td>
+                          <td className="px-5 py-4 font-mono font-bold text-rose-400">{inr(f.totalCostInr || 0)}</td>
+                          <td className="px-5 py-4 font-mono text-slate-300">{f.creditsCharged ?? 0}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* ── Per-User × Feature matrix ─────────────────────────────── */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-700 flex flex-wrap items-center gap-3">
+                <h2 className="font-bold text-white">Per-User × Feature Matrix</h2>
+                <span className="text-xs text-slate-500">Click a row to expand and see exactly which features each user has consumed.</span>
+                <input
+                  type="text"
+                  value={featureSearch}
+                  onChange={e => setFeatureSearch(e.target.value)}
+                  placeholder="Search by name or email…"
+                  className="ml-auto bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white w-64 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-900/60 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700">
+                    <tr>
+                      <th className="px-5 py-3 w-8"></th>
+                      <th className="px-5 py-3">User</th>
+                      <th className="px-5 py-3">Features Used</th>
+                      <th className="px-5 py-3">Total Tokens</th>
+                      <th className="px-5 py-3">LLM Cost ₹</th>
+                      <th className="px-5 py-3">Astro Cost ₹</th>
+                      <th className="px-5 py-3 text-rose-300">Total Cost ₹</th>
+                      <th className="px-5 py-3">Credits Charged</th>
+                      <th className="px-5 py-3">Last Active</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {(() => {
+                      const filtered = (metrics.users as any[]).filter((u: any) => {
+                        if (!u.featureBreakdown || u.featureBreakdown.length === 0) return false;
+                        if (!featureSearch.trim()) return true;
+                        const q = featureSearch.toLowerCase();
+                        return (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
+                      });
+                      if (filtered.length === 0) {
+                        return <tr><td colSpan={9} className="px-5 py-8 text-center text-slate-500">No matching users with feature usage.</td></tr>;
+                      }
+                      return filtered.map((u: any) => {
+                        const isOpen = expandedUserId === u.id;
+                        return (
+                          <>
+                            <tr
+                              key={u.id}
+                              className="hover:bg-slate-800/50 transition-colors cursor-pointer"
+                              onClick={() => setExpandedUserId(isOpen ? null : u.id)}
+                            >
+                              <td className="px-5 py-4 text-slate-400">
+                                {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                              </td>
+                              <td className="px-5 py-4">
+                                <div className="font-semibold text-white">{u.name}</div>
+                                <div className="text-xs text-slate-500">{u.email}</div>
+                              </td>
+                              <td className="px-5 py-4 font-mono text-cyan-300">{u.featureBreakdown.length}</td>
+                              <td className="px-5 py-4 font-mono text-white">{fmt(u.totalTokens)}</td>
+                              <td className="px-5 py-4 font-mono text-amber-400">{inr(u.llmCostInr || 0)}</td>
+                              <td className="px-5 py-4 font-mono text-emerald-400">{inr(u.astroCostInr || 0)}</td>
+                              <td className="px-5 py-4 font-mono font-bold text-rose-400">{inr(u.totalCostInr || 0)}</td>
+                              <td className="px-5 py-4 font-mono text-slate-300">{u.creditsDeducted ?? 0}</td>
+                              <td className="px-5 py-4 text-xs text-slate-400">{ago(u.lastActivityAt)}</td>
+                            </tr>
+                            {isOpen && (
+                              <tr key={`${u.id}-expand`} className="bg-slate-900/40">
+                                <td colSpan={9} className="px-5 py-4">
+                                  <div className="rounded-lg border border-slate-700/60 overflow-hidden">
+                                    <table className="w-full text-left text-xs">
+                                      <thead className="bg-slate-900/80 text-[10px] uppercase tracking-wider text-slate-500">
+                                        <tr>
+                                          <th className="px-4 py-2">Feature</th>
+                                          <th className="px-4 py-2">Engine</th>
+                                          <th className="px-4 py-2">Calls</th>
+                                          <th className="px-4 py-2">Input</th>
+                                          <th className="px-4 py-2">Output</th>
+                                          <th className="px-4 py-2">Total Tokens</th>
+                                          <th className="px-4 py-2">LLM ₹</th>
+                                          <th className="px-4 py-2">Astro ₹</th>
+                                          <th className="px-4 py-2 text-rose-300">Total ₹</th>
+                                          <th className="px-4 py-2">Credits Charged</th>
+                                          <th className="px-4 py-2">Last Used</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-slate-700/40">
+                                        {u.featureBreakdown.map((f: any) => (
+                                          <tr key={f.key}>
+                                            <td className="px-4 py-2 font-semibold text-white">{f.label}</td>
+                                            <td className="px-4 py-2">
+                                              <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                                f.engine === 'llm' ? 'bg-indigo-900/40 text-indigo-300 border border-indigo-700/40'
+                                                : 'bg-emerald-900/40 text-emerald-300 border border-emerald-700/40'
+                                              }`}>{f.engine === 'llm' ? 'LLM' : 'PDF'}</span>
+                                            </td>
+                                            <td className="px-4 py-2 font-mono text-white">{fmt(f.calls)}</td>
+                                            <td className="px-4 py-2 font-mono text-indigo-400">{fmt(f.inputTokens)}</td>
+                                            <td className="px-4 py-2 font-mono text-emerald-400">{fmt(f.outputTokens)}</td>
+                                            <td className="px-4 py-2 font-mono text-white font-bold">{fmt(f.totalTokens)}</td>
+                                            <td className="px-4 py-2 font-mono text-amber-400">{inr(f.llmCostInr || 0)}</td>
+                                            <td className="px-4 py-2 font-mono text-emerald-400">{inr(f.astroCostInr || 0)}</td>
+                                            <td className="px-4 py-2 font-mono font-bold text-rose-400">{inr(f.totalCostInr || 0)}</td>
+                                            <td className="px-4 py-2 font-mono text-slate-300">{f.creditsCharged ?? 0}</td>
+                                            <td className="px-4 py-2 text-slate-400">{ago(f.lastUsedAt)}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
