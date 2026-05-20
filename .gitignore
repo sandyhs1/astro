@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Internal documentation (founder/investor only — never public, never committed)
+/docs-internal/
