@@ -659,14 +659,23 @@ export default function PaymentGate({ children }: PaymentGateProps) {
       </div>
 
       {/* ── Overlay ──────────────────────────────────────────────────────────── */}
-      <div style={{
-        position: "fixed", inset: 0, zIndex: 1000,
-        display: "flex", alignItems: "flex-start", justifyContent: "center",
-        padding: "1.5rem 1rem",
-        background: "rgba(5,5,7,0.82)",
-        backdropFilter: "blur(4px)",
-        overflowY: "auto",
-      }}>
+      {/* data-lenis-prevent: stops the page-level Lenis smooth-scroll instance
+          from hijacking wheel/touch events inside this fixed overlay so the
+          modal content can scroll natively. Without this, the promo code
+          input at the bottom is unreachable. */}
+      <div
+        data-lenis-prevent
+        style={{
+          position: "fixed", inset: 0, zIndex: 1000,
+          display: "flex", alignItems: "flex-start", justifyContent: "center",
+          padding: "1.5rem 1rem 3rem",
+          background: "rgba(5,5,7,0.82)",
+          backdropFilter: "blur(4px)",
+          overflowY: "auto",
+          overscrollBehavior: "contain",
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
         <AnimatePresence mode="wait">
 
           {/* ── PLAN 1 FORM: Intake Form ──────────────────────────────────── */}
@@ -1066,9 +1075,39 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                 </div>
               )}
 
-              {/* Promo Code Input */}
-              <div style={{ marginTop: 24, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                <form onSubmit={handleApplyPromo} style={{ display: "flex", gap: 8, maxWidth: 320, margin: "0 auto" }}>
+              {/* Promo Code Input — always shown for both plans */}
+              <div
+                style={{
+                  marginTop: 28,
+                  paddingTop: 24,
+                  paddingBottom: 4,
+                  borderTop: "1px solid rgba(255,255,255,0.08)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "9px",
+                    letterSpacing: "0.2em",
+                    color: "rgba(255,255,255,0.4)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Have a Promo Code?
+                </div>
+                <form
+                  onSubmit={handleApplyPromo}
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    width: "100%",
+                    maxWidth: 360,
+                  }}
+                >
                   <input
                     type="text"
                     placeholder="ENTER PROMO CODE"
@@ -1076,9 +1115,10 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                     onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                     style={{
                       ...inputStyle,
+                      flex: 1,
                       textTransform: "uppercase",
                       letterSpacing: "0.15em",
-                      textAlign: "center"
+                      textAlign: "center",
                     }}
                   />
                   <motion.button
@@ -1087,7 +1127,7 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     style={{
-                      padding: "0 20px",
+                      padding: "0 24px",
                       background: "rgba(0,229,255,0.1)",
                       border: "1px solid rgba(0,229,255,0.3)",
                       color: "#00E5FF",
@@ -1097,19 +1137,27 @@ export default function PaymentGate({ children }: PaymentGateProps) {
                       textTransform: "uppercase",
                       cursor: (isApplyingPromo || !promoCode.trim()) ? "not-allowed" : "pointer",
                       opacity: (isApplyingPromo || !promoCode.trim()) ? 0.5 : 1,
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {isApplyingPromo ? "..." : "APPLY"}
                   </motion.button>
                 </form>
                 {promoError && (
-                  <div style={{ textAlign: "center", marginTop: 8, fontFamily: "'IBM Plex Mono', monospace", fontSize: "10px", color: "#FF5E3A" }}>
+                  <div
+                    style={{
+                      textAlign: "center",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: "10px",
+                      color: "#FF5E3A",
+                    }}
+                  >
                     {promoError}
                   </div>
                 )}
               </div>
 
-              <div style={{ marginTop: 24, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.08em" }}>
+              <div style={{ marginTop: 20, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "8px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.08em" }}>
                 SECURED BY {currency === "INR" ? "RAZORPAY" : "FREEMIUS"} · 256-BIT SSL ENCRYPTION · PAYMENTS NEVER STORED ON OUR SERVERS
               </div>
             </motion.div>
