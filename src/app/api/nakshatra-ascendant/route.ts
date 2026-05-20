@@ -6,11 +6,28 @@ import { routeLLM } from "@/lib/astrology/llm-router";
 // @ts-ignore
 import api from 'astrologyapi';
 import { geocodePlace } from "@/lib/astrology/client";
+import { FEATURE_CREDITS, NAKSHATRA_ASC_BUNDLE_COST } from "@/lib/pricing/feature-credits";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// ── INR pricing — same table as the other report routes ────────────────────────
+const LLM_PRICE: Record<string, { in: number; out: number }> = {
+  "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26   },
+  "gemini/gemini-3.1-pro-preview":           { in: 0.105,  out: 0.42   },
+  "gemini/gemini-3.1-flash-lite":            { in: 0.0063, out: 0.0063 },
+};
+function calcCostInr(model: string, tokIn: number, tokOut: number): number {
+  const p = LLM_PRICE[model] ?? { in: 0.252, out: 1.26 };
+  return (tokIn / 1000) * p.in + (tokOut / 1000) * p.out;
+}
+
+// ── Credit cost — Nakshatra + Ascendant (combined) ────────────────────────────
+// One LLM call generates BOTH the Nakshatra and Ascendant reports together,
+// so users pay once and unlock both pages. Sourced from central pricing module.
+const CREDITS_COST = NAKSHATRA_ASC_BUNDLE_COST;
 
 function parseBirthData(profileData: any) {
   let d = 1, m = 1, y = 2000;
@@ -180,6 +197,21 @@ export async function POST(req: Request) {
       if (existing) return NextResponse.json({ ...existing.content, fromCache: true });
     }
 
+    // ── Credits check (only reached on first-time generation) ────────────────
+    const { data: profileForCredits } = await supabaseAdmin
+      .from("user_profiles")
+      .select("credits")
+      .eq("id", user.id)
+      .single();
+    const credits = profileForCredits?.credits ?? 0;
+    if (credits < CREDITS_COST) {
+      return NextResponse.json({
+        error: `Insufficient credits. Nakshatra + Ascendant Report costs ${CREDITS_COST} credits.`,
+        required: CREDITS_COST,
+        available: credits,
+      }, { status: 402 });
+    }
+
     let profileData: any;
     if (!targetProfileId) {
       const { data: lead } = await supabaseAdmin.from("onboarding_leads").select("*").eq("email", user.email).maybeSingle();
@@ -230,7 +262,34 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json(reportContent);
+    // ── Deduct credits ───────────────────────────────────────────────────────
+    const newCredits = Math.max(0, credits - CREDITS_COST);
+    await supabaseAdmin
+      .from("user_profiles")
+      .update({ credits: newCredits })
+      .eq("id", user.id);
+
+    // ── Log usage so it shows up on the admin dashboard ───────────────────────
+    // One LLM call powers BOTH the Nakshatra and the Ascendant reports, so we
+    // tag it with the combined feature key. The admin dashboard splits the
+    // token / cost equally between the two pages when displayed.
+    void (async () => {
+      try {
+        await supabaseAdmin.from("token_usage_logs").insert({
+          user_id:          user.id,
+          model_name:       llmResult.model,
+          input_tokens:     llmResult.tokensIn,
+          output_tokens:    llmResult.tokensOut,
+          total_tokens:     llmResult.tokensIn + llmResult.tokensOut,
+          cost_inr:         calcCostInr(llmResult.model, llmResult.tokensIn, llmResult.tokensOut).toFixed(6),
+          credits_used:     CREDITS_COST,
+          question_preview: "Nakshatra + Ascendant Report",
+          feature:          "nakshatra_ascendant",
+        });
+      } catch { /* non-critical */ }
+    })();
+
+    return NextResponse.json({ ...reportContent, creditsRemaining: newCredits });
   } catch (err: any) {
     console.error("Nakshatra-Ascendant POST error:", err);
     return NextResponse.json({ error: err.message || "Failed to generate" }, { status: 500 });

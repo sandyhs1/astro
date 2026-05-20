@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 import remarkGfm from "remark-gfm";
 import { PAL, PLANET_TONE } from "./destiny-theme";
 
@@ -157,7 +158,7 @@ export default function IshtaDevata({ profileId, profileName }: IshtaDevataProps
             className="mt-7 serif-text text-[13px] font-semibold px-7 py-3 rounded-sm text-white transition-opacity hover:opacity-90"
             style={{ background: PAL.accent }}
           >
-            🙏 Reveal my Ishta Devata — 5 credits
+            🙏 Reveal my Ishta Devata — {FEATURE_CREDITS.ishta_devata} credits
           </button>
           <p className="serif-text italic text-[11.5px] mt-3" style={{ color: PAL.ink3 }}>
             Saved permanently · never expires · free to re-read anytime

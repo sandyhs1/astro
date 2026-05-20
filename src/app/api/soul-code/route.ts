@@ -6,11 +6,27 @@ import { routeLLM } from "@/lib/astrology/llm-router";
 // @ts-ignore
 import api from 'astrologyapi';
 import { geocodePlace } from "@/lib/astrology/client";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// ── INR pricing — same table as the other report routes ────────────────────────
+const LLM_PRICE: Record<string, { in: number; out: number }> = {
+  "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26   },
+  "gemini/gemini-3.1-pro-preview":           { in: 0.105,  out: 0.42   },
+  "gemini/gemini-3.1-flash-lite":            { in: 0.0063, out: 0.0063 },
+};
+function calcCostInr(model: string, tokIn: number, tokOut: number): number {
+  const p = LLM_PRICE[model] ?? { in: 0.252, out: 1.26 };
+  return (tokIn / 1000) * p.in + (tokOut / 1000) * p.out;
+}
+
+// ── Credit cost — Your Purpose (Soul Code) ────────────────────────────────────
+// Sourced from the central pricing module so frontend & backend stay in sync.
+const CREDITS_COST = FEATURE_CREDITS.your_purpose;
 
 const SOUL_CODE_PROMPT = (pName: string, jaiminiJson: string, bioJson: string, moonBioJson: string) => `You are KARMA — the Grand Master Jyotishi of Quantum Karma.
 You are generating a deeply personal, brutal, savage, legit, and accurate SOUL CODE REPORT for ${pName}.
@@ -127,6 +143,45 @@ export async function POST(req: Request) {
     }
     if (targetProfileId === "self") targetProfileId = null;
 
+    // ── ONE-TIME GENERATION GUARD ────────────────────────────────────────────
+    // If a saved Soul Code report already exists for this user+profile, return
+    // it free of charge. Users only pay credits the first time the report is
+    // generated; re-opening the same report later is always free.
+    if (targetProfileId) {
+      const { data: existing } = await supabaseAdmin
+        .from("saved_reports")
+        .select("content")
+        .eq("user_id", user.id)
+        .eq("profile_id", targetProfileId)
+        .eq("report_type", "soul_code")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existing?.content) {
+        const { data: profile } = await supabaseAdmin
+          .from("user_profiles")
+          .select("credits")
+          .eq("id", user.id)
+          .single();
+        return NextResponse.json({ ...existing.content, creditsRemaining: profile?.credits ?? 0, fromCache: true });
+      }
+    }
+
+    // ── Credits check (only reached on first-time generation) ────────────────
+    const { data: profileForCredits } = await supabaseAdmin
+      .from("user_profiles")
+      .select("credits")
+      .eq("id", user.id)
+      .single();
+    const credits = profileForCredits?.credits ?? 0;
+    if (credits < CREDITS_COST) {
+      return NextResponse.json({
+        error: `Insufficient credits. Your Purpose (Soul Code) Report costs ${CREDITS_COST} credits.`,
+        required: CREDITS_COST,
+        available: credits,
+      }, { status: 402 });
+    }
+
     // Force regenerate by bypassing cache (for now while we test changes)
     // if (targetProfileId) { ... cache code removed ... }
 
@@ -209,7 +264,31 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json(reportContent);
+    // ── Deduct credits ───────────────────────────────────────────────────────
+    const newCredits = Math.max(0, credits - CREDITS_COST);
+    await supabaseAdmin
+      .from("user_profiles")
+      .update({ credits: newCredits })
+      .eq("id", user.id);
+
+    // ── Log usage so it shows up on the admin dashboard ───────────────────────
+    void (async () => {
+      try {
+        await supabaseAdmin.from("token_usage_logs").insert({
+          user_id:          user.id,
+          model_name:       llmResult.model,
+          input_tokens:     llmResult.tokensIn,
+          output_tokens:    llmResult.tokensOut,
+          total_tokens:     llmResult.tokensIn + llmResult.tokensOut,
+          cost_inr:         calcCostInr(llmResult.model, llmResult.tokensIn, llmResult.tokensOut).toFixed(6),
+          credits_used:     CREDITS_COST,
+          question_preview: "Your Purpose (Soul Code)",
+          feature:          "your_purpose",
+        });
+      } catch { /* non-critical */ }
+    })();
+
+    return NextResponse.json({ ...reportContent, creditsRemaining: newCredits });
   } catch (err: any) {
     console.error("Soul Code POST error:", err);
     return NextResponse.json({ error: err.message || "Failed to generate report" }, { status: 500 });

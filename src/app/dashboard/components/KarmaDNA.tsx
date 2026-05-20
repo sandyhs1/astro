@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 interface Props {
   profileId: string;
@@ -251,7 +252,7 @@ export default function KarmaDNA({ profileId, profileName }: Props) {
 
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 max-w-sm text-left">
             <p className="text-xs font-bold text-amber-800 mb-1">⚡ Premium Report</p>
-            <p className="text-xs text-amber-700">This deep analysis costs 20 credits. It uses D12 & D60 divisional charts for maximum depth and accuracy.</p>
+            <p className="text-xs text-amber-700">This deep analysis costs {FEATURE_CREDITS.karma_dna} credits. It uses D12 & D60 divisional charts for maximum depth and accuracy.</p>
           </div>
 
           {!confirmed ? (
@@ -259,11 +260,11 @@ export default function KarmaDNA({ profileId, profileName }: Props) {
               onClick={() => setConfirmed(true)}
               className="px-8 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 shadow-lg shadow-purple-200 transition-all"
             >
-              Generate Karma DNA · 20 Credits
+              Generate Karma DNA · {FEATURE_CREDITS.karma_dna} Credits
             </button>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <p className="text-sm font-semibold text-slate-700">Confirm 20 credit deduction?</p>
+              <p className="text-sm font-semibold text-slate-700">Confirm {FEATURE_CREDITS.karma_dna} credit deduction?</p>
               <div className="flex gap-3">
                 <button onClick={() => setConfirmed(false)} className="px-5 py-2.5 bg-slate-100 text-slate-600 font-semibold rounded-xl hover:bg-slate-200 text-sm transition-all">
                   Cancel

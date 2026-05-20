@@ -16,13 +16,15 @@
  *   4. Generate the report. Persist it together with the metrics so the UI
  *      can render the score card without re-running anything.
  *
- * No credits are charged.
+ * Credits: 5 credits charged on first generation per unique pair (pair_hash).
+ * Re-opening a saved report or regenerating the same pair is free.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import crypto from "crypto";
 
 import { getOrBuildChart } from "@/lib/astrology/manager";
 import { buildClaudeContext } from "@/lib/astrology/prompts";
@@ -36,6 +38,9 @@ import {
   type MatchPartnerInput,
 } from "@/lib/astrology/match-fetch";
 import { tzStringToFloat } from "@/lib/astrology/client";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
+
+const CREDITS_COST = FEATURE_CREDITS.compatibility;
 
 // Service-role client for persistence (RLS-safe writes)
 const supabaseAdmin = createSupabaseClient(
@@ -97,6 +102,59 @@ export async function POST(req: NextRequest) {
     if (!v2.ok) return NextResponse.json({ error: v2.error }, { status: 422 });
     const partner1 = v1.partner;
     const partner2 = v2.partner;
+
+    // ── Pair-hash: deterministic key for "same pair" detection ───────────────
+    // Sorted so (A,B) and (B,A) produce the same hash → same pair.
+    function birthHash(p: PartnerPayload): string {
+      return crypto.createHash("md5")
+        .update(`${p.dob}-${p.tob}-${p.pob}`.toLowerCase().replace(/\s+/g, ""))
+        .digest("hex");
+    }
+    const h1 = birthHash(partner1);
+    const h2 = birthHash(partner2);
+    const pairHash = [h1, h2].sort().join(":");
+
+    // ── Credits + first-time guard ──────────────────────────────────────────
+    const { data: userProfile } = await supabaseAdmin
+      .from("user_profiles").select("credits").eq("id", user.id).single();
+    const credits = userProfile?.credits ?? 0;
+
+    // Check if this exact pair was already generated for this user
+    const { data: existingPair } = await supabaseAdmin
+      .from("compatibility_reports")
+      .select("id, report_markdown, metrics, partner1, partner2, created_at")
+      .eq("user_id", user.id)
+      .eq("pair_hash", pairHash)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingPair) {
+      // Already generated this pair — return saved report at ZERO credit cost
+      const snapshot = existingPair.metrics
+        ? buildCompatibilitySnapshot(existingPair.metrics as MatchMetrics)
+        : null;
+      return NextResponse.json({
+        id:        existingPair.id,
+        report:    existingPair.report_markdown,
+        snapshot,
+        partner1:  existingPair.partner1,
+        partner2:  existingPair.partner2,
+        createdAt: existingPair.created_at,
+        savedToDashboard: true,
+        fromCache: true,
+        creditsRemaining: credits,
+      });
+    }
+
+    // First-time pair — check credits
+    if (credits < CREDITS_COST) {
+      return NextResponse.json({
+        error: `Insufficient credits. Compatibility Report costs ${CREDITS_COST} credits.`,
+        required: CREDITS_COST,
+        available: credits,
+      }, { status: 402 });
+    }
 
     // ── Step 1+2 in parallel: charts (cached) + match metrics (cached) ──────
     const matchInputFor = (p: PartnerPayload): MatchPartnerInput | null => {
@@ -182,9 +240,29 @@ export async function POST(req: NextRequest) {
         model:           llm.model,
         tokens_in:       llm.tokensIn,
         tokens_out:      llm.tokensOut,
+        pair_hash:       pairHash,
       })
       .select("id, created_at")
       .single();
+
+    // ── Deduct credits (first-time pair) ────────────────────────────────────
+    const newCredits = Math.max(0, credits - CREDITS_COST);
+    await supabaseAdmin.from("user_profiles")
+      .update({ credits: newCredits })
+      .eq("id", user.id);
+
+    // ── Log usage ───────────────────────────────────────────────────────────
+    void supabaseAdmin.from("token_usage_logs").insert({
+      user_id:          user.id,
+      model_name:       llm.model,
+      input_tokens:     llm.tokensIn,
+      output_tokens:    llm.tokensOut,
+      total_tokens:     llm.tokensIn + llm.tokensOut,
+      cost_inr:         "0.000000", // cost tracked via LLM pricing separately
+      credits_used:     CREDITS_COST,
+      question_preview: `Compatibility: ${partner1.name} & ${partner2.name}`,
+      feature:          "compatibility",
+    });
 
     if (saveErr) {
       console.error("[compatibility] save failed:", saveErr.message, saveErr.details);
@@ -195,6 +273,7 @@ export async function POST(req: NextRequest) {
         partner1, partner2,
         savedToDashboard: false,
         warning: "Reading generated but archive write failed. Refresh and re-save.",
+        creditsRemaining: newCredits,
         tokens: { input: llm.tokensIn, output: llm.tokensOut, total: llm.tokensIn + llm.tokensOut },
         model:  llm.model,
       });
@@ -207,6 +286,7 @@ export async function POST(req: NextRequest) {
       partner1, partner2,
       createdAt: saved.created_at,
       savedToDashboard: true,
+      creditsRemaining: newCredits,
       tokens:    { input: llm.tokensIn, output: llm.tokensOut, total: llm.tokensIn + llm.tokensOut },
       model:     llm.model,
     });

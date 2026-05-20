@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getOrBuildChart } from "@/lib/astrology/manager";
 import { routeLLMCached } from "@/lib/astrology/llm-router";
 import { getCurrentGochar, formatGocharForContext } from "@/lib/astrology/gochar";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +23,7 @@ function calcCostInr(model: string, tokIn: number, tokOut: number): number {
   return (tokIn / 1000) * p.in + (tokOut / 1000) * p.out;
 }
 
-const CREDIT_COST = 25;
+const CREDIT_COST = FEATURE_CREDITS.remedy;
 
 // ─── System Prompt ────────────────────────────────────────────────────────────
 
@@ -278,6 +279,7 @@ Use these transits to make remedy prescriptions time-aware: identify which house
           cost_inr:         calcCostInr(llmResult.model, llmResult.tokensIn, llmResult.tokensOut).toFixed(6),
           credits_used:     CREDIT_COST,
           question_preview: "Remedy Report",
+          feature:          "remedy",
         });
       } catch { /* ignored */ }
     })();

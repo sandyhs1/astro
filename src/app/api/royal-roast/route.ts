@@ -5,6 +5,9 @@ import { cookies } from "next/headers";
 import { getOrBuildChart } from "@/lib/astrology/manager";
 import { routeLLM } from "@/lib/astrology/llm-router";
 import { getCurrentGochar, formatGocharForContext } from "@/lib/astrology/gochar";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
+
+const CREDITS_COST = FEATURE_CREDITS.royal_roast;
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -122,11 +125,46 @@ export async function POST(req: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // ── Credits check ────────────────────────────────────────────────────────
+    // ── Credits + profile lookup ─────────────────────────────────────────────
     const { data: profile } = await supabaseAdmin.from("user_profiles").select("*").eq("id", user.id).single();
     const credits = profile?.credits ?? 0;
-    if (credits < 15) {
-      return NextResponse.json({ error: "Insufficient credits. Royal Roast costs 15 credits." }, { status: 402 });
+
+    // ── ONE-TIME GUARD: return existing saved report at zero cost ────────────
+    // The Royal Roast was previously deducting credits on every POST and
+    // duplicating saves. Resolve the profile id first, then look up an
+    // existing saved row before touching credits.
+    let earlyTargetId: string | null = null;
+    {
+      const { data: astroClientRow } = await supabaseAdmin
+        .from("astrologer_clients").select("id").eq("id", profileId).maybeSingle();
+      if (astroClientRow) {
+        earlyTargetId = astroClientRow.id;
+      } else if (!profileId || profileId === "self") {
+        const { data: fp } = await supabaseAdmin.from("family_profiles").select("id")
+          .eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+        earlyTargetId = fp?.id ?? null;
+      } else {
+        earlyTargetId = profileId;
+      }
+    }
+    if (earlyTargetId) {
+      const { data: existing } = await supabaseAdmin
+        .from("saved_reports").select("content")
+        .eq("user_id", user.id).eq("profile_id", earlyTargetId)
+        .eq("report_type", "royal_roast").limit(1).maybeSingle();
+      if (existing?.content) {
+        console.log("[ROYAL ROAST] ✅ Returning existing saved report (0 credits)");
+        return NextResponse.json({ ...existing.content, creditsRemaining: credits, fromCache: true });
+      }
+    }
+
+    // ── Credits check (only reached on first-time generation) ────────────────
+    if (credits < CREDITS_COST) {
+      return NextResponse.json({
+        error: `Insufficient credits. Royal Roast costs ${CREDITS_COST} credits.`,
+        required: CREDITS_COST,
+        available: credits,
+      }, { status: 402 });
     }
 
     // ── Resolve birth details ─────────────────────────────────────────────────
@@ -238,9 +276,9 @@ Use these transits to anchor which traits/houses are CURRENTLY under activation 
       5500
     );
 
-    // ── Deduct 15 credits ─────────────────────────────────────────────────────
+    // ── Deduct credits ────────────────────────────────────────────────────────
     await supabaseAdmin.from("user_profiles")
-      .update({ credits: Math.max(0, credits - 15) })
+      .update({ credits: Math.max(0, credits - CREDITS_COST) })
       .eq("id", user.id);
 
     // ── Log usage ──────────────────────────────────────────────────────────────
@@ -249,7 +287,8 @@ Use these transits to anchor which traits/houses are CURRENTLY under activation 
       input_tokens: llmResult.tokensIn, output_tokens: llmResult.tokensOut,
       total_tokens: llmResult.tokensIn + llmResult.tokensOut,
       cost_inr: calcCostInr(llmResult.model, llmResult.tokensIn, llmResult.tokensOut).toFixed(6),
-      credits_used: 15, question_preview: "Royal Roast",
+      credits_used: CREDITS_COST, question_preview: "Royal Roast",
+      feature: "royal_roast",
     });
 
     const reportData = {
@@ -264,15 +303,10 @@ Use these transits to anchor which traits/houses are CURRENTLY under activation 
     };
 
     // ── Save report ────────────────────────────────────────────────────────────
-    let targetProfileId: string | null = null;
-    if (astroClientData) {
-      targetProfileId = profileId;
-    } else if (!profileId || profileId === "self") {
-      const { data: fp } = await supabaseAdmin.from("family_profiles").select("id").eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
-      targetProfileId = fp?.id ?? null;
-    } else {
-      targetProfileId = profileId;
-    }
+    // earlyTargetId was resolved at the top of POST so we use it directly here
+    // (no extra DB lookups needed). It's null only when there is no Self
+    // profile yet, in which case we just skip persistence.
+    const targetProfileId: string | null = earlyTargetId;
 
     if (targetProfileId) {
       const { error: saveErr } = await supabaseAdmin.from("saved_reports").insert({
@@ -284,7 +318,7 @@ Use these transits to anchor which traits/houses are CURRENTLY under activation 
       if (saveErr) console.error("[ROYAL ROAST] Save error:", saveErr.message);
     }
 
-    return NextResponse.json({ ...reportData, creditsRemaining: Math.max(0, credits - 15) });
+    return NextResponse.json({ ...reportData, creditsRemaining: Math.max(0, credits - CREDITS_COST) });
 
   } catch (err: any) {
     console.error("Royal Roast POST error:", err);

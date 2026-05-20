@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PAL } from "./destiny-theme";
+import { FEATURE_CREDITS, NAKSHATRA_ASC_BUNDLE_COST } from "@/lib/pricing/feature-credits";
 
 const LOADING_LINES = [
   "Reading your exact Nakshatra from planetary positions…",
@@ -157,7 +158,7 @@ export default function ReportsPanel({ profileId }: { profileId: string }) {
                     className="mt-7 serif-text text-[13px] font-semibold px-6 py-3 rounded-sm text-white transition-opacity hover:opacity-90"
                     style={{ background: PAL.accent }}
                   >
-                    Generate report
+                    Generate report · {NAKSHATRA_ASC_BUNDLE_COST} credits
                   </button>
                 </div>
               )}
@@ -486,7 +487,7 @@ function PdfSection({ profileId }: { profileId: string }) {
 
       {/* Basic */}
       <section>
-        <Divider label="Free report" />
+        <Divider label={`Core · ${FEATURE_CREDITS.core_horoscope} credits`} />
         <div className="flex items-start gap-4 mb-4">
           <span
             className="w-12 h-12 rounded-sm grid place-items-center serif-display text-[20px] flex-shrink-0"
@@ -502,7 +503,7 @@ function PdfSection({ profileId }: { profileId: string }) {
               <span className="text-[10px] font-semibold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm"
                 style={{ color: PAL.sage, background: PAL.sageBg, border: `1px solid #C7D6BB` }}
               >
-                Free forever
+                {FEATURE_CREDITS.core_horoscope} credits · one-time
               </span>
             </div>
             <p className="serif-text text-[14px] leading-relaxed" style={{ color: PAL.ink2 }}>
@@ -552,7 +553,7 @@ function PdfSection({ profileId }: { profileId: string }) {
 
       {/* Pro */}
       <section>
-        <Divider label="Pro · 5 credits" tone="gold" />
+        <Divider label={`Pro · ${FEATURE_CREDITS.professional_horoscope} credits`} tone="gold" />
         <div className="flex items-start gap-4 mb-4">
           <span
             className="w-12 h-12 rounded-sm grid place-items-center serif-display text-[20px] flex-shrink-0"
@@ -576,7 +577,7 @@ function PdfSection({ profileId }: { profileId: string }) {
                 <span className="text-[10px] font-semibold uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm"
                   style={{ color: PAL.gold, background: PAL.amberBg, border: `1px solid #E1CE9B` }}
                 >
-                  5 credits
+                  {FEATURE_CREDITS.professional_horoscope} credits
                 </span>
               )}
             </div>
@@ -612,7 +613,7 @@ function PdfSection({ profileId }: { profileId: string }) {
             className="serif-text text-[13px] font-semibold px-5 py-2.5 rounded-sm text-white transition-opacity hover:opacity-90"
             style={{ background: PAL.ink }}
           >
-            ✦ Unlock for 5 credits
+            ✦ Unlock for {FEATURE_CREDITS.professional_horoscope} credits
           </button>
         )}
         {proStatus === "ready" && (

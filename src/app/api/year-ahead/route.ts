@@ -6,11 +6,27 @@ import { routeLLM } from "@/lib/astrology/llm-router";
 // @ts-ignore
 import api from 'astrologyapi';
 import { geocodePlace } from "@/lib/astrology/client";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// ── INR pricing — same table as the other report routes ────────────────────────
+const LLM_PRICE: Record<string, { in: number; out: number }> = {
+  "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252,  out: 1.26   },
+  "gemini/gemini-3.1-pro-preview":           { in: 0.105,  out: 0.42   },
+  "gemini/gemini-3.1-flash-lite":            { in: 0.0063, out: 0.0063 },
+};
+function calcCostInr(model: string, tokIn: number, tokOut: number): number {
+  const p = LLM_PRICE[model] ?? { in: 0.252, out: 1.26 };
+  return (tokIn / 1000) * p.in + (tokOut / 1000) * p.out;
+}
+
+// ── Credit cost — Year Ahead ──────────────────────────────────────────────────
+// Sourced from the central pricing module so frontend & backend stay in sync.
+const CREDITS_COST = FEATURE_CREDITS.year_ahead;
 
 const YEAR_AHEAD_PROMPT = (pName: string, year: number, yogasJson: string, monthJson: string) => `You are KARMA — the Grand Master Jyotishi of Quantum Karma.
 You are generating a deeply personal, brutal, savage, legit, and accurate YEAR AHEAD ${year} REPORT for ${pName}.
@@ -150,6 +166,23 @@ export async function POST(req: Request) {
       }
     }
 
+    // ── Credits check (only reached on first-time generation) ────────────────
+    // This is positioned BEFORE the AstrologyAPI call so users with insufficient
+    // credits get a fast 402 without us paying for an upstream API request.
+    const { data: profileForCredits } = await supabaseAdmin
+      .from("user_profiles")
+      .select("credits")
+      .eq("id", user.id)
+      .single();
+    const credits = profileForCredits?.credits ?? 0;
+    if (credits < CREDITS_COST) {
+      return NextResponse.json({
+        error: `Insufficient credits. Year Ahead Report costs ${CREDITS_COST} credits.`,
+        required: CREDITS_COST,
+        available: credits,
+      }, { status: 402 });
+    }
+
     let dob, tob, pob, tz, pName;
     if (!targetProfileId) {
       const { data: lead } = await supabaseAdmin.from("onboarding_leads").select("*").eq("email", user.email).maybeSingle();
@@ -241,7 +274,31 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json(reportContent);
+    // ── Deduct credits ───────────────────────────────────────────────────────
+    const newCredits = Math.max(0, credits - CREDITS_COST);
+    await supabaseAdmin
+      .from("user_profiles")
+      .update({ credits: newCredits })
+      .eq("id", user.id);
+
+    // ── Log usage so it shows up on the admin dashboard ───────────────────────
+    void (async () => {
+      try {
+        await supabaseAdmin.from("token_usage_logs").insert({
+          user_id:          user.id,
+          model_name:       llmResult.model,
+          input_tokens:     llmResult.tokensIn,
+          output_tokens:    llmResult.tokensOut,
+          total_tokens:     llmResult.tokensIn + llmResult.tokensOut,
+          cost_inr:         calcCostInr(llmResult.model, llmResult.tokensIn, llmResult.tokensOut).toFixed(6),
+          credits_used:     CREDITS_COST,
+          question_preview: `Year Ahead ${year}`,
+          feature:          "year_ahead",
+        });
+      } catch { /* non-critical */ }
+    })();
+
+    return NextResponse.json({ ...reportContent, creditsRemaining: newCredits });
   } catch (err: any) {
     console.error("Year Ahead POST error:", err);
     return NextResponse.json({ error: err.message || "Failed to generate report" }, { status: 500 });

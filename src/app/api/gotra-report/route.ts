@@ -3,13 +3,14 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { routeLLM } from "@/lib/astrology/llm-router";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const CREDITS_COST = 5;
+const CREDITS_COST = FEATURE_CREDITS.your_gotra;
 
 const LLM_PRICE: Record<string, { in: number; out: number }> = {
   "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252, out: 1.26 },
@@ -145,9 +146,30 @@ export async function POST(req: Request) {
         .eq("id", user.id)
         .single();
       credits = profile?.credits ?? 0;
+
+      // ── ONE-TIME GUARD: return existing saved report at zero cost ──────────
+      let earlyTargetId: string | null = null;
+      if (!profileId || profileId === "self") {
+        const { data: fp } = await supabaseAdmin.from("family_profiles").select("id")
+          .eq("user_id", user.id).eq("relationship", "Self").maybeSingle();
+        earlyTargetId = fp?.id ?? null;
+      } else {
+        earlyTargetId = profileId;
+      }
+      if (earlyTargetId) {
+        const { data: existing } = await supabaseAdmin
+          .from("saved_reports").select("content")
+          .eq("user_id", user.id).eq("profile_id", earlyTargetId)
+          .eq("report_type", "gotra_report").limit(1).maybeSingle();
+        if (existing?.content) {
+          console.log("[GOTRA REPORT] ✅ Returning existing saved report (0 credits)");
+          return NextResponse.json({ ...existing.content, creditsRemaining: credits, fromCache: true });
+        }
+      }
+
       if (credits < CREDITS_COST) {
         return NextResponse.json(
-          { error: `Insufficient credits. This report costs ${CREDITS_COST} credits.` },
+          { error: `Insufficient credits. This report costs ${CREDITS_COST} credits.`, required: CREDITS_COST, available: credits },
           { status: 402 }
         );
       }
@@ -186,6 +208,7 @@ export async function POST(req: Request) {
         cost_inr:       calcCostInr(llmResult.model, llmResult.tokensIn, llmResult.tokensOut).toFixed(6),
         credits_used:   CREDITS_COST,
         question_preview: `Gotra Report: ${cleanGotra}`,
+        feature:        "your_gotra",
       });
 
       // Resolve target profile_id

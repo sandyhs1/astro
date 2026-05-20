@@ -4,13 +4,14 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { getOrBuildChart } from "@/lib/astrology/manager";
 import { routeLLM } from "@/lib/astrology/llm-router";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const CREDITS_COST = 5;
+const CREDITS_COST = FEATURE_CREDITS.ishta_devata;
 
 const LLM_PRICE: Record<string, { in: number; out: number }> = {
   "bedrock/us.anthropic.claude-sonnet-4-6": { in: 0.252, out: 1.26 },
@@ -324,6 +325,7 @@ export async function POST(req: Request) {
       cost_inr:      calcCostInr(llmResult.model, llmResult.tokensIn, llmResult.tokensOut).toFixed(6),
       credits_used:  CREDITS_COST,
       question_preview: `Ishta Devata: ${derivation.ishtaDevata}`,
+      feature:       "ishta_devata",
     });
 
     const reportData = {

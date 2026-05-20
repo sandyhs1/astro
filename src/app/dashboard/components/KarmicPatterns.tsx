@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 import remarkGfm from "remark-gfm";
 
 interface Props {
@@ -347,7 +348,7 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
                 <p className="text-xs text-indigo-700 mt-1 leading-relaxed">
                   This report uses D1 through D60, computes 5 Karmic Echoes, and delivers Grandmaster-level domain intelligence for Marriage, Career, and Health.
                 </p>
-                <p className="text-sm font-bold text-indigo-800 mt-2">Cost: 25 Credits</p>
+                <p className="text-sm font-bold text-indigo-800 mt-2">Cost: {FEATURE_CREDITS.karmic_patterns} Credits</p>
               </div>
             </div>
           </div>
@@ -365,7 +366,7 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
               onClick={() => setConfirmed(true)}
               className="px-10 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-2xl hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-200 transition-all text-sm tracking-wide"
             >
-              Generate Report · 25 Credits
+              Generate Report · {FEATURE_CREDITS.karmic_patterns} Credits
             </motion.button>
           ) : (
             <motion.div
@@ -373,7 +374,7 @@ export default function KarmicPatterns({ profileId, profileName }: Props) {
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col items-center gap-3"
             >
-              <p className="text-sm font-bold text-slate-800">Confirm 25 credit deduction?</p>
+              <p className="text-sm font-bold text-slate-800">Confirm {FEATURE_CREDITS.karmic_patterns} credit deduction?</p>
               <div className="flex gap-3">
                 <button onClick={() => setConfirmed(false)} className="px-5 py-2.5 bg-slate-100 text-slate-600 font-semibold rounded-xl hover:bg-slate-200 text-sm transition-all">Cancel</button>
                 <button onClick={generate} className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-200 text-sm transition-all">Yes, Generate Report</button>

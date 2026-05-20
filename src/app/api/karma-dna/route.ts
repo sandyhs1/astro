@@ -7,6 +7,9 @@ import { routeLLM } from "@/lib/astrology/llm-router";
 import { getCurrentGochar, formatGocharForContext } from "@/lib/astrology/gochar";
 import { astroClient } from "@/lib/astrology/client";
 import { parseBirthParams, geocodePlace, tzStringToFloat } from "@/lib/astrology/client";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
+
+const CREDITS_COST = FEATURE_CREDITS.karma_dna;
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -190,8 +193,12 @@ export async function POST(req: Request) {
     }
 
     // ── Credits check (only reached on first-time generation) ─────────────────
-    if (credits < 20) {
-      return NextResponse.json({ error: "Insufficient credits. Karma DNA Report costs 20 credits." }, { status: 402 });
+    if (credits < CREDITS_COST) {
+      return NextResponse.json({
+        error: `Insufficient credits. Karma DNA Report costs ${CREDITS_COST} credits.`,
+        required: CREDITS_COST,
+        available: credits,
+      }, { status: 402 });
     }
 
 
@@ -288,9 +295,9 @@ Use these transits to identify which houses are currently activated for ${pName}
       4000  // Increased token limit to ensure complete report without cutoff
     );
 
-    // ── Deduct 20 credits ──────────────────────────────────────────────────────
+    // ── Deduct credits ─────────────────────────────────────────────────────────
     await supabaseAdmin.from("user_profiles")
-      .update({ credits: Math.max(0, credits - 20) })
+      .update({ credits: Math.max(0, credits - CREDITS_COST) })
       .eq("id", user.id);
 
     // ── Log usage ──────────────────────────────────────────────────────────────
@@ -299,7 +306,8 @@ Use these transits to identify which houses are currently activated for ${pName}
       input_tokens: llmResult.tokensIn, output_tokens: llmResult.tokensOut,
       total_tokens: llmResult.tokensIn + llmResult.tokensOut,
       cost_inr: calcCostInr(llmResult.model, llmResult.tokensIn, llmResult.tokensOut).toFixed(6),
-      credits_used: 20, question_preview: "Karma DNA Report",
+      credits_used: CREDITS_COST, question_preview: "Karma DNA Report",
+      feature: "karma_dna",
     });
 
     const reportData = {
@@ -342,7 +350,7 @@ Use these transits to identify which houses are currently activated for ${pName}
 
     return NextResponse.json({
       ...reportData,
-      creditsRemaining: Math.max(0, credits - 20),
+      creditsRemaining: Math.max(0, credits - CREDITS_COST),
     });
 
   } catch (err: any) {

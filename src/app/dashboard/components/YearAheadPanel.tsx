@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PAL } from "./destiny-theme";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 const LOADING_LINES = [
   "Casting your Solar Return chart for the current year…",
@@ -123,7 +124,7 @@ export default function YearAheadPanel({ profileId }: { profileId: string }) {
               className="mt-7 serif-text text-[13px] font-semibold px-6 py-3 rounded-sm text-white transition-opacity hover:opacity-90"
               style={{ background: PAL.accent }}
             >
-              Generate year ahead blueprint
+              Generate year ahead blueprint · {FEATURE_CREDITS.year_ahead} credits
             </button>
           </div>
         )}

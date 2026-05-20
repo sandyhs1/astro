@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PAL, PLANET_TONE } from "./destiny-theme";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 const LOADING_LINES = [
   "Aligning Jaimini astrological algorithms…",
@@ -150,7 +151,7 @@ export default function SoulCodePanel({ profileId }: { profileId: string }) {
             className="mt-7 serif-text text-[13px] font-semibold px-6 py-3 rounded-sm text-white transition-opacity hover:opacity-90"
             style={{ background: PAL.accent }}
           >
-            Generate soul blueprint
+            Generate soul blueprint · {FEATURE_CREDITS.your_purpose} credits
           </button>
         </div>
       )}

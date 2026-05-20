@@ -22,6 +22,7 @@ import remarkGfm from "remark-gfm";
 import { ArrowRight, Heart, Loader2, Sparkles, Trash2, X } from "lucide-react";
 
 import PlaceAutocomplete, { type PlaceSelection } from "@/components/PlaceAutocomplete";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 /* ── Editorial palette (matches dashboard) ─────────────────────────────── */
 const PAL = {
@@ -627,7 +628,7 @@ export default function Compatibility({ selfProfile }: Props) {
           {submitting ? (
             <><Loader2 size={16} className="animate-spin" /> Reading the alignment…</>
           ) : (
-            <>Analyse Soul Alignment <ArrowRight size={16} /></>
+            <>Analyse Soul Alignment · {FEATURE_CREDITS.compatibility} credits <ArrowRight size={16} /></>
           )}
         </button>
       </div>

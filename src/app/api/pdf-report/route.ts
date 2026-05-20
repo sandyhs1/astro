@@ -9,7 +9,10 @@ import { geocodePlace } from "@/lib/astrology/client";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const PDF_BASE = "https://pdf.astrologyapi.com/v1";
-const PRO_CREDIT_COST = 5;
+
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
+const BASIC_CREDIT_COST = FEATURE_CREDITS.core_horoscope;
+const PRO_CREDIT_COST = FEATURE_CREDITS.professional_horoscope;
 
 // ── Logo URL ──────────────────────────────────────────────────────────────────
 // Wordmark served directly from the Next.js public/ directory.
@@ -359,6 +362,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "not_unlocked" }, { status: 402 });
     }
 
+    // 3b. For BASIC — credit gate (first-time only; cache hit above returns free)
+    const { data: userProfileForCredits } = await admin
+      .from("user_profiles").select("credits").eq("id", session.user.id).single();
+    const basicCredits = userProfileForCredits?.credits ?? 0;
+    if (basicCredits < BASIC_CREDIT_COST) {
+      return NextResponse.json({
+        error: "insufficient_credits",
+        required: BASIC_CREDIT_COST,
+        available: basicCredits,
+      }, { status: 402 });
+    }
+
     // 4. BASIC — generate, strip gemstones, store
     let d = 1, m = 1, y = 2000;
     if (profileData.dob?.includes('-')) {
@@ -422,7 +437,21 @@ export async function GET(req: NextRequest) {
       profile_id: profileId,
       hash, report_type: reportType,
       storage_path: storagePath,
-      credits_charged: 0,
+      credits_charged: BASIC_CREDIT_COST,
+    });
+
+    // ── Deduct credits for basic PDF (first-time only — cache hit returns free above)
+    await admin.from("user_profiles")
+      .update({ credits: Math.max(0, basicCredits - BASIC_CREDIT_COST) })
+      .eq("id", session.user.id);
+
+    // ── Log AstrologyAPI usage so the admin dashboard sees the spend ─────────
+    void admin.from("astroapi_logs").insert({
+      user_id:    session.user.id,
+      endpoint:   "basic_horoscope_pdf",
+      from_cache: false,
+      cost_inr:   0.084,
+      feature:    "core_horoscope",
     });
 
     const { data: signed } = await admin.storage
@@ -572,6 +601,15 @@ export async function POST(req: NextRequest) {
       hash, report_type: reportType,
       storage_path: storagePath,
       credits_charged: PRO_CREDIT_COST,
+    });
+
+    // ── Log AstrologyAPI usage so the admin dashboard sees the spend ─────────
+    void admin.from("astroapi_logs").insert({
+      user_id:    session.user.id,
+      endpoint:   "pro_horoscope_pdf",
+      from_cache: false,
+      cost_inr:   0.084,
+      feature:    "professional_horoscope",
     });
 
     const { data: signed } = await admin.storage.from("pdf-reports").createSignedUrl(storagePath, 3600);

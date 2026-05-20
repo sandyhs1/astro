@@ -34,6 +34,7 @@ import ReportsPanel from "./components/ReportsPanel";
 import SoulCodePanel from "./components/SoulCodePanel";
 import YearAheadPanel from "./components/YearAheadPanel";
 import ExplainerPanel from "./components/ExplainerPanel";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 /* ── Editorial palette (V6 Stripe Press) ─────────────────────────── */
 const PAL = {
@@ -77,25 +78,26 @@ type FeatureMeta = {
   accent: keyof typeof BENTO_ACCENT;
   Icon: LucideIcon;
   premium?: boolean;
+  creditCost?: number;
 };
 
 const FEATURE_META: FeatureMeta[] = [
   { key: "explainer",       label: "Explainer Masterclass", hint: "Start here · 9-min onboarding masterclass",     badge: "START", accent: "indigo",  Icon: BookOpen },
   { key: "chat",            label: "Oracle Chat",           hint: "Ask anything about your chart",                                accent: "indigo",  Icon: MessageCircle },
-  { key: "destiny",         label: "Destiny Window",        hint: "Best dates this month",                          accent: "sky",     Icon: Calendar, premium: true },
-  { key: "karma-dna",       label: "Karma DNA",             hint: "Your karmic blueprint",                          accent: "purple",  Icon: Sparkles, premium: true },
-  { key: "karmic-patterns", label: "Karmic Patterns",       hint: "Repeating life themes",                          accent: "purple",  Icon: Compass,  premium: true },
-  { key: "royal-roast",     label: "Royal Roast",           hint: "No-filter chart roast",                          accent: "orange",  Icon: Flame,    premium: true },
-  { key: "gotra",           label: "Your Gotra",            hint: "Your spiritual lineage",       badge: "NEW",     accent: "amber",   Icon: Sun },
-  { key: "ishta-devata",    label: "Ishta Devata",          hint: "Your guiding deity",           badge: "NEW",     accent: "rose",    Icon: Heart },
+  { key: "destiny",         label: "Destiny Window",        hint: "Best dates this month",                          accent: "sky",     Icon: Calendar, premium: true, creditCost: 3 },
+  { key: "karma-dna",       label: "Karma DNA",             hint: "Your karmic blueprint",                          accent: "purple",  Icon: Sparkles, premium: true, creditCost: FEATURE_CREDITS.karma_dna },
+  { key: "karmic-patterns", label: "Karmic Patterns",       hint: "Repeating life themes",                          accent: "purple",  Icon: Compass,  premium: true, creditCost: FEATURE_CREDITS.karmic_patterns },
+  { key: "royal-roast",     label: "Royal Roast",           hint: "No-filter chart roast",                          accent: "orange",  Icon: Flame,    premium: true, creditCost: FEATURE_CREDITS.royal_roast },
+  { key: "gotra",           label: "Your Gotra",            hint: "Your spiritual lineage",       badge: "NEW",     accent: "amber",   Icon: Sun,      creditCost: FEATURE_CREDITS.your_gotra },
+  { key: "ishta-devata",    label: "Ishta Devata",          hint: "Your guiding deity",           badge: "NEW",     accent: "rose",    Icon: Heart,    creditCost: FEATURE_CREDITS.ishta_devata },
   { key: "journal",         label: "Life Journal",          hint: "Voice-log your life events",                     accent: "emerald", Icon: Mic },
-  { key: "year-ahead",      label: "Year Ahead",            hint: "12-month transit forecast",                      accent: "amber",   Icon: Calendar },
-  { key: "soul-code",       label: "Your Purpose",          hint: "Atmakaraka & life path",                         accent: "purple",  Icon: Crown },
+  { key: "year-ahead",      label: "Year Ahead",            hint: "12-month transit forecast",                      accent: "amber",   Icon: Calendar, creditCost: FEATURE_CREDITS.year_ahead },
+  { key: "soul-code",       label: "Your Purpose",          hint: "Atmakaraka & life path",                         accent: "purple",  Icon: Crown,    creditCost: FEATURE_CREDITS.your_purpose },
   { key: "roadmap",         label: "Roadmap",               hint: "Your custom action plan",      badge: "NEW",     accent: "indigo",  Icon: Map },
-  { key: "remedy",          label: "Remedy",                hint: "Mantras, gems, rituals",                         accent: "emerald", Icon: Gem,      premium: true },
-  { key: "reports",         label: "Reports",               hint: "Saved PDF reports",                              accent: "slate",   Icon: FileText },
+  { key: "remedy",          label: "Remedy",                hint: "Mantras, gems, rituals",                         accent: "emerald", Icon: Gem,      premium: true, creditCost: FEATURE_CREDITS.remedy },
+  { key: "reports",         label: "Reports",               hint: "Saved PDF reports",                              accent: "slate",   Icon: FileText, creditCost: FEATURE_CREDITS.core_horoscope },
   { key: "details",         label: "My Details",            hint: "Birth chart raw data",                           accent: "slate",   Icon: ListChecks },
-  { key: "compatibility",   label: "Compatibility",         hint: "Soul alignment with another person", badge: "NEW", accent: "rose",    Icon: Heart },
+  { key: "compatibility",   label: "Compatibility",         hint: "Soul alignment with another person", badge: "NEW", accent: "rose",    Icon: Heart,    creditCost: FEATURE_CREDITS.compatibility },
 ];
 
 /* ── Editorial sidebar sections ─────────────────────────────────── */
@@ -1913,7 +1915,7 @@ function BentoCard({
           <span className="text-[10px] font-semibold uppercase tracking-[0.18em]"
             style={{ color: a.ink, opacity: 0.7 }}
           >
-            ~5 credits
+            {f.creditCost ? `${f.creditCost} credit${f.creditCost === 1 ? "" : "s"}` : "Free"}
           </span>
         </div>
       </div>

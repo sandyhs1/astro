@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 import remarkGfm from "remark-gfm";
 
 interface Props {
@@ -264,7 +265,7 @@ export default function RemedyPanel({ profileId, profileName }: Props) {
                 <p className="text-xs text-indigo-700 mt-1 leading-relaxed">
                   Personalized to your birth chart, active Dasha lord, and afflicted planets. Includes 48-day mandala protocol, specific chant counts, and strict Vedic instructions.
                 </p>
-                <p className="text-sm font-bold text-indigo-800 mt-2">Cost: 25 Credits</p>
+                <p className="text-sm font-bold text-indigo-800 mt-2">Cost: {FEATURE_CREDITS.remedy} Credits</p>
               </div>
             </div>
           </div>
@@ -284,7 +285,7 @@ export default function RemedyPanel({ profileId, profileName }: Props) {
               onClick={() => setConfirmed(true)}
               className="px-10 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-2xl hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-200 transition-all text-sm tracking-wide"
             >
-              Generate Report · 25 Credits
+              Generate Report · {FEATURE_CREDITS.remedy} Credits
             </motion.button>
           ) : (
             <motion.div
@@ -292,7 +293,7 @@ export default function RemedyPanel({ profileId, profileName }: Props) {
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col items-center gap-3"
             >
-              <p className="text-sm font-bold text-slate-800">Confirm 25 credit deduction?</p>
+              <p className="text-sm font-bold text-slate-800">Confirm {FEATURE_CREDITS.remedy} credit deduction?</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmed(false)}

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 import remarkGfm from "remark-gfm";
 import { PAL } from "./destiny-theme";
 
@@ -158,7 +159,7 @@ export default function YourGotra({ profileId, profileName }: YourGotraProps) {
               className="w-full serif-text text-[13px] font-semibold py-3 rounded-sm text-white transition-opacity hover:opacity-90 disabled:opacity-40"
               style={{ background: PAL.accent }}
             >
-              🕉 Decode my Gotra{!isB2B && " — 5 credits"}
+              🕉 Decode my Gotra{!isB2B && ` — ${FEATURE_CREDITS.your_gotra} credits`}
             </button>
             <p className="serif-text italic text-[11.5px]" style={{ color: PAL.ink3 }}>
               {!isB2B

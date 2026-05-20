@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PAL } from "./destiny-theme";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 interface RoyalRoastProps {
   profileId: string;
@@ -288,7 +289,7 @@ export default function RoyalRoast({ profileId, profileName, isB2B = false }: Ro
             className="mt-7 serif-text text-[13px] font-semibold px-6 py-3 rounded-sm text-white transition-opacity hover:opacity-90"
             style={{ background: PAL.accent }}
           >
-            🔥 Generate my royal roast — 15 credits
+            🔥 Generate my royal roast — {FEATURE_CREDITS.royal_roast} credits
           </button>
           <p className="serif-text italic text-[11.5px] mt-3" style={{ color: PAL.ink3 }}>
             Saved after generation · free to re-read anytime

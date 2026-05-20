@@ -8,6 +8,7 @@ import { getCurrentGochar, formatGocharForContext } from "@/lib/astrology/gochar
 import { astroClient } from "@/lib/astrology/client";
 import { parseBirthParams, geocodePlace, tzStringToFloat } from "@/lib/astrology/client";
 import { computeKarmicEchoes, echoesToPromptString } from "@/lib/astrology/karmic-engine";
+import { FEATURE_CREDITS } from "@/lib/pricing/feature-credits";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,7 +27,7 @@ function calcCostInr(model: string, tokIn: number, tokOut: number): number {
   return (tokIn / 1000) * p.in + (tokOut / 1000) * p.out;
 }
 
-const CREDIT_COST = 25;
+const CREDIT_COST = FEATURE_CREDITS.karmic_patterns;
 
 // ─── System Prompt ────────────────────────────────────────────────────────────
 
@@ -426,6 +427,7 @@ Use these transits to specify WHICH karmic patterns are actively triggered right
           cost_inr:         calcCostInr(llmResult.model, llmResult.tokensIn, llmResult.tokensOut).toFixed(6),
           credits_used:     CREDIT_COST,
           question_preview: "Karmic Patterns Report",
+          feature:          "karmic_patterns",
         });
       } catch { /* non-critical */ }
     })();
