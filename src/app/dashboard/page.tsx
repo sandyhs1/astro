@@ -1340,7 +1340,7 @@ export default function DashboardPage() {
 
           {activeFeature === "explainer" && (
             <FeatureFrame title="Explainer Masterclass" eyebrow="Section 01 · Begin">
-              <ExplainerPanel profileId={activeProfileId} profileName={activeProfileName} />
+              <ExplainerPanel profileId={activeProfileId} profileName={displayName} />
             </FeatureFrame>
           )}
           {activeFeature === "destiny" && (
