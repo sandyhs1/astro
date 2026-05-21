@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
-import TheVoid from "@/components/sections/TheVoid";
+import LandingFooter from "@/components/LandingFooter";
 import { useOnboarding } from "@/context/OnboardingContext";
 import FloatingLogo from "@/components/ui/FloatingLogo";
 
@@ -971,7 +971,7 @@ export default function Astrology() {
                 </div>
             </section>
 
-            <TheVoid />
+            <LandingFooter />
 
             {/* Reduced-motion respect */}
             <style dangerouslySetInnerHTML={{ __html: `

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import TheVoid from '@/components/sections/TheVoid';
+import LandingFooter from "@/components/LandingFooter";
 import FloatingLogo from "@/components/ui/FloatingLogo";
 
 export default function RoadmapPage() {
@@ -192,7 +192,7 @@ export default function RoadmapPage() {
                 </div>
             </section>
 
-            <TheVoid />
+            <LandingFooter />
         </div>
     );
 }

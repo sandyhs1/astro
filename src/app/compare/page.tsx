@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import Link from 'next/link';
+import LandingFooter from '@/components/LandingFooter';
 import {
   ChevronLeft, Sparkles, Star, Cpu, Heart, MessageCircle,
   Database, Activity, Zap, CheckCircle2, XCircle, ShieldCheck,
@@ -1164,6 +1165,8 @@ export default function ComparePage() {
           }
         }
       `}} />
+
+      <LandingFooter />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { FaCrosshairs, FaSkull, FaChartPie, FaBolt, FaClock, FaCheckCircle, FaExclamationTriangle, FaTerminal, FaEye, FaMicroscope } from "react-icons/fa";
-import TheVoid from "@/components/sections/TheVoid";
+import LandingFooter from "@/components/LandingFooter";
 import FloatingLogo from "@/components/ui/FloatingLogo";
 
 // --- INTERACTIVE COMPONENTS ---
@@ -539,7 +539,7 @@ export default function OurProcessInteractive() {
                 </div>
             </section>
 
-            <TheVoid />
+            <LandingFooter />
         </main>
     );
 }

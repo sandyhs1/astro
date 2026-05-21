@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import TheVoid from '@/components/sections/TheVoid';
+import LandingFooter from "@/components/LandingFooter";
 import FloatingLogo from "@/components/ui/FloatingLogo";
 
 export default function SampleReport() {
@@ -776,7 +776,7 @@ export default function SampleReport() {
                 </div>
             </main>
 
-            <TheVoid />
+            <LandingFooter />
         </div>
     );
 }

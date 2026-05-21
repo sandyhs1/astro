@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import Link from 'next/link';
+import LandingFooter from '@/components/LandingFooter';
 import {
   ChevronLeft, Sparkles, Heart, ArrowRight, Quote, Compass,
   Atom, Brain, Target, Flame, Star, Eye, Shield, Lock,
@@ -871,6 +872,8 @@ export default function AboutPage() {
           }
         }
       `}} />
+
+      <LandingFooter />
     </div>
   );
 }

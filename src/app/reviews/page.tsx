@@ -2,7 +2,7 @@
 
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import TheVoid from "@/components/sections/TheVoid";
+import LandingFooter from "@/components/LandingFooter";
 import { useOnboarding } from "@/context/OnboardingContext";
 import FloatingLogo from "@/components/ui/FloatingLogo";
 
@@ -327,7 +327,7 @@ export default function Report() {
             {/* 7. TESTIMONIALS (REDDIT STYLE) */}
             <TestimonialsSection />
 
-            <TheVoid />
+            <LandingFooter />
         </main>
     );
 }
